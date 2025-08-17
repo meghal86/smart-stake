@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          amount_usd: number
+          chain: string
+          created_at: string
+          detected_at: string
+          from_addr: string
+          id: string
+          to_addr: string
+          token: string
+          tx_hash: string
+        }
+        Insert: {
+          amount_usd: number
+          chain: string
+          created_at?: string
+          detected_at?: string
+          from_addr: string
+          id?: string
+          to_addr: string
+          token: string
+          tx_hash: string
+        }
+        Update: {
+          amount_usd?: number
+          chain?: string
+          created_at?: string
+          detected_at?: string
+          from_addr?: string
+          id?: string
+          to_addr?: string
+          token?: string
+          tx_hash?: string
+        }
+        Relationships: []
+      }
+      devices: {
+        Row: {
+          created_at: string
+          expo_push_token: string
+          id: string
+          platform: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expo_push_token: string
+          id?: string
+          platform: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expo_push_token?: string
+          id?: string
+          platform?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      risk_scans: {
+        Row: {
+          created_at: string
+          id: string
+          result_json: Json | null
+          user_id: string
+          wallet: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          result_json?: Json | null
+          user_id: string
+          wallet: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          result_json?: Json | null
+          user_id?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          product_id: string
+          rc_entitlement: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          product_id: string
+          rc_entitlement?: string | null
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          product_id?: string
+          rc_entitlement?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          plan: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      yields: {
+        Row: {
+          apy: number
+          chain: string
+          created_at: string
+          id: string
+          protocol: string
+          risk_score: number
+          tvl_usd: number
+          updated_at: string
+        }
+        Insert: {
+          apy: number
+          chain: string
+          created_at?: string
+          id?: string
+          protocol: string
+          risk_score: number
+          tvl_usd: number
+          updated_at?: string
+        }
+        Update: {
+          apy?: number
+          chain?: string
+          created_at?: string
+          id?: string
+          protocol?: string
+          risk_score?: number
+          tvl_usd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
