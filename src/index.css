@@ -2,41 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* DeFi Whale Tracker Design System - Dark Theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark theme base colors */
+    --background: 220 13% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 13% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 13% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Electric Blue */
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 13% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Deep Purple */
+    --secondary: 263 70% 50%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Subtle grays */
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Violet */
+    --accent: 270 95% 75%;
+    --accent-foreground: 220 13% 8%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Success - Emerald Green */
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    /* Warning - Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 13% 8%;
+
+    /* Destructive - Red */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Premium - Gold */
+    --premium: 45 93% 58%;
+    --premium-foreground: 220 13% 8%;
 
-    --radius: 0.5rem;
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(263 70% 50%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(120 76% 45%) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(45 93% 58%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-background: linear-gradient(135deg, hsl(220 13% 8%) 0%, hsl(220 13% 12%) 100%);
+    
+    /* Glassmorphism */
+    --glass-bg: hsla(220 13% 15% / 0.8);
+    --glass-border: hsla(210 40% 98% / 0.1);
+
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsla(217 91% 60% / 0.3);
+    --shadow-premium: 0 0 40px hsla(45 93% 58% / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsla(220 13% 0% / 0.5);
 
     --sidebar-background: 0 0% 98%;
 
