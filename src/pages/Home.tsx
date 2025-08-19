@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, Zap } from "lucide-react";
 import { WhaleTransactionCard } from "@/components/whale/WhaleTransactionCard";
+import { WhaleTransactionSkeleton } from "@/components/whale/WhaleTransactionSkeleton";
+import { ErrorState } from "@/components/whale/ErrorState";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +48,40 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChain, setSelectedChain] = useState("all");
   const [minAmount, setMinAmount] = useState("");
+  const [transactions, setTransactions] = useState(mockTransactions);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const fetchTransactions = async () => {
+    try {
+      setError(null);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Simulate occasional API failures (20% chance)
+      if (Math.random() < 0.2) {
+        throw new Error("API rate limit exceeded");
+      }
+      
+      setTransactions(mockTransactions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
+    } finally {
+      setIsLoading(false);
+      setIsRetrying(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    setIsLoading(true);
+    fetchTransactions();
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
@@ -106,14 +142,41 @@ export default function Home() {
 
       {/* Transaction Feed */}
       <div className="p-4 space-y-4">
-        {mockTransactions.map((transaction) => (
-          <WhaleTransactionCard key={transaction.id} transaction={transaction} />
-        ))}
-        
-        {/* Load more indicator */}
-        <div className="text-center py-8">
-          <div className="animate-pulse text-muted-foreground">Loading more transactions...</div>
-        </div>
+        {isLoading ? (
+          // Loading skeletons
+          Array.from({ length: 5 }).map((_, index) => (
+            <WhaleTransactionSkeleton key={index} />
+          ))
+        ) : error ? (
+          // Error state
+          <ErrorState onRetry={handleRetry} isRetrying={isRetrying} />
+        ) : transactions.length === 0 ? (
+          // No data state
+          <div className="text-center py-12">
+            <div className="space-y-3">
+              <div className="p-3 bg-muted/20 rounded-full inline-block">
+                <Zap className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground">No Whale Activity</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                There are no large transactions matching your criteria at the moment. 
+                Try adjusting your filters or check back later.
+              </p>
+            </div>
+          </div>
+        ) : (
+          // Transaction list
+          <>
+            {transactions.map((transaction) => (
+              <WhaleTransactionCard key={transaction.id} transaction={transaction} />
+            ))}
+            
+            {/* Load more indicator */}
+            <div className="text-center py-8">
+              <div className="animate-pulse text-muted-foreground">Loading more transactions...</div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
