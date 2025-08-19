@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScannerEmptyState } from "@/components/scanner/ScannerEmptyState";
 
 export default function Scanner() {
   const [walletAddress, setWalletAddress] = useState("");
@@ -92,14 +93,7 @@ export default function Scanner() {
       {/* Results */}
       <div className="p-4">
         {!scanResult && !isScanning && (
-          <Card className="p-8 text-center bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/50">
-            <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-foreground mb-2">Enter a Wallet Address</h2>
-            <p className="text-muted-foreground">
-              Get comprehensive risk analysis including transaction patterns, 
-              associated addresses, and security flags.
-            </p>
-          </Card>
+          <ScannerEmptyState type="initial" />
         )}
 
         {isScanning && (
