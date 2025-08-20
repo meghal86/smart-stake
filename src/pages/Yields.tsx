@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { TrendingUp, Filter, ArrowUpDown } from "lucide-react";
+import { TrendingUp, Filter, ArrowUpDown, BarChart3 } from "lucide-react";
 import { YieldProtocolCard } from "@/components/yields/YieldProtocolCard";
+import { YieldAnalytics } from "@/components/yields/YieldAnalytics";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Mock data for yield protocols
 const mockProtocols = [
@@ -71,63 +73,83 @@ export default function Yields() {
               <p className="text-sm text-muted-foreground">Top performing protocols</p>
             </div>
           </div>
-
-          {/* Filters and Sort */}
-          <div className="flex gap-2">
-            <Select value={selectedChain} onValueChange={setSelectedChain}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Chain" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Chains</SelectItem>
-                <SelectItem value="ethereum">Ethereum</SelectItem>
-                <SelectItem value="polygon">Polygon</SelectItem>
-                <SelectItem value="bsc">BSC</SelectItem>
-                <SelectItem value="arbitrum">Arbitrum</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="apy">Highest APY</SelectItem>
-                <SelectItem value="tvl">Highest TVL</SelectItem>
-                <SelectItem value="risk">Lowest Risk</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button size="icon" variant="outline">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Content */}
       <div className="p-4">
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-3 text-center">
-            <div className="text-xs text-muted-foreground mb-1">Avg APY</div>
-            <div className="text-lg font-bold text-success">16.02%</div>
-          </div>
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-3 text-center">
-            <div className="text-xs text-muted-foreground mb-1">Total TVL</div>
-            <div className="text-lg font-bold text-foreground">$6.65B</div>
-          </div>
-          <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-3 text-center">
-            <div className="text-xs text-muted-foreground mb-1">Protocols</div>
-            <div className="text-lg font-bold text-primary">157</div>
-          </div>
-        </div>
+        <Tabs defaultValue="protocols" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="protocols" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Protocols
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Protocol Cards */}
-        <div className="space-y-4">
-          {mockProtocols.map((protocol) => (
-            <YieldProtocolCard key={protocol.id} protocol={protocol} />
-          ))}
-        </div>
+          <TabsContent value="protocols" className="space-y-6">
+            {/* Filters and Sort */}
+            <div className="flex gap-2">
+              <Select value={selectedChain} onValueChange={setSelectedChain}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Chain" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Chains</SelectItem>
+                  <SelectItem value="ethereum">Ethereum</SelectItem>
+                  <SelectItem value="polygon">Polygon</SelectItem>
+                  <SelectItem value="bsc">BSC</SelectItem>
+                  <SelectItem value="arbitrum">Arbitrum</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="apy">Highest APY</SelectItem>
+                  <SelectItem value="tvl">Highest TVL</SelectItem>
+                  <SelectItem value="risk">Lowest Risk</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button size="icon" variant="outline">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-3 text-center">
+                <div className="text-xs text-muted-foreground mb-1">Avg APY</div>
+                <div className="text-lg font-bold text-success">16.02%</div>
+              </div>
+              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-3 text-center">
+                <div className="text-xs text-muted-foreground mb-1">Total TVL</div>
+                <div className="text-lg font-bold text-foreground">$6.65B</div>
+              </div>
+              <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-3 text-center">
+                <div className="text-xs text-muted-foreground mb-1">Protocols</div>
+                <div className="text-lg font-bold text-primary">157</div>
+              </div>
+            </div>
+
+            {/* Protocol Cards */}
+            <div className="space-y-4">
+              {mockProtocols.map((protocol) => (
+                <YieldProtocolCard key={protocol.id} protocol={protocol} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <YieldAnalytics />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

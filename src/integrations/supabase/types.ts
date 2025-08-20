@@ -131,11 +131,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          created_at: string
+          favorite_chains: string[] | null
+          favorite_tokens: string[] | null
+          id: string
+          min_whale_threshold: number | null
+          notification_settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          favorite_chains?: string[] | null
+          favorite_tokens?: string[] | null
+          id?: string
+          min_whale_threshold?: number | null
+          notification_settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          favorite_chains?: string[] | null
+          favorite_tokens?: string[] | null
+          id?: string
+          min_whale_threshold?: number | null
+          notification_settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
           email: string | null
           id: string
+          onboarding_completed: boolean | null
           plan: string
           updated_at: string
           user_id: string
@@ -144,6 +178,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          onboarding_completed?: boolean | null
           plan?: string
           updated_at?: string
           user_id: string
@@ -152,9 +187,40 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          onboarding_completed?: boolean | null
           plan?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      yield_history: {
+        Row: {
+          apy: number
+          chain: string
+          created_at: string
+          id: string
+          protocol: string
+          recorded_at: string
+          tvl_usd: number
+        }
+        Insert: {
+          apy: number
+          chain: string
+          created_at?: string
+          id?: string
+          protocol: string
+          recorded_at?: string
+          tvl_usd: number
+        }
+        Update: {
+          apy?: number
+          chain?: string
+          created_at?: string
+          id?: string
+          protocol?: string
+          recorded_at?: string
+          tvl_usd?: number
         }
         Relationships: []
       }

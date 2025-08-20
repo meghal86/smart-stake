@@ -1,11 +1,17 @@
-import { User, Settings, Bell, LogOut, Crown, Shield, Mail, CreditCard } from "lucide-react";
+import { User, Settings, Bell, LogOut, Crown, Shield, Mail, CreditCard, HelpCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PersonalizationSection } from "@/components/profile/PersonalizationSection";
 
 export default function Profile() {
+  const handleOpenOnboarding = () => {
+    // This will be implemented to show onboarding
+    console.log("Opening onboarding...");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
       {/* Header */}
@@ -57,6 +63,11 @@ export default function Profile() {
           </div>
         </Card>
 
+        {/* Personalization Section */}
+        <div className="mb-6">
+          <PersonalizationSection />
+        </div>
+
         {/* Settings Sections */}
         <div className="space-y-4">
           {/* Notifications */}
@@ -69,24 +80,24 @@ export default function Profile() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-foreground">Whale Alerts</div>
-                  <div className="text-xs text-muted-foreground">Get notified of large transactions</div>
+                  <div className="text-sm font-medium text-foreground">Push Notifications</div>
+                  <div className="text-xs text-muted-foreground">Receive alerts on your device</div>
                 </div>
                 <Switch defaultChecked />
               </div>
               
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-foreground">Yield Opportunities</div>
-                  <div className="text-xs text-muted-foreground">New high-yield farming opportunities</div>
+                  <div className="text-sm font-medium text-foreground">Email Summaries</div>
+                  <div className="text-xs text-muted-foreground">Weekly digest of your activity</div>
                 </div>
                 <Switch defaultChecked />
               </div>
               
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-foreground">Risk Alerts</div>
-                  <div className="text-xs text-muted-foreground">Security and risk notifications</div>
+                  <div className="text-sm font-medium text-foreground">Marketing Updates</div>
+                  <div className="text-xs text-muted-foreground">Product updates and announcements</div>
                 </div>
                 <Switch />
               </div>
@@ -114,6 +125,15 @@ export default function Profile() {
               <Button variant="ghost" className="w-full justify-start">
                 <CreditCard className="h-4 w-4 mr-3" />
                 Billing & Subscription
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={handleOpenOnboarding}
+              >
+                <HelpCircle className="h-4 w-4 mr-3" />
+                View Onboarding
               </Button>
             </div>
           </Card>
