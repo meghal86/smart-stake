@@ -49,18 +49,12 @@ serve(async (req) => {
       const { error } = await supabaseClient
         .from('alerts')
         .insert({
-          alert_type: 'whale_transaction',
-          message: `Large transaction: ${valueInEth.toFixed(2)} ETH ($${valueInUsd.toLocaleString()})`,
-          data: {
-            hash: tx.hash,
-            from: tx.from,
-            to: tx.to,
-            value_eth: valueInEth,
-            value_usd: valueInUsd,
-            gas_used: tx.gasUsed,
-            timestamp: new Date(parseInt(tx.timeStamp) * 1000).toISOString()
-          },
-          severity: valueInUsd > 50000000 ? 'high' : valueInUsd > 10000000 ? 'medium' : 'low'
+          to_addr: tx.to,
+          from_addr: tx.from,
+          tx_hash: tx.hash,
+          token: 'ETH',
+          chain: 'ethereum',
+          amount_usd: valueInUsd
         });
 
       if (error) {

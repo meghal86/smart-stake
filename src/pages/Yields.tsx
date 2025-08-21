@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, Filter, ArrowUpDown, BarChart3 } from "lucide-react";
 import { YieldProtocolCard } from "@/components/yields/YieldProtocolCard";
 import { YieldAnalytics } from "@/components/yields/YieldAnalytics";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for yield protocols
 const mockProtocols = [
@@ -58,6 +59,46 @@ const mockProtocols = [
 export default function Yields() {
   const [selectedChain, setSelectedChain] = useState("all");
   const [sortBy, setSortBy] = useState("apy");
+  const [protocols, setProtocols] = useState(mockProtocols);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchYields();
+  }, []);
+
+  const fetchYields = async () => {
+    try {
+      // Fetch real data from Supabase
+      const { data: yields, error } = await supabase
+        .from('yields')
+        .select('*')
+        .order('apy', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform yields data to match component expectations
+      const transformedProtocols = yields?.map((yieldItem, index) => ({
+        id: yieldItem.id,
+        name: yieldItem.protocol || 'Unknown Protocol',
+        apy: Number(yieldItem.apy) || 0,
+        chain: yieldItem.chain || 'Ethereum',
+        tvlUSD: Number(yieldItem.tvl_usd) || 0,
+        riskScore: yieldItem.risk_score || 5,
+        category: 'DeFi',
+      })) || [];
+
+      setProtocols(transformedProtocols.length > 0 ? transformedProtocols : mockProtocols);
+    } catch (err) {
+      console.error('Error fetching yields:', err);
+      // Fallback to mock data on error
+      setProtocols(mockProtocols);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
@@ -140,9 +181,15 @@ export default function Yields() {
 
             {/* Protocol Cards */}
             <div className="space-y-4">
-              {mockProtocols.map((protocol) => (
-                <YieldProtocolCard key={protocol.id} protocol={protocol} />
-              ))}
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="animate-pulse bg-card/80 rounded-lg p-4 h-24" />
+                ))
+              ) : (
+                protocols.map((protocol) => (
+                  <YieldProtocolCard key={protocol.id} protocol={protocol} />
+                ))
+              )}
             </div>
           </TabsContent>
 

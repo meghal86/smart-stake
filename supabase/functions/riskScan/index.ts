@@ -132,11 +132,9 @@ serve(async (req) => {
     const { error } = await supabaseClient
       .from('risk_scans')
       .insert({
-        wallet_address: walletAddress,
+        wallet: walletAddress,
         user_id: userId || null,
-        risk_score: riskScore,
-        risk_level: riskLevel,
-        scan_data: scanResult
+        result_json: scanResult
       });
 
     if (error) {
@@ -148,14 +146,12 @@ serve(async (req) => {
       await supabaseClient
         .from('alerts')
         .insert({
-          alert_type: 'risk_warning',
-          message: `High-risk wallet detected: ${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}`,
-          data: {
-            wallet_address: walletAddress,
-            risk_score: riskScore,
-            risk_factors: riskFactors
-          },
-          severity: 'high'
+          to_addr: 'Risk Warning',
+          from_addr: walletAddress.slice(0, 8) + '...',
+          tx_hash: `risk-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          token: 'RISK',
+          chain: 'ethereum',
+          amount_usd: 0
         });
     }
 

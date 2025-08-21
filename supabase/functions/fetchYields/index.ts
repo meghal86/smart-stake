@@ -69,23 +69,13 @@ serve(async (req) => {
       const { error } = await supabaseClient
         .from('yields')
         .upsert({
-          protocol_name: yieldData.project || 'Unknown',
-          pool_name: yieldData.symbol || 'Unknown Pool',
+          protocol: yieldData.project || 'Unknown',
+          chain: yieldData.chain || 'ethereum',
           apy: yieldData.apy,
           tvl_usd: yieldData.tvlUsd,
-          risk_score: yieldData.risk_score,
-          chain: yieldData.chain || 'ethereum',
-          category: yieldData.category || 'lending',
-          data: {
-            pool_id: yieldData.pool,
-            token: yieldData.symbol,
-            underlying_tokens: yieldData.underlyingTokens,
-            pool_meta: yieldData.poolMeta,
-            audits: yieldData.audits || [],
-            url: yieldData.url
-          }
+          risk_score: yieldData.risk_score
         }, {
-          onConflict: 'protocol_name,pool_name'
+          onConflict: 'protocol,chain'
         });
 
       if (error) {
@@ -103,17 +93,12 @@ serve(async (req) => {
       const { error } = await supabaseClient
         .from('alerts')
         .insert({
-          alert_type: 'yield_opportunity',
-          message: `High yield opportunity: ${highYield.apy.toFixed(2)}% APY on ${highYield.project}`,
-          data: {
-            protocol: highYield.project,
-            pool: highYield.symbol,
-            apy: highYield.apy,
-            tvl: highYield.tvlUsd,
-            risk_score: highYield.risk_score,
-            chain: highYield.chain
-          },
-          severity: highYield.apy > 30 ? 'high' : 'medium'
+          to_addr: 'DeFi Protocol',
+          from_addr: 'Yield Alert',
+          tx_hash: `yield-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          token: highYield.symbol || 'Unknown',
+          chain: highYield.chain || 'ethereum',
+          amount_usd: highYield.tvlUsd || 0
         });
 
       if (error) {

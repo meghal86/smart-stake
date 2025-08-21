@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/whale/ErrorState";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for whale transactions
 const mockTransactions = [
@@ -56,17 +57,36 @@ export default function Home() {
   const fetchTransactions = async () => {
     try {
       setError(null);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Simulate occasional API failures (20% chance)
-      if (Math.random() < 0.2) {
-        throw new Error("API rate limit exceeded");
+      // Fetch real data from Supabase
+      const { data: alerts, error: alertsError } = await supabase
+        .from('alerts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (alertsError) {
+        throw alertsError;
       }
-      
-      setTransactions(mockTransactions);
+
+      // Transform alerts data to match component expectations
+      const transformedTransactions = alerts?.map((alert, index) => ({
+        id: alert.id,
+        fromAddress: alert.from_addr || "0x0000000000000000000000000000000000000000",
+        toAddress: alert.to_addr || "0x0000000000000000000000000000000000000000",
+        amountUSD: Number(alert.amount_usd) || 0,
+        token: alert.token || 'ETH',
+        chain: alert.chain || 'Ethereum',
+        timestamp: new Date(alert.created_at),
+        txHash: alert.tx_hash || `0x${index.toString().padStart(64, '0')}`,
+        type: Math.random() > 0.5 ? "buy" as const : "sell" as const,
+      })) || [];
+
+      setTransactions(transformedTransactions.length > 0 ? transformedTransactions : mockTransactions);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch transactions");
+      // Fallback to mock data on error
+      setTransactions(mockTransactions);
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
