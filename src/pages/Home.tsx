@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Zap } from "lucide-react";
+import { Search, Filter, Zap, Crown } from "lucide-react";
 import { WhaleTransactionCard } from "@/components/whale/WhaleTransactionCard";
 import { WhaleTransactionSkeleton } from "@/components/whale/WhaleTransactionSkeleton";
 import { ErrorState } from "@/components/whale/ErrorState";
+import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
+import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Mock data for whale transactions
 const mockTransactions = [
@@ -46,14 +52,22 @@ const mockTransactions = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
+  const { userPlan, canAccessFeature, getUpgradeMessage } = useSubscription();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChain, setSelectedChain] = useState("all");
+  const [dailyAlertsCount, setDailyAlertsCount] = useState(0);
   const [minAmount, setMinAmount] = useState("");
   const [transactions, setTransactions] = useState(mockTransactions);
   const [isMockData, setIsMockData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  
+  const whaleAccess = canAccessFeature('whaleAlerts');
+  const isLimitedAccess = whaleAccess === 'limited';
+  const dailyLimit = 50;
 
   const fetchTransactions = async () => {
     try {
@@ -112,15 +126,30 @@ export default function Home() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
         <div className="p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-primary/20 rounded-xl">
-              <Zap className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/20 rounded-xl">
+                <Zap className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Whale Alerts</h1>
+                <p className="text-sm text-muted-foreground">Live whale transactions</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Whale Alerts</h1>
-              <p className="text-sm text-muted-foreground">Live whale transactions</p>
-            </div>
+            <PlanBadge plan={userPlan.plan} />
           </div>
+
+          {/* Plan-based alert counter */}
+          {isLimitedAccess && (
+            <Alert className="mb-4">
+              <AlertDescription className="flex items-center justify-between">
+                <span>Daily alerts: {dailyAlertsCount}/{dailyLimit}</span>
+                <Button size="sm" variant="outline" onClick={() => navigate('/subscription')}>
+                  Upgrade <Crown className="h-3 w-3 ml-1" />
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Filters */}
           <div className="space-y-3">

@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, Filter, ArrowUpDown, BarChart3 } from "lucide-react";
+import { TrendingUp, Filter, ArrowUpDown, BarChart3, Crown } from "lucide-react";
 import { YieldProtocolCard } from "@/components/yields/YieldProtocolCard";
 import { YieldAnalytics } from "@/components/yields/YieldAnalytics";
+import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
+import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Mock data for yield protocols
 const mockProtocols = [
@@ -57,10 +61,15 @@ const mockProtocols = [
 ];
 
 export default function Yields() {
+  const { user } = useAuth();
+  const { userPlan, canAccessFeature, getUpgradeMessage } = useSubscription();
   const [selectedChain, setSelectedChain] = useState("all");
   const [sortBy, setSortBy] = useState("apy");
   const [protocols, setProtocols] = useState(mockProtocols);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const yieldsAccess = canAccessFeature('yields');
+  const canViewYields = yieldsAccess === 'full';
 
   useEffect(() => {
     fetchYields();
@@ -105,21 +114,32 @@ export default function Yields() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
         <div className="p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-success/20 rounded-xl">
-              <TrendingUp className="h-6 w-6 text-success" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-success/20 rounded-xl">
+                <TrendingUp className="h-6 w-6 text-success" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">DeFi Yields</h1>
+                <p className="text-sm text-muted-foreground">Top performing protocols</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">DeFi Yields</h1>
-              <p className="text-sm text-muted-foreground">Top performing protocols</p>
-            </div>
+            <PlanBadge plan={userPlan.plan} />
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="p-4">
-        <Tabs defaultValue="protocols" className="space-y-6">
+        {!canViewYields ? (
+          <UpgradePrompt
+            feature="Yield Farming Insights"
+            message={getUpgradeMessage('yields')}
+            requiredPlan="pro"
+            className="max-w-md mx-auto mt-8"
+          />
+        ) : (
+          <Tabs defaultValue="protocols" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="protocols" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -196,7 +216,8 @@ export default function Yields() {
           <TabsContent value="analytics">
             <YieldAnalytics />
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        )}
       </div>
     </div>
   );
