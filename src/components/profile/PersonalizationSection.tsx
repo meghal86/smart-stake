@@ -1,313 +1,197 @@
-import { useState, useEffect } from "react";
-import { Settings, ChevronRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { X, Plus, Palette } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserMetadata, updateUserMetadata } from '@/hooks/useUserMetadata';
+import { useToast } from '@/components/ui/use-toast';
 
-interface UserPreferences {
-  favorite_chains: string[];
-  favorite_tokens: string[];
-  min_whale_threshold: number;
-  notification_settings: {
-    whale_alerts: boolean;
-    yield_alerts: boolean;
-    risk_alerts: boolean;
-  };
-}
+const POPULAR_CHAINS = ['Ethereum', 'Bitcoin', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche'];
+const POPULAR_TOKENS = ['ETH', 'BTC', 'USDC', 'USDT', 'MATIC', 'BNB', 'AVAX', 'SOL'];
 
-const availableChains = [
-  { id: "ethereum", name: "Ethereum", color: "bg-blue-500" },
-  { id: "polygon", name: "Polygon", color: "bg-purple-500" },
-  { id: "solana", name: "Solana", color: "bg-green-500" },
-  { id: "bsc", name: "BSC", color: "bg-yellow-500" },
-  { id: "arbitrum", name: "Arbitrum", color: "bg-indigo-500" },
-  { id: "optimism", name: "Optimism", color: "bg-red-500" },
-  { id: "avalanche", name: "Avalanche", color: "bg-red-400" },
-];
+export const PersonalizationSection = () => {
+  const { user } = useAuth();
+  const { metadata, refetch } = useUserMetadata();
+  const { toast } = useToast();
+  
+  const [favoriteChains, setFavoriteChains] = useState<string[]>(
+    metadata?.preferences?.favorite_chains || []
+  );
+  const [favoriteTokens, setFavoriteTokens] = useState<string[]>(
+    metadata?.preferences?.favorite_tokens || []
+  );
+  const [minThreshold, setMinThreshold] = useState<string>(
+    metadata?.preferences?.min_whale_threshold?.toString() || '1000000'
+  );
+  const [isEditing, setIsEditing] = useState(false);
 
-const popularTokens = [
-  "BTC", "ETH", "USDC", "USDT", "BNB", "ADA", "SOL", "DOT", "MATIC", "AVAX",
-  "LINK", "UNI", "AAVE", "COMP", "MKR", "SNX", "CRV", "SUSHI", "YFI", "1INCH"
-];
+  const handleSave = async () => {
+    if (!user || !metadata) return;
 
-export function PersonalizationSection() {
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    favorite_chains: ["ethereum"],
-    favorite_tokens: [],
-    min_whale_threshold: 1000000,
-    notification_settings: {
-      whale_alerts: true,
-      yield_alerts: true,
-      risk_alerts: false,
-    },
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [newToken, setNewToken] = useState("");
+    const updates = {
+      ...metadata,
+      preferences: {
+        ...metadata.preferences,
+        favorite_chains: favoriteChains,
+        favorite_tokens: favoriteTokens,
+        min_whale_threshold: parseInt(minThreshold) || 1000000,
+      },
+    };
 
-  useEffect(() => {
-    loadPreferences();
-  }, []);
-
-  const loadPreferences = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("user_preferences")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (data && !error) {
-        setPreferences({
-          favorite_chains: data.favorite_chains || ["ethereum"],
-          favorite_tokens: data.favorite_tokens || [],
-          min_whale_threshold: data.min_whale_threshold || 1000000,
-          notification_settings: typeof data.notification_settings === 'object' && data.notification_settings !== null
-            ? {
-                whale_alerts: (data.notification_settings as any)?.whale_alerts ?? true,
-                yield_alerts: (data.notification_settings as any)?.yield_alerts ?? true,
-                risk_alerts: (data.notification_settings as any)?.risk_alerts ?? false,
-              }
-            : {
-                whale_alerts: true,
-                yield_alerts: true,
-                risk_alerts: false,
-              },
-        });
-      }
-    } catch (error) {
-      console.error("Error loading preferences:", error);
+    const result = await updateUserMetadata(user.id, updates);
+    
+    if (result.success) {
+      toast({
+        title: 'Preferences Updated',
+        description: 'Your personalization settings have been saved.',
+      });
+      setIsEditing(false);
+      refetch();
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Failed to save your preferences. Please try again.',
+      });
     }
   };
 
-  const savePreferences = async () => {
-    setIsLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("user_preferences")
-        .upsert({
-          user_id: user.id,
-          ...preferences,
-        });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error saving preferences:", error);
-    } finally {
-      setIsLoading(false);
+  const addChain = (chain: string) => {
+    if (!favoriteChains.includes(chain)) {
+      setFavoriteChains([...favoriteChains, chain]);
     }
   };
 
-  const toggleChain = (chainId: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      favorite_chains: prev.favorite_chains.includes(chainId)
-        ? prev.favorite_chains.filter(id => id !== chainId)
-        : [...prev.favorite_chains, chainId]
-    }));
+  const removeChain = (chain: string) => {
+    setFavoriteChains(favoriteChains.filter(c => c !== chain));
   };
 
-  const addToken = () => {
-    if (newToken && !preferences.favorite_tokens.includes(newToken.toUpperCase())) {
-      setPreferences(prev => ({
-        ...prev,
-        favorite_tokens: [...prev.favorite_tokens, newToken.toUpperCase()]
-      }));
-      setNewToken("");
+  const addToken = (token: string) => {
+    if (!favoriteTokens.includes(token)) {
+      setFavoriteTokens([...favoriteTokens, token]);
     }
   };
 
   const removeToken = (token: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      favorite_tokens: prev.favorite_tokens.filter(t => t !== token)
-    }));
-  };
-
-  const updateNotificationSetting = (key: keyof typeof preferences.notification_settings, value: boolean) => {
-    setPreferences(prev => ({
-      ...prev,
-      notification_settings: {
-        ...prev.notification_settings,
-        [key]: value
-      }
-    }));
+    setFavoriteTokens(favoriteTokens.filter(t => t !== token));
   };
 
   return (
     <Card className="p-4 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/50">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings className="h-5 w-5 text-accent" />
-        <h3 className="font-semibold text-foreground">Personalization</h3>
-      </div>
-
-      <div className="space-y-6">
-        {/* Favorite Blockchains */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">Favorite Blockchains</Label>
-          <p className="text-xs text-muted-foreground">
-            Select your preferred chains to prioritize relevant alerts and opportunities
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {availableChains.map((chain) => (
-              <button
-                key={chain.id}
-                onClick={() => toggleChain(chain.id)}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                  preferences.favorite_chains.includes(chain.id)
-                    ? "border-primary/50 bg-primary/10 text-foreground"
-                    : "border-border hover:bg-muted/30 text-muted-foreground"
-                }`}
-              >
-                <div className={`w-3 h-3 rounded-full ${chain.color}`} />
-                <span className="text-sm font-medium">{chain.name}</span>
-              </button>
-            ))}
-          </div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Palette className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-foreground">Personalization</h3>
         </div>
-
-        {/* Favorite Tokens */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">Favorite Tokens</Label>
-          <p className="text-xs text-muted-foreground">
-            Track specific tokens for personalized whale alerts
-          </p>
-          
-          {/* Add Token Input */}
+        {!isEditing ? (
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+            Edit
+          </Button>
+        ) : (
           <div className="flex gap-2">
-            <Input
-              placeholder="Add token (e.g., BTC, ETH)"
-              value={newToken}
-              onChange={(e) => setNewToken(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addToken()}
-              className="flex-1"
-            />
-            <Button onClick={addToken} size="sm" disabled={!newToken}>
-              Add
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSave}>
+              Save
             </Button>
           </div>
+        )}
+      </div>
 
-          {/* Popular Tokens */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Popular tokens:</Label>
-            <div className="flex flex-wrap gap-1">
-              {popularTokens.slice(0, 10).map((token) => (
-                <button
-                  key={token}
-                  onClick={() => {
-                    if (!preferences.favorite_tokens.includes(token)) {
-                      setPreferences(prev => ({
-                        ...prev,
-                        favorite_tokens: [...prev.favorite_tokens, token]
-                      }));
-                    }
-                  }}
-                  className="px-2 py-1 text-xs bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded transition-colors"
-                  disabled={preferences.favorite_tokens.includes(token)}
-                >
-                  {token}
-                </button>
-              ))}
-            </div>
+      <div className="space-y-4">
+        {/* Favorite Chains */}
+        <div>
+          <Label className="text-sm font-medium mb-2 block">Favorite Chains</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {favoriteChains.map((chain) => (
+              <Badge key={chain} variant="secondary" className="flex items-center gap-1">
+                {chain}
+                {isEditing && (
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => removeChain(chain)}
+                  />
+                )}
+              </Badge>
+            ))}
           </div>
-
-          {/* Selected Tokens */}
-          {preferences.favorite_tokens.length > 0 && (
+          {isEditing && (
             <div className="flex flex-wrap gap-1">
-              {preferences.favorite_tokens.map((token) => (
-                <Badge
-                  key={token}
-                  variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => removeToken(token)}
+              {POPULAR_CHAINS.filter(chain => !favoriteChains.includes(chain)).map((chain) => (
+                <Button
+                  key={chain}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => addChain(chain)}
                 >
-                  {token} ×
-                </Badge>
+                  <Plus className="h-3 w-3 mr-1" />
+                  {chain}
+                </Button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Whale Alert Threshold */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">
-            Minimum Whale Alert Threshold
+        {/* Favorite Tokens */}
+        <div>
+          <Label className="text-sm font-medium mb-2 block">Favorite Tokens</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {favoriteTokens.map((token) => (
+              <Badge key={token} variant="secondary" className="flex items-center gap-1">
+                {token}
+                {isEditing && (
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => removeToken(token)}
+                  />
+                )}
+              </Badge>
+            ))}
+          </div>
+          {isEditing && (
+            <div className="flex flex-wrap gap-1">
+              {POPULAR_TOKENS.filter(token => !favoriteTokens.includes(token)).map((token) => (
+                <Button
+                  key={token}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => addToken(token)}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  {token}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Minimum Whale Threshold */}
+        <div>
+          <Label htmlFor="threshold" className="text-sm font-medium mb-2 block">
+            Minimum Whale Threshold (USD)
           </Label>
-          <p className="text-xs text-muted-foreground">
-            Only show transactions above this USD value
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">$</span>
+          {isEditing ? (
             <Input
+              id="threshold"
               type="number"
-              value={preferences.min_whale_threshold}
-              onChange={(e) => setPreferences(prev => ({
-                ...prev,
-                min_whale_threshold: parseInt(e.target.value) || 1000000
-              }))}
-              className="flex-1"
+              value={minThreshold}
+              onChange={(e) => setMinThreshold(e.target.value)}
+              placeholder="1000000"
+              className="w-full"
             />
-          </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              ${parseInt(minThreshold || '1000000').toLocaleString()}
+            </div>
+          )}
         </div>
-
-        {/* Notification Settings */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">Notification Preferences</Label>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-foreground">Whale Alerts</div>
-                <div className="text-xs text-muted-foreground">Large transaction notifications</div>
-              </div>
-              <Switch
-                checked={preferences.notification_settings.whale_alerts}
-                onCheckedChange={(checked) => updateNotificationSetting("whale_alerts", checked)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-foreground">Yield Opportunities</div>
-                <div className="text-xs text-muted-foreground">New high-yield protocol alerts</div>
-              </div>
-              <Switch
-                checked={preferences.notification_settings.yield_alerts}
-                onCheckedChange={(checked) => updateNotificationSetting("yield_alerts", checked)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-foreground">Risk Alerts</div>
-                <div className="text-xs text-muted-foreground">Security and risk notifications</div>
-              </div>
-              <Switch
-                checked={preferences.notification_settings.risk_alerts}
-                onCheckedChange={(checked) => updateNotificationSetting("risk_alerts", checked)}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <Button 
-          onClick={savePreferences}
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? "Saving..." : "Save Preferences"}
-        </Button>
       </div>
     </Card>
   );
-}
+};

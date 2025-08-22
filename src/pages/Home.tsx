@@ -50,15 +50,15 @@ export default function Home() {
   const [selectedChain, setSelectedChain] = useState("all");
   const [minAmount, setMinAmount] = useState("");
   const [transactions, setTransactions] = useState(mockTransactions);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isMockData, setIsMockData] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
   const fetchTransactions = async () => {
     try {
       setError(null);
-      
-      // Fetch real data from Supabase
+      // Fetch real data from Supabase in the background
       const { data: alerts, error: alertsError } = await supabase
         .from('alerts')
         .select('*')
@@ -66,7 +66,9 @@ export default function Home() {
         .limit(10);
 
       if (alertsError) {
-        throw alertsError;
+        // Don't throw error, just log it and continue with mock data
+        console.log('No real data available, using mock data:', alertsError.message);
+        return;
       }
 
       // Transform alerts data to match component expectations
@@ -82,11 +84,13 @@ export default function Home() {
         type: Math.random() > 0.5 ? "buy" as const : "sell" as const,
       })) || [];
 
-      setTransactions(transformedTransactions.length > 0 ? transformedTransactions : mockTransactions);
+      if (transformedTransactions.length > 0) {
+        setTransactions(transformedTransactions);
+        setIsMockData(false);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch transactions");
-      // Fallback to mock data on error
-      setTransactions(mockTransactions);
+      // Silently fail and keep using mock data
+      console.log('Error fetching real data, using mock data:', err);
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
@@ -190,11 +194,22 @@ export default function Home() {
             {transactions.map((transaction) => (
               <WhaleTransactionCard key={transaction.id} transaction={transaction} />
             ))}
-            
-            {/* Load more indicator */}
-            <div className="text-center py-8">
-              <div className="animate-pulse text-muted-foreground">Loading more transactions...</div>
-            </div>
+            {/* Show end of feed message only for real data */}
+            {error === null && !isLoading && !isMockData && transactions.length > 0 && (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground text-sm">
+                  You're all caught up!
+                </div>
+              </div>
+            )}
+            {/* Show demo data indicator */}
+            {error === null && !isLoading && isMockData && transactions.length > 0 && (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground text-sm bg-muted/20 rounded-lg p-3 mx-4">
+                  📊 Showing demo data - Sign up to see real whale alerts
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

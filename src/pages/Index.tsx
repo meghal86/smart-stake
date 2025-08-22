@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
+import { UserHeader } from "@/components/layout/UserHeader";
 import { OnboardingWalkthrough } from "@/components/onboarding/OnboardingWalkthrough";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Home from "./Home";
 import Yields from "./Yields";
@@ -11,37 +13,38 @@ import Profile from "./Profile";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    checkOnboardingStatus();
-  }, []);
+    if (!loading) {
+      checkOnboardingStatus();
+    }
+  }, [user, loading]);
 
   const checkOnboardingStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setShowOnboarding(true);
-        return;
-      }
+    if (!user) {
+      setShowOnboarding(true);
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from("users")
         .select("onboarding_completed")
         .eq("user_id", user.id)
         .single();
 
-      if (!data?.onboarding_completed) {
+      if (error || !data?.onboarding_completed) {
         setShowOnboarding(true);
       }
     } catch (error) {
-      // If user is not logged in, show onboarding
+      console.error("Error checking onboarding status:", error);
       setShowOnboarding(true);
     }
   };
 
   const handleOnboardingComplete = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
           .from("users")
@@ -71,16 +74,31 @@ const Index = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {renderContent()}
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      <OnboardingWalkthrough
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={handleOnboardingComplete}
-      />
+    <div className="min-h-screen flex flex-col">
+      {showOnboarding ? (
+        <OnboardingWalkthrough 
+          isOpen={showOnboarding} 
+          onClose={() => setShowOnboarding(false)} 
+          onComplete={handleOnboardingComplete} 
+        />
+      ) : (
+        <>
+          <div className="flex justify-end p-4 bg-card/80 backdrop-blur-lg border-b border-border">
+            <UserHeader />
+          </div>
+          {renderContent()}
+          <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        </>
+      )}
     </div>
   );
 };

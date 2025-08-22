@@ -5,63 +5,76 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PersonalizationSection } from "@/components/profile/PersonalizationSection";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserMetadata } from "@/hooks/useUserMetadata";
 
 export default function Profile() {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { metadata, loading, error } = useUserMetadata();
+
   const handleOpenOnboarding = () => {
     // This will be implemented to show onboarding
     console.log("Opening onboarding...");
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    navigate('/login');
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
       {/* Header */}
       <div className="p-4">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-accent/20 rounded-xl">
-            <User className="h-6 w-6 text-accent" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Profile</h1>
-            <p className="text-sm text-muted-foreground">Manage your account settings</p>
-          </div>
-        </div>
-
+        {/* Show loading/error states for metadata */}
+        {loading && <div className="text-center text-muted-foreground">Loading profile...</div>}
+        {error && <div className="text-center text-red-500">{error}</div>}
         {/* User Info */}
-        <Card className="p-6 mb-6 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/50">
-          <div className="flex items-center gap-4 mb-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="text-lg font-semibold">JD</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-foreground">John Doe</h2>
-              <p className="text-sm text-muted-foreground">john.doe@example.com</p>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="default" className="text-xs">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Pro Plan
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  Member since Dec 2024
-                </Badge>
+        {metadata && (
+          <Card className="p-6 mb-6 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm border border-border/50">
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar className="h-16 w-16">
+                <AvatarFallback className="text-lg font-semibold">
+                  {metadata.profile?.name?.split(" ").map(n => n[0]).join("") || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-foreground">{metadata.profile?.name || "User"}</h2>
+                <p className="text-sm text-muted-foreground">{metadata.profile?.email || "No email"}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  {metadata.subscription?.plan && (
+                    <Badge variant="default" className="text-xs">
+                      <Crown className="h-3 w-3 mr-1" />
+                      {metadata.subscription.plan.charAt(0).toUpperCase() + metadata.subscription.plan.slice(1)} Plan
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="text-xs">
+                    Member since {metadata.created_at ? new Date(metadata.created_at).toLocaleDateString() : "N/A"}
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
-            <div className="text-center">
-              <div className="text-lg font-bold text-foreground">1,247</div>
-              <div className="text-xs text-muted-foreground">Alerts Received</div>
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
+              <Button variant="outline" className="w-full" onClick={() => navigate("/subscription")}>Manage Subscription</Button>
+              <Button variant="outline" className="w-full" onClick={handleLogout}>Logout</Button>
             </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-foreground">23</div>
-              <div className="text-xs text-muted-foreground">Scans Performed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-foreground">$2.5M</div>
-              <div className="text-xs text-muted-foreground">Total Tracked</div>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Personalization Section */}
         <div className="mb-6">
@@ -154,7 +167,7 @@ export default function Profile() {
                 <Badge variant="default">Active</Badge>
               </div>
               
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => navigate("/subscription")}>
                 Manage Subscription
               </Button>
             </div>
@@ -162,7 +175,11 @@ export default function Profile() {
 
           {/* Sign Out */}
           <Card className="p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/30">
-            <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-destructive hover:text-destructive"
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4 mr-3" />
               Sign Out
             </Button>
