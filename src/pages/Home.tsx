@@ -118,8 +118,16 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchTransactions();
-  }, []);
+    // Only fetch real data if user is authenticated
+    if (user) {
+      fetchTransactions();
+    } else {
+      // For unauthenticated users, show mock data immediately
+      setTransactions(mockTransactions);
+      setIsMockData(true);
+      setIsLoading(false);
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
