@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Palette } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, Plus, Palette, Moon, Sun, Monitor } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMetadata, updateUserMetadata } from '@/hooks/useUserMetadata';
 import { useToast } from '@/components/ui/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const POPULAR_CHAINS = ['Ethereum', 'Bitcoin', 'Polygon', 'BSC', 'Arbitrum', 'Optimism', 'Avalanche'];
 const POPULAR_TOKENS = ['ETH', 'BTC', 'USDC', 'USDT', 'MATIC', 'BNB', 'AVAX', 'SOL'];
@@ -16,6 +18,7 @@ export const PersonalizationSection = () => {
   const { user } = useAuth();
   const { metadata, refetch } = useUserMetadata();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   const [favoriteChains, setFavoriteChains] = useState<string[]>(
     metadata?.preferences?.favorite_chains || []
@@ -169,6 +172,36 @@ export const PersonalizationSection = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Theme Preference */}
+        <div>
+          <Label className="text-sm font-medium mb-2 block">Theme Preference</Label>
+          <Select value={theme} onValueChange={setTheme}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select theme" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">
+                <div className="flex items-center gap-2">
+                  <Sun className="h-4 w-4" />
+                  Light
+                </div>
+              </SelectItem>
+              <SelectItem value="dark">
+                <div className="flex items-center gap-2">
+                  <Moon className="h-4 w-4" />
+                  Dark
+                </div>
+              </SelectItem>
+              <SelectItem value="system">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-4 w-4" />
+                  System
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Minimum Whale Threshold */}

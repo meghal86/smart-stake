@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserMetadata } from '@/hooks/useUserMetadata';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,8 @@ export const UserHeader = () => {
 
   if (!user || loading) {
     return (
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
         <Button variant="outline" onClick={() => navigate('/login')} className="text-sm">
           Login
         </Button>
@@ -44,27 +46,29 @@ export const UserHeader = () => {
   const avatarUrl = metadata?.profile?.avatar_url;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarUrl} alt={userName} />
-            <AvatarFallback className="text-sm">
-              {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col items-start">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{userName}</span>
-              {userPlan === 'premium' && (
-                <Crown className="h-3 w-3 text-yellow-500" />
-              )}
+    <div className="flex items-center gap-2">
+      <ThemeToggle />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={avatarUrl} alt={userName} />
+              <AvatarFallback className="text-sm">
+                {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col items-start">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{userName}</span>
+                {userPlan === 'premium' && (
+                  <Crown className="h-3 w-3 text-yellow-500" />
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">{userEmail}</span>
             </div>
-            <span className="text-xs text-muted-foreground">{userEmail}</span>
-          </div>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
       
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
@@ -107,5 +111,6 @@ export const UserHeader = () => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   );
 };
