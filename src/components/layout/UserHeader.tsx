@@ -17,20 +17,27 @@ import { useUserMetadata } from '@/hooks/useUserMetadata';
 import { useNavigate } from 'react-router-dom';
 
 export const UserHeader = () => {
-  const { user, signOut } = useAuth();
-  const { metadata, loading } = useUserMetadata();
+  const { user, signOut, loading: authLoading } = useAuth();
+  const { metadata, loading: metadataLoading } = useUserMetadata();
   const navigate = useNavigate();
 
-  if (!user || loading) {
+  // Show login/signup only if user is not authenticated or auth is still loading
+  if (!user) {
     return (
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        <Button variant="outline" onClick={() => navigate('/login')} className="text-sm">
-          Login
-        </Button>
-        <Button onClick={() => navigate('/signup')} className="text-sm">
-          Sign Up
-        </Button>
+        {authLoading ? (
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+        ) : (
+          <>
+            <Button variant="outline" onClick={() => navigate('/login')} className="text-sm">
+              Login
+            </Button>
+            <Button onClick={() => navigate('/signup')} className="text-sm">
+              Sign Up
+            </Button>
+          </>
+        )}
       </div>
     );
   }
@@ -40,10 +47,11 @@ export const UserHeader = () => {
     navigate('/');
   };
 
-  const userName = metadata?.profile?.name || user.email?.split('@')[0] || 'User';
+  // Use fallback data while metadata is loading
+  const userName = metadata?.profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
   const userEmail = metadata?.profile?.email || user.email;
   const userPlan = metadata?.subscription?.plan || 'free';
-  const avatarUrl = metadata?.profile?.avatar_url;
+  const avatarUrl = metadata?.profile?.avatar_url || user.user_metadata?.avatar_url;
 
   return (
     <div className="flex items-center gap-2">
@@ -60,7 +68,10 @@ export const UserHeader = () => {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{userName}</span>
-                {userPlan === 'premium' && (
+                {metadataLoading && (
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
+                )}
+                {!metadataLoading && userPlan === 'premium' && (
                   <Crown className="h-3 w-3 text-yellow-500" />
                 )}
               </div>
@@ -91,10 +102,17 @@ export const UserHeader = () => {
           Profile
         </DropdownMenuItem>
         
-        <DropdownMenuItem onClick={() => navigate('/subscription')}>
-          <Settings className="mr-2 h-4 w-4" />
-          Subscription
-        </DropdownMenuItem>
+        {userPlan === 'premium' ? (
+          <DropdownMenuItem onClick={() => navigate('/subscription/manage')}>
+            <Settings className="mr-2 h-4 w-4" />
+            Manage Subscription
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={() => navigate('/subscription')}>
+            <Settings className="mr-2 h-4 w-4" />
+            Subscription
+          </DropdownMenuItem>
+        )}
         
         {userPlan === 'free' && (
           <DropdownMenuItem onClick={() => navigate('/subscription')}>

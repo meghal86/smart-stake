@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Crown, Check, Zap, TrendingUp, Shield, Headphones, ArrowLeft, CreditCard } from 'lucide-react';
+import { Crown, Check, Zap, TrendingUp, Shield, Headphones, ArrowLeft, CreditCard, Smartphone, Wallet } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -313,6 +313,14 @@ const Subscription: React.FC = () => {
                     </>
                   )}
                 </Button>
+                {plan.id !== 'free' && (
+                  <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
+                    <CreditCard className="h-3 w-3" />
+                    <Smartphone className="h-3 w-3" />
+                    <Wallet className="h-3 w-3" />
+                    <span>Card • Apple Pay • Google Pay</span>
+                  </div>
+                )}
               </CardFooter>
             </Card>
           ))}

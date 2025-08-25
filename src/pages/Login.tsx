@@ -45,7 +45,7 @@ const Login: React.FC = () => {
           description: "You've been successfully logged in.",
         });
         // Redirect to home page
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (err) {
       setError('An unexpected error occurred');

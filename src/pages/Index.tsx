@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { UserHeader } from "@/components/layout/UserHeader";
 import { OnboardingWalkthrough } from "@/components/onboarding/OnboardingWalkthrough";
+import { AuthDebug } from "@/components/debug/AuthDebug";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Home from "./Home";
@@ -84,6 +85,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <AuthDebug />
       {showOnboarding ? (
         <OnboardingWalkthrough 
           isOpen={showOnboarding} 

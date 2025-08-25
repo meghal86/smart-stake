@@ -54,9 +54,9 @@ serve(async (req) => {
       )
     }
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with multiple payment methods
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'apple_pay', 'google_pay'],
       line_items: [
         {
           price: priceId,
@@ -77,6 +77,10 @@ serve(async (req) => {
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',
+      payment_method_configuration: 'pmc_1234567890', // Replace with your actual payment method configuration ID
+      automatic_tax: {
+        enabled: true,
+      },
     })
 
     return new Response(

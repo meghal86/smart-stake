@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Subscription from "./pages/Subscription";
+import ManageSubscription from "./pages/ManageSubscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import Scanner from "./pages/Scanner";
 import Yields from "./pages/Yields";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/subscription" element={<Subscription />} />
+              <Route path="/subscription/manage" element={<ManageSubscription />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
               <Route path="/scanner" element={<Scanner />} />
               <Route path="/yields" element={<Yields />} />
