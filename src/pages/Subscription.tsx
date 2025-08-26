@@ -54,7 +54,7 @@ const pricingPlans: PricingPlan[] = [
       'Priority support',
     ],
     popular: true,
-    stripePriceId: 'price_pro_monthly_999', // TODO: Replace with your actual Stripe price ID from Stripe Dashboard
+    stripePriceId: 'price_1S0HB3JwuQyqUsks8bKNUt6M', // Pro Monthly Price ID
   },
   {
     id: 'premium',
@@ -72,7 +72,7 @@ const pricingPlans: PricingPlan[] = [
       'White-label options',
       'Dedicated support',
     ],
-    stripePriceId: 'price_premium_monthly_1999', // TODO: Replace with your actual Stripe price ID from Stripe Dashboard
+    stripePriceId: 'price_1S0HBOJwuQyqUsksDCs7SbPB', // Premium Monthly Price ID
   },
 ];
 
@@ -182,6 +182,8 @@ const Subscription: React.FC = () => {
 
     try {
       // Check if Stripe is configured
+      console.log('Calling Edge Function with priceId:', plan.stripePriceId);
+      
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: {
           priceId: plan.stripePriceId,
@@ -190,18 +192,19 @@ const Subscription: React.FC = () => {
         },
       });
 
+      console.log('Edge Function response:', response);
+
       if (response.error) {
-        // If Stripe isn't configured, show setup message
-        if (response.error.message?.includes('STRIPE_SECRET_KEY') || response.status === 500) {
-          toast({
-            variant: "destructive",
-            title: "Stripe Not Configured",
-            description: "Stripe payment processing is not set up yet. Please check the STRIPE_SETUP.md file for configuration instructions.",
-          });
-          setError('Stripe payment processing is not configured. Please set up Stripe integration first.');
-          return;
-        }
-        throw new Error(response.error.message || 'Failed to create checkout session');
+        console.error('Edge Function error:', response.error);
+        
+        // Show detailed error information
+        setError(`Edge Function Error: ${JSON.stringify(response.error)}`);
+        toast({
+          variant: "destructive",
+          title: "Subscription Error",
+          description: `Error: ${response.error.message || 'Unknown error'}. Check console for details.`,
+        });
+        return;
       }
 
       const { url } = response.data;
