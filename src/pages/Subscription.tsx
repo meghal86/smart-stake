@@ -26,53 +26,57 @@ const pricingPlans: PricingPlan[] = [
     name: 'Free',
     price: 0,
     interval: 'month',
-    description: 'Perfect for getting started with whale tracking',
+    description: 'Get started with basic whale tracking',
     features: [
-      'Basic whale alerts',
-      'Limited to 10 alerts per day',
-      'Standard notification delivery',
+      '50 whale alerts per day',
+      'Basic chain support',
+      'Standard notifications',
       'Community support',
+      'Limited historical data',
+      'No yield farming insights',
+      'No risk scanner',
     ],
   },
   {
-    id: 'premium-monthly',
-    name: 'Premium',
+    id: 'pro',
+    name: 'Pro',
     price: 9.99,
     interval: 'month',
-    description: 'Advanced features for serious traders',
+    description: 'Perfect for active DeFi traders',
     features: [
       'Unlimited whale alerts',
+      'All chain support',
       'Real-time notifications',
-      'Advanced filtering & search',
+      'Advanced filtering',
+      'Yield farming insights',
       'Portfolio tracking',
-      'Risk analysis tools',
-      'Priority customer support',
-      'Custom alert thresholds',
-      'Export data to CSV',
+      'Priority support',
     ],
     popular: true,
-    stripePriceId: 'price_1QdQJsJwuQyqUsksKJvJvJvJ', // Monthly price ID - update with your actual ID
+    stripePriceId: 'price_pro_monthly_999', // Replace with your actual Stripe price ID
   },
   {
-    id: 'premium-yearly',
-    name: 'Premium Annual',
-    price: 99.99,
-    interval: 'year',
-    description: 'Save 17% with annual billing',
+    id: 'premium',
+    name: 'Premium',
+    price: 19.99,
+    interval: 'month',
+    description: 'Advanced tools for professional traders',
     features: [
-      'Everything in Premium Monthly',
-      'Save $20 per year',
-      'Priority feature requests',
-      'Dedicated account manager',
-      'Advanced analytics dashboard',
-      'API access (coming soon)',
+      'Everything in Pro',
+      'AI-powered risk scanner',
+      'Smart contract analysis',
+      'Wallet security scoring',
+      'Advanced analytics',
+      'API access',
+      'White-label options',
+      'Dedicated support',
     ],
-    stripePriceId: 'price_1QdQKsJwuQyqUsksLMnMnMnM', // Yearly price ID - update with your actual ID
+    stripePriceId: 'price_premium_monthly_1999', // Replace with your actual Stripe price ID
   },
 ];
 
 const Subscription: React.FC = () => {
-  const [selectedPlan, setSelectedPlan] = useState<string>('premium-monthly');
+  const [selectedPlan, setSelectedPlan] = useState<string>('pro');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [user, setUser] = useState<any>(null);
@@ -90,8 +94,10 @@ const Subscription: React.FC = () => {
 
     // Set plan from URL params
     const planFromUrl = searchParams.get('plan');
-    if (planFromUrl === 'premium') {
-      setSelectedPlan('premium-monthly');
+    if (planFromUrl === 'pro') {
+      setSelectedPlan('pro');
+    } else if (planFromUrl === 'premium') {
+      setSelectedPlan('premium');
     }
   }, [searchParams]);
 
@@ -145,37 +151,24 @@ const Subscription: React.FC = () => {
     setError('');
 
     try {
-      // Get the user's session token
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       // Create Stripe checkout session using Supabase Edge Function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('create-checkout-session', {
+        body: {
           priceId: plan.stripePriceId,
           successUrl: `${window.location.origin}/subscription/success`,
-          cancelUrl: `${window.location.origin}/subscription`,
-        }),
+          cancelUrl: `${window.location.origin}/subscription/cancel`,
+        },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create checkout session');
       }
 
-      const { sessionId, url } = await response.json();
+      const { url } = response.data;
       
       if (url) {
-        // Redirect to Stripe Checkout
-        window.location.href = url;
+        // Open Stripe checkout in a new tab for better UX
+        window.open(url, '_blank');
       } else {
         throw new Error('No checkout URL received');
       }
@@ -217,8 +210,8 @@ const Subscription: React.FC = () => {
                 <Zap className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Choose Your Plan</h1>
-                <p className="text-sm text-muted-foreground">Upgrade to unlock premium features</p>
+                <h1 className="text-xl font-bold">Premium Plans</h1>
+                <p className="text-sm text-muted-foreground">Choose the best plan for your DeFi journey</p>
               </div>
             </div>
           </div>
@@ -228,10 +221,9 @@ const Subscription: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Unlock the Power of Whale Tracking</h2>
+          <h2 className="text-3xl font-bold mb-4">Premium Plans</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of traders who use our platform to track large cryptocurrency movements 
-            and make informed trading decisions.
+            Choose the best plan for your DeFi journey.
           </p>
         </div>
 
@@ -261,7 +253,11 @@ const Subscription: React.FC = () => {
                 <div className="flex justify-center mb-4">
                   {plan.id === 'free' ? (
                     <div className="p-3 bg-muted/20 rounded-2xl">
-                      <Zap className="h-8 w-8 text-muted-foreground" />
+                      <Shield className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  ) : plan.id === 'pro' ? (
+                    <div className="p-3 bg-success/20 rounded-2xl">
+                      <Zap className="h-8 w-8 text-success" />
                     </div>
                   ) : (
                     <div className="p-3 bg-primary/20 rounded-2xl">
@@ -273,6 +269,9 @@ const Subscription: React.FC = () => {
                 <div className="text-3xl font-bold">
                   {formatPrice(plan.price, plan.interval)}
                 </div>
+                {plan.interval === 'month' && plan.price > 0 && (
+                  <div className="text-sm text-muted-foreground">per month</div>
+                )}
                 <CardDescription className="mt-2">
                   {plan.description}
                 </CardDescription>
@@ -282,17 +281,17 @@ const Subscription: React.FC = () => {
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <Check className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
 
-              <CardFooter>
+              <CardFooter className="flex flex-col gap-2">
                 <Button
                   className="w-full"
-                  variant={selectedPlan === plan.id ? "default" : "outline"}
+                  variant={plan.id === 'free' ? "outline" : "default"}
                   onClick={() => {
                     setSelectedPlan(plan.id);
                     handleStripeCheckout(plan);
@@ -305,16 +304,16 @@ const Subscription: React.FC = () => {
                       Processing...
                     </>
                   ) : plan.id === 'free' ? (
-                    'Get Started Free'
+                    'Current Plan'
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Subscribe Now
+                      Upgrade to {plan.name}
                     </>
                   )}
                 </Button>
                 {plan.id !== 'free' && (
-                  <div className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                     <CreditCard className="h-3 w-3" />
                     <Smartphone className="h-3 w-3" />
                     <Wallet className="h-3 w-3" />

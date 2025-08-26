@@ -70,27 +70,15 @@ export const SubscriptionManager: React.FC = () => {
   }, [user]);
 
   const callStripeFunction = async (action: string, data: any = {}) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('No active session');
-    }
-
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ action, ...data }),
+    const response = await supabase.functions.invoke('manage-subscription', {
+      body: { action, ...data },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Request failed');
+    if (response.error) {
+      throw new Error(response.error.message || 'Request failed');
     }
 
-    return response.json();
+    return response.data;
   };
 
   const fetchSubscriptionDetails = async () => {

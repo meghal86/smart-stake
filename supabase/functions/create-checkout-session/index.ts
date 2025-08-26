@@ -54,9 +54,27 @@ serve(async (req) => {
       )
     }
 
+    // Check if customer already exists
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 })
+    let customerId = null
+    
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id
+    } else {
+      // Create new customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          userId: user.id,
+        },
+      })
+      customerId = customer.id
+    }
+
     // Create Stripe checkout session with multiple payment methods
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'apple_pay', 'google_pay'],
+      customer: customerId,
+      payment_method_types: ['card'],
       line_items: [
         {
           price: priceId,
@@ -66,7 +84,6 @@ serve(async (req) => {
       mode: 'subscription',
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
-      customer_email: user.email,
       metadata: {
         userId: user.id,
       },
@@ -77,9 +94,8 @@ serve(async (req) => {
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',
-      payment_method_configuration: 'pmc_1234567890', // Replace with your actual payment method configuration ID
       automatic_tax: {
-        enabled: true,
+        enabled: false,
       },
     })
 

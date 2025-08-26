@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import Subscription from "./pages/Subscription";
 import ManageSubscription from "./pages/ManageSubscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import SubscriptionCancel from "./pages/SubscriptionCancel";
 import Scanner from "./pages/Scanner";
 import Yields from "./pages/Yields";
 import Profile from "./pages/Profile";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/subscription/manage" element={<ManageSubscription />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+              <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
               <Route path="/scanner" element={<Scanner />} />
               <Route path="/yields" element={<Yields />} />
               <Route path="/profile" element={<Profile />} />
