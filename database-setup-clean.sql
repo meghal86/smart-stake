@@ -22,6 +22,10 @@ CREATE TABLE public.users (
   email TEXT,
   plan TEXT DEFAULT 'free',
   onboarding_completed BOOLEAN DEFAULT false,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  subscription_status TEXT DEFAULT 'free',
+  subscription_current_period_end TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   CONSTRAINT users_user_id_key UNIQUE (user_id),
@@ -47,6 +51,8 @@ CREATE TABLE public.subscriptions (
   status TEXT NOT NULL,
   current_period_end TIMESTAMP WITH TIME ZONE,
   rc_entitlement TEXT,
+  stripe_subscription_id TEXT,
+  stripe_customer_id TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   CONSTRAINT subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -131,8 +137,12 @@ CREATE TABLE public.yield_history (
 
 -- Step 12: Create indexes for performance
 CREATE INDEX idx_users_user_id ON public.users(user_id);
+CREATE INDEX idx_users_stripe_customer_id ON public.users(stripe_customer_id);
+CREATE INDEX idx_users_stripe_subscription_id ON public.users(stripe_subscription_id);
 CREATE INDEX idx_users_metadata_user_id ON public.users_metadata(user_id);
 CREATE INDEX idx_subscriptions_user_id ON public.subscriptions(user_id);
+CREATE INDEX idx_subscriptions_stripe_subscription_id ON public.subscriptions(stripe_subscription_id);
+CREATE INDEX idx_subscriptions_stripe_customer_id ON public.subscriptions(stripe_customer_id);
 CREATE INDEX idx_alerts_created_at ON public.alerts(created_at DESC);
 CREATE INDEX idx_alerts_amount_usd ON public.alerts(amount_usd DESC);
 CREATE INDEX idx_alerts_chain ON public.alerts(chain);

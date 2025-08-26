@@ -1,4 +1,5 @@
 import { DatabaseStatus } from '@/components/debug/DatabaseStatus';
+import { SubscriptionDebug } from '@/components/debug/SubscriptionDebug';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +23,8 @@ export default function Debug() {
         </div>
 
         <DatabaseStatus />
+        
+        <SubscriptionDebug />
 
         <div className="text-center text-sm text-muted-foreground">
           <p>This debug page helps you verify that your database is set up correctly.</p>

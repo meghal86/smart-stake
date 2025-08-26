@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SplashScreen } from "@/components/ui/SplashScreen";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -22,35 +24,46 @@ import Debug from "./pages/Debug";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/subscription/manage" element={<ManageSubscription />} />
-              <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-              <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-              <Route path="/scanner" element={<Scanner />} />
-              <Route path="/yields" element={<Yields />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/premium" element={<Premium />} />
-              <Route path="/debug" element={<Debug />} />
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            {showSplash && (
+              <SplashScreen onComplete={handleSplashComplete} duration={5000} />
+            )}
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/subscription" element={<Subscription />} />
+                <Route path="/subscription/manage" element={<ManageSubscription />} />
+                <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+                <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+                <Route path="/scanner" element={<Scanner />} />
+                <Route path="/yields" element={<Yields />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/premium" element={<Premium />} />
+                <Route path="/debug" element={<Debug />} />
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -13,14 +13,17 @@ export const checkDatabaseHealth = async (): Promise<HealthCheckResult[]> => {
     'users_metadata', 
     'subscriptions',
     'alerts',
-    'user_preferences'
+    'user_preferences',
+    'devices',
+    'risk_scans',
+    'yields'
   ];
 
   const results: HealthCheckResult[] = [];
 
   for (const table of tables) {
     try {
-      // Try to query the table
+      // Try to query the table with a limit to check if it exists and is accessible
       const { data, error } = await supabase
         .from(table)
         .select('*')
@@ -53,25 +56,49 @@ export const checkDatabaseHealth = async (): Promise<HealthCheckResult[]> => {
   return results;
 };
 
-export const logHealthCheck = async () => {
-  console.log('🔍 Checking database health...');
-  const results = await checkDatabaseHealth();
-  
-  results.forEach(result => {
-    if (result.accessible) {
-      console.log(`✅ ${result.table}: OK`);
-    } else {
-      console.error(`❌ ${result.table}: ${result.error}`);
-    }
-  });
+export const checkUserAccess = async (userId: string) => {
+  try {
+    // Check if user exists in users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-  const allHealthy = results.every(r => r.accessible);
-  
-  if (allHealthy) {
-    console.log('🎉 All database tables are healthy!');
-  } else {
-    console.error('⚠️  Some database tables have issues. Check the setup guide.');
+    // Check if user has metadata
+    const { data: metadataData, error: metadataError } = await supabase
+      .from('users_metadata')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    // Check if user has subscription
+    const { data: subscriptionData, error: subscriptionError } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    return {
+      user: {
+        exists: !userError,
+        data: userData,
+        error: userError?.message
+      },
+      metadata: {
+        exists: !metadataError,
+        data: metadataData,
+        error: metadataError?.message
+      },
+      subscription: {
+        exists: !subscriptionError,
+        data: subscriptionData,
+        error: subscriptionError?.message
+      }
+    };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : 'Unknown error'
+    };
   }
-
-  return allHealthy;
 };
