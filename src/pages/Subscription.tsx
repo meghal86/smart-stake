@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PricingPlan {
   id: string;
@@ -53,7 +54,7 @@ const pricingPlans: PricingPlan[] = [
       'Priority support',
     ],
     popular: true,
-    stripePriceId: 'price_pro_monthly_999', // Replace with your actual Stripe price ID
+    stripePriceId: 'price_pro_monthly_999', // TODO: Replace with your actual Stripe price ID from Stripe Dashboard
   },
   {
     id: 'premium',
@@ -71,7 +72,7 @@ const pricingPlans: PricingPlan[] = [
       'White-label options',
       'Dedicated support',
     ],
-    stripePriceId: 'price_premium_monthly_1999', // Replace with your actual Stripe price ID
+    stripePriceId: 'price_premium_monthly_1999', // TODO: Replace with your actual Stripe price ID from Stripe Dashboard
   },
 ];
 
@@ -79,19 +80,12 @@ const Subscription: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<string>('pro');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // Get current user
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getCurrentUser();
-
     // Set plan from URL params
     const planFromUrl = searchParams.get('plan');
     if (planFromUrl === 'pro') {
@@ -99,7 +93,43 @@ const Subscription: React.FC = () => {
     } else if (planFromUrl === 'premium') {
       setSelectedPlan('premium');
     }
-  }, [searchParams]);
+
+    // Test database connection
+    const testDB = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('count')
+          .limit(1);
+        
+        if (error) {
+          console.error('Database test error:', error);
+          setError(`Database connection issue: ${error.message}`);
+        } else {
+          console.log('Database connection OK');
+        }
+      } catch (err) {
+        console.error('Database test failed:', err);
+        setError('Database connection failed');
+      }
+    };
+
+    if (user) {
+      testDB();
+    }
+  }, [searchParams, user]);
+
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleStripeCheckout = async (plan: PricingPlan) => {
     if (!user) {
@@ -151,7 +181,7 @@ const Subscription: React.FC = () => {
     setError('');
 
     try {
-      // Create Stripe checkout session using Supabase Edge Function
+      // Check if Stripe is configured
       const response = await supabase.functions.invoke('create-checkout-session', {
         body: {
           priceId: plan.stripePriceId,
@@ -161,6 +191,16 @@ const Subscription: React.FC = () => {
       });
 
       if (response.error) {
+        // If Stripe isn't configured, show setup message
+        if (response.error.message?.includes('STRIPE_SECRET_KEY') || response.status === 500) {
+          toast({
+            variant: "destructive",
+            title: "Stripe Not Configured",
+            description: "Stripe payment processing is not set up yet. Please check the STRIPE_SETUP.md file for configuration instructions.",
+          });
+          setError('Stripe payment processing is not configured. Please set up Stripe integration first.');
+          return;
+        }
         throw new Error(response.error.message || 'Failed to create checkout session');
       }
 
@@ -173,13 +213,24 @@ const Subscription: React.FC = () => {
         throw new Error('No checkout URL received');
       }
     } catch (err) {
-      setError('Failed to start subscription process');
-      toast({
-        variant: "destructive",
-        title: "Subscription Error",
-        description: "Failed to start the subscription process. Please try again.",
-      });
       console.error('Stripe checkout error:', err);
+      
+      // Show helpful error message
+      if (err.message?.includes('Edge Function returned a non-2xx status code')) {
+        setError('Stripe integration is not configured yet. Please set up Stripe keys and deploy the Edge Function.');
+        toast({
+          variant: "destructive",
+          title: "Setup Required",
+          description: "Stripe integration needs to be configured. Check STRIPE_SETUP.md for instructions.",
+        });
+      } else {
+        setError('Failed to start subscription process');
+        toast({
+          variant: "destructive",
+          title: "Subscription Error",
+          description: "Failed to start the subscription process. Please try again.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

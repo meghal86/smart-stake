@@ -54,24 +54,40 @@ serve(async (req) => {
       )
     }
 
-    // Check if customer already exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 })
-    let customerId = null
-    
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id
+    // Get or create customer
+    let customerId: string
+
+    // Check if user already has a Stripe customer ID
+    const { data: userData } = await supabaseClient
+      .from('users')
+      .select('stripe_customer_id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (userData?.stripe_customer_id) {
+      customerId = userData.stripe_customer_id
     } else {
-      // Create new customer
+      // Create new Stripe customer
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
-          userId: user.id,
+          supabase_user_id: user.id,
         },
       })
       customerId = customer.id
+
+      // Update user record with Stripe customer ID
+      await supabaseClient
+        .from('users')
+        .upsert({
+          user_id: user.id,
+          email: user.email,
+          stripe_customer_id: customerId,
+          plan: 'free',
+        })
     }
 
-    // Create Stripe checkout session with multiple payment methods
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -82,36 +98,30 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl,
+      success_url: successUrl || `${req.headers.get('origin')}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${req.headers.get('origin')}/subscription`,
       metadata: {
-        userId: user.id,
-      },
-      subscription_data: {
-        metadata: {
-          userId: user.id,
-        },
-      },
-      allow_promotion_codes: true,
-      billing_address_collection: 'required',
-      automatic_tax: {
-        enabled: false,
+        user_id: user.id,
       },
     })
 
     return new Response(
-      JSON.stringify({
-        sessionId: session.id,
+      JSON.stringify({ 
         url: session.url,
+        sessionId: session.id
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
+
   } catch (error) {
     console.error('Error creating checkout session:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to create checkout session' }),
+      JSON.stringify({ 
+        error: 'Failed to create checkout session',
+        details: error.message 
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

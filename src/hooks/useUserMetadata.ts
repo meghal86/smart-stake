@@ -57,12 +57,22 @@ export const useUserMetadata = () => {
       setLoading(true);
       setError(null);
 
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Metadata fetch timeout')), 3000)
+      );
+
       // Fetch user subscription info first
-      const { data: userData, error: userError } = await supabase
+      const userDataPromise = supabase
         .from('users')
         .select('plan, created_at')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      const { data: userData, error: userError } = await Promise.race([
+        userDataPromise,
+        timeoutPromise
+      ]) as any;
 
       if (userError) {
         console.error('User data error:', userError);
@@ -84,12 +94,17 @@ export const useUserMetadata = () => {
         }
       }
 
-      // Fetch user metadata
-      const { data: metadataData, error: metadataError } = await supabase
+      // Fetch user metadata with timeout
+      const metadataPromise = supabase
         .from('users_metadata')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      const { data: metadataData, error: metadataError } = await Promise.race([
+        metadataPromise,
+        timeoutPromise
+      ]) as any;
 
       let metadata: any = {};
       
@@ -99,13 +114,57 @@ export const useUserMetadata = () => {
 
       if (!metadataData && !metadataError) {
         // Create default metadata if it doesn't exist
-        const defaultMetadata = {
-          profile: {
+        const defaultProfile = {
+          name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+          email: user.email,
+          avatar_url: user.user_metadata?.avatar_url,
+        };
+
+        const defaultPreferences = {
+          notifications: true,
+          email_updates: true,
+          marketing: false,
+          favorite_chains: [],
+          favorite_tokens: [],
+          min_whale_threshold: 1000000,
+        };
+
+        const defaultSubscription = {
+          plan: 'free',
+          status: 'free',
+        };
+
+        // Try to create the metadata record with new structure
+        const { error: createError } = await supabase
+          .from('users_metadata')
+          .insert({
+            user_id: user.id,
+            profile: defaultProfile,
+            preferences: defaultPreferences,
+            subscription: defaultSubscription,
+          });
+
+        if (createError && !createError.message.includes('duplicate key')) {
+          console.error('Error creating metadata:', createError);
+        }
+
+        metadata = {
+          profile: defaultProfile,
+          preferences: defaultPreferences,
+          onboarding: {
+            completed: false,
+            steps_completed: [],
+          },
+        };
+      } else if (metadataData) {
+        // Use the new column structure
+        metadata = {
+          profile: metadataData.profile || {
             name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
             email: user.email,
             avatar_url: user.user_metadata?.avatar_url,
           },
-          preferences: {
+          preferences: metadataData.preferences || {
             notifications: true,
             email_updates: true,
             marketing: false,
@@ -118,22 +177,6 @@ export const useUserMetadata = () => {
             steps_completed: [],
           },
         };
-
-        // Try to create the metadata record
-        const { error: createError } = await supabase
-          .from('users_metadata')
-          .insert({
-            user_id: user.id,
-            metadata: defaultMetadata,
-          });
-
-        if (createError && !createError.message.includes('duplicate key')) {
-          console.error('Error creating metadata:', createError);
-        }
-
-        metadata = defaultMetadata;
-      } else if (metadataData) {
-        metadata = metadataData.metadata;
       } else {
         // Use fallback metadata
         metadata = {
@@ -157,12 +200,17 @@ export const useUserMetadata = () => {
         };
       }
 
-      // Fetch subscription details
-      const { data: subscriptionData } = await supabase
+      // Fetch subscription details with timeout
+      const subscriptionPromise = supabase
         .from('subscriptions')
         .select('status, current_period_end')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      const { data: subscriptionData } = await Promise.race([
+        subscriptionPromise,
+        timeoutPromise
+      ]) as any;
 
       const combinedMetadata: UserMetadata = {
         ...metadata,

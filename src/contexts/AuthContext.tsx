@@ -62,12 +62,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const createUserRecord = async (user: User) => {
     try {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('User creation timeout')), 5000)
+      );
+
       // Check if user record exists
-      const { data: existingUser, error: checkUserError } = await supabase
+      const checkUserPromise = supabase
         .from('users')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      const { data: existingUser, error: checkUserError } = await Promise.race([
+        checkUserPromise,
+        timeoutPromise
+      ]) as any;
 
       if (checkUserError) {
         console.error('Error checking user record:', checkUserError);
@@ -75,8 +85,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (!existingUser) {
-        // Create user record
-        const { error: userError } = await supabase
+        // Create user record with timeout
+        const createUserPromise = supabase
           .from('users')
           .insert({
             user_id: user.id,
@@ -85,17 +95,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             onboarding_completed: false,
           });
 
-        if (userError && !userError.message.includes('duplicate key')) {
+        const { error: userError } = await Promise.race([
+          createUserPromise,
+          timeoutPromise
+        ]) as any;
+
+        if (userError && !userError.message.includes('duplicate key') && !userError.message.includes('timeout')) {
           console.error('Error creating user record:', userError);
         }
       }
 
-      // Check if user metadata exists
-      const { data: existingMetadata, error: checkMetadataError } = await supabase
+      // Check if user metadata exists with timeout
+      const checkMetadataPromise = supabase
         .from('users_metadata')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      const { data: existingMetadata, error: checkMetadataError } = await Promise.race([
+        checkMetadataPromise,
+        timeoutPromise
+      ]) as any;
 
       if (checkMetadataError) {
         console.error('Error checking user metadata:', checkMetadataError);
@@ -103,38 +123,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (!existingMetadata) {
-        // Create user metadata record
-        const { error: metadataError } = await supabase
+        // Create user metadata record with timeout
+        const createMetadataPromise = supabase
           .from('users_metadata')
           .insert({
             user_id: user.id,
-            metadata: {
-              profile: {
-                name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-                email: user.email,
-                avatar_url: user.user_metadata?.avatar_url,
-              },
-              preferences: {
-                notifications: true,
-                email_updates: true,
-                marketing: false,
-                favorite_chains: [],
-                favorite_tokens: [],
-                min_whale_threshold: 1000000,
-              },
-              onboarding: {
-                completed: false,
-                steps_completed: [],
-              },
+            profile: {
+              name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+              email: user.email,
+              avatar_url: user.user_metadata?.avatar_url,
+            },
+            preferences: {
+              notifications: true,
+              email_updates: true,
+              marketing: false,
+              favorite_chains: [],
+              favorite_tokens: [],
+              min_whale_threshold: 1000000,
+            },
+            subscription: {
+              plan: 'free',
+              status: 'free',
             },
           });
 
-        if (metadataError && !metadataError.message.includes('duplicate key')) {
+        const { error: metadataError } = await Promise.race([
+          createMetadataPromise,
+          timeoutPromise
+        ]) as any;
+
+        if (metadataError && !metadataError.message.includes('duplicate key') && !metadataError.message.includes('timeout')) {
           console.error('Error creating user metadata:', metadataError);
         }
       }
     } catch (error) {
       console.error('Error in createUserRecord:', error);
+      // Don't let user creation errors block login
     }
   };
 

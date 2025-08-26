@@ -12,13 +12,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserMetadata } from '@/hooks/useUserMetadata';
+// import { useUserMetadata } from '@/hooks/useUserMetadata';
 import { useNavigate } from 'react-router-dom';
 
 export const UserHeader = () => {
   const { user, signOut, loading: authLoading } = useAuth();
-  const { metadata, loading: metadataLoading } = useUserMetadata();
+  // const { metadata, loading: metadataLoading } = useUserMetadata();
   const navigate = useNavigate();
+  
+  // Temporary: use fallback data without metadata hook
+  const metadata = null;
+  const metadataLoading = false;
 
   // Show login/signup only if user is not authenticated or auth is still loading
   if (!user) {
@@ -56,11 +60,11 @@ export const UserHeader = () => {
     navigate('/');
   };
 
-  // Use fallback data while metadata is loading
-  const userName = metadata?.profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
-  const userEmail = metadata?.profile?.email || user.email;
-  const userPlan = metadata?.subscription?.plan || 'free';
-  const avatarUrl = metadata?.profile?.avatar_url || user.user_metadata?.avatar_url;
+  // Use fallback data from user auth data only
+  const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+  const userEmail = user.email;
+  const userPlan = 'free'; // Default to free plan for now
+  const avatarUrl = user.user_metadata?.avatar_url;
 
   return (
     <div className="flex items-center justify-between w-full">
