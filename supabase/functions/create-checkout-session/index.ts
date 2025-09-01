@@ -14,18 +14,22 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Checking Stripe key availability...');
+    
     // Get Stripe secret key
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeSecretKey) {
       console.error('STRIPE_SECRET_KEY environment variable not found');
       return new Response(
-        JSON.stringify({ error: 'Stripe configuration error' }),
+        JSON.stringify({ error: 'Stripe configuration error - API key not found' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
+    
+    console.log('Stripe key found, length:', stripeSecretKey.length);
 
     // Initialize Stripe
     const stripe = new Stripe(stripeSecretKey, {
