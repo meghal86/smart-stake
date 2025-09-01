@@ -21,60 +21,43 @@ const SubscriptionSuccess: React.FC = () => {
       return;
     }
 
-    // Wait for webhook to process and then check subscription status
-    const checkSubscriptionStatus = async () => {
+    // Verify payment directly with Stripe
+    const verifyPayment = async () => {
       try {
-        // Wait a moment for webhook to process
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          // Check if subscription was updated
-          const { data: userData } = await supabase
-            .from('users')
-            .select('plan, subscription_status')
-            .eq('user_id', user.id)
-            .single();
+        const { data, error } = await supabase.functions.invoke('verify-session', {
+          body: { sessionId }
+        });
 
-          if (userData?.plan !== 'free') {
-            setSessionData({ plan: userData.plan });
-            toast({
-              title: "Welcome to Premium!",
-              description: "Your subscription has been activated successfully.",
-            });
-          } else {
-            // If not updated yet, wait a bit more and try again
-            setTimeout(async () => {
-              const { data: retryData } = await supabase
-                .from('users')
-                .select('plan, subscription_status')
-                .eq('user_id', user.id)
-                .single();
-              
-              if (retryData?.plan !== 'free') {
-                setSessionData({ plan: retryData.plan });
-                toast({
-                  title: "Welcome to Premium!",
-                  description: "Your subscription has been activated successfully.",
-                });
-              }
-            }, 3000);
-          }
+        if (error) {
+          throw error;
         }
-      } catch (error) {
-        console.error('Error checking subscription status:', error);
+
+        console.log('Payment verified successfully:', data);
+        setSessionData({ plan: data.plan });
+        
         toast({
-          variant: "destructive",
-          title: "Processing Payment",
-          description: "Your payment is being processed. Please check your profile in a few minutes.",
+          title: "Payment Successful!",
+          description: `Your subscription has been upgraded to ${data.plan}`,
+        });
+
+        // Trigger a page refresh to update the UI after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+
+      } catch (err) {
+        console.error('Error verifying payment:', err);
+        toast({
+          variant: "destructive", 
+          title: "Verification Failed",
+          description: "We couldn't verify your payment. Please contact support.",
         });
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkSubscriptionStatus();
+    verifyPayment();
   }, [searchParams, navigate, toast]);
 
   if (isLoading) {

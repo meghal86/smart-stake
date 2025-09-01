@@ -25,9 +25,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get session_id from URL params
-    const url = new URL(req.url)
-    const sessionId = url.searchParams.get('session_id')
+    // Get the authorization header and session data
+    const authHeader = req.headers.get('Authorization')!;
+    const token = authHeader.replace('Bearer ', '');
+
+    // Get user from token
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const { sessionId } = await req.json();
 
     if (!sessionId) {
       return new Response(
@@ -54,53 +69,66 @@ serve(async (req) => {
       )
     }
 
-    // Extract subscription details
-    const subscription = session.subscription as Stripe.Subscription
-    const product = subscription.items.data[0].price.product as Stripe.Product
+    console.log('Verifying session for user:', user.id);
 
-    // Update user's subscription in Supabase
-    const userId = session.metadata?.userId
-    if (userId) {
-      // Update subscriptions table
-      const { error: subError } = await supabaseClient
-        .from('subscriptions')
-        .upsert({
-          user_id: userId,
-          product_id: product.id,
-          status: subscription.status,
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+    // Get subscription details  
+    const subscription = await stripe.subscriptions.retrieve(session.subscription);
+    console.log('Subscription retrieved:', subscription.id);
 
-      if (subError) {
-        console.error('Error updating subscription:', subError)
-      }
-
-      // Update users table
-      const { error: userError } = await supabaseClient
-        .from('users')
-        .upsert({
-          user_id: userId,
-          plan: 'premium',
-          updated_at: new Date().toISOString(),
-        })
-
-      if (userError) {
-        console.error('Error updating user plan:', userError)
-      }
+    // Determine plan based on price
+    let plan = 'free';
+    const priceId = subscription.items.data[0].price.id;
+    
+    if (priceId === 'price_1S0HB3JwuQyqUsks8bKNUt6M') {
+      plan = 'pro';
+    } else if (priceId === 'price_1S0HBOJwuQyqUsksDCs7SbPB') {
+      plan = 'premium';
     }
+
+    console.log('Determined plan:', plan, 'for price ID:', priceId);
+
+    // Update user's plan and subscription data
+    const { error: userUpdateError } = await supabaseClient
+      .from('users')
+      .update({
+        plan: plan,
+        subscription_status: subscription.status,
+        stripe_subscription_id: subscription.id,
+        stripe_customer_id: subscription.customer,
+        subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    if (userUpdateError) {
+      console.error('Error updating user:', userUpdateError);
+      throw userUpdateError;
+    }
+
+    // Update subscription table
+    const { error: subscriptionError } = await supabaseClient
+      .from('subscriptions')
+      .upsert({
+        user_id: user.id,
+        product_id: subscription.items.data[0].price.product,
+        status: subscription.status,
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (subscriptionError) {
+      console.error('Error updating subscription:', subscriptionError);
+    }
+
+    console.log('Successfully updated user plan to:', plan);
 
     return new Response(
       JSON.stringify({
-        session_id: session.id,
-        customer_id: session.customer,
-        subscription_id: subscription.id,
-        product_id: product.id,
-        amount_total: session.amount_total,
-        currency: session.currency,
-        current_period_end: subscription.current_period_end,
-        interval: subscription.items.data[0].price.recurring?.interval,
+        success: true,
+        plan: plan,
         status: subscription.status,
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
