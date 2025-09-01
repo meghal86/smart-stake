@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 // Mock data for yield protocols
 const mockProtocols = [
@@ -110,12 +111,12 @@ export default function Yields() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+    <AppLayout>
+      <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
               <div className="p-2 bg-success/20 rounded-xl">
                 <TrendingUp className="h-6 w-6 text-success" />
               </div>
@@ -126,11 +127,6 @@ export default function Yields() {
             </div>
             <PlanBadge plan={userPlan.plan} />
           </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
         {!canViewYields ? (
           <UpgradePrompt
             feature="Yield Farming Insights"
@@ -219,6 +215,7 @@ export default function Yields() {
           </Tabs>
         )}
       </div>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

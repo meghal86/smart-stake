@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { createUserIfNotExists } from '@/utils/databaseTest';
 
 interface AuthContextType {
   user: User | null;
@@ -50,9 +51,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Create user record if it doesn't exist
+        // Create user record if it doesn't exist (non-blocking)
         if (event === 'SIGNED_IN' && session?.user) {
-          await createUserRecord(session.user);
+          createUserRecord(session.user);
         }
       }
     );
@@ -61,105 +62,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const createUserRecord = async (user: User) => {
-    try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('User creation timeout')), 5000)
-      );
+    // Run this in the background without blocking the auth flow
+    setTimeout(async () => {
+      try {
+        // Use the simpler utility function
+        const result = await createUserIfNotExists(user.id, user.email || '');
+        
+        if (!result.success) {
+          console.error('Failed to create user record:', result.error);
+        }
 
-      // Check if user record exists
-      const checkUserPromise = supabase
-        .from('users')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        // Try to create metadata record (optional) - but don't override existing subscription data
+        try {
+          // First check if metadata already exists
+          const { data: existingMetadata } = await supabase
+            .from('users_metadata')
+            .select('subscription')
+            .eq('user_id', user.id)
+            .single();
 
-      const { data: existingUser, error: checkUserError } = await Promise.race([
-        checkUserPromise,
-        timeoutPromise
-      ]) as any;
-
-      if (checkUserError) {
-        console.error('Error checking user record:', checkUserError);
-        return;
-      }
-
-      if (!existingUser) {
-        // Create user record with timeout
-        const createUserPromise = supabase
-          .from('users')
-          .insert({
-            user_id: user.id,
-            email: user.email,
+          // Only set default subscription if no existing data
+          const subscriptionData = existingMetadata?.subscription || {
             plan: 'free',
-            onboarding_completed: false,
-          });
+            status: 'free',
+          };
 
-        const { error: userError } = await Promise.race([
-          createUserPromise,
-          timeoutPromise
-        ]) as any;
-
-        if (userError && !userError.message.includes('duplicate key') && !userError.message.includes('timeout')) {
-          console.error('Error creating user record:', userError);
+          await supabase
+            .from('users_metadata')
+            .upsert({
+              user_id: user.id,
+              profile: {
+                name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+                email: user.email || '',
+                avatar_url: user.user_metadata?.avatar_url || null,
+              },
+              preferences: {
+                notifications: true,
+                email_updates: true,
+                marketing: false,
+                favorite_chains: [],
+                favorite_tokens: [],
+                min_whale_threshold: 1000000,
+              },
+              subscription: subscriptionData,
+            }, {
+              onConflict: 'user_id'
+            });
+        } catch (metadataError) {
+          console.error('Metadata creation error (non-critical):', metadataError);
         }
+      } catch (error) {
+        console.error('Background user creation error:', error);
+        // This is non-blocking, so we just log the error
       }
-
-      // Check if user metadata exists with timeout
-      const checkMetadataPromise = supabase
-        .from('users_metadata')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const { data: existingMetadata, error: checkMetadataError } = await Promise.race([
-        checkMetadataPromise,
-        timeoutPromise
-      ]) as any;
-
-      if (checkMetadataError) {
-        console.error('Error checking user metadata:', checkMetadataError);
-        return;
-      }
-
-      if (!existingMetadata) {
-        // Create user metadata record with timeout
-        const createMetadataPromise = supabase
-          .from('users_metadata')
-          .insert({
-            user_id: user.id,
-            profile: {
-              name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-              email: user.email,
-              avatar_url: user.user_metadata?.avatar_url,
-            },
-            preferences: {
-              notifications: true,
-              email_updates: true,
-              marketing: false,
-              favorite_chains: [],
-              favorite_tokens: [],
-              min_whale_threshold: 1000000,
-            },
-            subscription: {
-              plan: 'free',
-              status: 'free',
-            },
-          });
-
-        const { error: metadataError } = await Promise.race([
-          createMetadataPromise,
-          timeoutPromise
-        ]) as any;
-
-        if (metadataError && !metadataError.message.includes('duplicate key') && !metadataError.message.includes('timeout')) {
-          console.error('Error creating user metadata:', metadataError);
-        }
-      }
-    } catch (error) {
-      console.error('Error in createUserRecord:', error);
-      // Don't let user creation errors block login
-    }
+    }, 500); // Slightly longer delay to ensure auth is fully complete
   };
 
   const signOut = async () => {

@@ -21,65 +21,60 @@ const SubscriptionSuccess: React.FC = () => {
       return;
     }
 
-    // Verify the session and update user's subscription status
-    const verifySession = async () => {
+    // Wait for webhook to process and then check subscription status
+    const checkSubscriptionStatus = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-session?session_id=${sessionId}`);
+        // Wait a moment for webhook to process
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to verify session');
-        }
-
-        const data = await response.json();
-        setSessionData(data);
-
-        // Update user's subscription in Supabase
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
-          const { error } = await supabase
-            .from('subscriptions')
-            .upsert({
-              user_id: user.id,
-              product_id: data.product_id,
-              status: 'active',
-              current_period_end: data.current_period_end,
-              updated_at: new Date().toISOString(),
-            });
-
-          if (error) {
-            console.error('Error updating subscription:', error);
-          }
-
-          // Also update the users table
-          await supabase
+          // Check if subscription was updated
+          const { data: userData } = await supabase
             .from('users')
-            .upsert({
-              user_id: user.id,
-              email: user.email,
-              plan: 'premium',
-              updated_at: new Date().toISOString(),
-            });
-        }
+            .select('plan, subscription_status')
+            .eq('user_id', user.id)
+            .single();
 
-        toast({
-          title: "Welcome to Premium!",
-          description: "Your subscription has been activated successfully.",
-        });
+          if (userData?.plan !== 'free') {
+            setSessionData({ plan: userData.plan });
+            toast({
+              title: "Welcome to Premium!",
+              description: "Your subscription has been activated successfully.",
+            });
+          } else {
+            // If not updated yet, wait a bit more and try again
+            setTimeout(async () => {
+              const { data: retryData } = await supabase
+                .from('users')
+                .select('plan, subscription_status')
+                .eq('user_id', user.id)
+                .single();
+              
+              if (retryData?.plan !== 'free') {
+                setSessionData({ plan: retryData.plan });
+                toast({
+                  title: "Welcome to Premium!",
+                  description: "Your subscription has been activated successfully.",
+                });
+              }
+            }, 3000);
+          }
+        }
       } catch (error) {
-        console.error('Error verifying session:', error);
+        console.error('Error checking subscription status:', error);
         toast({
           variant: "destructive",
-          title: "Verification Error",
-          description: "There was an issue verifying your subscription. Please contact support.",
+          title: "Processing Payment",
+          description: "Your payment is being processed. Please check your profile in a few minutes.",
         });
       } finally {
         setIsLoading(false);
       }
     };
 
-    verifySession();
+    checkSubscriptionStatus();
   }, [searchParams, navigate, toast]);
 
   if (isLoading) {

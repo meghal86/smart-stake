@@ -43,6 +43,17 @@ serve(async (req) => {
 
     console.log('Webhook event received:', event.type);
 
+    // Log webhook event
+    await supabaseClient
+      .from('webhook_logs')
+      .insert({
+        event_type: event.type,
+        event_id: event.id,
+        status: 'processing',
+        created_at: new Date().toISOString()
+      })
+      .catch(err => console.log('Could not log webhook event:', err));
+
     // Handle the events
     switch (event.type) {
       case 'checkout.session.completed':
@@ -64,12 +75,31 @@ serve(async (req) => {
         console.log(`Unhandled event type ${event.type}`);
     }
 
+    // Update webhook log as successful
+    await supabaseClient
+      .from('webhook_logs')
+      .update({ status: 'success' })
+      .eq('event_id', event.id)
+      .catch(err => console.log('Could not update webhook log:', err));
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Error handling webhook:', error);
+    
+    // Log error
+    await supabaseClient
+      .from('webhook_logs')
+      .insert({
+        event_type: 'error',
+        status: 'failed',
+        error_message: error.message,
+        created_at: new Date().toISOString()
+      })
+      .catch(err => console.log('Could not log webhook error:', err));
+
     return new Response(JSON.stringify({ error: 'Webhook handler failed' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -80,7 +110,7 @@ serve(async (req) => {
 async function handleCheckoutSessionCompleted(session, supabaseClient, stripe) {
   console.log('Handling checkout session completed:', session.id);
   
-  const userId = session.metadata?.userId;
+  const userId = session.metadata?.user_id;
   if (!userId) {
     console.error('No userId in session metadata');
     return;
@@ -98,14 +128,14 @@ async function handleCheckoutSessionCompleted(session, supabaseClient, stripe) {
   
   // Map price IDs to plans
   if (priceId === 'price_1S0HB3JwuQyqUsks8bKNUt6M') {
-    plan = 'pro';
+    plan = 'pro'; // Pro plan
   } else if (priceId === 'price_1S0HBOJwuQyqUsksDCs7SbPB') {
-    plan = 'premium';
+    plan = 'premium'; // Premium plan
   }
 
   console.log('Determined plan:', plan, 'for price ID:', priceId);
 
-  // Update user's subscription in Supabase
+  // Update subscription in database (using correct column names from schema)
   const { error: subscriptionError } = await supabaseClient
     .from('subscriptions')
     .upsert({
@@ -113,8 +143,6 @@ async function handleCheckoutSessionCompleted(session, supabaseClient, stripe) {
       product_id: subscription.items.data[0].price.product,
       status: subscription.status,
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
@@ -125,29 +153,47 @@ async function handleCheckoutSessionCompleted(session, supabaseClient, stripe) {
     console.log('Subscription updated successfully');
   }
 
-  // Update user's plan
+  // Update user's plan (using correct column name from schema)
   const { error: userError } = await supabaseClient
     .from('users')
+    .update({
+      plan: plan, // This matches the schema
+      updated_at: new Date().toISOString()
+    })
+    .eq('user_id', userId);
+
+  if (userError) {
+    console.error('Error updating user plan:', userError);
+  } else {
+    console.log('User plan updated to:', plan);
+  }
+
+  // Update users_metadata with subscription info
+  const { error: metadataError } = await supabaseClient
+    .from('users_metadata')
     .upsert({
       user_id: userId,
-      plan: plan,
-      stripe_customer_id: subscription.customer,
-      stripe_subscription_id: subscription.id,
-      subscription_status: subscription.status,
-      subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      metadata: {
+        subscription: {
+          plan: plan,
+          status: subscription.status,
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          stripe_subscription_id: subscription.id,
+        }
+      },
       updated_at: new Date().toISOString()
     });
 
-  if (userError) {
-    console.error('Error updating user:', userError);
+  if (metadataError) {
+    console.error('Error updating user metadata:', metadataError);
   } else {
-    console.log('User plan updated to:', plan);
+    console.log('User metadata updated with plan:', plan);
   }
 }
 
 async function handleInvoicePaymentSucceeded(invoice, supabaseClient, stripe) {
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-  const userId = subscription.metadata?.userId;
+  const userId = subscription.metadata?.user_id;
   if (!userId) return;
 
   // Update subscription status
@@ -163,7 +209,7 @@ async function handleInvoicePaymentSucceeded(invoice, supabaseClient, stripe) {
 
 async function handleInvoicePaymentFailed(invoice, supabaseClient, stripe) {
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-  const userId = subscription.metadata?.userId;
+  const userId = subscription.metadata?.user_id;
   if (!userId) return;
 
   // Update subscription status
@@ -177,11 +223,31 @@ async function handleInvoicePaymentFailed(invoice, supabaseClient, stripe) {
 }
 
 async function handleSubscriptionUpdated(subscription, supabaseClient) {
-  const userId = subscription.metadata?.userId;
-  if (!userId) return;
+  const userId = subscription.metadata?.user_id;
+  if (!userId) {
+    console.error('No user_id in subscription metadata for subscription.updated');
+    return;
+  }
+
+  console.log('Handling subscription updated for user:', userId);
+
+  // Determine plan based on price
+  let plan = 'free';
+  if (subscription.items && subscription.items.data && subscription.items.data.length > 0) {
+    const priceId = subscription.items.data[0].price.id;
+    
+    // Map price IDs to plans
+    if (priceId === 'price_1S0HB3JwuQyqUsks8bKNUt6M') {
+      plan = 'pro'; // Pro plan
+    } else if (priceId === 'price_1S0HBOJwuQyqUsksDCs7SbPB') {
+      plan = 'premium'; // Premium plan
+    }
+  }
+
+  console.log('Determined plan from subscription update:', plan);
 
   // Update subscription details
-  await supabaseClient
+  const { error: subscriptionError } = await supabaseClient
     .from('subscriptions')
     .update({
       status: subscription.status,
@@ -189,10 +255,51 @@ async function handleSubscriptionUpdated(subscription, supabaseClient) {
       updated_at: new Date().toISOString()
     })
     .eq('user_id', userId);
+
+  if (subscriptionError) {
+    console.error('Error updating subscription:', subscriptionError);
+  }
+
+  // Update user's plan
+  const { error: userError } = await supabaseClient
+    .from('users')
+    .update({
+      plan: plan,
+      updated_at: new Date().toISOString()
+    })
+    .eq('user_id', userId);
+
+  if (userError) {
+    console.error('Error updating user plan:', userError);
+  } else {
+    console.log('User plan updated to:', plan);
+  }
+
+  // Update users_metadata
+  const { error: metadataError } = await supabaseClient
+    .from('users_metadata')
+    .upsert({
+      user_id: userId,
+      metadata: {
+        subscription: {
+          plan: plan,
+          status: subscription.status,
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          stripe_subscription_id: subscription.id,
+        }
+      },
+      updated_at: new Date().toISOString()
+    });
+
+  if (metadataError) {
+    console.error('Error updating user metadata:', metadataError);
+  } else {
+    console.log('User metadata updated with plan:', plan);
+  }
 }
 
 async function handleSubscriptionDeleted(subscription, supabaseClient) {
-  const userId = subscription.metadata?.userId;
+  const userId = subscription.metadata?.user_id;
   if (!userId) return;
 
   // Update subscription status and user plan
@@ -208,7 +315,6 @@ async function handleSubscriptionDeleted(subscription, supabaseClient) {
     .from('users')
     .update({
       plan: 'free',
-      subscription_status: 'canceled',
       updated_at: new Date().toISOString()
     })
     .eq('user_id', userId);

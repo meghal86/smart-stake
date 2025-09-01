@@ -10,6 +10,7 @@ import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function Scanner() {
   const { user } = useAuth();
@@ -86,12 +87,12 @@ export default function Scanner() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+    <AppLayout>
+      <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
               <div className="p-2 bg-destructive/20 rounded-xl">
                 <Shield className="h-6 w-6 text-destructive" />
               </div>
@@ -102,11 +103,6 @@ export default function Scanner() {
             </div>
             <PlanBadge plan={userPlan.plan} />
           </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
         {!canUsePremiumScanner ? (
           <UpgradePrompt
             feature="AI-Powered Risk Scanner"
@@ -227,6 +223,7 @@ export default function Scanner() {
            </div>
          )}
        </div>
-     </div>
+       </div>
+     </AppLayout>
    );
  }

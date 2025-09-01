@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubscriptionManager } from '@/components/subscription/SubscriptionManager';
 import { useAuth } from '@/contexts/AuthContext';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { UserHeader } from '@/components/layout/UserHeader';
 
 const ManageSubscription: React.FC = () => {
   const navigate = useNavigate();
@@ -43,37 +45,37 @@ const ManageSubscription: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-xl">
-                <Settings className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">Manage Subscription</h1>
-                <p className="text-sm text-muted-foreground">
-                  View and manage your subscription details
-                </p>
+    <AppLayout showHeader={false}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          {/* Page Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-xl">
+                  <Settings className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">Manage Subscription</h1>
+                  <p className="text-sm text-muted-foreground">
+                    View and manage your subscription details
+                  </p>
+                </div>
               </div>
             </div>
+            <UserHeader />
           </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview" className="flex items-center gap-2">
@@ -159,9 +161,10 @@ const ManageSubscription: React.FC = () => {
               </Card>
             </TabsContent>
           </Tabs>
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

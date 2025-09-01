@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { User, LogOut, Settings, Crown, ChevronDown } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -17,14 +19,111 @@ import { useNavigate } from 'react-router-dom';
 
 export const UserHeader = () => {
   const { user, signOut, loading: authLoading } = useAuth();
-  // const { metadata, loading: metadataLoading } = useUserMetadata();
   const navigate = useNavigate();
   
-  // Temporary: use fallback data without metadata hook
-  const metadata = null;
-  const metadataLoading = false;
+  // Get user plan from database
+  const [userPlan, setUserPlan] = useState('free');
+  const [actualPlan, setActualPlan] = useState('free'); // The actual plan to display
+  const [planLoading, setPlanLoading] = useState(false);
 
-  // Show login/signup only if user is not authenticated or auth is still loading
+  useEffect(() => {
+    if (user) {
+      fetchUserPlan();
+    }
+  }, [user]);
+
+  // Add a periodic refresh to catch plan updates
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(() => {
+        fetchUserPlan();
+      }, 5000); // Refresh every 5 seconds for faster updates
+
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Listen for storage events to refresh when sync happens
+  useEffect(() => {
+    const handleStorageChange = () => {
+      if (user) {
+        fetchUserPlan();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [user]);
+
+  const fetchUserPlan = async () => {
+    if (!user) return;
+    
+    setPlanLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('plan, stripe_subscription_id')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching user plan:', error);
+        // Try to create user record if it doesn't exist
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            plan: 'free'
+          });
+        
+        if (!insertError) {
+          setUserPlan('free');
+          setActualPlan('free');
+        }
+      } else if (data && data.length > 0) {
+        const userData = data[0];
+        setUserPlan(userData.plan);
+        setActualPlan(userData.plan);
+      } else {
+        // No user record found, create one
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            plan: 'free'
+          });
+        
+        if (!insertError) {
+          setUserPlan('free');
+          setActualPlan('free');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user plan:', error);
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
+          <img 
+            src="/whaleplus-logo.png" 
+            alt="WhalePlus" 
+            className="h-8 w-8"
+          />
+          <span className="font-bold text-lg text-foreground">WhalePlus</span>
+        </div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show login/signup only if user is not authenticated
   if (!user) {
     return (
       <div className="flex items-center justify-between w-full">
@@ -60,11 +159,11 @@ export const UserHeader = () => {
     navigate('/');
   };
 
-  // Use fallback data from user auth data only
-  const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
-  const userEmail = user.email;
-  const userPlan = 'free'; // Default to free plan for now
-  const avatarUrl = user.user_metadata?.avatar_url;
+  // Use fallback data from user auth data only with safe null checking
+  const userMetadata = user?.user_metadata || {};
+  const userName = userMetadata.full_name || userMetadata.name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
+  const avatarUrl = userMetadata.avatar_url;
 
   return (
     <div className="flex items-center justify-between w-full">
@@ -84,16 +183,16 @@ export const UserHeader = () => {
               <Avatar className="h-8 w-8">
                 <AvatarImage src={avatarUrl} alt={userName} />
                 <AvatarFallback className="text-sm">
-                  {userName.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                  {userName ? userName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{userName}</span>
-                  {metadataLoading && (
+                  {planLoading && (
                     <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
                   )}
-                  {!metadataLoading && userPlan === 'premium' && (
+                  {!planLoading && (actualPlan === 'pro' || actualPlan === 'premium') && (
                     <Crown className="h-3 w-3 text-yellow-500" />
                   )}
                 </div>
@@ -109,9 +208,9 @@ export const UserHeader = () => {
                 <p className="text-sm font-medium">{userName}</p>
                 <p className="text-xs text-muted-foreground">{userEmail}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant={userPlan === 'premium' ? 'default' : 'secondary'} className="text-xs">
-                    {userPlan === 'premium' && <Crown className="h-3 w-3 mr-1" />}
-                    {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)} Plan
+                  <Badge variant={(actualPlan === 'pro' || actualPlan === 'premium') ? 'default' : 'secondary'} className="text-xs">
+                    {(actualPlan === 'pro' || actualPlan === 'premium') && <Crown className="h-3 w-3 mr-1" />}
+                    {actualPlan === 'pro' ? 'Pro' : actualPlan === 'premium' ? 'Premium' : actualPlan.charAt(0).toUpperCase() + actualPlan.slice(1)} Plan
                   </Badge>
                 </div>
               </div>
@@ -124,7 +223,7 @@ export const UserHeader = () => {
               Profile
             </DropdownMenuItem>
             
-            {userPlan === 'premium' ? (
+            {(actualPlan === 'pro' || actualPlan === 'premium') ? (
               <DropdownMenuItem onClick={() => navigate('/subscription/manage')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Manage Subscription
@@ -136,7 +235,7 @@ export const UserHeader = () => {
               </DropdownMenuItem>
             )}
             
-            {userPlan === 'free' && (
+            {actualPlan === 'free' && (
               <DropdownMenuItem onClick={() => navigate('/subscription')}>
                 <Crown className="mr-2 h-4 w-4" />
                 Upgrade to Premium

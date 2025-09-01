@@ -63,23 +63,23 @@ export const PersonalizationSection = () => {
   };
 
   const addChain = (chain: string) => {
-    if (!favoriteChains.includes(chain)) {
-      setFavoriteChains([...favoriteChains, chain]);
+    if (!favoriteChains?.includes(chain)) {
+      setFavoriteChains([...(favoriteChains || []), chain]);
     }
   };
 
   const removeChain = (chain: string) => {
-    setFavoriteChains(favoriteChains.filter(c => c !== chain));
+    setFavoriteChains(favoriteChains?.filter(c => c !== chain) || []);
   };
 
   const addToken = (token: string) => {
-    if (!favoriteTokens.includes(token)) {
-      setFavoriteTokens([...favoriteTokens, token]);
+    if (!favoriteTokens?.includes(token)) {
+      setFavoriteTokens([...(favoriteTokens || []), token]);
     }
   };
 
   const removeToken = (token: string) => {
-    setFavoriteTokens(favoriteTokens.filter(t => t !== token));
+    setFavoriteTokens(favoriteTokens?.filter(t => t !== token) || []);
   };
 
   return (
@@ -110,7 +110,7 @@ export const PersonalizationSection = () => {
         <div>
           <Label className="text-sm font-medium mb-2 block">Favorite Chains</Label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {favoriteChains.map((chain) => (
+            {favoriteChains?.map((chain) => (
               <Badge key={chain} variant="secondary" className="flex items-center gap-1">
                 {chain}
                 {isEditing && (
@@ -124,7 +124,7 @@ export const PersonalizationSection = () => {
           </div>
           {isEditing && (
             <div className="flex flex-wrap gap-1">
-              {POPULAR_CHAINS.filter(chain => !favoriteChains.includes(chain)).map((chain) => (
+              {POPULAR_CHAINS.filter(chain => !favoriteChains?.includes(chain)).map((chain) => (
                 <Button
                   key={chain}
                   variant="ghost"
@@ -144,7 +144,7 @@ export const PersonalizationSection = () => {
         <div>
           <Label className="text-sm font-medium mb-2 block">Favorite Tokens</Label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {favoriteTokens.map((token) => (
+            {favoriteTokens?.map((token) => (
               <Badge key={token} variant="secondary" className="flex items-center gap-1">
                 {token}
                 {isEditing && (
@@ -158,7 +158,7 @@ export const PersonalizationSection = () => {
           </div>
           {isEditing && (
             <div className="flex flex-wrap gap-1">
-              {POPULAR_TOKENS.filter(token => !favoriteTokens.includes(token)).map((token) => (
+              {POPULAR_TOKENS.filter(token => !favoriteTokens?.includes(token)).map((token) => (
                 <Button
                   key={token}
                   variant="ghost"

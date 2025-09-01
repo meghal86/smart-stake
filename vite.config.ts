@@ -7,7 +7,8 @@ import { componentTagger } from "lovable-tagger"
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
+    // Temporarily disabled to fix h1-check.js error
+    // mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {

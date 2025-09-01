@@ -56,4 +56,51 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Force Chrome to reset all scrollbar styling */
+  html {
+    scrollbar-color: auto auto !important;
+    scrollbar-width: auto !important;
+  }
+  
+  /* Chrome-specific scrollbar fix */
+  * {
+    scrollbar-width: thin !important;
+  }
+  
+  /* Force rectangular scrollbars in Chrome */
+  *::-webkit-scrollbar {
+    width: 12px !important;
+    height: 12px !important;
+    background: transparent !important;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background: #c1c1c1 !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8 !important;
+  }
+  
+  *::-webkit-scrollbar-corner {
+    background: #f1f1f1 !important;
+  }
+  
+  /* Override any potential rounded corners */
+  *::-webkit-scrollbar-thumb:vertical {
+    border-radius: 0 !important;
+  }
+  
+  *::-webkit-scrollbar-thumb:horizontal {
+    border-radius: 0 !important;
+  }
 }

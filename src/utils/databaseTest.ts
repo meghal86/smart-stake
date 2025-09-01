@@ -17,28 +17,45 @@ export const testDatabaseConnection = async () => {
     
     console.log('Database connection successful');
     return { success: true, data };
-  } catch (err) {
-    console.error('Database test failed:', err);
-    return { success: false, error: err.message };
+  } catch (error) {
+    console.error('Database test failed:', error);
+    return { success: false, error: error.message };
   }
 };
 
-export const checkTableExists = async (tableName: string) => {
+export const createUserIfNotExists = async (userId: string, email: string) => {
   try {
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .limit(1);
-    
-    if (error) {
-      console.error(`Table ${tableName} error:`, error);
-      return false;
+    // First check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('user_id, plan')
+      .eq('user_id', userId)
+      .single();
+
+    if (existingUser) {
+      // User exists, don't override their plan
+      console.log('User already exists with plan:', existingUser.plan);
+      return { success: true };
     }
-    
-    console.log(`Table ${tableName} exists`);
-    return true;
-  } catch (err) {
-    console.error(`Table ${tableName} check failed:`, err);
-    return false;
+
+    // User doesn't exist, create with default plan
+    const { error } = await supabase
+      .from('users')
+      .insert({
+        user_id: userId,
+        email: email,
+        plan: 'free',
+        onboarding_completed: false,
+      });
+
+    if (error) {
+      console.error('Error creating user:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('User creation failed:', error);
+    return { success: false, error: error.message };
   }
 };

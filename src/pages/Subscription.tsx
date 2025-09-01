@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { UserHeader } from '@/components/layout/UserHeader';
 
 interface PricingPlan {
   id: string;
@@ -78,6 +80,7 @@ const pricingPlans: PricingPlan[] = [
 
 const Subscription: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<string>('pro');
+  const [currentPlan, setCurrentPlan] = useState<string>('free');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -94,19 +97,27 @@ const Subscription: React.FC = () => {
       setSelectedPlan('premium');
     }
 
-    // Test database connection
-    const testDB = async () => {
+    // Fetch current user plan
+    const fetchCurrentPlan = async () => {
+      if (!user) return;
+      
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('count')
-          .limit(1);
+          .select('plan')
+          .eq('user_id', user.id)
+          .single();
         
         if (error) {
-          console.error('Database test error:', error);
+          console.error('Error fetching user plan:', error);
           setError(`Database connection issue: ${error.message}`);
+        } else if (data?.plan) {
+          setCurrentPlan(data.plan);
+          console.log('Current user plan from database:', data.plan);
+          console.log('Full user data:', data);
         } else {
-          console.log('Database connection OK');
+          console.log('No plan found in database, defaulting to free');
+          setCurrentPlan('free');
         }
       } catch (err) {
         console.error('Database test failed:', err);
@@ -115,9 +126,21 @@ const Subscription: React.FC = () => {
     };
 
     if (user) {
-      testDB();
+      fetchCurrentPlan();
     }
   }, [searchParams, user]);
+
+  // Listen for plan updates
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user_plan_updated' && user) {
+        fetchCurrentPlan();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [user]);
 
   // Show loading while auth is being determined
   if (authLoading) {
@@ -245,35 +268,35 @@ const Subscription: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-xl">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">Premium Plans</h1>
-                <p className="text-sm text-muted-foreground">Choose the best plan for your DeFi journey</p>
+    <AppLayout showHeader={false}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          {/* Page Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-xl">
+                  <Zap className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">Premium Plans</h1>
+                  <p className="text-sm text-muted-foreground">Choose the best plan for your DeFi journey</p>
+                </div>
               </div>
             </div>
+            <UserHeader />
           </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
+          {/* Hero Section */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Premium Plans</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -357,12 +380,14 @@ const Subscription: React.FC = () => {
                       <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
                       Processing...
                     </>
-                  ) : plan.id === 'free' ? (
+                  ) : (currentPlan === 'premium' && (plan.id === 'pro' || plan.id === 'premium')) ? (
+                    'Current Plan'
+                  ) : plan.id === 'free' && currentPlan === 'free' ? (
                     'Current Plan'
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Upgrade to {plan.name}
+                      {plan.id === 'free' ? 'Downgrade to Free' : `Upgrade to ${plan.name}`}
                     </>
                   )}
                 </Button>
@@ -425,18 +450,19 @@ const Subscription: React.FC = () => {
           </div>
         </div>
 
-        {/* FAQ or Additional Info */}
-        <div className="max-w-2xl mx-auto mt-12 text-center">
-          <Separator className="mb-6" />
-          <p className="text-sm text-muted-foreground mb-4">
-            All plans include a 7-day free trial. Cancel anytime. No hidden fees.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Secure payments powered by Stripe. Your payment information is encrypted and secure.
-          </p>
+          {/* FAQ or Additional Info */}
+          <div className="max-w-2xl mx-auto mt-12 text-center">
+            <Separator className="mb-6" />
+            <p className="text-sm text-muted-foreground mb-4">
+              All plans include a 7-day free trial. Cancel anytime. No hidden fees.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Secure payments powered by Stripe. Your payment information is encrypted and secure.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

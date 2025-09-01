@@ -131,11 +131,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/20 rounded-xl">
                 <Zap className="h-6 w-6 text-primary" />
               </div>
@@ -147,7 +146,7 @@ export default function Home() {
             <PlanBadge plan={userPlan.plan} />
           </div>
 
-          {/* Plan-based alert counter */}
+        {/* Plan-based alert counter */}
           {isLimitedAccess && (
             <Alert className="mb-4">
               <AlertDescription className="flex items-center justify-between">
@@ -199,10 +198,9 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Transaction Feed */}
-      <div className="p-4 space-y-4">
+        {/* Transaction Feed */}
+        <div className="space-y-4">
         {isLoading ? (
           // Loading skeletons
           Array.from({ length: 5 }).map((_, index) => (

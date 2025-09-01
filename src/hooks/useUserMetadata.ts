@@ -12,6 +12,9 @@ interface UserPreferences {
   notifications: boolean;
   email_updates: boolean;
   marketing: boolean;
+  favorite_chains: string[];
+  favorite_tokens: string[];
+  min_whale_threshold: number;
 }
 
 interface UserOnboarding {
