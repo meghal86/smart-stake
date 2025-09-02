@@ -40,9 +40,14 @@ const SubscriptionSuccess: React.FC = () => {
           description: `Your subscription has been upgraded to ${data.plan}`,
         });
 
-        // Trigger a page refresh to update the UI after a short delay
+        // Force refresh subscription data and navigate to home
         setTimeout(() => {
-          window.location.reload();
+          // Dispatch a storage event to notify components to refetch
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'user_plan_updated',
+            newValue: data.plan
+          }));
+          navigate('/', { replace: true });
         }, 2000);
 
       } catch (err) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -13,16 +13,7 @@ export const useSubscription = () => {
   const [userPlan, setUserPlan] = useState<UserPlan>({ plan: 'free', subscribed: false });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user || authLoading) {
-      setLoading(false);
-      return;
-    }
-
-    fetchUserPlan();
-  }, [user, authLoading]);
-
-  const fetchUserPlan = async () => {
+  const fetchUserPlan = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -41,6 +32,8 @@ export const useSubscription = () => {
         return;
       }
 
+      console.log('Current user plan from database:', userData.plan);
+
       // Map plan names to match Stripe pricing
       let mappedPlan: 'free' | 'pro' | 'premium' = 'free';
       if (userData.plan === 'premium-monthly' || userData.plan === 'pro') {
@@ -48,6 +41,8 @@ export const useSubscription = () => {
       } else if (userData.plan === 'premium-yearly' || userData.plan === 'premium') {
         mappedPlan = 'premium';
       }
+
+      console.log('Mapped plan:', mappedPlan);
 
       setUserPlan({
         plan: mappedPlan,
@@ -59,7 +54,32 @@ export const useSubscription = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || authLoading) {
+      setLoading(false);
+      return;
+    }
+
+    fetchUserPlan();
+
+    // Listen for storage events to refetch when plan updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user_plan_updated') {
+        console.log('Plan updated via storage event, refetching...');
+        setTimeout(() => {
+          fetchUserPlan();
+        }, 100); // Small delay to ensure database is updated
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [user, authLoading, fetchUserPlan]);
 
   const canAccessFeature = (feature: 'whaleAlerts' | 'yields' | 'riskScanner' | 'advancedFiltering') => {
     switch (feature) {
