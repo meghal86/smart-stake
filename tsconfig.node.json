@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
+    "composite": true,        // ADD this line
     "target": "ES2022",
     "lib": ["ES2023"],
     "module": "ESNext",
     "skipLibCheck": true,
-
+    
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
-
+    // "noEmit": true,         // REMOVE this line or set to false
+    
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
