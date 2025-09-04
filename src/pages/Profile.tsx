@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PersonalizationSection } from "@/components/profile/PersonalizationSection";
 import { ManualSync } from "@/components/debug/ManualSync";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserMetadata } from "@/hooks/useUserMetadata";
@@ -19,10 +19,21 @@ export default function Profile() {
 
   // Refresh metadata when component mounts to get latest subscription status
   useEffect(() => {
+    // Listen for subscription change event and refetch metadata
+    const handlePlanUpdate = (e: StorageEvent) => {
+      if (e.key === 'user_plan_updated') {
+        refetch();
+      }
+    };
+    window.addEventListener('storage', handlePlanUpdate);
+    // Initial fetch
     if (user && !loading) {
       refetch();
     }
-  }, [user]); // Removed refetch from dependencies to prevent infinite loop
+    return () => {
+      window.removeEventListener('storage', handlePlanUpdate);
+    };
+  }, [user]);
 
   const handleOpenOnboarding = () => {
     // This will be implemented to show onboarding
@@ -48,9 +59,7 @@ export default function Profile() {
   }
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
-      {/* Header */}
+    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4">
         {/* Show loading/error states for metadata */}
         {loading && <div className="text-center text-muted-foreground">Loading profile...</div>}
@@ -87,8 +96,6 @@ export default function Profile() {
             </div>
           </Card>
         )}
-
-
 
         {/* Personalization Section */}
         <div className="mb-6">
@@ -205,7 +212,6 @@ export default function Profile() {
           </Card>
         </div>
       </div>
-      </div>
-    </AppLayout>
+    </div>
   );
 }

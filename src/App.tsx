@@ -71,12 +71,7 @@ const App = () => {
                   <Route path="/subscription/manage" element={<ManageSubscription />} />
                   <Route path="/subscription/success" element={<SubscriptionSuccess />} />
                   <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-                  <Route path="/scanner" element={<Scanner />} />
-                  <Route path="/yields" element={<Yields />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/premium" element={<Premium />} />
                   <Route path="/debug" element={<Debug />} />
-                  {/* Catch-all route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

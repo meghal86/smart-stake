@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { UserHeader } from "@/components/layout/UserHeader";
 import { OnboardingWalkthrough } from "@/components/onboarding/OnboardingWalkthrough";
@@ -12,9 +13,24 @@ import Premium from "./Premium";
 import Profile from "./Profile";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("home");
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loading } = useAuth();
+  
+  // Determine active tab from URL
+  const getActiveTabFromUrl = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    return tab || 'home';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getActiveTabFromUrl());
+  
+  // Update active tab when URL changes
+  useEffect(() => {
+    setActiveTab(getActiveTabFromUrl());
+  }, [location.search]);
 
   useEffect(() => {
     if (!loading) {
@@ -58,6 +74,11 @@ const Index = () => {
     setShowOnboarding(false);
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    navigate(`/?tab=${tab}`);
+  };
+  
   const renderContent = () => {
     switch (activeTab) {
       case "home":
@@ -97,7 +118,7 @@ const Index = () => {
             <UserHeader />
           </div>
           {renderContent()}
-          <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         </>
       )}
     </div>

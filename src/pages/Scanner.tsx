@@ -1,19 +1,17 @@
 import React, { useState } from "react";
-import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Crown } from "lucide-react";
+import { Shield, Search, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScannerEmptyState } from "@/components/scanner/ScannerEmptyState";
 import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
 import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useAuth } from "@/contexts/AuthContext";
-import { AppLayout } from "@/components/layout/AppLayout";
+
+
 
 export default function Scanner() {
-  const { user } = useAuth();
   const { userPlan, canAccessFeature, getUpgradeMessage } = useSubscription();
   const [walletAddress, setWalletAddress] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -87,22 +85,9 @@ export default function Scanner() {
   };
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
-      {/* Content */}
+    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-              <div className="p-2 bg-destructive/20 rounded-xl">
-                <Shield className="h-6 w-6 text-destructive" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Risk Scanner</h1>
-                <p className="text-sm text-muted-foreground">AI-powered wallet analysis</p>
-              </div>
-            </div>
-            <PlanBadge plan={userPlan.plan} />
-          </div>
+        <PlanBadge plan={userPlan.plan} />
         {!canUsePremiumScanner ? (
           <UpgradePrompt
             feature="AI-Powered Risk Scanner"
@@ -136,7 +121,7 @@ export default function Scanner() {
             </div>
 
             {!scanResult && !isScanning && (
-              <ScannerEmptyState />
+              <ScannerEmptyState type="initial" />
             )}
 
             {isScanning && (
@@ -223,7 +208,6 @@ export default function Scanner() {
            </div>
          )}
        </div>
-       </div>
-     </AppLayout>
+     </div>
    );
  }

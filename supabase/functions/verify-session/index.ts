@@ -26,18 +26,28 @@ serve(async (req) => {
     )
 
     // Get the authorization header and session data
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or malformed Authorization header:', authHeader);
+      return new Response(
+        JSON.stringify({ error: 'Missing or malformed Authorization header' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
     const token = authHeader.replace('Bearer ', '');
 
     // Get user from token
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    
     if (userError || !user) {
+      console.error('User authentication failed:', userError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -103,6 +113,36 @@ serve(async (req) => {
     if (userUpdateError) {
       console.error('Error updating user:', userUpdateError);
       throw userUpdateError;
+    }
+
+    // Update users_metadata table with merged plan
+    const { data: currentMetadata } = await supabaseClient
+      .from('users_metadata')
+      .select('metadata')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const newMetadata = {
+      ...(currentMetadata?.metadata || {}),
+      subscription: {
+        plan: plan,
+        status: subscription.status,
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        stripe_subscription_id: subscription.id,
+        stripe_customer_id: subscription.customer,
+      }
+    };
+
+    const { error: metadataError } = await supabaseClient
+      .from('users_metadata')
+      .update({
+        metadata: newMetadata,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
+    if (metadataError) {
+      console.error('Error updating users_metadata:', metadataError);
     }
 
     // Update subscription table

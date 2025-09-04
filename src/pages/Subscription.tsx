@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Crown, Check, Zap, TrendingUp, Shield, Headphones, ArrowLeft, CreditCard, Smartphone, Wallet } from 'lucide-react';
-import { supabase } from '../integrations/supabase/client';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Crown, Check, Zap, Shield, ArrowLeft, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { UserHeader } from '@/components/layout/UserHeader';
+import { useSimpleSubscription } from '@/hooks/useSimpleSubscription';
 
 interface PricingPlan {
   id: string;
@@ -79,184 +77,37 @@ const pricingPlans: PricingPlan[] = [
 ];
 
 const Subscription: React.FC = () => {
-  const [selectedPlan, setSelectedPlan] = useState<string>('pro');
-  const [currentPlan, setCurrentPlan] = useState<string>('free');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const { plan: currentPlan, createCheckout } = useSimpleSubscription();
 
-  useEffect(() => {
-    // Set plan from URL params
-    const planFromUrl = searchParams.get('plan');
-    if (planFromUrl === 'pro') {
-      setSelectedPlan('pro');
-    } else if (planFromUrl === 'premium') {
-      setSelectedPlan('premium');
-    }
 
-    // Fetch current user plan
-    const fetchCurrentPlan = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('plan')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching user plan:', error);
-          setError(`Database connection issue: ${error.message}`);
-        } else if (data?.plan) {
-          setCurrentPlan(data.plan);
-          console.log('Current user plan from database:', data.plan);
-          console.log('Full user data:', data);
-        } else {
-          console.log('No plan found in database, defaulting to free');
-          setCurrentPlan('free');
-        }
-      } catch (err) {
-        console.error('Database test failed:', err);
-        setError('Database connection failed');
-      }
-    };
 
-    if (user) {
-      fetchCurrentPlan();
-    }
-  }, [searchParams, user]);
 
-  // Listen for plan updates
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'user_plan_updated' && user) {
-        fetchCurrentPlan();
-      }
-    };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [user]);
-
-  // Show loading while auth is being determined
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleStripeCheckout = async (plan: PricingPlan) => {
+  const handleSubscribe = async (plan: PricingPlan) => {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Required",
-        description: "Please sign in to subscribe to a plan.",
-      });
       navigate('/login');
       return;
     }
 
     if (plan.id === 'free') {
-      // Handle free plan selection
-      try {
-        setIsLoading(true);
-        
-        // Update user's plan in database
-        const { error } = await supabase
-          .from('users')
-          .upsert({
-            user_id: user.id,
-            email: user.email,
-            plan: 'free',
-            updated_at: new Date().toISOString(),
-          });
-
-        if (error) throw error;
-
-        toast({
-          title: "Plan Updated",
-          description: "You're now on the free plan.",
-        });
-        navigate('/');
-      } catch (err) {
-        setError('Failed to update plan');
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to update your plan. Please try again.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+      toast({ title: "Already on free plan" });
       return;
     }
 
-    setIsLoading(true);
-    setError('');
-
     try {
-      // Check if Stripe is configured
-      console.log('Calling Edge Function with priceId:', plan.stripePriceId);
-      
-      const response = await supabase.functions.invoke('create-checkout-session', {
-        body: {
-          priceId: plan.stripePriceId,
-          successUrl: `${window.location.origin}/subscription/success`,
-          cancelUrl: `${window.location.origin}/subscription/cancel`,
-        },
+      setIsLoading(true);
+      const url = await createCheckout(plan.stripePriceId!);
+      window.location.href = url;
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to start checkout"
       });
-
-      console.log('Edge Function response:', response);
-
-      if (response.error) {
-        console.error('Edge Function error:', response.error);
-        
-        // Show detailed error information
-        setError(`Edge Function Error: ${JSON.stringify(response.error)}`);
-        toast({
-          variant: "destructive",
-          title: "Subscription Error",
-          description: `Error: ${response.error.message || 'Unknown error'}. Check console for details.`,
-        });
-        return;
-      }
-
-      const { url } = response.data;
-      
-      if (url) {
-        // Open Stripe checkout in a new tab for better UX
-        window.open(url, '_blank');
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (err) {
-      console.error('Stripe checkout error:', err);
-      
-      // Show helpful error message
-      if (err.message?.includes('Edge Function returned a non-2xx status code')) {
-        setError('Stripe integration is not configured yet. Please set up Stripe keys and deploy the Edge Function.');
-        toast({
-          variant: "destructive",
-          title: "Setup Required",
-          description: "Stripe integration needs to be configured. Check STRIPE_SETUP.md for instructions.",
-        });
-      } else {
-        setError('Failed to start subscription process');
-        toast({
-          variant: "destructive",
-          title: "Subscription Error",
-          description: "Failed to start the subscription process. Please try again.",
-        });
-      }
     } finally {
       setIsLoading(false);
     }
@@ -304,21 +155,14 @@ const Subscription: React.FC = () => {
           </p>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="mb-6 max-w-2xl mx-auto">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
           {pricingPlans.map((plan) => (
             <Card 
               key={plan.id}
-              className={`relative transition-all hover:shadow-lg ${
-                selectedPlan === plan.id ? 'ring-2 ring-primary' : ''
-              } ${plan.popular ? 'border-primary' : ''}`}
+              className={`relative transition-all hover:shadow-lg ${plan.popular ? 'border-primary' : ''}`}
             >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
@@ -368,98 +212,28 @@ const Subscription: React.FC = () => {
               <CardFooter className="flex flex-col gap-2">
                 <Button
                   className="w-full"
-                  variant={plan.id === 'free' ? "outline" : "default"}
-                  onClick={() => {
-                    setSelectedPlan(plan.id);
-                    handleStripeCheckout(plan);
-                  }}
-                  disabled={isLoading}
+                  variant={currentPlan === plan.id ? "outline" : "default"}
+                  onClick={() => handleSubscribe(plan)}
+                  disabled={isLoading || currentPlan === plan.id}
                 >
-                  {isLoading && selectedPlan === plan.id ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                      Processing...
-                    </>
-                  ) : (currentPlan === 'premium' && (plan.id === 'pro' || plan.id === 'premium')) ? (
-                    'Current Plan'
-                  ) : plan.id === 'free' && currentPlan === 'free' ? (
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  ) : currentPlan === plan.id ? (
                     'Current Plan'
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      {plan.id === 'free' ? 'Downgrade to Free' : `Upgrade to ${plan.name}`}
+                      {plan.id === 'free' ? 'Free' : `Upgrade to ${plan.name}`}
                     </>
                   )}
                 </Button>
-                {plan.id !== 'free' && (
-                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                    <CreditCard className="h-3 w-3" />
-                    <Smartphone className="h-3 w-3" />
-                    <Wallet className="h-3 w-3" />
-                    <span>Card • Apple Pay • Google Pay</span>
-                  </div>
-                )}
+
               </CardFooter>
             </Card>
           ))}
         </div>
 
-        {/* Features Highlight */}
-        <div className="max-w-4xl mx-auto">
-          <h3 className="text-2xl font-bold text-center mb-8">Why Choose Premium?</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <TrendingUp className="h-8 w-8 text-primary mx-auto mb-4" />
-                <h4 className="font-semibold mb-2">Real-time Alerts</h4>
-                <p className="text-sm text-muted-foreground">
-                  Get instant notifications when whales make large moves
-                </p>
-              </CardContent>
-            </Card>
 
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <Shield className="h-8 w-8 text-primary mx-auto mb-4" />
-                <h4 className="font-semibold mb-2">Risk Analysis</h4>
-                <p className="text-sm text-muted-foreground">
-                  Advanced tools to assess market risks and opportunities
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <Zap className="h-8 w-8 text-primary mx-auto mb-4" />
-                <h4 className="font-semibold mb-2">Advanced Filtering</h4>
-                <p className="text-sm text-muted-foreground">
-                  Filter alerts by token, chain, amount, and more
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <Headphones className="h-8 w-8 text-primary mx-auto mb-4" />
-                <h4 className="font-semibold mb-2">Priority Support</h4>
-                <p className="text-sm text-muted-foreground">
-                  Get help when you need it with priority customer support
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-          {/* FAQ or Additional Info */}
-          <div className="max-w-2xl mx-auto mt-12 text-center">
-            <Separator className="mb-6" />
-            <p className="text-sm text-muted-foreground mb-4">
-              All plans include a 7-day free trial. Cancel anytime. No hidden fees.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Secure payments powered by Stripe. Your payment information is encrypted and secure.
-            </p>
-          </div>
         </div>
       </div>
     </AppLayout>

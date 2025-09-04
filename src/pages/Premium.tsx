@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { AppLayout } from "@/components/layout/AppLayout";
+
+
 
 const plans = [
   {
@@ -71,8 +72,7 @@ const Premium = () => {
   const navigate = useNavigate();
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
+    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-2 text-foreground flex items-center gap-2">
           <Crown className="h-6 w-6 text-premium" /> Premium Plans
@@ -111,8 +111,7 @@ const Premium = () => {
           ))}
         </div>
       </div>
-      </div>
-    </AppLayout>
+    </div>
   );
 };
 

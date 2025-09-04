@@ -130,21 +130,20 @@ export default function Home() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/80 pb-20">
-      {/* Content */}
+    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-xl">
-                <Zap className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Whale Alerts</h1>
-                <p className="text-sm text-muted-foreground">Live whale transactions</p>
-              </div>
+            <div className="p-2 bg-primary/20 rounded-xl">
+              <Zap className="h-6 w-6 text-primary" />
             </div>
-            <PlanBadge plan={userPlan.plan} />
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Whale Alerts</h1>
+              <p className="text-sm text-muted-foreground">Live whale transactions</p>
+            </div>
           </div>
+          <PlanBadge plan={userPlan.plan} />
+        </div>
 
         {/* Plan-based alert counter */}
           {isLimitedAccess && (
