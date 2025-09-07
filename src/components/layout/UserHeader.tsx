@@ -14,16 +14,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-// import { useUserMetadata } from '@/hooks/useUserMetadata';
 import { useNavigate } from 'react-router-dom';
-
 export const UserHeader = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
-  // Get user plan from database
   const [userPlan, setUserPlan] = useState('free');
-  const [actualPlan, setActualPlan] = useState('free'); // The actual plan to display
+  const [actualPlan, setActualPlan] = useState('free');
   const [planLoading, setPlanLoading] = useState(false);
 
   useEffect(() => {
@@ -32,9 +29,6 @@ export const UserHeader = () => {
     }
   }, [user]);
 
-
-
-  // Listen for storage events to refresh when sync happens
   useEffect(() => {
     const handleStorageChange = () => {
       if (user) {
@@ -58,7 +52,6 @@ export const UserHeader = () => {
       
       if (error) {
         console.error('Error fetching user plan:', error);
-        // Try to create user record if it doesn't exist
         const { error: insertError } = await supabase
           .from('users')
           .insert({
@@ -76,7 +69,6 @@ export const UserHeader = () => {
         setUserPlan(userData.plan);
         setActualPlan(userData.plan);
       } else {
-        // No user record found, create one
         const { error: insertError } = await supabase
           .from('users')
           .insert({
@@ -97,15 +89,18 @@ export const UserHeader = () => {
     }
   };
 
-  // Show loading while auth is being determined
+  const getLogoSrc = () => {
+    return '/logos/logo on flat backgroud.png';
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src="/whaleplus-logo.png" 
+            src={getLogoSrc()}
             alt="WhalePlus" 
-            className="h-6 w-6 sm:h-8 sm:w-8"
+            className="h-12 object-contain"
           />
           <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
             WhalePlus
@@ -119,15 +114,14 @@ export const UserHeader = () => {
     );
   }
 
-  // Show login/signup only if user is not authenticated
   if (!user) {
     return (
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src="/whaleplus-logo.png" 
+            src={getLogoSrc()}
             alt="WhalePlus" 
-            className="h-6 w-6 sm:h-8 sm:w-8"
+            className="h-12 object-contain"
           />
           <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
             WhalePlus
@@ -160,7 +154,6 @@ export const UserHeader = () => {
     navigate('/');
   };
 
-  // Use fallback data from user auth data only with safe null checking
   const userMetadata = user?.user_metadata || {};
   const userName = userMetadata.full_name || userMetadata.name || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || '';
@@ -170,9 +163,9 @@ export const UserHeader = () => {
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
         <img 
-          src="/logos/in app logo icon hd.png?v=1" 
+          src={getLogoSrc()}
           alt="WhalePlus" 
-          className="h-6 w-6 sm:h-8 sm:w-8"
+          className="h-12 object-contain"
         />
         <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
           WhalePlus

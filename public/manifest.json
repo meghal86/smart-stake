@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logos/1. Favicon (HD) - Flat Blue Background .png",
+      "src": "/logos/in app logo icon hd.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logos/1. Favicon (HD) - Flat Blue Background .png",
+      "src": "/logos/in app logo icon hd.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
