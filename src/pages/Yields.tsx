@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, Filter, ArrowUpDown, BarChart3 } from "lucide-react";
+import { TrendingUp, Filter, ArrowUpDown, BarChart3, Search, Calculator } from "lucide-react";
 import { YieldProtocolCard } from "@/components/yields/YieldProtocolCard";
 import { YieldAnalytics } from "@/components/yields/YieldAnalytics";
+import { ProtocolDetailModal } from "@/components/yield/ProtocolDetailModal";
+import { YieldCalculator } from "@/components/yield/YieldCalculator";
+import { AlertSetupModal } from "@/components/yield/AlertSetupModal";
 import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
 import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -67,6 +72,11 @@ export default function Yields() {
   const [sortBy, setSortBy] = useState("apy");
   const [protocols, setProtocols] = useState(mockProtocols);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
   
   const yieldsAccess = canAccessFeature('yields');
   const canViewYields = yieldsAccess === 'full';
@@ -134,35 +144,51 @@ export default function Yields() {
           </TabsList>
 
           <TabsContent value="protocols" className="space-y-6">
-            {/* Filters and Sort */}
-            <div className="flex gap-2">
-              <Select value={selectedChain} onValueChange={setSelectedChain}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Chain" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Chains</SelectItem>
-                  <SelectItem value="ethereum">Ethereum</SelectItem>
-                  <SelectItem value="polygon">Polygon</SelectItem>
-                  <SelectItem value="bsc">BSC</SelectItem>
-                  <SelectItem value="arbitrum">Arbitrum</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Search and Filters */}
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search protocols..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
               
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="apy">Highest APY</SelectItem>
-                  <SelectItem value="tvl">Highest TVL</SelectItem>
-                  <SelectItem value="risk">Lowest Risk</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button size="icon" variant="outline">
-                <Filter className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Select value={selectedChain} onValueChange={setSelectedChain}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Chain" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Chains</SelectItem>
+                    <SelectItem value="ethereum">Ethereum</SelectItem>
+                    <SelectItem value="polygon">Polygon</SelectItem>
+                    <SelectItem value="bsc">BSC</SelectItem>
+                    <SelectItem value="arbitrum">Arbitrum</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="apy">Highest APY</SelectItem>
+                    <SelectItem value="tvl">Highest TVL</SelectItem>
+                    <SelectItem value="risk">Lowest Risk</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  size="icon" 
+                  variant="outline"
+                  onClick={() => setShowCalculator(!showCalculator)}
+                >
+                  <Calculator className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Stats Cards */}
@@ -181,18 +207,46 @@ export default function Yields() {
               </div>
             </div>
 
+            {/* Yield Calculator */}
+            {showCalculator && (
+              <YieldCalculator protocol={selectedProtocol} />
+            )}
+
             {/* Protocol Cards */}
-            <div className="space-y-4">
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="animate-pulse bg-card/80 rounded-lg p-4 h-24" />
-                ))
-              ) : (
-                protocols.map((protocol) => (
-                  <YieldProtocolCard key={protocol.id} protocol={protocol} />
-                ))
-              )}
-            </div>
+            <TooltipProvider>
+              <div className="space-y-4">
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="animate-pulse bg-card/80 rounded-lg p-4 h-24" />
+                  ))
+                ) : (
+                  protocols
+                    .filter(protocol => 
+                      searchQuery === "" || 
+                      protocol.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      protocol.chain.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((protocol) => (
+                      <div 
+                        key={protocol.id} 
+                        className="cursor-pointer"
+                        onClick={() => {
+                          setSelectedProtocol(protocol);
+                          setShowDetailModal(true);
+                        }}
+                      >
+                        <YieldProtocolCard 
+                          protocol={protocol} 
+                          onAlertClick={() => {
+                            setSelectedProtocol(protocol);
+                            setShowAlertModal(true);
+                          }}
+                        />
+                      </div>
+                    ))
+                )}
+              </div>
+            </TooltipProvider>
           </TabsContent>
 
           <TabsContent value="analytics">
@@ -200,6 +254,19 @@ export default function Yields() {
           </TabsContent>
           </Tabs>
         )}
+        
+        {/* Modals */}
+        <ProtocolDetailModal
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          protocol={selectedProtocol}
+        />
+        
+        <AlertSetupModal
+          isOpen={showAlertModal}
+          onClose={() => setShowAlertModal(false)}
+          protocol={selectedProtocol}
+        />
       </div>
     </div>
   );

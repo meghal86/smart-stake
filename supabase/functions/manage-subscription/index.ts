@@ -26,13 +26,24 @@ serve(async (req) => {
     )
 
     // Get the authorization header
-    const authHeader = req.headers.get('Authorization')!
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or malformed Authorization header:', authHeader)
+      return new Response(
+        JSON.stringify({ error: 'Missing or malformed Authorization header' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
     const token = authHeader.replace('Bearer ', '')
 
     // Get user from token
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
     
     if (userError || !user) {
+      console.error('User authentication failed:', userError)
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { 
@@ -42,7 +53,10 @@ serve(async (req) => {
       )
     }
 
-    const { action, subscriptionId, priceId } = await req.json()
+    const body = await req.json()
+    const { action, subscriptionId, priceId } = body
+    
+    console.log('Received action:', action, 'for user:', user.id)
 
     // Get user's subscription from database
     const { data: userData, error: dbError } = await supabaseClient
@@ -162,9 +176,13 @@ serve(async (req) => {
       case 'get_details':
         if (!userData.stripe_subscription_id) {
           return new Response(
-            JSON.stringify({ error: 'No active subscription found' }),
+            JSON.stringify({ 
+              success: true, 
+              subscription: null,
+              message: 'No active subscription found'
+            }),
             { 
-              status: 400, 
+              status: 200, 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           )
@@ -188,9 +206,13 @@ serve(async (req) => {
       case 'get_invoices':
         if (!userData.stripe_customer_id) {
           return new Response(
-            JSON.stringify({ error: 'No customer found' }),
+            JSON.stringify({ 
+              success: true, 
+              invoices: [],
+              message: 'No customer found'
+            }),
             { 
-              status: 400, 
+              status: 200, 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           )
@@ -251,7 +273,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error managing subscription:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to manage subscription' }),
+      JSON.stringify({ 
+        error: 'Failed to manage subscription',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

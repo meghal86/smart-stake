@@ -11,6 +11,9 @@ import Yields from "./Yields";
 import Scanner from "./Scanner";
 import Premium from "./Premium";
 import Profile from "./Profile";
+import MarketSentiment from "./MarketSentiment";
+import MultiCoinSentiment from "./MultiCoinSentiment";
+import WhaleAnalytics from "./WhaleAnalytics";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -83,6 +86,12 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return <Home />;
+      case "sentiment":
+        return <MarketSentiment />;
+      case "multi-sentiment":
+        return <MultiCoinSentiment />;
+      case "whales":
+        return <WhaleAnalytics />;
       case "yields":
         return <Yields />;
       case "scanner":
@@ -98,14 +107,17 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Loading WhalePlus...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       {showOnboarding ? (
         <OnboardingWalkthrough 
           isOpen={showOnboarding} 
@@ -114,10 +126,17 @@ const Index = () => {
         />
       ) : (
         <>
-          <div className="flex justify-end p-4 bg-card/80 backdrop-blur-lg border-b border-border">
+          {/* Mobile-optimized header */}
+          <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border/50 px-3 py-2 sm:px-4 sm:py-3">
             <UserHeader />
           </div>
-          {renderContent()}
+          
+          {/* Main content with proper mobile spacing */}
+          <main className="flex-1 overflow-auto pb-20">
+            {renderContent()}
+          </main>
+          
+          {/* Mobile-optimized bottom navigation */}
           <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         </>
       )}

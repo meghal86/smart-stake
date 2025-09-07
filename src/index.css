@@ -104,3 +104,131 @@
     border-radius: 0 !important;
   }
 }
+/* Mobile-specific optimizations */
+@layer utilities {
+  /* Safe area support for mobile devices */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Touch-friendly interactions */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Prevent text selection on interactive elements */
+  .select-none {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Smooth scrolling for mobile */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbars on mobile while keeping functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Mobile-optimized text sizes */
+  .text-mobile-xs {
+    font-size: 0.625rem;
+    line-height: 0.75rem;
+  }
+  
+  /* Responsive breakpoint for extra small screens */
+  @media (min-width: 375px) {
+    .xs\:block {
+      display: block;
+    }
+    
+    .xs\:hidden {
+      display: none;
+    }
+    
+    .xs\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .xs\:inline {
+      display: inline;
+    }
+  }
+}
+
+/* Mobile viewport optimizations */
+@media (max-width: 768px) {
+  /* Ensure proper mobile viewport */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* Optimize tap targets for mobile */
+  button, 
+  [role="button"], 
+  input[type="submit"], 
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve form inputs on mobile */
+  input, 
+  textarea, 
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better mobile card spacing */
+  .card-mobile {
+    margin: 0.5rem;
+    border-radius: 0.75rem;
+  }
+  
+  /* Mobile-optimized modals */
+  .modal-mobile {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    border-radius: 1rem;
+  }
+}
+
+/* PWA and mobile app optimizations */
+@media (display-mode: standalone) {
+  /* Hide browser UI when in PWA mode */
+  .pwa-hide {
+    display: none;
+  }
+  
+  /* Adjust for PWA status bar */
+  .pwa-safe-top {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+}
+
+/* Dark mode mobile optimizations */
+@media (prefers-color-scheme: dark) {
+  /* Better contrast for mobile dark mode */
+  .dark-mobile-text {
+    color: #f8fafc;
+  }
+  
+  .dark-mobile-bg {
+    background-color: #0f172a;
+  }
+}

@@ -87,9 +87,7 @@ export const SubscriptionManager: React.FC = () => {
       const result = await callStripeFunction('get_details');
       setSubscription(result.subscription);
     } catch (err: any) {
-      if (err.message !== 'No active subscription found') {
-        setError(err.message);
-      }
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,8 @@
-import { ExternalLink, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { ExternalLink, AlertTriangle, CheckCircle, XCircle, Bell, HelpCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface YieldProtocol {
   id: string;
@@ -14,9 +16,10 @@ interface YieldProtocol {
 
 interface YieldProtocolCardProps {
   protocol: YieldProtocol;
+  onAlertClick?: () => void;
 }
 
-export function YieldProtocolCard({ protocol }: YieldProtocolCardProps) {
+export function YieldProtocolCard({ protocol, onAlertClick }: YieldProtocolCardProps) {
   const formatTVL = (tvl: number) => {
     if (tvl >= 1000000000) {
       return `$${(tvl / 1000000000).toFixed(2)}B`;
@@ -74,7 +77,23 @@ export function YieldProtocolCard({ protocol }: YieldProtocolCardProps) {
           </div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-1">Risk</div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+            Risk
+            <Tooltip>
+              <TooltipTrigger>
+                <HelpCircle size={12} className="text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs max-w-xs">
+                  <p className="font-medium mb-1">Risk Score Components:</p>
+                  <p>• Smart Contract Security (40%)</p>
+                  <p>• Liquidity Risk (30%)</p>
+                  <p>• Market Volatility (20%)</p>
+                  <p>• Regulatory Risk (10%)</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <div className="flex items-center gap-1">
             <RiskIcon size={16} className={getRiskColor(protocol.riskScore)} />
             <span className={`font-semibold ${getRiskColor(protocol.riskScore)}`}>
@@ -84,11 +103,24 @@ export function YieldProtocolCard({ protocol }: YieldProtocolCardProps) {
         </div>
       </div>
 
-      <div className="w-full bg-muted rounded-full h-2">
-        <div 
-          className="bg-gradient-to-r from-success to-success/80 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${Math.min(protocol.apy * 2, 100)}%` }}
-        />
+      <div className="flex items-center gap-2">
+        <div className="flex-1 bg-muted rounded-full h-2">
+          <div 
+            className="bg-gradient-to-r from-success to-success/80 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${Math.min(protocol.apy * 2, 100)}%` }}
+          />
+        </div>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onAlertClick?.();
+          }}
+          className="h-8 px-2"
+        >
+          <Bell size={12} />
+        </Button>
       </div>
     </Card>
   );
