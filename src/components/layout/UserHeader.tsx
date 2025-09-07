@@ -32,16 +32,7 @@ export const UserHeader = () => {
     }
   }, [user]);
 
-  // Add a periodic refresh to catch plan updates
-  useEffect(() => {
-    if (user) {
-      const interval = setInterval(() => {
-        fetchUserPlan();
-      }, 5000); // Refresh every 5 seconds for faster updates
 
-      return () => clearInterval(interval);
-    }
-  }, [user]);
 
   // Listen for storage events to refresh when sync happens
   useEffect(() => {
@@ -218,7 +209,7 @@ export const UserHeader = () => {
             
             <DropdownMenuSeparator />
             
-            <DropdownMenuItem onClick={() => navigate('/profile')}>
+            <DropdownMenuItem onClick={() => navigate('/?tab=profile')}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>

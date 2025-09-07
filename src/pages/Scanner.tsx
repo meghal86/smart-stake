@@ -34,47 +34,55 @@ export default function Scanner() {
         throw error;
       }
 
+      // Filter risk factors based on actual wallet age
+      const filteredRiskFactors = data.risk_factors?.filter((factor: string) => {
+        if (factor.includes('New wallet') && data.analysis?.walletAge >= 8) {
+          return false;
+        }
+        return true;
+      }) || [];
+
+      // Calculate volatility based on transaction data
+      const volatilityScore = data.analysis?.totalTransactions > 5000 ? 8 : 
+                             data.analysis?.totalTransactions > 1000 ? 6 : 4;
+
       setScanResult({
         address: walletAddress,
         riskScore: data.risk_score || 5,
-        totalValue: Math.random() * 5000000,
-        flags: data.risk_factors?.map((factor: string) => ({
+        riskLevel: data.risk_level || 'medium',
+        totalValue: data.analysis?.currentBalance || 0,
+        avgTxValue: data.analysis?.avgTxValue || 0,
+        flags: filteredRiskFactors.map((factor: string) => ({
           type: "warning",
           message: factor
-        })) || [],
+        })),
+        recommendations: data.recommendations || [],
         breakdown: {
-          liquidity: Math.max(1, 10 - (data.risk_score || 5)),
-          history: data.analysis?.walletAge > 365 ? 9 : 5,
-          associations: Math.floor(Math.random() * 4) + 6,
-          volatility: Math.floor(Math.random() * 4) + 6,
-        }
+          liquidity: data.analysis?.currentBalance > 1 ? 8 : 2,
+          history: data.analysis?.walletAge >= 1 ? Math.min(9, data.analysis.walletAge) : 1,
+          associations: data.analysis?.uniqueContracts > 10 ? 7 : data.analysis?.uniqueContracts || 3,
+          volatility: volatilityScore,
+        },
+        analysis: data.analysis,
+        scanTimestamp: new Date().toISOString()
       });
     } catch (error) {
       console.error('Error scanning wallet:', error);
-      setScanResult({
-        address: walletAddress,
-        riskScore: 7.2,
-        totalValue: 2450000,
-        flags: [
-          { type: "warning", message: "High volume trading detected" },
-          { type: "info", message: "Associated with known DeFi protocols" },
-          { type: "success", message: "No suspicious activities found" },
-        ],
-        breakdown: {
-          liquidity: 8,
-          history: 7,
-          associations: 6,
-          volatility: 8,
-        }
-      });
+      setScanResult({ error: error.message || 'Failed to scan wallet' });
     } finally {
       setIsScanning(false);
     }
   };
 
-  const getRiskColor = (score: number) => {
-    if (score >= 8) return "text-success";
-    if (score >= 6) return "text-warning";
+  const getRiskColor = (level: string) => {
+    if (level === 'low') return "text-success";
+    if (level === 'medium') return "text-warning";
+    return "text-destructive";
+  };
+
+  const getRiskColorByScore = (score: number) => {
+    if (score >= 7) return "text-success";
+    if (score >= 4) return "text-warning";
     return "text-destructive";
   };
 
@@ -134,30 +142,52 @@ export default function Scanner() {
               </Card>
             )}
 
-            {scanResult && (
+            {scanResult && scanResult.error && (
+              <Card className="p-6 text-center">
+                <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Scan Failed</h3>
+                <p className="text-muted-foreground">{scanResult.error}</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setScanResult(null)} 
+                  className="mt-4"
+                >
+                  Try Again
+                </Button>
+              </Card>
+            )}
+
+            {scanResult && !scanResult.error && (
               <div className="space-y-4">
                 {/* Risk Score */}
                 <Card className="p-6">
                   <div className="text-center mb-4">
-                    <div className={`text-4xl font-bold mb-2 ${getRiskColor(scanResult.riskScore)}`}>
+                    <div className={`text-4xl font-bold mb-2 ${getRiskColorByScore(scanResult.riskScore)}`}>
                       {scanResult.riskScore}/10
                     </div>
                     <div className="flex items-center justify-center gap-2">
                       {React.createElement(getRiskIcon(scanResult.riskScore), { 
                         size: 20, 
-                        className: getRiskColor(scanResult.riskScore) 
+                        className: getRiskColor(scanResult.riskLevel) 
                       })}
-                      <span className="text-lg font-semibold text-foreground">
-                        {scanResult.riskScore >= 8 ? "Low Risk" : 
-                         scanResult.riskScore >= 6 ? "Medium Risk" : "High Risk"}
+                      <span className="text-lg font-semibold text-foreground capitalize">
+                        {scanResult.riskLevel} Risk
                       </span>
                     </div>
                   </div>
                   
-                  <div className="text-center">
-                    <div className="text-sm text-muted-foreground mb-1">Total Portfolio Value</div>
-                    <div className="text-2xl font-bold text-foreground">
-                      ${scanResult.totalValue.toLocaleString()}
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
+                      <div className="text-xl font-bold text-foreground">
+                        {scanResult.totalValue > 0 ? `${scanResult.totalValue.toFixed(4)} ETH` : 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-1">Avg Transaction</div>
+                      <div className="text-xl font-bold text-foreground">
+                        {scanResult.avgTxValue > 0 ? `${scanResult.avgTxValue.toFixed(4)} ETH` : 'N/A'}
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -189,20 +219,60 @@ export default function Scanner() {
                   </div>
                 </Card>
 
-                {/* Flags */}
-                <Card className="p-4">
-                  <h3 className="font-semibold text-foreground mb-4">Security Flags</h3>
-                  <div className="space-y-2">
-                    {scanResult.flags.map((flag: any, index: number) => (
-                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                        {flag.type === "warning" && <AlertTriangle size={16} className="text-warning mt-0.5" />}
-                        {flag.type === "info" && <CheckCircle size={16} className="text-primary mt-0.5" />}
-                        {flag.type === "success" && <CheckCircle size={16} className="text-success mt-0.5" />}
-                         <span className="text-sm text-foreground">{flag.message}</span>
-                       </div>
-                     ))}
-                   </div>
-                 </Card>
+                {/* Risk Factors */}
+                {scanResult.flags.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="font-semibold text-foreground mb-4">Risk Factors</h3>
+                    <div className="space-y-2">
+                      {scanResult.flags.map((flag: any, index: number) => (
+                        <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                          <AlertTriangle size={16} className="text-warning mt-0.5" />
+                          <span className="text-sm text-foreground">{flag.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Recommendations */}
+                {scanResult.recommendations?.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="font-semibold text-foreground mb-4">Recommendations</h3>
+                    <div className="space-y-2">
+                      {scanResult.recommendations.map((rec: string, index: number) => (
+                        <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-primary/10">
+                          <CheckCircle size={16} className="text-primary mt-0.5" />
+                          <span className="text-sm text-foreground">{rec}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Analysis Details */}
+                {scanResult.analysis && (
+                  <Card className="p-4">
+                    <h3 className="font-semibold text-foreground mb-4">Wallet Analysis</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Total Transactions:</span>
+                        <span className="ml-2 font-medium">{scanResult.analysis.totalTransactions?.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Wallet Age:</span>
+                        <span className="ml-2 font-medium">{scanResult.analysis.walletAge} years</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Recent Activity:</span>
+                        <span className="ml-2 font-medium">{scanResult.analysis.recentActivity} txns</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Unique Contracts:</span>
+                        <span className="ml-2 font-medium">{scanResult.analysis.uniqueContracts}</span>
+                      </div>
+                    </div>
+                  </Card>
+                )}
                </div>
              )}
            </div>
