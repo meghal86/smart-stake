@@ -14,6 +14,8 @@ import Profile from "./Profile";
 import MarketSentiment from "./MarketSentiment";
 import MultiCoinSentiment from "./MultiCoinSentiment";
 import WhaleAnalytics from "./WhaleAnalytics";
+import { TeamManagement } from "@/components/team/TeamManagement";
+import { PredictiveAnalytics } from "@/components/analytics/PredictiveAnalytics";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -94,6 +96,10 @@ const Index = () => {
         return <MarketSentiment />;
       case "whales":
         return <WhaleAnalytics />;
+      case "team":
+        return <TeamManagement />;
+      case "analytics":
+        return <PredictiveAnalytics />;
       case "yields":
         return <Yields />;
       case "scanner":

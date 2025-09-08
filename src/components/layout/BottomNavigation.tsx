@@ -1,4 +1,4 @@
-import { Home, Activity, Fish, TrendingUp, Shield } from "lucide-react";
+import { Home, Activity, Fish, TrendingUp, Shield, Users, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavigationItem {
@@ -12,7 +12,8 @@ const navigationItems: NavigationItem[] = [
   { id: "home", label: "Home", icon: Home },
   { id: "sentiment", label: "Sentiment", icon: Activity },
   { id: "whales", label: "Whales", icon: Fish },
-  { id: "yields", label: "Yields", icon: TrendingUp },
+  { id: "analytics", label: "Analytics", icon: Brain, isPremium: true },
+  { id: "team", label: "Team", icon: Users, isPremium: true },
   { id: "scanner", label: "Scanner", icon: Shield, isPremium: true },
 ];
 

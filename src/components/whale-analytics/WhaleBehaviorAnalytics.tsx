@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, Activity, Wallet, Droplets, AlertTriangle, Eye, Settings, Download, Filter, Info, History, ExternalLink, Bell } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Wallet, Droplets, AlertTriangle, Eye, Settings, Download, Filter, Info, History, ExternalLink, Bell, HelpCircle, Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EnterpriseFeatures } from './EnterpriseFeatures';
 import { AlertsManager } from '@/components/alerts/AlertsManager';
+import { WhaleProfileModal } from '@/components/whale-profiles/WhaleProfileModal';
 
 interface WhaleData {
   id: string;
@@ -131,6 +133,7 @@ export const WhaleBehaviorAnalytics = () => {
   const [marketSignals, setMarketSignals] = useState({ highRisk: 0, clustering: 0, accumulation: 0 });
   const [showEnterpriseFeatures, setShowEnterpriseFeatures] = useState(false);
   const [showAlertsManager, setShowAlertsManager] = useState(false);
+  const [showWhaleProfile, setShowWhaleProfile] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState({ signals: false, whales: false, admin: true });
   const [activeTab, setActiveTab] = useState('signals');
 
@@ -146,7 +149,8 @@ export const WhaleBehaviorAnalytics = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <TooltipProvider>
+      <div className="space-y-6">
       {/* Sticky Summary Bar - Mobile */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b p-2 sm:hidden">
         <div className="flex items-center justify-between text-sm">
@@ -216,15 +220,17 @@ export const WhaleBehaviorAnalytics = () => {
                 <SelectItem value="low-risk">Low Risk (1-3)</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={() => exportWhaleData(whales)}>
-              <Download className="h-4 w-4 mr-2" />
-              Export All
-            </Button>
-            <Button variant="outline" size="sm" className="text-red-600" onClick={() => exportHighRiskReport(whales)}>
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Export High Risk
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowAlertsManager(true)}>
+            <div data-tutorial="export-buttons" className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => exportWhaleData(whales)}>
+                <Download className="h-4 w-4 mr-2" />
+                Export All
+              </Button>
+              <Button variant="outline" size="sm" className="text-red-600" onClick={() => exportHighRiskReport(whales)}>
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Export High Risk
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowAlertsManager(true)} data-tutorial="alerts-manager">
               <Bell className="h-4 w-4 mr-2" />
               Alerts
             </Button>
@@ -232,6 +238,7 @@ export const WhaleBehaviorAnalytics = () => {
               variant={showEnterpriseFeatures ? "default" : "outline"} 
               size="sm" 
               onClick={() => setShowEnterpriseFeatures(!showEnterpriseFeatures)}
+              data-tutorial="enterprise-button"
             >
               <Settings className="h-4 w-4 mr-2" />
               Enterprise
@@ -249,7 +256,17 @@ export const WhaleBehaviorAnalytics = () => {
                   <AlertTriangle className="h-4 w-4 text-red-700" />
                   <span className="text-sm font-medium text-red-800">High Risk Activity</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-red-700">{marketSignals.highRisk}</div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-xl sm:text-2xl font-bold text-red-700 cursor-help">
+                      {marketSignals.highRisk}
+                      <HelpCircle className="h-3 w-3 inline ml-1 opacity-60" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Whales with risk score ≥7 showing unusual trading patterns</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="text-xs text-red-600/80">Whales showing unusual patterns</div>
               </div>
               <div className="p-2 sm:p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
@@ -257,7 +274,17 @@ export const WhaleBehaviorAnalytics = () => {
                   <TrendingUp className="h-4 w-4 text-yellow-700" />
                   <span className="text-sm font-medium text-yellow-800">Whale Clustering</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-yellow-700">{marketSignals.clustering}</div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-xl sm:text-2xl font-bold text-yellow-700 cursor-help">
+                      {marketSignals.clustering}
+                      <HelpCircle className="h-3 w-3 inline ml-1 opacity-60" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Whales showing coordinated behavior patterns</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="text-xs text-yellow-600/80">Similar behavior detected</div>
               </div>
               <div className="p-2 sm:p-3 bg-green-500/10 rounded-lg border border-green-500/30">
@@ -265,7 +292,17 @@ export const WhaleBehaviorAnalytics = () => {
                   <TrendingDown className="h-4 w-4 text-green-700" />
                   <span className="text-sm font-medium text-green-800">Accumulation</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-green-700">{marketSignals.accumulation}</div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-xl sm:text-2xl font-bold text-green-700 cursor-help">
+                      {marketSignals.accumulation}
+                      <HelpCircle className="h-3 w-3 inline ml-1 opacity-60" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Whales in long-term accumulation phase</p>
+                  </TooltipContent>
+                </Tooltip>
                 <div className="text-xs text-green-600/80">Whales in accumulation phase</div>
               </div>
             </div>
@@ -355,7 +392,10 @@ export const WhaleBehaviorAnalytics = () => {
             <div
               key={whale.id}
               className="p-3 sm:p-4 border rounded-lg hover:bg-muted/20 cursor-pointer transition-all duration-200 hover:shadow-md"
-              onClick={() => setSelectedWhale(whale)}
+              onClick={() => {
+                setSelectedWhale(whale);
+                setShowWhaleProfile(true);
+              }}
             >
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -381,9 +421,17 @@ export const WhaleBehaviorAnalytics = () => {
                 </div>
                 <div className="text-right">
                   <div className="font-semibold">{whale.balance}</div>
-                  <div className={`text-sm ${getRiskColor(whale.riskScore)}`}>
-                    Risk: {whale.riskScore}/10
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`text-sm ${getRiskColor(whale.riskScore)} cursor-help`}>
+                        Risk: {whale.riskScore}/10
+                        <HelpCircle className="h-3 w-3 inline ml-1 opacity-60" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Risk calculated from transaction patterns, volume, and behavior changes</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
               
@@ -451,134 +499,33 @@ export const WhaleBehaviorAnalytics = () => {
               ×
             </Button>
           </div>
-          <EnterpriseFeatures 
-            whales={whales} 
-            onTriggerAlert={(whale, rule) => {
-              console.log(`Alert triggered for ${whale.address} by rule ${rule.name}`);
-            }} 
-          />
+          <div data-tutorial="risk-rules">
+            <EnterpriseFeatures 
+              whales={whales} 
+              onTriggerAlert={(whale, rule) => {
+                console.log(`Alert triggered for ${whale.address} by rule ${rule.name}`);
+              }} 
+            />
+          </div>
         </Card>
       )}
 
       {/* Alerts Manager */}
       <AlertsManager isOpen={showAlertsManager} onClose={() => setShowAlertsManager(false)} />
 
-      {/* Whale Detail Modal */}
+      {/* Whale Profile Modal */}
       {selectedWhale && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-xl font-bold">{selectedWhale.address}</h3>
-                  <Badge className={`mt-2 ${getWhaleTypeColor(selectedWhale.type)}`}>
-                    {getWhaleTypeIcon(selectedWhale.type)}
-                    <span className="ml-1 capitalize">{selectedWhale.type.replace('_', ' ')}</span>
-                  </Badge>
-                </div>
-                <Button variant="ghost" onClick={() => setSelectedWhale(null)}>×</Button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-3 bg-muted/20 rounded">
-                    <div className="text-sm text-muted-foreground">Balance</div>
-                    <div className="text-lg font-bold">{selectedWhale.balance}</div>
-                  </div>
-                  <div className="p-3 bg-muted/20 rounded">
-                    <div className="text-sm text-muted-foreground">Risk Score</div>
-                    <div className={`text-lg font-bold ${getRiskColor(selectedWhale.riskScore)}`}>
-                      {selectedWhale.riskScore}/10
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium">Activity Trends</h4>
-                    <Button variant="ghost" size="sm">
-                      <History className="h-4 w-4 mr-1" />
-                      Pattern History
-                    </Button>
-                  </div>
-                  <div className="h-32 bg-muted/20 rounded p-4 mb-3">
-                    <div className="relative">
-                      <div className="absolute left-0 top-0 text-xs text-muted-foreground">60</div>
-                      <div className="absolute left-0 top-1/2 text-xs text-muted-foreground">30</div>
-                      <div className="absolute left-0 bottom-0 text-xs text-muted-foreground">0</div>
-                      <div className="flex items-end gap-1 h-20 ml-6">
-                        {Array.from({ length: 30 }, (_, i) => {
-                          const value = Math.floor(Math.random() * 50) + 10;
-                          const height = (value / 60) * 100;
-                          return (
-                            <div
-                              key={i}
-                              className="bg-primary rounded-t flex-1 min-h-[4px]"
-                              style={{ height: `${height}%` }}
-                              title={`Day ${i + 1}: ${value} transactions`}
-                            />
-                          );
-                        })}
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground mt-1 ml-6">
-                        <span>30d ago</span>
-                        <span>Today</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    <div className="flex justify-between">
-                      <span>Pattern Changes: Trader → Hodler (30d ago)</span>
-                      <span>Risk Trend: ↗️ Increasing</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded">
-                  <h4 className="font-medium mb-3">Behavior Signals & Counterparties</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <h5 className="text-sm font-medium mb-2">Active Signals</h5>
-                      <div className="space-y-2">
-                        {selectedWhale.signals.map((signal, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-muted/20 rounded">
-                            <div className="flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                              <span className="text-sm">{signal}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">2h ago</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-medium mb-2">Top Counterparties</h5>
-                      <div className="space-y-1">
-                        {['Uniswap V3', 'Binance Hot Wallet', '1inch Router'].map((party, index) => (
-                          <div key={index} className="flex items-center justify-between text-xs p-2 bg-muted/10 rounded">
-                            <span>{party}</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-6 w-6 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(`https://etherscan.io/address/${party.toLowerCase().replace(' ', '')}`, '_blank');
-                              }}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
+        <WhaleProfileModal 
+          whale={selectedWhale} 
+          isOpen={showWhaleProfile} 
+          onClose={() => {
+            setShowWhaleProfile(false);
+            setSelectedWhale(null);
+          }} 
+        />
       )}
+
+
 
       {/* Floating Action Button - Mobile */}
       <div className="fixed bottom-4 right-4 sm:hidden z-50">
@@ -600,6 +547,7 @@ export const WhaleBehaviorAnalytics = () => {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 };

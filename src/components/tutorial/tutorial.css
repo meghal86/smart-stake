@@ -1,0 +1,53 @@
+/* Tutorial highlight styles */
+.tutorial-highlight {
+  position: relative;
+  z-index: 51;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 0 8px rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  animation: tutorial-pulse 2s infinite;
+}
+
+@keyframes tutorial-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 0 8px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.7), 0 0 0 12px rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* Tutorial pointer */
+.tutorial-pointer {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+}
+
+.tutorial-pointer.top {
+  border-bottom-color: hsl(var(--border));
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tutorial-pointer.bottom {
+  border-top-color: hsl(var(--border));
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tutorial-pointer.left {
+  border-right-color: hsl(var(--border));
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tutorial-pointer.right {
+  border-left-color: hsl(var(--border));
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
