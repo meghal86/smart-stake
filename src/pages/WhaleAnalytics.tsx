@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
+import { WhaleBehaviorAnalytics } from '@/components/whale-analytics/WhaleBehaviorAnalytics';
 
 interface WhaleWallet {
   id: string;
@@ -34,6 +36,8 @@ interface SharedWatchlist {
 
 export default function WhaleAnalytics() {
   const { user } = useAuth();
+  const { planLimits, canAccessFeature } = useSubscription();
+  const whaleAccess = canAccessFeature('whaleAnalytics');
   const [whales, setWhales] = useState<WhaleWallet[]>([]);
   const [sharedWatchlists, setSharedWatchlists] = useState<SharedWatchlist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +50,7 @@ export default function WhaleAnalytics() {
 
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('balance');
+  const [activeView, setActiveView] = useState<'analytics' | 'behavior'>('analytics');
 
   useEffect(() => {
     fetchWhaleData();
@@ -108,51 +113,74 @@ export default function WhaleAnalytics() {
 
   const filteredWhales = whales.filter(whale => 
     filterType === 'all' || whale.type === filterType
-  );
+  ).slice(0, whaleAccess === 'limited' ? planLimits.whaleAnalyticsLimit : whales.length);
 
   return (
     <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/20 rounded-xl">
-            <Fish className="h-6 w-6 text-primary" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/20 rounded-xl">
+              <Fish className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Whale Analytics</h1>
+              <p className="text-sm text-muted-foreground">Track top crypto whales</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">Whale Analytics</h1>
-            <p className="text-sm text-muted-foreground">Track top crypto whales</p>
+          <div className="flex gap-2">
+            <Button 
+              variant={activeView === 'analytics' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setActiveView('analytics')}
+            >
+              Analytics
+            </Button>
+            <Button 
+              variant={activeView === 'behavior' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setActiveView('behavior')}
+            >
+              Behavior AI
+            </Button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2">
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Whales</SelectItem>
-              <SelectItem value="trading">Trading Wallets</SelectItem>
-              <SelectItem value="investment">Investment Wallets</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="balance">Balance</SelectItem>
-              <SelectItem value="roi">ROI</SelectItem>
-              <SelectItem value="risk">Risk Score</SelectItem>
-              <SelectItem value="activity">Recent Activity</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button size="icon" variant="outline">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Conditional Content */}
+        {activeView === 'behavior' ? (
+          <WhaleBehaviorAnalytics />
+        ) : (
+          <>
+            {/* Filters */}
+            <div className="flex gap-2">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Whales</SelectItem>
+                  <SelectItem value="trading">Trading Wallets</SelectItem>
+                  <SelectItem value="investment">Investment Wallets</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="balance">Balance</SelectItem>
+                  <SelectItem value="roi">ROI</SelectItem>
+                  <SelectItem value="risk">Risk Score</SelectItem>
+                  <SelectItem value="activity">Recent Activity</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button size="icon" variant="outline">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
 
         {/* Whale List */}
         <div className="space-y-4">
@@ -436,6 +464,8 @@ export default function WhaleAnalytics() {
               ))}
             </div>
           </Card>
+        )}
+          </>
         )}
       </div>
     </div>

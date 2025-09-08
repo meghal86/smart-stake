@@ -90,7 +90,7 @@ export const UserHeader = () => {
   };
 
   const getLogoSrc = () => {
-    return '/logos/logo on flat backgroud.png';
+    return '/logos/png logo .png';
   };
 
   if (authLoading) {
@@ -162,11 +162,13 @@ export const UserHeader = () => {
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <img 
-          src={getLogoSrc()}
-          alt="WhalePlus" 
-          className="h-12 object-contain"
-        />
+        <div className="relative h-12 w-auto">
+          <img 
+            src={getLogoSrc()}
+            alt="WhalePlus" 
+            className="h-12 object-contain logo-transparent"
+          />
+        </div>
         <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
           WhalePlus
         </span>

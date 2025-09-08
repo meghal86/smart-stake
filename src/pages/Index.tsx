@@ -87,9 +87,11 @@ const Index = () => {
       case "home":
         return <Home />;
       case "sentiment":
-        return <MarketSentiment />;
+        return <MultiCoinSentiment />;
       case "multi-sentiment":
         return <MultiCoinSentiment />;
+      case "basic-sentiment":
+        return <MarketSentiment />;
       case "whales":
         return <WhaleAnalytics />;
       case "yields":
@@ -117,7 +119,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background circuit-pattern">
       {showOnboarding ? (
         <OnboardingWalkthrough 
           isOpen={showOnboarding} 
@@ -127,7 +129,7 @@ const Index = () => {
       ) : (
         <>
           {/* Mobile-optimized header */}
-          <div className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border/50 px-3 py-2 sm:px-4 sm:py-3">
+          <div className="sticky top-0 z-50 whale-card border-b border-primary/20 px-3 py-2 sm:px-4 sm:py-3">
             <UserHeader />
           </div>
           

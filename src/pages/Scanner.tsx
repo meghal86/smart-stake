@@ -12,7 +12,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 
 
 export default function Scanner() {
-  const { userPlan, canAccessFeature, getUpgradeMessage } = useSubscription();
+  const { userPlan, planLimits, canAccessFeature, getUpgradeMessage } = useSubscription();
+  const [dailyScansUsed, setDailyScansUsed] = useState(0);
   const [walletAddress, setWalletAddress] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
@@ -21,11 +22,17 @@ export default function Scanner() {
   const [showMethodology, setShowMethodology] = useState(false);
   const [showRiskBreakdown, setShowRiskBreakdown] = useState(false);
   
-  const scannerAccess = canAccessFeature('riskScanner');
-  const canUsePremiumScanner = scannerAccess === 'full';
+  const scannerAccess = canAccessFeature('scanner');
+  const canUsePremiumScanner = scannerAccess === 'full' || scannerAccess === 'limited';
 
   const handleScan = async () => {
     if (!walletAddress) return;
+    
+    // Check daily scan limit for free users
+    if (userPlan.plan === 'free' && dailyScansUsed >= planLimits.walletScansPerDay) {
+      alert(`Daily scan limit reached (${planLimits.walletScansPerDay}/day). Upgrade to Pro for unlimited scans.`);
+      return;
+    }
     
     setIsScanning(true);
     
@@ -70,6 +77,11 @@ export default function Scanner() {
         monitoring_alerts: data.monitoring_alerts,
         scanTimestamp: new Date().toISOString()
       });
+      
+      // Increment daily scan count for free users
+      if (userPlan.plan === 'free') {
+        setDailyScansUsed(prev => prev + 1);
+      }
     } catch (error) {
       console.error('Error scanning wallet:', error);
       setScanResult({ error: error.message || 'Failed to scan wallet' });
@@ -103,12 +115,24 @@ export default function Scanner() {
         {!canUsePremiumScanner ? (
           <UpgradePrompt
             feature="AI-Powered Risk Scanner"
-            message={getUpgradeMessage('riskScanner')}
+            message={getUpgradeMessage('scanner')}
             requiredPlan="premium"
             className="max-w-md mx-auto mt-8"
           />
         ) : (
           <div>
+            {/* Daily Scan Limit Indicator for Free Users */}
+            {userPlan.plan === 'free' && (
+              <Card className="p-3 mb-4 bg-muted/30">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Daily scans used: {dailyScansUsed}/{planLimits.walletScansPerDay}</span>
+                  <Button size="sm" variant="outline" onClick={() => window.location.href = '/subscription'}>
+                    Upgrade for unlimited
+                  </Button>
+                </div>
+              </Card>
+            )}
+            
             {/* Scanner Input */}
             <div className="mb-6">
               <div className="space-y-3">

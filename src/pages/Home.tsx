@@ -192,10 +192,17 @@ export default function Home() {
   });
 
   useEffect(() => {
-    fetchTransactions();
-    // Refresh every 2 minutes
-    const interval = setInterval(fetchTransactions, 120000);
-    return () => clearInterval(interval);
+    if (user) {
+      // Logged users get real API data
+      fetchTransactions();
+      const interval = setInterval(fetchTransactions, 120000);
+      return () => clearInterval(interval);
+    } else {
+      // Non-logged users get mock data (Free Plan)
+      setTransactions(mockTransactions);
+      setIsMockData(true);
+      setIsLoading(false);
+    }
   }, [user]);
 
   return (

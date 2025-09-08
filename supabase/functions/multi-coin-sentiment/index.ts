@@ -22,7 +22,13 @@ serve(async (req) => {
     const priceResponse = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${TOP_COINS.join(',')}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`
     )
+    
+    if (!priceResponse.ok) {
+      throw new Error(`CoinGecko API failed: ${priceResponse.status} ${priceResponse.statusText}`)
+    }
+    
     const priceData = await priceResponse.json()
+    console.log('Price data:', priceData)
 
     // Fetch Fear & Greed Index
     const fearGreedResponse = await fetch('https://api.alternative.me/fng/')
@@ -32,7 +38,10 @@ serve(async (req) => {
     // Calculate sentiment scores for each coin
     const coinSentiments = TOP_COINS.map(coinId => {
       const coin = priceData[coinId]
-      if (!coin) return null
+      if (!coin) {
+        console.log(`No data for coin: ${coinId}`)
+        return null
+      }
 
       const change24h = coin.usd_24h_change || 0
       const volume = coin.usd_24h_vol || 0

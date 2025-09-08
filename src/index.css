@@ -5,47 +5,47 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 210 100% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 100% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 100% 8%;
+    --primary: 210 100% 20%;
+    --primary-foreground: 180 100% 95%;
+    --secondary: 180 100% 85%;
+    --secondary-foreground: 210 100% 15%;
+    --muted: 180 50% 95%;
+    --muted-foreground: 210 50% 40%;
+    --accent: 150 100% 70%;
+    --accent-foreground: 210 100% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --border: 180 30% 90%;
+    --input: 180 30% 90%;
+    --ring: 180 100% 50%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 210 100% 4%;
+    --foreground: 180 100% 95%;
+    --card: 210 100% 6%;
+    --card-foreground: 180 100% 95%;
+    --popover: 210 100% 6%;
+    --popover-foreground: 180 100% 95%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 210 100% 10%;
+    --secondary: 210 50% 15%;
+    --secondary-foreground: 180 100% 90%;
+    --muted: 210 50% 12%;
+    --muted-foreground: 180 30% 70%;
+    --accent: 150 100% 60%;
+    --accent-foreground: 210 100% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    --border: 210 50% 18%;
+    --input: 210 50% 18%;
+    --ring: 180 100% 60%;
   }
 }
 
@@ -167,6 +167,72 @@
     .xs\:inline {
       display: inline;
     }
+  }
+}
+
+/* WhalePlus Brand Styles */
+@layer components {
+  .whale-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 50%, hsl(var(--accent)) 100%);
+  }
+  
+  .whale-glow {
+    box-shadow: 0 0 20px hsla(var(--primary), 0.3), 0 0 40px hsla(var(--secondary), 0.2);
+  }
+  
+  .whale-border {
+    border: 1px solid hsla(var(--primary), 0.3);
+    background: linear-gradient(135deg, hsla(var(--primary), 0.05) 0%, hsla(var(--secondary), 0.05) 100%);
+  }
+  
+  .whale-card {
+    background: linear-gradient(135deg, hsla(var(--card), 0.95) 0%, hsla(var(--primary), 0.02) 100%);
+    border: 1px solid hsla(var(--primary), 0.1);
+    backdrop-filter: blur(10px);
+  }
+  
+  .whale-button {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    transition: all 0.3s ease;
+  }
+  
+  .whale-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px hsla(var(--primary), 0.4);
+  }
+  
+  .circuit-pattern {
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsla(var(--primary), 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, hsla(var(--secondary), 0.1) 0%, transparent 50%);
+  }
+  
+  .logo-transparent {
+    background: transparent !important;
+    filter: 
+      contrast(1.2) 
+      brightness(1.1)
+      drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+  
+  .logo-transparent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  
+  .dark .logo-transparent {
+    filter: 
+      invert(0)
+      contrast(1.3) 
+      brightness(1.3)
+      drop-shadow(0 2px 8px rgba(0,255,255,0.3));
   }
 }
 

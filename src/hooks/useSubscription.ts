@@ -38,7 +38,7 @@ export const useSubscription = () => {
       let mappedPlan: 'free' | 'pro' | 'premium' = 'free';
       if (userData.plan === 'premium-monthly' || userData.plan === 'pro') {
         mappedPlan = 'pro';
-      } else if (userData.plan === 'premium-yearly' || userData.plan === 'premium') {
+      } else if (userData.plan === 'premium-yearly' || userData.plan === 'premium' || userData.plan === 'premier-plus') {
         mappedPlan = 'premium';
       }
 
@@ -81,18 +81,28 @@ export const useSubscription = () => {
     };
   }, [user, authLoading, fetchUserPlan]);
 
-  const canAccessFeature = (feature: 'whaleAlerts' | 'yields' | 'riskScanner' | 'advancedFiltering') => {
+  const getPlanLimits = () => {
+    const plan = user ? userPlan.plan : 'free';
+    const limits = {
+      free: { whaleAlertsPerDay: 50, whaleAnalyticsLimit: 10, walletScansPerDay: 1, watchlistLimit: 3, yieldsLimit: 20, realTimeAlerts: false, exportData: false, apiAccess: false, advancedFilters: false },
+      pro: { whaleAlertsPerDay: 500, whaleAnalyticsLimit: -1, walletScansPerDay: -1, watchlistLimit: -1, yieldsLimit: -1, realTimeAlerts: true, exportData: true, apiAccess: false, advancedFilters: true },
+      premium: { whaleAlertsPerDay: -1, whaleAnalyticsLimit: -1, walletScansPerDay: -1, watchlistLimit: -1, yieldsLimit: -1, realTimeAlerts: true, exportData: true, apiAccess: true, advancedFilters: true }
+    };
+    return limits[plan];
+  };
+
+  const canAccessFeature = (feature: string): 'full' | 'limited' | 'none' => {
+    const limits = getPlanLimits();
     switch (feature) {
-      case 'whaleAlerts':
-        return userPlan.plan === 'free' ? 'limited' : 'unlimited'; // Free: 50/day, Pro/Premium: unlimited
-      case 'yields':
-        return userPlan.plan !== 'free' ? 'full' : 'none'; // Only Pro/Premium can access
-      case 'riskScanner':
-        return userPlan.plan === 'premium' ? 'full' : 'none'; // Only Premium can access
-      case 'advancedFiltering':
-        return userPlan.plan !== 'free' ? 'full' : 'none'; // Pro/Premium can access
-      default:
-        return 'none';
+      case 'whaleAlerts': return limits.whaleAlertsPerDay > 0 ? 'limited' : 'none';
+      case 'whaleAnalytics': return limits.whaleAnalyticsLimit === -1 ? 'full' : 'limited';
+      case 'yields': return limits.yieldsLimit === -1 ? 'full' : 'limited';
+      case 'scanner': return limits.walletScansPerDay === -1 ? 'full' : 'limited';
+      case 'alerts': return limits.realTimeAlerts ? 'full' : 'none';
+      case 'export': return limits.exportData ? 'full' : 'none';
+      case 'api': return limits.apiAccess ? 'full' : 'none';
+      case 'advancedFilters': return limits.advancedFilters ? 'full' : 'none';
+      default: return 'limited';
     }
   };
 
@@ -112,6 +122,7 @@ export const useSubscription = () => {
   return {
     userPlan,
     loading,
+    planLimits: getPlanLimits(),
     canAccessFeature,
     getUpgradeMessage,
     refetch: fetchUserPlan

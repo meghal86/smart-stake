@@ -90,13 +90,18 @@ export default function MultiCoinSentiment() {
     setFilteredCoins(filtered);
   }, [coins, searchTerm, filterSentiment, sortBy, favorites, showFavoritesOnly]);
 
+  const [error, setError] = useState<string | null>(null);
+
   const fetchMultiCoinSentiment = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('multi-coin-sentiment');
       if (error) throw error;
-      setCoins(data.data);
+      console.log('API Response:', data);
+      setCoins(data.data || data);
+      setError(null);
     } catch (error) {
       console.error('Failed to fetch multi-coin sentiment:', error);
+      setError('API failed to load sentiment data');
     } finally {
       setIsLoading(false);
     }
@@ -850,6 +855,19 @@ export default function MultiCoinSentiment() {
                 <div key={i} className="h-32 bg-muted rounded"></div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
+        <div className="p-4 flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-red-500 mb-2">API Failed</p>
+            <p className="text-muted-foreground">{error}</p>
           </div>
         </div>
       </div>
