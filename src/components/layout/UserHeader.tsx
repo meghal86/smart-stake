@@ -89,18 +89,18 @@ export const UserHeader = () => {
     }
   };
 
-  const getLogoSrc = () => {
-    return '/logos/png logo .png';
-  };
-
   if (authLoading) {
     return (
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src={getLogoSrc()}
+            src="/whaleplus-logo.png"
             alt="WhalePlus" 
             className="h-12 object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/logos/Stacked : Square Logo (HD).png';
+            }}
           />
           <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
             WhalePlus
@@ -119,9 +119,13 @@ export const UserHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src={getLogoSrc()}
+            src="/whaleplus-logo.png"
             alt="WhalePlus" 
             className="h-12 object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/logos/Stacked : Square Logo (HD).png';
+            }}
           />
           <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
             WhalePlus
@@ -162,13 +166,19 @@ export const UserHeader = () => {
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <div className="relative h-12 w-auto">
-          <img 
-            src={getLogoSrc()}
-            alt="WhalePlus" 
-            className="h-12 object-contain logo-transparent"
-          />
-        </div>
+          <div className="relative h-12 w-auto">
+            <img 
+              src="/whaleplus-logo.png"
+              alt="WhalePlus" 
+              className="h-12 object-contain"
+              onLoad={() => console.log('Logo loaded successfully')}
+              onError={(e) => {
+                console.error('Logo failed to load, trying fallback');
+                const target = e.target as HTMLImageElement;
+                target.src = '/logos/Stacked : Square Logo (HD).png';
+              }}
+            />
+          </div>
         <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
           WhalePlus
         </span>

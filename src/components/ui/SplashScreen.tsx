@@ -27,6 +27,10 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           src="/whaleplus-logo.png" 
           alt="WhalePlus" 
           className="w-48 h-48 mb-6 drop-shadow-lg"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = '/logos/Stacked : Square Logo (HD).png';
+          }}
         />
         <h1 className="text-5xl font-bold text-foreground mb-3">WhalePlus</h1>
         <p className="text-xl text-muted-foreground">Master the DeFi Waves</p>
@@ -41,6 +45,10 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           src="/whaleplus-logo.png" 
           alt="WhalePlus" 
           className="w-48 h-48 mb-6 drop-shadow-lg"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = '/logos/Stacked : Square Logo (HD).png';
+          }}
         />
         <h1 className="text-5xl font-bold text-foreground mb-3">WhalePlus</h1>
         <p className="text-xl text-muted-foreground">Master the DeFi Waves</p>
