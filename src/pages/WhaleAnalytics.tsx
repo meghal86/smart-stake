@@ -183,7 +183,7 @@ export default function WhaleAnalytics() {
             </div>
 
         {/* Whale List */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {isLoading ? (
             <div className="space-y-4">
               {[1,2,3,4,5].map(i => (
@@ -194,7 +194,7 @@ export default function WhaleAnalytics() {
               ))}
             </div>
           ) : filteredWhales.map((whale) => (
-            <Card key={whale.id} className="p-4">
+            <Card key={whale.id} className="p-6 hover:shadow-lg transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-lg">
@@ -245,13 +245,22 @@ export default function WhaleAnalytics() {
                     <button
                       onMouseEnter={() => setRiskTooltip(whale.id)}
                       onMouseLeave={() => setRiskTooltip(null)}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-muted-foreground hover:text-[#14B8A6] transition-colors"
+                      title="Click for risk explanation"
                     >
-                      <Info size={12} />
+                      <Info size={14} />
                     </button>
                     {riskTooltip === whale.id && (
-                      <div className="absolute bottom-full left-0 mb-2 p-2 bg-popover border rounded shadow-lg text-xs w-48 z-10">
-                        {getRiskExplanation(whale.riskScore || 0, whale.type)}
+                      <div className="absolute bottom-full left-0 mb-2 p-3 bg-popover border rounded-lg shadow-xl text-xs w-64 z-10">
+                        <div className="space-y-2">
+                          <p className="font-semibold text-sm">
+                            {whale.riskScore >= 8 ? '🟢 Low Risk Whale' : whale.riskScore >= 6 ? '🟡 Medium Risk Whale' : '🔴 High Risk Whale'}
+                          </p>
+                          <p>{getRiskExplanation(whale.riskScore || 0, whale.type)}</p>
+                          <div className="text-xs text-muted-foreground border-t pt-2">
+                            💡 <strong>Tip:</strong> Lower risk whales typically have more predictable patterns
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

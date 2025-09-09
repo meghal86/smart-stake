@@ -104,7 +104,7 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
   return (
     <TooltipProvider>
       <Card 
-        className={`group p-4 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm border transition-all duration-200 cursor-pointer ${
+        className={`group p-6 mb-6 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm border transition-all duration-200 cursor-pointer ${
           transaction.type === "buy" 
             ? "border-l-4 border-l-green-500 hover:border-green-500/30" 
             : transaction.type === "sell"
@@ -259,14 +259,24 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
           )}
           <Tooltip>
             <TooltipTrigger>
-              <Info size={12} className="text-muted-foreground" />
+              <Info size={14} className="text-muted-foreground hover:text-[#14B8A6] transition-colors" />
             </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs max-w-xs">
-                {transaction.type === "buy" ? "Large purchase detected - whale accumulating" :
-                 transaction.type === "sell" ? "Large sale detected - whale distributing" :
-                 "Large transfer between wallets - whale movement"}
-              </p>
+            <TooltipContent className="max-w-sm">
+              <div className="space-y-2">
+                <p className="font-semibold text-sm">
+                  {transaction.type === "buy" ? "🟢 Whale Buy Signal" :
+                   transaction.type === "sell" ? "🔴 Whale Sell Signal" :
+                   "🔵 Whale Transfer"}
+                </p>
+                <p className="text-xs">
+                  {transaction.type === "buy" ? "Large purchase detected - institutional or whale accumulation. This could indicate bullish sentiment." :
+                   transaction.type === "sell" ? "Large sale detected - whale distribution or profit-taking. Monitor for potential price impact." :
+                   "Large transfer between wallets - whale movement or exchange activity. Could signal upcoming market action."}
+                </p>
+                <div className="text-xs text-muted-foreground border-t pt-2">
+                  <p>💡 <strong>Tip:</strong> {formatAmount(transaction.amountUSD)} transactions often move markets</p>
+                </div>
+              </div>
             </TooltipContent>
           </Tooltip>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Zap, Apple } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Apple } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,9 +158,7 @@ const Login: React.FC = () => {
         {/* Logo and Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <div className="p-3 bg-primary/10 rounded-2xl">
-              <Zap className="h-8 w-8 text-primary" />
-            </div>
+            <Logo size="lg" showText={false} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
           <p className="text-muted-foreground">Sign in to your account to continue</p>

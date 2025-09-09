@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { AlertQuickActions } from "@/components/alerts/AlertQuickActions";
 
 // Utility function to format time
 const formatTime = (timestamp: Date) => {
@@ -253,6 +254,9 @@ export default function Home() {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Alert Quick Actions */}
+        <AlertQuickActions />
 
         {/* Quick Filters */}
         <div className="flex gap-2 mb-3 overflow-x-auto">

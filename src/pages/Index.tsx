@@ -11,6 +11,7 @@ import Yields from "./Yields";
 import Scanner from "./Scanner";
 import Premium from "./Premium";
 import Profile from "./Profile";
+import Portfolio from "./Portfolio";
 import MarketSentiment from "./MarketSentiment";
 import MultiCoinSentiment from "./MultiCoinSentiment";
 import WhaleAnalytics from "./WhaleAnalytics";
@@ -88,6 +89,8 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return <Home />;
+      case "portfolio":
+        return <Portfolio />;
       case "sentiment":
         return <MultiCoinSentiment />;
       case "multi-sentiment":
