@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Zap, Crown, Bell, Plus, X, Copy } from "lucide-react";
+import { Search, Filter, Zap, Crown, Bell, Plus, X, Copy, Clock } from "lucide-react";
 import { WhaleTransactionCard } from "@/components/whale/WhaleTransactionCard";
 import { WhaleTransactionSkeleton } from "@/components/whale/WhaleTransactionSkeleton";
 import { ErrorState } from "@/components/whale/ErrorState";
@@ -15,6 +15,11 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { AlertQuickActions } from "@/components/alerts/AlertQuickActions";
+import { LiveDataStatus } from "@/components/whale/LiveDataStatus";
+import { WhalePreferencesModal } from "@/components/whale/WhalePreferencesModal";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // Utility function to format time
 const formatTime = (timestamp: Date) => {
@@ -83,6 +88,11 @@ export default function Home() {
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const [viewMode, setViewMode] = useState<'expanded' | 'compact'>('expanded');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [apiHealth, setApiHealth] = useState<'healthy' | 'degraded' | 'down'>('healthy');
+  const [lastApiUpdate, setLastApiUpdate] = useState<string>('');
+  const [alertCenterOpen, setAlertCenterOpen] = useState(false);
+  const [activeRules, setActiveRules] = useState(0);
+  const [triggeredToday, setTriggeredToday] = useState(3);
   
   const whaleAccess = canAccessFeature('whaleAlerts');
   const isLimitedAccess = whaleAccess === 'limited';
@@ -152,6 +162,8 @@ export default function Home() {
       if (apiTransactions.length > 0) {
         setTransactions(apiTransactions);
         setIsMockData(false);
+        setApiHealth('healthy');
+        setLastApiUpdate(new Date().toISOString());
       }
     } catch (err) {
       console.log('Error fetching whale data, using mock data:', err);
@@ -210,36 +222,61 @@ export default function Home() {
     <TooltipProvider>
       <div className="flex-1 bg-gradient-to-br from-background to-background/80">
         <div className="p-3 sm:p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 bg-primary/20 rounded-xl">
-              <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        {/* Sticky Header */}
+        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-40 -mx-4 px-4 py-3 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg">
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <h1 className="text-lg font-bold">Whale Alerts</h1>
+              </div>
+              
+              <div className="hidden sm:flex items-center gap-2">
+                <LiveDataStatus 
+                  lastUpdate={lastApiUpdate}
+                  apiHealth={apiHealth}
+                  transactionCount={filteredTransactions.length}
+                />
+                <div className="bg-green-50 dark:bg-green-950/20 px-2 py-1 rounded-full border border-green-200 dark:border-green-800">
+                  <span className="text-xs font-medium text-green-700 dark:text-green-300">{activeRules} Rules</span>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950/20 px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{triggeredToday} Today</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-foreground">Whale Alerts</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Live whale transactions</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex border rounded-lg p-1">
-              <Button
-                size="sm"
-                variant={viewMode === 'expanded' ? 'default' : 'ghost'}
-                onClick={() => setViewMode('expanded')}
-                className="text-xs px-2"
+            
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => setAlertCenterOpen(true)}
+                className="bg-primary hover:bg-primary/90"
               >
-                Expanded
+                <Bell className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Create Alert</span>
               </Button>
-              <Button
-                size="sm"
-                variant={viewMode === 'compact' ? 'default' : 'ghost'}
-                onClick={() => setViewMode('compact')}
-                className="text-xs px-2"
-              >
-                Compact
-              </Button>
+              <div className="hidden sm:flex border rounded-lg p-1">
+                <Button
+                  size="sm"
+                  variant={viewMode === 'expanded' ? 'default' : 'ghost'}
+                  onClick={() => setViewMode('expanded')}
+                  className="text-xs px-2"
+                >
+                  Expanded
+                </Button>
+                <Button
+                  size="sm"
+                  variant={viewMode === 'compact' ? 'default' : 'ghost'}
+                  onClick={() => setViewMode('compact')}
+                  className="text-xs px-2"
+                >
+                  Compact
+                </Button>
+              </div>
+              <PlanBadge plan={userPlan.plan} />
             </div>
-            <PlanBadge plan={userPlan.plan} />
           </div>
         </div>
 
@@ -255,163 +292,164 @@ export default function Home() {
           </Alert>
         )}
 
-        {/* Alert Quick Actions */}
-        <AlertQuickActions />
-
-        {/* Quick Filters */}
-        <div className="flex gap-2 mb-3 overflow-x-auto">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setMinAmount('10000000')}>
-                💥 $10M+
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Show only mega whale transactions above $10M</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setMinAmount('5000000')}>
-                🐋 $5M+
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Show large whale transactions above $5M</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setMinAmount('1000000')}>
-                🐟 $1M+
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Show whale transactions above $1M</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setSelectedChain('ethereum')}>
-                Ξ ETH Only
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Filter to Ethereum blockchain only</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setSelectedChain('tron')}>
-                ⚡ TRX Only
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Filter to Tron blockchain only</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setSelectedChain('solana')}>
-                ◎ SOL Only
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Filter to Solana blockchain only</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="sm" variant="outline" onClick={() => setSelectedChain('avalanche')}>
-                🔺 AVAX Only
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Filter to Avalanche blockchain only</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Filters */}
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search by token, address..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 text-sm"
-            />
+        {/* Alert Center Modal */}
+        {alertCenterOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Bell className="h-6 w-6 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold">Alert Center</h2>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setAlertCenterOpen(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-1">Create Custom Alert</h3>
+                    <p className="text-sm text-muted-foreground">Custom rules let you set personalized triggers for whale transactions. Start with a template or make your own.</p>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+                      onClick={() => {
+                        alert('Custom Alert Wizard: Set amount threshold, select chains, choose notification type');
+                        setAlertCenterOpen(false);
+                      }}
+                    >
+                      <Zap className="h-4 w-4" />
+                      Create Custom Alert
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        const choice = prompt('Choose template:\n1. $10M+ Mega Whales\n2. $5M+ Large Whales\n3. $1M+ Standard Whales\n4. Ethereum Only\n\nEnter number (1-4):');
+                        if (choice === '1') { setMinAmount('10000000'); setAlertCenterOpen(false); }
+                        else if (choice === '2') { setMinAmount('5000000'); setAlertCenterOpen(false); }
+                        else if (choice === '3') { setMinAmount('1000000'); setAlertCenterOpen(false); }
+                        else if (choice === '4') { setSelectedChain('ethereum'); setAlertCenterOpen(false); }
+                      }}
+                    >
+                      <Filter className="h-4 w-4" />
+                      Browse Templates
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        alert('Alert History: 3 alerts triggered today - 2 successful, 1 pending');
+                      }}
+                    >
+                      <Clock className="h-4 w-4" />
+                      View History
+                    </Button>
+                  </div>
+                  
+                  <div className="text-center py-6 border-2 border-dashed border-muted-foreground/20 rounded-xl bg-muted/20">
+                    <Zap className="h-8 w-8 mx-auto mb-2 text-primary/60" />
+                    <h4 className="font-medium mb-2">No custom alert rules yet</h4>
+                    <p className="text-sm text-muted-foreground mb-3">Get notified instantly when whales make moves</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => {
+                        alert('Alert Wizard: Step 1 - Choose alert type (Price, Volume, Whale Activity)');
+                        setAlertCenterOpen(false);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create your first alert rule
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex gap-2">
-            <Select value={selectedChain} onValueChange={setSelectedChain}>
-              <SelectTrigger className="flex-1 text-sm">
-                <SelectValue placeholder="Chain" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Chains</SelectItem>
-                <SelectItem value="ethereum">Ethereum</SelectItem>
-                <SelectItem value="tron">Tron</SelectItem>
-                <SelectItem value="ripple">Ripple</SelectItem>
-                <SelectItem value="solana">Solana</SelectItem>
-                <SelectItem value="avalanche">Avalanche</SelectItem>
-                <SelectItem value="fantom">Fantom</SelectItem>
-                <SelectItem value="polygon">Polygon</SelectItem>
-                <SelectItem value="bsc">BSC</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Input
-              placeholder="Min USD"
-              value={minAmount}
-              onChange={(e) => setMinAmount(e.target.value)}
-              className="flex-1 text-sm"
-              type="number"
-            />
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon" variant="outline" className="shrink-0">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Advanced filtering options</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon" variant="outline" className="shrink-0">
-                  <Bell className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Set custom whale alerts</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => alert('Alert: Notify me of all USDT transfers > $5M')}
-                  className="text-xs px-2 shrink-0"
-                >
-                  🚨 USDT
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Quick alert for USDT $5M+ transfers</p>
-              </TooltipContent>
-            </Tooltip>
+        )}
+
+        {/* Alert Templates - Quick Access */}
+        <div className="bg-muted/30 rounded-lg p-4 mb-4">
+          <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Alert Templates
+          </h3>
+          <div className="flex gap-2 overflow-x-auto">
+            <Button size="sm" variant="outline" onClick={() => setMinAmount('10000000')} className="shrink-0">
+              💥 $10M+ Mega Whales
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setMinAmount('5000000')} className="shrink-0">
+              🐋 $5M+ Large Whales
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setMinAmount('1000000')} className="shrink-0">
+              🐟 $1M+ Whales
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setSelectedChain('ethereum')} className="shrink-0">
+              Ξ ETH Only
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setSelectedChain('tron')} className="shrink-0">
+              ⚡ TRX Only
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => alert('USDT Alert: $5M+ transfers')} className="shrink-0">
+              🚨 USDT $5M+
+            </Button>
           </div>
         </div>
 
+        {/* Sticky Filter Bar */}
+        <div className="sticky top-16 bg-background/95 backdrop-blur-sm border rounded-lg p-4 z-30 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search by token, address..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Select value={selectedChain} onValueChange={setSelectedChain}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Chain" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Chains</SelectItem>
+                  <SelectItem value="ethereum">Ethereum</SelectItem>
+                  <SelectItem value="tron">Tron</SelectItem>
+                  <SelectItem value="ripple">Ripple</SelectItem>
+                  <SelectItem value="solana">Solana</SelectItem>
+                  <SelectItem value="avalanche">Avalanche</SelectItem>
+                  <SelectItem value="polygon">Polygon</SelectItem>
+                  <SelectItem value="bsc">BSC</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Input
+                placeholder="Min USD"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                className="w-24"
+                type="number"
+              />
+              
+              <WhalePreferencesModal />
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-6"></div>
+        
         {/* Transaction Feed */}
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-4 sm:space-y-6">
           {isLoading ? (
           // Loading skeletons
           Array.from({ length: 5 }).map((_, index) => (

@@ -6,12 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface AlertData {
+  id: string;
+  from_addr: string;
+  to_addr: string;
+  amount_usd: number;
+  token: string;
+  chain: string;
+  tx_hash: string;
+  detected_at: string;
+  whale_tags?: string[];
+  direction?: string;
+}
+
 interface AlertCondition {
   type: 'amount' | 'chain' | 'token' | 'whale_tag' | 'direction' | 'time_window';
-  operator: 'eq' | 'gte' | 'lte' | 'in' | 'not_in';
-  value: string | number | string[];
-  currency?: 'USD' | 'ETH' | 'BTC';
-  unit?: 'hours' | 'days' | 'minutes';
+  operator: string;
+  value: any;
+  currency?: string;
+  unit?: string;
 }
 
 interface AlertRule {
@@ -22,27 +35,11 @@ interface AlertRule {
   logic_operator: 'AND' | 'OR' | 'NOR';
   time_window_hours?: number;
   frequency_limit?: number;
-  delivery_channels: {
-    push: boolean;
-    email: boolean;
-    sms: boolean;
-    webhook: boolean;
-  };
+  delivery_channels: any;
   webhook_url?: string;
-  is_active: boolean;
+  priority: number;
   times_triggered: number;
   last_triggered_at?: string;
-}
-
-interface WhaleAlert {
-  id: string;
-  from_addr: string;
-  to_addr: string;
-  amount_usd: number;
-  token: string;
-  chain: string;
-  tx_hash: string;
-  detected_at: string;
 }
 
 serve(async (req) => {
@@ -51,75 +48,62 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { alert } = await req.json() as { alert: WhaleAlert }
-
-    if (!alert) {
-      return new Response(
-        JSON.stringify({ error: 'Alert data is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    const { alert }: { alert: AlertData } = await req.json()
 
     // Get all active alert rules
-    const { data: rules, error: rulesError } = await supabaseClient
+    const { data: rules, error: rulesError } = await supabase
       .from('alert_rules')
       .select('*')
       .eq('is_active', true)
 
-    if (rulesError) {
-      throw rulesError
-    }
+    if (rulesError) throw rulesError
 
     const matchedRules: { rule: AlertRule; matchedConditions: any }[] = []
 
-    // Check each rule against the alert
-    for (const rule of rules as AlertRule[]) {
-      const matchResult = evaluateRule(rule, alert)
-      if (matchResult.matches) {
-        matchedRules.push({ rule, matchedConditions: matchResult.conditions })
+    // Evaluate each rule against the alert data
+    for (const rule of rules) {
+      const conditionResults = rule.conditions.map((condition: AlertCondition) => 
+        evaluateCondition(condition, alert)
+      )
+
+      let ruleMatches = false
+      if (rule.logic_operator === 'AND') {
+        ruleMatches = conditionResults.every(result => result)
+      } else if (rule.logic_operator === 'OR') {
+        ruleMatches = conditionResults.some(result => result)
+      } else if (rule.logic_operator === 'NOR') {
+        ruleMatches = !conditionResults.some(result => result)
+      }
+
+      // Check frequency limits
+      if (ruleMatches && rule.frequency_limit) {
+        const now = new Date()
+        const windowStart = new Date(now.getTime() - (rule.time_window_hours || 24) * 60 * 60 * 1000)
+        
+        if (rule.last_triggered_at) {
+          const lastTriggered = new Date(rule.last_triggered_at)
+          if (lastTriggered > windowStart && rule.times_triggered >= rule.frequency_limit) {
+            ruleMatches = false // Skip due to frequency limit
+          }
+        }
+      }
+
+      if (ruleMatches) {
+        matchedRules.push({
+          rule,
+          matchedConditions: rule.conditions.filter((_, index) => conditionResults[index])
+        })
       }
     }
 
     // Process matched rules
-    const notifications = []
     for (const { rule, matchedConditions } of matchedRules) {
-      // Check frequency limits
-      if (rule.frequency_limit && rule.time_window_hours) {
-        const timeWindow = new Date(Date.now() - rule.time_window_hours * 60 * 60 * 1000)
-        
-        const { count } = await supabaseClient
-          .from('alert_rule_history')
-          .select('*', { count: 'exact', head: true })
-          .eq('alert_rule_id', rule.id)
-          .gte('triggered_at', timeWindow.toISOString())
-
-        if (count && count >= rule.frequency_limit) {
-          console.log(`Rule ${rule.id} frequency limit reached`)
-          continue
-        }
-      }
-
-      // Send notifications
-      const deliveryStatus = await sendNotifications(rule, alert, matchedConditions)
-
-      // Record in history
-      await supabaseClient
-        .from('alert_rule_history')
-        .insert({
-          alert_rule_id: rule.id,
-          user_id: rule.user_id,
-          alert_id: alert.id,
-          matched_conditions: matchedConditions,
-          delivery_status: deliveryStatus
-        })
-
-      // Update rule stats
-      await supabaseClient
+      // Update rule statistics
+      await supabase
         .from('alert_rules')
         .update({
           times_triggered: rule.times_triggered + 1,
@@ -127,155 +111,86 @@ serve(async (req) => {
         })
         .eq('id', rule.id)
 
-      notifications.push({
-        ruleId: rule.id,
-        ruleName: rule.name,
-        userId: rule.user_id,
-        deliveryStatus
-      })
+      // Record in history
+      await supabase
+        .from('alert_rule_history')
+        .insert({
+          alert_rule_id: rule.id,
+          user_id: rule.user_id,
+          alert_id: alert.id,
+          matched_conditions: matchedConditions,
+          delivery_status: {},
+          triggered_at: new Date().toISOString()
+        })
+
+      // Send notifications
+      await sendNotifications(rule, alert, matchedConditions)
     }
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        processed: true, 
         matchedRules: matchedRules.length,
-        notifications 
+        rules: matchedRules.map(m => ({ id: m.rule.id, name: m.rule.name }))
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error processing custom alerts:', error)
+    console.error('Alert processing error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
     )
   }
 })
 
-function evaluateRule(rule: AlertRule, alert: WhaleAlert): { matches: boolean; conditions: any } {
-  const results: boolean[] = []
-  const matchedConditions: any = {}
-
-  for (const condition of rule.conditions) {
-    const result = evaluateCondition(condition, alert)
-    results.push(result.matches)
-    
-    if (result.matches) {
-      matchedConditions[condition.type] = result.value
-    }
-  }
-
-  let finalResult = false
-  
-  switch (rule.logic_operator) {
-    case 'AND':
-      finalResult = results.every(r => r)
-      break
-    case 'OR':
-      finalResult = results.some(r => r)
-      break
-    case 'NOR':
-      finalResult = !results.some(r => r)
-      break
-  }
-
-  return { matches: finalResult, conditions: matchedConditions }
-}
-
-function evaluateCondition(condition: AlertCondition, alert: WhaleAlert): { matches: boolean; value?: any } {
+function evaluateCondition(condition: AlertCondition, alert: AlertData): boolean {
   switch (condition.type) {
     case 'amount':
       const amount = condition.currency === 'USD' ? alert.amount_usd : alert.amount_usd // Simplified
       switch (condition.operator) {
-        case 'gte':
-          return { matches: amount >= (condition.value as number), value: amount }
-        case 'lte':
-          return { matches: amount <= (condition.value as number), value: amount }
-        case 'eq':
-          return { matches: amount === (condition.value as number), value: amount }
-        default:
-          return { matches: false }
+        case 'gte': return amount >= condition.value
+        case 'lte': return amount <= condition.value
+        case 'eq': return amount === condition.value
+        default: return false
       }
 
     case 'chain':
       switch (condition.operator) {
-        case 'eq':
-          return { matches: alert.chain.toLowerCase() === (condition.value as string).toLowerCase(), value: alert.chain }
-        case 'in':
-          const chains = condition.value as string[]
-          return { matches: chains.some(c => c.toLowerCase() === alert.chain.toLowerCase()), value: alert.chain }
-        case 'not_in':
-          const excludeChains = condition.value as string[]
-          return { matches: !excludeChains.some(c => c.toLowerCase() === alert.chain.toLowerCase()), value: alert.chain }
-        default:
-          return { matches: false }
+        case 'eq': return alert.chain === condition.value
+        case 'in': return Array.isArray(condition.value) && condition.value.includes(alert.chain)
+        case 'not_in': return Array.isArray(condition.value) && !condition.value.includes(alert.chain)
+        default: return false
       }
 
     case 'token':
       switch (condition.operator) {
-        case 'eq':
-          return { matches: alert.token.toLowerCase() === (condition.value as string).toLowerCase(), value: alert.token }
-        case 'in':
-          const tokens = condition.value as string[]
-          return { matches: tokens.some(t => t.toLowerCase() === alert.token.toLowerCase()), value: alert.token }
-        case 'not_in':
-          const excludeTokens = condition.value as string[]
-          return { matches: !excludeTokens.some(t => t.toLowerCase() === alert.token.toLowerCase()), value: alert.token }
-        default:
-          return { matches: false }
+        case 'eq': return alert.token === condition.value
+        case 'in': return Array.isArray(condition.value) && condition.value.includes(alert.token)
+        case 'not_in': return Array.isArray(condition.value) && !condition.value.includes(alert.token)
+        default: return false
       }
 
     case 'whale_tag':
-      // This would require whale wallet detection logic
-      // For now, assume large amounts indicate whale activity
-      const isWhale = alert.amount_usd >= 1000000
-      return { matches: isWhale === condition.value, value: isWhale }
+      const isWhale = alert.whale_tags && alert.whale_tags.length > 0
+      return condition.operator === 'is_whale' ? isWhale : !isWhale
 
     case 'direction':
-      // This would require transaction analysis to determine buy/sell/transfer
-      // Simplified implementation
-      return { matches: true, value: 'transfer' }
+      return alert.direction === condition.value
 
     default:
-      return { matches: false }
+      return false
   }
 }
 
-async function sendNotifications(rule: AlertRule, alert: WhaleAlert, conditions: any): Promise<any> {
+async function sendNotifications(rule: AlertRule, alert: AlertData, matchedConditions: any[]) {
   const deliveryStatus: any = {}
 
-  // Push notification
-  if (rule.delivery_channels.push) {
-    try {
-      // Implementation would integrate with push notification service
-      deliveryStatus.push = 'sent'
-    } catch (error) {
-      deliveryStatus.push = 'failed'
-    }
-  }
-
-  // Email notification
-  if (rule.delivery_channels.email) {
-    try {
-      // Implementation would integrate with email service
-      deliveryStatus.email = 'sent'
-    } catch (error) {
-      deliveryStatus.email = 'failed'
-    }
-  }
-
-  // SMS notification
-  if (rule.delivery_channels.sms) {
-    try {
-      // Implementation would integrate with SMS service
-      deliveryStatus.sms = 'sent'
-    } catch (error) {
-      deliveryStatus.sms = 'failed'
-    }
-  }
-
-  // Webhook notification
+  // Send webhook notification
   if (rule.delivery_channels.webhook && rule.webhook_url) {
     try {
       const webhookPayload = {
@@ -283,8 +198,15 @@ async function sendNotifications(rule: AlertRule, alert: WhaleAlert, conditions:
           id: rule.id,
           name: rule.name
         },
-        alert,
-        matchedConditions: conditions,
+        alert: {
+          from_addr: alert.from_addr,
+          to_addr: alert.to_addr,
+          amount_usd: alert.amount_usd,
+          token: alert.token,
+          chain: alert.chain,
+          tx_hash: alert.tx_hash
+        },
+        matchedConditions,
         timestamp: new Date().toISOString()
       }
 
@@ -294,14 +216,26 @@ async function sendNotifications(rule: AlertRule, alert: WhaleAlert, conditions:
           'Content-Type': 'application/json',
           'User-Agent': 'WhalePlus-Alert-System/1.0'
         },
-        body: JSON.stringify(webhookPayload)
+        body: JSON.stringify(webhookPayload),
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       })
 
-      deliveryStatus.webhook = response.ok ? 'sent' : 'failed'
+      deliveryStatus.webhook = {
+        success: response.ok,
+        status: response.status,
+        timestamp: new Date().toISOString()
+      }
     } catch (error) {
-      deliveryStatus.webhook = 'failed'
+      deliveryStatus.webhook = {
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }
     }
   }
+
+  // Additional notification channels would be implemented here
+  // (push notifications, email, SMS)
 
   return deliveryStatus
 }

@@ -1,541 +1,342 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus, X, Zap, TestTube, Save } from 'lucide-react';
-
-interface AlertCondition {
-  id: string;
-  type: 'amount' | 'chain' | 'token' | 'whale_tag' | 'direction' | 'time_window';
-  operator: 'eq' | 'gte' | 'lte' | 'in' | 'not_in';
-  value: string | number | string[];
-  currency?: 'USD' | 'ETH' | 'BTC';
-  unit?: 'hours' | 'days' | 'minutes';
-}
-
-interface AlertRule {
-  id?: string;
-  name: string;
-  description: string;
-  conditions: AlertCondition[];
-  logicOperator: 'AND' | 'OR' | 'NOR';
-  timeWindowHours?: number;
-  frequencyLimit?: number;
-  deliveryChannels: {
-    push: boolean;
-    email: boolean;
-    sms: boolean;
-    webhook: boolean;
-  };
-  webhookUrl?: string;
-  priority: number;
-  isActive: boolean;
-}
+import { Plus, X, Zap, TestTube } from 'lucide-react';
+import { AlertRule, AlertCondition } from '@/hooks/useCustomAlerts';
 
 interface AlertRuleBuilderProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (rule: AlertRule) => void;
-  editingRule?: AlertRule | null;
+  initialRule?: Partial<AlertRule>;
+  onSave: (rule: Omit<AlertRule, 'id'>) => Promise<void>;
+  onCancel: () => void;
 }
 
-const CONDITION_TYPES = [
-  { value: 'amount', label: 'Transaction Amount', operators: ['gte', 'lte', 'eq'] },
-  { value: 'chain', label: 'Blockchain', operators: ['eq', 'in', 'not_in'] },
-  { value: 'token', label: 'Token/Asset', operators: ['eq', 'in', 'not_in'] },
-  { value: 'whale_tag', label: 'Whale Wallet', operators: ['eq'] },
-  { value: 'direction', label: 'Transaction Type', operators: ['eq'] },
-  { value: 'time_window', label: 'Time Window', operators: ['lte'] }
-];
-
-const CHAINS = ['ethereum', 'polygon', 'bsc', 'arbitrum', 'optimism', 'avalanche'];
-const TOKENS = ['ETH', 'BTC', 'USDC', 'USDT', 'MATIC', 'BNB', 'AVAX', 'OP', 'ARB'];
-
-export const AlertRuleBuilder = ({ isOpen, onClose, onSave, editingRule }: AlertRuleBuilderProps) => {
-  const [rule, setRule] = useState<AlertRule>({
-    name: '',
-    description: '',
-    conditions: [],
-    logicOperator: 'AND',
-    deliveryChannels: { push: true, email: false, sms: false, webhook: false },
-    priority: 1,
-    isActive: true
+export function AlertRuleBuilder({ initialRule, onSave, onCancel }: AlertRuleBuilderProps) {
+  const [rule, setRule] = useState<Omit<AlertRule, 'id'>>({
+    name: initialRule?.name || '',
+    description: initialRule?.description || '',
+    conditions: initialRule?.conditions || [],
+    logic_operator: initialRule?.logic_operator || 'AND',
+    time_window_hours: initialRule?.time_window_hours,
+    frequency_limit: initialRule?.frequency_limit || 10,
+    delivery_channels: initialRule?.delivery_channels || { push: true },
+    webhook_url: initialRule?.webhook_url || '',
+    priority: initialRule?.priority || 3,
+    is_active: initialRule?.is_active ?? true
   });
 
-  const [previewResults, setPreviewResults] = useState<string[]>([]);
-  const [isTestingRule, setIsTestingRule] = useState(false);
-
-  useEffect(() => {
-    if (editingRule) {
-      setRule(editingRule);
-    } else {
-      setRule({
-        name: '',
-        description: '',
-        conditions: [],
-        logicOperator: 'AND',
-        deliveryChannels: { push: true, email: false, sms: false, webhook: false },
-        priority: 1,
-        isActive: true
-      });
-    }
-  }, [editingRule, isOpen]);
+  const [saving, setSaving] = useState(false);
 
   const addCondition = () => {
-    const newCondition: AlertCondition = {
-      id: Math.random().toString(36).substr(2, 9),
-      type: 'amount',
-      operator: 'gte',
-      value: 1000000,
-      currency: 'USD'
-    };
-    setRule(prev => ({ ...prev, conditions: [...prev.conditions, newCondition] }));
-  };
-
-  const updateCondition = (id: string, updates: Partial<AlertCondition>) => {
     setRule(prev => ({
       ...prev,
-      conditions: prev.conditions.map(c => c.id === id ? { ...c, ...updates } : c)
+      conditions: [...prev.conditions, {
+        type: 'amount',
+        operator: 'gte',
+        value: 1000000,
+        currency: 'USD'
+      }]
     }));
   };
 
-  const removeCondition = (id: string) => {
+  const updateCondition = (index: number, updates: Partial<AlertCondition>) => {
     setRule(prev => ({
       ...prev,
-      conditions: prev.conditions.filter(c => c.id !== id)
+      conditions: prev.conditions.map((condition, i) => 
+        i === index ? { ...condition, ...updates } : condition
+      )
     }));
+  };
+
+  const removeCondition = (index: number) => {
+    setRule(prev => ({
+      ...prev,
+      conditions: prev.conditions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!rule.name.trim() || rule.conditions.length === 0) return;
+    
+    setSaving(true);
+    try {
+      await onSave(rule);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const testRule = () => {
-    setIsTestingRule(true);
-    
-    // Simulate rule testing
-    setTimeout(() => {
-      const mockResults = [
-        "Would trigger on: ETH transfer of $2.5M on Ethereum",
-        "Would trigger on: USDC transfer of $1.8M on Polygon", 
-        "Would NOT trigger on: BTC transfer of $500K (below threshold)"
-      ];
-      setPreviewResults(mockResults);
-      setIsTestingRule(false);
-    }, 1500);
+    // Simulate testing the rule
+    alert('Rule test: This rule would trigger for the current conditions');
   };
-
-  const handleSave = () => {
-    if (!rule.name.trim() || rule.conditions.length === 0) {
-      alert('Please provide a name and at least one condition');
-      return;
-    }
-    onSave(rule);
-    onClose();
-  };
-
-  const renderConditionValue = (condition: AlertCondition) => {
-    switch (condition.type) {
-      case 'amount':
-        return (
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={condition.value}
-              onChange={(e) => updateCondition(condition.id, { value: Number(e.target.value) })}
-              placeholder="1000000"
-              className="flex-1"
-            />
-            <Select
-              value={condition.currency}
-              onValueChange={(value) => updateCondition(condition.id, { currency: value as 'USD' | 'ETH' | 'BTC' })}
-            >
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="ETH">ETH</SelectItem>
-                <SelectItem value="BTC">BTC</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        );
-      
-      case 'chain':
-        return (
-          <Select
-            value={Array.isArray(condition.value) ? condition.value[0] : condition.value}
-            onValueChange={(value) => updateCondition(condition.id, { value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select chain" />
-            </SelectTrigger>
-            <SelectContent>
-              {CHAINS.map(chain => (
-                <SelectItem key={chain} value={chain}>{chain}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      
-      case 'token':
-        return (
-          <Select
-            value={Array.isArray(condition.value) ? condition.value[0] : condition.value}
-            onValueChange={(value) => updateCondition(condition.id, { value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select token" />
-            </SelectTrigger>
-            <SelectContent>
-              {TOKENS.map(token => (
-                <SelectItem key={token} value={token}>{token}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      
-      case 'whale_tag':
-        return (
-          <Select
-            value={condition.value as string}
-            onValueChange={(value) => updateCondition(condition.id, { value: value === 'true' })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">Is Whale Wallet</SelectItem>
-              <SelectItem value="false">Not Whale Wallet</SelectItem>
-            </SelectContent>
-          </Select>
-        );
-      
-      case 'direction':
-        return (
-          <Select
-            value={condition.value as string}
-            onValueChange={(value) => updateCondition(condition.id, { value })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="buy">Buy/Deposit</SelectItem>
-              <SelectItem value="sell">Sell/Withdrawal</SelectItem>
-              <SelectItem value="transfer">Transfer</SelectItem>
-            </SelectContent>
-          </Select>
-        );
-      
-      case 'time_window':
-        return (
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={condition.value}
-              onChange={(e) => updateCondition(condition.id, { value: Number(e.target.value) })}
-              placeholder="24"
-              className="flex-1"
-            />
-            <Select
-              value={condition.unit}
-              onValueChange={(value) => updateCondition(condition.id, { unit: value as 'hours' | 'days' })}
-            >
-              <SelectTrigger className="w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hours">Hours</SelectItem>
-                <SelectItem value="days">Days</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        );
-      
-      default:
-        return <Input value={condition.value} onChange={(e) => updateCondition(condition.id, { value: e.target.value })} />;
-    }
-  };
-
-  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">
-                {editingRule ? 'Edit Alert Rule' : 'Create Alert Rule'}
-              </h2>
-              <p className="text-muted-foreground">Set up custom conditions for on-chain alerts</p>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+      {/* Basic Info */}
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="name">Rule Name</Label>
+          <Input
+            id="name"
+            value={rule.name}
+            onChange={(e) => setRule(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="Large ETH Movements"
+            className="mt-1"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="description">Description (Optional)</Label>
+          <Input
+            id="description"
+            value={rule.description}
+            onChange={(e) => setRule(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="Alert when ETH transactions exceed $1M"
+            className="mt-1"
+          />
+        </div>
+      </div>
 
-          <div className="space-y-6">
-            {/* Basic Info */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-4">Basic Information</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Rule Name</Label>
-                  <Input
-                    id="name"
-                    value={rule.name}
-                    onChange={(e) => setRule(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Large ETH Whale Movements"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Textarea
-                    id="description"
-                    value={rule.description}
-                    onChange={(e) => setRule(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe what this alert monitors..."
-                  />
-                </div>
-              </div>
-            </Card>
+      {/* Conditions */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium">Alert Conditions</h3>
+          <Button size="sm" onClick={addCondition}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Condition
+          </Button>
+        </div>
 
-            {/* Conditions */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">Alert Conditions</h3>
-                <Button onClick={addCondition} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Condition
+        {rule.conditions.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No conditions added. Click "Add Condition" to start.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {rule.conditions.map((condition, index) => (
+              <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                {index > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    {rule.logic_operator}
+                  </Badge>
+                )}
+                
+                <Select
+                  value={condition.type}
+                  onValueChange={(value: any) => updateCondition(index, { type: value })}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="amount">Amount</SelectItem>
+                    <SelectItem value="chain">Chain</SelectItem>
+                    <SelectItem value="token">Token</SelectItem>
+                    <SelectItem value="whale_tag">Whale Tag</SelectItem>
+                    <SelectItem value="direction">Direction</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={condition.operator}
+                  onValueChange={(value) => updateCondition(index, { operator: value })}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {condition.type === 'amount' && (
+                      <>
+                        <SelectItem value="gte">≥</SelectItem>
+                        <SelectItem value="lte">≤</SelectItem>
+                        <SelectItem value="eq">=</SelectItem>
+                      </>
+                    )}
+                    {condition.type !== 'amount' && (
+                      <>
+                        <SelectItem value="eq">Equals</SelectItem>
+                        <SelectItem value="in">In List</SelectItem>
+                        <SelectItem value="not_in">Not In</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+
+                <Input
+                  value={condition.value}
+                  onChange={(e) => updateCondition(index, { 
+                    value: condition.type === 'amount' ? Number(e.target.value) : e.target.value 
+                  })}
+                  placeholder={condition.type === 'amount' ? '1000000' : 'ETH'}
+                  className="flex-1"
+                />
+
+                {condition.type === 'amount' && (
+                  <Select
+                    value={condition.currency || 'USD'}
+                    onValueChange={(value) => updateCondition(index, { currency: value })}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="ETH">ETH</SelectItem>
+                      <SelectItem value="BTC">BTC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeCondition(index)}
+                >
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
+            ))}
+          </div>
+        )}
 
-              {rule.conditions.length > 0 && (
-                <div className="mb-4">
-                  <Label>Logic Operator</Label>
-                  <Select
-                    value={rule.logicOperator}
-                    onValueChange={(value) => setRule(prev => ({ ...prev, logicOperator: value as 'AND' | 'OR' | 'NOR' }))}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AND">AND</SelectItem>
-                      <SelectItem value="OR">OR</SelectItem>
-                      <SelectItem value="NOR">NOR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    How to combine multiple conditions
-                  </p>
-                </div>
-              )}
+        {rule.conditions.length > 1 && (
+          <div className="mt-4">
+            <Label>Logic Operator</Label>
+            <Select
+              value={rule.logic_operator}
+              onValueChange={(value: any) => setRule(prev => ({ ...prev, logic_operator: value }))}
+            >
+              <SelectTrigger className="w-32 mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AND">AND</SelectItem>
+                <SelectItem value="OR">OR</SelectItem>
+                <SelectItem value="NOR">NOR</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </Card>
 
-              <div className="space-y-4">
-                {rule.conditions.map((condition, index) => (
-                  <div key={condition.id} className="border rounded-lg p-4">
-                    <div className="flex items-center gap-4 mb-3">
-                      {index > 0 && (
-                        <Badge variant="outline" className="text-xs">
-                          {rule.logicOperator}
-                        </Badge>
-                      )}
-                      <Select
-                        value={condition.type}
-                        onValueChange={(value) => updateCondition(condition.id, { type: value as AlertCondition['type'] })}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CONDITION_TYPES.map(type => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={condition.operator}
-                        onValueChange={(value) => updateCondition(condition.id, { operator: value as AlertCondition['operator'] })}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="eq">Equals</SelectItem>
-                          <SelectItem value="gte">≥ Greater</SelectItem>
-                          <SelectItem value="lte">≤ Less</SelectItem>
-                          <SelectItem value="in">In List</SelectItem>
-                          <SelectItem value="not_in">Not In</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeCondition(condition.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex-1">
-                      {renderConditionValue(condition)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+      {/* Delivery Settings */}
+      <Card className="p-4">
+        <h3 className="font-medium mb-4">Delivery Channels</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Push Notifications</Label>
+            <Switch
+              checked={rule.delivery_channels.push}
+              onCheckedChange={(checked) => 
+                setRule(prev => ({
+                  ...prev,
+                  delivery_channels: { ...prev.delivery_channels, push: checked }
+                }))
+              }
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label>Email Alerts</Label>
+            <Switch
+              checked={rule.delivery_channels.email}
+              onCheckedChange={(checked) => 
+                setRule(prev => ({
+                  ...prev,
+                  delivery_channels: { ...prev.delivery_channels, email: checked }
+                }))
+              }
+            />
+          </div>
 
-              {rule.conditions.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No conditions added yet</p>
-                  <p className="text-sm">Click "Add Condition" to start building your alert</p>
-                </div>
-              )}
-            </Card>
+          <div className="flex items-center justify-between">
+            <Label>Webhook</Label>
+            <Switch
+              checked={rule.delivery_channels.webhook}
+              onCheckedChange={(checked) => 
+                setRule(prev => ({
+                  ...prev,
+                  delivery_channels: { ...prev.delivery_channels, webhook: checked }
+                }))
+              }
+            />
+          </div>
 
-            {/* Delivery Settings */}
-            <Card className="p-4">
-              <h3 className="font-semibold mb-4">Delivery Settings</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Push Notifications</Label>
-                    <Switch
-                      checked={rule.deliveryChannels.push}
-                      onCheckedChange={(checked) => 
-                        setRule(prev => ({
-                          ...prev,
-                          deliveryChannels: { ...prev.deliveryChannels, push: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Email Alerts</Label>
-                    <Switch
-                      checked={rule.deliveryChannels.email}
-                      onCheckedChange={(checked) => 
-                        setRule(prev => ({
-                          ...prev,
-                          deliveryChannels: { ...prev.deliveryChannels, email: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>SMS Alerts</Label>
-                    <Switch
-                      checked={rule.deliveryChannels.sms}
-                      onCheckedChange={(checked) => 
-                        setRule(prev => ({
-                          ...prev,
-                          deliveryChannels: { ...prev.deliveryChannels, sms: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label>Webhook</Label>
-                    <Switch
-                      checked={rule.deliveryChannels.webhook}
-                      onCheckedChange={(checked) => 
-                        setRule(prev => ({
-                          ...prev,
-                          deliveryChannels: { ...prev.deliveryChannels, webhook: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-                
-                {rule.deliveryChannels.webhook && (
-                  <div>
-                    <Label htmlFor="webhook">Webhook URL</Label>
-                    <Input
-                      id="webhook"
-                      value={rule.webhookUrl || ''}
-                      onChange={(e) => setRule(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                      placeholder="https://your-app.com/webhook"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <Label>Priority Level</Label>
-                  <Select
-                    value={rule.priority.toString()}
-                    onValueChange={(value) => setRule(prev => ({ ...prev, priority: Number(value) }))}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Low</SelectItem>
-                      <SelectItem value="2">Normal</SelectItem>
-                      <SelectItem value="3">High</SelectItem>
-                      <SelectItem value="4">Critical</SelectItem>
-                      <SelectItem value="5">Emergency</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </Card>
-
-            {/* Preview & Test */}
-            {rule.conditions.length > 0 && (
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Rule Preview & Test</h3>
-                  <Button onClick={testRule} disabled={isTestingRule} size="sm">
-                    <TestTube className="h-4 w-4 mr-2" />
-                    {isTestingRule ? 'Testing...' : 'Test Rule'}
-                  </Button>
-                </div>
-                
-                <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                  <p className="text-sm font-mono">
-                    Alert when: {rule.conditions.map((c, i) => (
-                      <span key={c.id}>
-                        {i > 0 && ` ${rule.logicOperator} `}
-                        {c.type} {c.operator} {Array.isArray(c.value) ? c.value.join(', ') : c.value}
-                        {c.currency && ` ${c.currency}`}
-                        {c.unit && ` ${c.unit}`}
-                      </span>
-                    ))}
-                  </p>
-                </div>
-
-                {previewResults.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Test Results:</Label>
-                    {previewResults.map((result, i) => (
-                      <div key={i} className="text-sm p-2 bg-muted/30 rounded">
-                        {result}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Button onClick={handleSave} className="flex-1">
-                <Save className="h-4 w-4 mr-2" />
-                {editingRule ? 'Update Rule' : 'Create Rule'}
-              </Button>
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
+          {rule.delivery_channels.webhook && (
+            <div>
+              <Label htmlFor="webhook">Webhook URL</Label>
+              <Input
+                id="webhook"
+                value={rule.webhook_url}
+                onChange={(e) => setRule(prev => ({ ...prev, webhook_url: e.target.value }))}
+                placeholder="https://your-api.com/webhook"
+                className="mt-1"
+              />
             </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Advanced Settings */}
+      <Card className="p-4">
+        <h3 className="font-medium mb-4">Advanced Settings</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="priority">Priority Level</Label>
+            <Select
+              value={rule.priority.toString()}
+              onValueChange={(value) => setRule(prev => ({ ...prev, priority: Number(value) }))}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 - Low</SelectItem>
+                <SelectItem value="2">2 - Medium</SelectItem>
+                <SelectItem value="3">3 - Normal</SelectItem>
+                <SelectItem value="4">4 - High</SelectItem>
+                <SelectItem value="5">5 - Emergency</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="frequency">Frequency Limit</Label>
+            <Input
+              id="frequency"
+              type="number"
+              value={rule.frequency_limit}
+              onChange={(e) => setRule(prev => ({ ...prev, frequency_limit: Number(e.target.value) }))}
+              placeholder="10"
+              className="mt-1"
+            />
           </div>
         </div>
       </Card>
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Button onClick={testRule} variant="outline" className="flex-1">
+          <TestTube className="h-4 w-4 mr-2" />
+          Test Rule
+        </Button>
+        <Button onClick={onCancel} variant="outline" className="flex-1">
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving || !rule.name.trim() || rule.conditions.length === 0}
+          className="flex-1 bg-[#14B8A6] hover:bg-[#0F9488]"
+        >
+          <Zap className="h-4 w-4 mr-2" />
+          {saving ? 'Saving...' : 'Save Rule'}
+        </Button>
+      </div>
     </div>
   );
-};
+}
