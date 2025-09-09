@@ -17,11 +17,11 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { id: "home", label: "Home", icon: Home },
   { id: "sentiment", label: "Sentiment", icon: TrendingUp },
+  { id: "portfolio", label: "Portfolio", icon: Briefcase },
   { id: "whales", label: "Whales", icon: Fish },
-  { id: "portfolio", label: "Portfolio", icon: Briefcase, isPremium: true },
   { id: "analytics", label: "Analytics", icon: Brain, isPremium: true },
+  { id: "predictions", label: "Predictions", icon: Activity, isPremium: true },
   { id: "scanner", label: "Scanner", icon: Shield, isPremium: true },
-  { id: "team", label: "Team", icon: Users, isPremium: true },
 ];
 
 interface BottomNavigationProps {
