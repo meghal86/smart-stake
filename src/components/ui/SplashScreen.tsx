@@ -24,7 +24,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 opacity-0 transition-opacity duration-500 pointer-events-none">
         <img 
-          src="/whaleplus-logo.png" 
+          src="/whaleplus-logo-512x512.png"
           alt="WhalePlus" 
           className="w-48 h-48 mb-6 drop-shadow-lg"
           onError={(e) => {
@@ -42,7 +42,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50 transition-opacity duration-500">
       <div className="animate-pulse flex flex-col items-center">
         <img 
-          src="/whaleplus-logo.png" 
+          src="/whaleplus-logo-512x512.png" 
           alt="WhalePlus" 
           className="w-48 h-48 mb-6 drop-shadow-lg"
           onError={(e) => {

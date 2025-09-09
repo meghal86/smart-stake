@@ -94,7 +94,7 @@ export const UserHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src="/whaleplus-logo.png"
+            src="/whaleplus-logo-512x512.png"
             alt="WhalePlus" 
             className="h-12 object-contain"
             onError={(e) => {
@@ -119,7 +119,7 @@ export const UserHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src="/whaleplus-logo.png"
+            src="/whaleplus-logo-512x512.png"
             alt="WhalePlus" 
             className="h-12 object-contain"
             onError={(e) => {
@@ -168,7 +168,7 @@ export const UserHeader = () => {
       <div className="flex items-center gap-2">
           <div className="relative h-12 w-auto">
             <img 
-              src="/whaleplus-logo.png"
+              src="/whaleplus-logo-512x512.png"
               alt="WhalePlus" 
               className="h-12 object-contain"
               onLoad={() => console.log('Logo loaded successfully')}
