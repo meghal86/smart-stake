@@ -145,18 +145,18 @@ export default function Home() {
 
       // Use fresh API data with transaction classification
       const apiTransactions = data.transactions?.map((tx: any) => ({
-        id: tx.tx_hash,
-        fromAddress: tx.from_addr || "0x0000000000000000000000000000000000000000",
-        toAddress: tx.to_addr || "0x0000000000000000000000000000000000000000",
-        amountUSD: Number(tx.amount_usd) || 0,
-        token: tx.token || 'ETH',
-        chain: tx.chain || 'Ethereum',
-        timestamp: new Date(tx.timestamp),
-        txHash: tx.tx_hash,
-        type: tx.tx_type === 'buy' ? "buy" as const : tx.tx_type === 'sell' ? "sell" as const : "transfer" as const,
-        fromType: tx.from_type,
-        toType: tx.to_type,
-        txType: tx.tx_type,
+        id: tx.hash || tx.tx_hash || tx.id,
+        fromAddress: tx.from?.address || tx.from_addr || "0x0000000000000000000000000000000000000000",
+        toAddress: tx.to?.address || tx.to_addr || "0x0000000000000000000000000000000000000000",
+        amountUSD: Number(tx.amount_usd || tx.amount) || 0,
+        token: tx.symbol || tx.token || 'ETH',
+        chain: tx.blockchain || tx.chain || 'Ethereum',
+        timestamp: new Date(tx.timestamp * 1000),
+        txHash: tx.hash || tx.tx_hash,
+        type: tx.transaction_type === 'transfer' ? "transfer" as const : tx.tx_type === 'buy' ? "buy" as const : tx.tx_type === 'sell' ? "sell" as const : "transfer" as const,
+        fromType: tx.from?.owner_type || tx.from_type || 'unknown',
+        toType: tx.to?.owner_type || tx.to_type || 'unknown',
+        txType: tx.transaction_type || tx.tx_type || 'transfer',
       })) || [];
 
       if (apiTransactions.length > 0) {
