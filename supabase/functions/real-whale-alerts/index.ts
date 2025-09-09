@@ -27,18 +27,17 @@ serve(async (req) => {
     if (error) throw error
 
     // Transform alerts for frontend
-    const whaleAlerts = alerts?.map(alert => ({
-      id: alert.id,
-      hash: alert.tx_hash,
-      from: alert.from_addr,
-      to: alert.to_addr,
-      amount: alert.amount_usd,
+    const whaleTransactions = alerts?.map(alert => ({
+      tx_hash: alert.tx_hash,
+      from_addr: alert.from_addr,
+      to_addr: alert.to_addr,
+      amount_usd: alert.amount_usd,
       token: alert.token,
       chain: alert.chain,
       timestamp: alert.created_at,
-      blockNumber: alert.block_number,
-      type: determineTransactionType(alert.from_addr, alert.to_addr),
-      riskLevel: calculateRiskLevel(alert.amount_usd)
+      tx_type: determineTransactionType(alert.from_addr, alert.to_addr),
+      from_type: 'wallet',
+      to_type: 'wallet'
     })) || []
 
     // Get current market data
@@ -48,14 +47,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        alerts: whaleAlerts,
-        marketData: {
-          ethPrice,
-          marketCap,
-          totalWhaleVolume24h: calculateTotalVolume24h(whaleAlerts),
-          activeWhales: countActiveWhales(whaleAlerts)
-        },
-        lastUpdated: new Date().toISOString()
+        transactions: whaleTransactions,
+        count: whaleTransactions.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
