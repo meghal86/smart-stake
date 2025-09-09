@@ -94,12 +94,12 @@ export const UserHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src="/whaleplus-logo-512x512.png"
+            src="/lovable-uploads/4b213cc9-9b3e-4295-8551-3e2fd23c87d8.png"
             alt="WhalePlus" 
             className="h-12 object-contain"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/logos/Stacked : Square Logo (HD).png';
+              target.src = '/lovable-uploads/5bb168f9-6f5d-4ad2-850e-f09610b3bc5e.png';
             }}
           />
           <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
@@ -119,12 +119,12 @@ export const UserHeader = () => {
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <img 
-            src="/whaleplus-logo-512x512.png"
+            src="/lovable-uploads/4b213cc9-9b3e-4295-8551-3e2fd23c87d8.png"
             alt="WhalePlus" 
             className="h-12 object-contain"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = '/logos/Stacked : Square Logo (HD).png';
+              target.src = '/lovable-uploads/5bb168f9-6f5d-4ad2-850e-f09610b3bc5e.png';
             }}
           />
           <span className="font-bold text-base sm:text-lg text-foreground hidden xs:block">
@@ -168,14 +168,14 @@ export const UserHeader = () => {
       <div className="flex items-center gap-2">
           <div className="relative h-12 w-auto">
             <img 
-              src="/whaleplus-logo-512x512.png"
+              src="/lovable-uploads/4b213cc9-9b3e-4295-8551-3e2fd23c87d8.png"
               alt="WhalePlus" 
               className="h-12 object-contain"
               onLoad={() => console.log('Logo loaded successfully')}
               onError={(e) => {
                 console.error('Logo failed to load, trying fallback');
                 const target = e.target as HTMLImageElement;
-                target.src = '/logos/Stacked : Square Logo (HD).png';
+                target.src = '/lovable-uploads/5bb168f9-6f5d-4ad2-850e-f09610b3bc5e.png';
               }}
             />
           </div>
