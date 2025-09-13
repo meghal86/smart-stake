@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logos/Stacked : Square Logo (HD).png",
-      "sizes": "192x192",
+      "src": "/whaleplus-icon-128x128.png",
+      "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logos/Stacked : Square Logo (HD).png",
+      "src": "/whaleplus-logo-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

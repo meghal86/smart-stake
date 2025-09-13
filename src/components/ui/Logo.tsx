@@ -9,6 +9,9 @@ interface LogoProps {
   onClick?: () => void;
   className?: string;
   textClassName?: string;
+  variant?: 'header' | 'splash';
+  // Optional explicit image source to override defaults
+  src?: string;
 }
 
 const sizeClasses = {
@@ -34,9 +37,33 @@ export const Logo: React.FC<LogoProps> = ({
   clickable = false,
   onClick,
   className = '',
-  textClassName = ''
+  textClassName = '',
+  variant = 'header',
+  src
 }) => {
   const Component = clickable ? 'button' : 'div';
+  const [imgError, setImgError] = React.useState(false);
+  const [sourceIndex, setSourceIndex] = React.useState(0);
+
+  // Prefer provided src, then fallbacks. Avoids issues if a file name changes
+  // or if files with spaces are problematic in some environments.
+  const sources = React.useMemo(() => {
+    if (variant === 'splash') {
+      return [
+        src || '/splash screen.png',
+        '/whaleplus-logo-512x512.png',
+        '/whaleplus-logo.svg',
+      ];
+    }
+    // header variant fallbacks
+    return [
+      src || '/header logo.png',
+      '/whaleplus-logo.svg',
+      '/whaleplus-logo-512x512.png',
+    ];
+  }, [variant, src]);
+
+  const currentSrc = sources[Math.min(sourceIndex, sources.length - 1)];
   
   return (
     <Component 
@@ -47,20 +74,28 @@ export const Logo: React.FC<LogoProps> = ({
       )}
       onClick={clickable ? onClick : undefined}
     >
-      <img
-        src="/lovable-uploads/4b213cc9-9b3e-4295-8551-3e2fd23c87d8.png"
-        alt="WhalePlus Logo"
-        className={cn("object-contain", sizeClasses[size])}
-        style={{ filter: 'drop-shadow(0 0 0 white)' }}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          if (target.src.includes('4b213cc9')) {
-            target.src = '/lovable-uploads/5bb168f9-6f5d-4ad2-850e-f09610b3bc5e.png';
-          } else if (target.src.includes('5bb168f9')) {
-            target.src = '/lovable-uploads/c19d6299-7cb7-455a-aa4a-fc3cd834f51d.png';
-          }
-        }}
-      />
+      {!imgError ? (
+        <img
+          src={currentSrc}
+          alt="WhalePlus Logo"
+          className={cn("object-contain", sizeClasses[size])}
+          loading="lazy"
+          onError={() => {
+            if (sourceIndex < sources.length - 1) {
+              setSourceIndex((i) => i + 1);
+            } else {
+              setImgError(true);
+            }
+          }}
+        />
+      ) : (
+        <div className={cn(
+          "bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-bold",
+          sizeClasses[size]
+        )}>
+          🐋
+        </div>
+      )}
       {showText && (
         <span className={cn(
           "font-bold text-foreground",

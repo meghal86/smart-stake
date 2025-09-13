@@ -95,6 +95,7 @@ export const UserHeader = () => {
             showText={true}
             clickable={true}
             onClick={() => navigate('/?tab=home')}
+            src="/whaleplus-logo-512x512.png"
             textClassName="text-base font-semibold"
           />
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
@@ -112,6 +113,7 @@ export const UserHeader = () => {
             showText={true}
             clickable={true}
             onClick={() => navigate('/?tab=home')}
+            src="/whaleplus-logo-512x512.png"
             textClassName="text-base font-semibold"
           />
           
@@ -168,6 +170,7 @@ export const UserHeader = () => {
           showText={true}
           clickable={true}
           onClick={() => navigate('/?tab=home')}
+          src="/whaleplus-logo-512x512.png"
           textClassName="text-base font-semibold"
         />
         

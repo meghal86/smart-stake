@@ -27,6 +27,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         <Logo 
           size="xl" 
           showText={false}
+          variant="splash"
+          src="/whaleplus-logo-512x512.png"
           className="mb-6 drop-shadow-lg"
         />
         <h1 className="text-5xl font-bold text-foreground mb-3">WhalePlus</h1>
@@ -41,6 +43,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         <Logo 
           size="xl" 
           showText={false}
+          variant="splash"
+          src="/whaleplus-logo-512x512.png"
           className="mb-6 drop-shadow-lg"
         />
         <h1 className="text-5xl font-bold text-foreground mb-3">WhalePlus</h1>

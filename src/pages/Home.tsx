@@ -93,6 +93,8 @@ export default function Home() {
   const [alertCenterOpen, setAlertCenterOpen] = useState(false);
   const [activeRules, setActiveRules] = useState(0);
   const [triggeredToday, setTriggeredToday] = useState(3);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [predLoading, setPredLoading] = useState(false);
   
   const whaleAccess = canAccessFeature('whaleAlerts');
   const isLimitedAccess = whaleAccess === 'limited';
@@ -154,8 +156,10 @@ export default function Home() {
         timestamp: new Date(tx.timestamp * 1000),
         txHash: tx.hash || tx.tx_hash,
         type: tx.transaction_type === 'transfer' ? "transfer" as const : tx.tx_type === 'buy' ? "buy" as const : tx.tx_type === 'sell' ? "sell" as const : "transfer" as const,
-        fromType: tx.from?.owner_type || tx.from_type || 'unknown',
-        toType: tx.to?.owner_type || tx.to_type || 'unknown',
+        fromType: tx.from?.owner_type || tx.from_type || undefined,
+        toType: tx.to?.owner_type || tx.to_type || undefined,
+        fromName: tx.from?.owner || tx.from_owner || undefined,
+        toName: tx.to?.owner || tx.to_owner || undefined,
         txType: tx.transaction_type || tx.tx_type || 'transfer',
       })) || [];
 
@@ -170,6 +174,20 @@ export default function Home() {
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
+    }
+  };
+
+  const fetchPredictions = async () => {
+    try {
+      setPredLoading(true);
+      const { data, error } = await supabase.functions.invoke('whale-predictions');
+      if (!error && data?.predictions) {
+        setPredictions(data.predictions);
+      }
+    } catch (err) {
+      // Non-fatal; keep UI smooth
+    } finally {
+      setPredLoading(false);
     }
   };
 
@@ -208,6 +226,7 @@ export default function Home() {
     if (user) {
       // Logged users get real API data
       fetchTransactions();
+      fetchPredictions();
       const interval = setInterval(fetchTransactions, 120000);
       return () => clearInterval(interval);
     } else {
@@ -217,6 +236,22 @@ export default function Home() {
       setIsLoading(false);
     }
   }, [user]);
+
+  // Derived 24h stats
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const tx24h = transactions.filter(t => now - t.timestamp.getTime() < dayMs);
+  const volume24h = tx24h.reduce((sum, t) => sum + (t.amountUSD || 0), 0);
+  const activeAddresses = new Set<string>();
+  tx24h.forEach(t => { activeAddresses.add(t.fromAddress); activeAddresses.add(t.toAddress); });
+  const activeWhalesCount = activeAddresses.size;
+
+  const formatCompactUsd = (n: number) => {
+    if (n >= 1_000_000_000) return `$${(n/1_000_000_000).toFixed(2)}B`;
+    if (n >= 1_000_000) return `$${(n/1_000_000).toFixed(2)}M`;
+    if (n >= 1_000) return `$${(n/1_000).toFixed(0)}K`;
+    return `$${n.toFixed(0)}`;
+  };
 
   return (
     <TooltipProvider>
@@ -244,6 +279,12 @@ export default function Home() {
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-950/20 px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800">
                   <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{triggeredToday} Today</span>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-950/20 px-2 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">24h Vol: {formatCompactUsd(volume24h)}</span>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-950/20 px-2 py-1 rounded-full border border-purple-200 dark:border-purple-800">
+                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Active: {activeWhalesCount}</span>
                 </div>
               </div>
             </div>
@@ -279,6 +320,28 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Predictions strip */}
+        {(predictions?.length || 0) > 0 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+            {predictions.slice(0, 6).map((p: any) => {
+              const type = (p.prediction_type || '').replace(/_/g, ' ');
+              const confidence = Math.round((p.confidence || 0) * 100);
+              const isPrice = (p.prediction_type || '') === 'price_movement';
+              const color = isPrice ? 'bg-blue-600/15 text-blue-400 border-blue-600/30' : 'bg-teal-600/15 text-teal-400 border-teal-600/30';
+              return (
+                <div key={p.id} className={`whitespace-nowrap text-xs px-2 py-1 rounded-full border ${color}`} title={p.explanation || ''}>
+                  <span className="font-medium mr-1">{p.asset || '—'}</span>
+                  <span className="capitalize mr-1">{type}</span>
+                  {isPrice && p.predicted_value && (
+                    <span className="mr-1">→ ${p.predicted_value}</span>
+                  )}
+                  <span className="opacity-70">({confidence}%)</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Plan-based alert counter */}
         {isLimitedAccess && (

@@ -10,6 +10,8 @@ interface WhaleTransaction {
   id: string;
   fromAddress: string;
   toAddress: string;
+  fromName?: string;
+  toName?: string;
   amountUSD: number;
   token: string;
   chain: string;
@@ -35,6 +37,13 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
   const copyToClipboard = (text: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(text);
+  };
+
+  const formatEntityName = (name?: string) => {
+    if (!name) return '';
+    const cleaned = name.replace(/_/g, ' ').trim();
+    // Keep it compact
+    return cleaned.length > 14 ? cleaned.slice(0, 12) + '…' : cleaned;
   };
 
   const getChainIcon = (chain: string) => {
@@ -74,6 +83,80 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
 
   const isLargeTransaction = transaction.amountUSD > 5000000;
   const isMegaTransaction = transaction.amountUSD > 10000000;
+
+  const getRiskLevel = (usd: number): 'low' | 'medium' | 'high' | 'critical' => {
+    if (usd > 50000000) return 'critical';
+    if (usd > 10000000) return 'high';
+    if (usd > 1000000) return 'medium';
+    return 'low';
+  };
+
+  const risk = getRiskLevel(transaction.amountUSD);
+
+  const getFlowLabel = (): { label: string; tooltip: string } => {
+    const t = (transaction.txType || '').toLowerCase();
+    if (t.includes('deposit')) return { label: 'CEX → Wallet', tooltip: 'Deposit from centralized exchange to wallet' };
+    if (t.includes('withdrawal')) return { label: 'Wallet → CEX', tooltip: 'Withdrawal from wallet to centralized exchange' };
+    if (t.includes('exchange_transfer')) return { label: 'CEX ↔ CEX', tooltip: 'Transfer between exchange addresses' };
+    if (t.includes('wallet_transfer') || t === 'transfer') return { label: 'Wallet ↔ Wallet', tooltip: 'Transfer between wallets' };
+    // Fallback using from/to types
+    const fromT = (transaction.fromType || '').toLowerCase();
+    const toT = (transaction.toType || '').toLowerCase();
+    const isFromCEX = fromT.includes('exchange');
+    const isToCEX = toT.includes('exchange');
+    if (isFromCEX && !isToCEX) return { label: 'CEX → Wallet', tooltip: 'Deposit from exchange' };
+    if (!isFromCEX && isToCEX) return { label: 'Wallet → CEX', tooltip: 'Withdrawal to exchange' };
+    if (isFromCEX && isToCEX) return { label: 'CEX ↔ CEX', tooltip: 'Transfer between exchanges' };
+    return { label: 'Wallet ↔ Wallet', tooltip: 'Transfer between wallets' };
+  };
+
+  const getExplorerAddressUrl = (chain: string, address: string) => {
+    switch (chain.toLowerCase()) {
+      case 'ethereum': return `https://etherscan.io/address/${address}`;
+      case 'tron': return `https://tronscan.org/#/address/${address}`;
+      case 'ripple':
+      case 'xrp': return `https://xrpscan.com/account/${address}`;
+      case 'bitcoin':
+      case 'btc': return `https://blockchair.com/bitcoin/address/${address}`;
+      case 'bsc':
+      case 'binance': return `https://bscscan.com/address/${address}`;
+      case 'polygon': return `https://polygonscan.com/address/${address}`;
+      case 'solana': return `https://solscan.io/account/${address}`;
+      default: return `https://etherscan.io/address/${address}`;
+    }
+  };
+
+  // Entity type helpers: label, emoji, and explanation tooltip
+  const normalizeType = (t: string) => {
+    const s = t.toLowerCase();
+    if (['cex', 'exchange', 'centralized_exchange'].includes(s)) return 'exchange';
+    if (['dex', 'amm', 'liquidity_pool', 'pool'].includes(s)) return 'dex';
+    if (['bridge', 'cross_chain_bridge', 'cross-chain-bridge'].includes(s)) return 'bridge';
+    if (['contract', 'smart_contract', 'smart-contract'].includes(s)) return 'contract';
+    if (['defi', 'protocol', 'lending', 'staking_protocol', 'yield'].includes(s)) return 'defi';
+    if (['miner', 'mining_pool', 'validator', 'staking', 'node', 'infrastructure'].includes(s)) return 'infrastructure';
+    if (['institution', 'fund', 'foundation', 'whale'].includes(s)) return 'institution';
+    if (['other', 'others', 'service', 'unknown_service'].includes(s)) return 'other';
+    if (s === 'wallet') return 'wallet';
+    return s;
+  };
+
+  const entityInfo = (t?: string) => {
+    if (!t) return null;
+    const kind = normalizeType(t);
+    const info: Record<string, { emoji: string; label: string; desc: string }> = {
+      exchange: { emoji: '🏦', label: 'Exchange', desc: 'Centralized exchange (CEX) address. Movements are typically deposits or withdrawals.' },
+      dex: { emoji: '🔁', label: 'DEX/Pool', desc: 'Decentralized exchange or liquidity pool smart contract.' },
+      bridge: { emoji: '🌉', label: 'Bridge', desc: 'Cross-chain bridge contract or operator address.' },
+      contract: { emoji: '📜', label: 'Contract', desc: 'General smart contract address (protocol or utility).' },
+      defi: { emoji: '🏗️', label: 'DeFi Protocol', desc: 'DeFi protocol address (lending, staking, yield, etc.).' },
+      infrastructure: { emoji: '⚙️', label: 'Infrastructure', desc: 'Validator, miner, staking node, or infrastructure service.' },
+      institution: { emoji: '🏛️', label: 'Institution', desc: 'Large holder, fund, or foundation-managed address.' },
+      other: { emoji: '❓', label: 'Other', desc: 'Unclassified address (service, contract, or private wallet). Classification is uncertain.' },
+      wallet: { emoji: '👛', label: 'Wallet', desc: 'Regular wallet. Often a user or cold wallet.' },
+    };
+    return info[kind] || { emoji: '🏷️', label: t.replace(/_/g, ' '), desc: 'Address category provided by data source.' };
+  };
 
   const formatAmount = (amount: number) => {
     if (amount >= 1000000) {
@@ -137,48 +220,90 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
           </div>
           {getChainLogo(transaction.chain)}
           <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button 
-                  onClick={(e) => copyToClipboard(transaction.fromAddress, e)}
-                  className="font-mono text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-                >
-                  {formatAddress(transaction.fromAddress)}
-                  <Copy size={10} className="opacity-0 group-hover:opacity-100" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to copy: {transaction.fromAddress}</p>
-              </TooltipContent>
-            </Tooltip>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowProfileModal(true);
-              }}
-              className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="View whale profile"
-            >
-              <User size={10} />
-            </Button>
-          </div>
-          <span className="text-muted-foreground">→</span>
+          {/* From address + optional entity name */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={(e) => copyToClipboard(transaction.fromAddress, e)}
+                className="font-mono text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+              >
+                {transaction.fromName && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/50 mr-1 capitalize">
+                    {formatEntityName(transaction.fromName)}
+                  </span>
+                )}
+                {formatAddress(transaction.fromAddress)}
+                <Copy size={10} className="opacity-0 group-hover:opacity-100" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="space-y-1">
+                {transaction.fromName && (
+                  <p className="text-xs font-medium">{transaction.fromName}</p>
+                )}
+                <p className="text-xs">Click to copy: {transaction.fromAddress}</p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+          <a
+            href={getExplorerAddressUrl(transaction.chain, transaction.fromAddress)}
+            onClick={(e) => e.stopPropagation()}
+            target="_blank"
+            rel="noreferrer"
+            className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+            title="Open address in explorer"
+          >
+            <ExternalLink size={12} />
+          </a>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowProfileModal(true);
+            }}
+            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="View whale profile"
+          >
+            <User size={10} />
+          </Button>
+        </div>
+        <span className="text-muted-foreground">→</span>
+          {/* To address + optional entity name */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
                 onClick={(e) => copyToClipboard(transaction.toAddress, e)}
                 className="font-mono text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
               >
+                {transaction.toName && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/50 mr-1 capitalize">
+                    {formatEntityName(transaction.toName)}
+                  </span>
+                )}
                 {formatAddress(transaction.toAddress)}
                 <Copy size={10} className="opacity-0 group-hover:opacity-100" />
               </button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Click to copy: {transaction.toAddress}</p>
+              <div className="space-y-1">
+                {transaction.toName && (
+                  <p className="text-xs font-medium">{transaction.toName}</p>
+                )}
+                <p className="text-xs">Click to copy: {transaction.toAddress}</p>
+              </div>
             </TooltipContent>
           </Tooltip>
+        <a
+          href={getExplorerAddressUrl(transaction.chain, transaction.toAddress)}
+          onClick={(e) => e.stopPropagation()}
+          target="_blank"
+          rel="noreferrer"
+          className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+          title="Open address in explorer"
+        >
+          <ExternalLink size={12} />
+        </a>
         </div>
         <button
           onClick={() => {
@@ -247,16 +372,69 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
             {transaction.type === "buy" ? "🟢 BUY" : transaction.type === "sell" ? "🔴 SELL" : "🔵 TRANSFER"}
             {isMegaTransaction && <span className="ml-1">💥</span>}
           </Badge>
-          {transaction.fromType && transaction.fromType !== 'wallet' && (
-            <Badge variant="outline" className="text-xs">
-              🏦 {transaction.fromType}
-            </Badge>
-          )}
-          {transaction.toType && transaction.toType !== 'wallet' && (
-            <Badge variant="outline" className="text-xs">
-              🏦 {transaction.toType}
-            </Badge>
-          )}
+          {/* Flow direction badge (CEX vs wallet) */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className="text-xs">
+                {getFlowLabel().label}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span className="text-xs">{getFlowLabel().tooltip}</span>
+            </TooltipContent>
+          </Tooltip>
+          {/* Risk level badge */}
+          <Badge 
+            variant="outline" 
+            className={`text-xs ${
+              risk === 'critical' ? 'text-red-500 border-red-500/40' :
+              risk === 'high' ? 'text-orange-500 border-orange-500/40' :
+              risk === 'medium' ? 'text-yellow-500 border-yellow-500/40' :
+              'text-green-500 border-green-500/40'
+            }`}
+            title={`Risk: ${risk}`}
+          >
+            {risk}
+          </Badge>
+          {(() => {
+            const raw = (transaction.fromType || '').toLowerCase();
+            if (!raw || raw === 'unknown' || raw === 'null') return null;
+            const info = entityInfo(raw);
+            if (!info) return null;
+            // We still hide generic 'wallet' badge to reduce noise
+            if (normalizeType(raw) === 'wallet') return null;
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs">
+                    <span className="mr-1">{info.emoji}</span> {info.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="text-xs max-w-xs block">{info.desc}</span>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })()}
+          {(() => {
+            const raw = (transaction.toType || '').toLowerCase();
+            if (!raw || raw === 'unknown' || raw === 'null') return null;
+            const info = entityInfo(raw);
+            if (!info) return null;
+            if (normalizeType(raw) === 'wallet') return null;
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs">
+                    <span className="mr-1">{info.emoji}</span> {info.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span className="text-xs max-w-xs block">{info.desc}</span>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })()}
           <Tooltip>
             <TooltipTrigger>
               <Info size={14} className="text-muted-foreground hover:text-[#14B8A6] transition-colors" />
