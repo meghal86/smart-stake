@@ -130,6 +130,33 @@ class BlockchainMonitor {
   }
 }
 
+function calculateRiskScore(transactions: any[], balance: number): number {
+  const txCount = transactions.length;
+  const avgValue = transactions.reduce((sum, tx) => sum + parseFloat(tx.value || '0'), 0) / txCount;
+  
+  let score = 5; // Base score
+  if (balance > 1000) score += 2; // High balance = lower risk
+  if (txCount < 10) score += 1; // Low activity = lower risk
+  if (avgValue < 10) score += 1; // Small transactions = lower risk
+  
+  return Math.min(10, Math.max(1, score));
+}
+
+function classifyWalletType(transactions: any[]): string {
+  const txCount = transactions.length;
+  const avgGasPrice = transactions.reduce((sum, tx) => sum + parseFloat(tx.gasPrice || '0'), 0) / txCount;
+  
+  if (txCount > 50 && avgGasPrice > 20000000000) return 'trading';
+  return 'investment';
+}
+
+function generateSignals(transactions: any[]): string[] {
+  const signals = [];
+  if (transactions.length > 100) signals.push('High Activity');
+  if (transactions.some(tx => parseFloat(tx.value) > 100)) signals.push('Large Transfers');
+  return signals;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -138,7 +165,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const { addresses } = await req.json()
@@ -155,29 +182,23 @@ serve(async (req) => {
       try {
         const whaleData = await monitor.getWhaleData(address);
         
-        // Store raw transaction data
+        // Store in whale_data_cache
+        const riskScore = calculateRiskScore(whaleData.transactions, whaleData.balance);
+        const walletType = classifyWalletType(whaleData.transactions);
+        
         await supabaseClient
-          .from('whale_transactions')
+          .from('whale_data_cache')
           .upsert({
-            address: whaleData.address,
-            transactions: whaleData.transactions,
+            whale_address: whaleData.address,
+            chain: 'ethereum',
             balance: whaleData.balance,
-            provider: whaleData.provider,
-            last_updated: new Date().toISOString()
+            transaction_count: whaleData.transactions.length,
+            last_activity: new Date().toISOString(),
+            risk_score: riskScore,
+            wallet_type: walletType,
+            cached_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes
           });
-
-        // Trigger classification
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/whale-behavior-engine`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
-          },
-          body: JSON.stringify({
-            address: whaleData.address,
-            transactions: whaleData.transactions
-          })
-        });
 
         return whaleData;
       } catch (error) {

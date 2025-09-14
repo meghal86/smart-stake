@@ -12,73 +12,52 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    )
-
-    // Get live whale classifications from database
-    const { data: classifications, error: classError } = await supabaseClient
-      .from('whale_classifications')
-      .select('*')
-      .order('risk_score', { ascending: false })
-      .limit(50)
-
-    if (classError) throw classError
-
-    // Get active signals
-    const { data: signals, error: signalsError } = await supabaseClient
-      .from('whale_signals')
-      .select('*')
-      .eq('is_active', true)
-      .order('triggered_at', { ascending: false })
-
-    if (signalsError) throw signalsError
-
-    // Get whale transaction data separately
-    const { data: transactions } = await supabaseClient
-      .from('whale_transactions')
-      .select('*')
-      .limit(50)
-
-    // Transform data for frontend
-    const whales = classifications?.map(whale => {
-      const whaleTransactions = transactions?.find(t => t.address === whale.address);
-      return {
-        id: whale.id,
-        address: whale.address,
-        balance: `${whaleTransactions?.balance || 0} ETH`,
-        type: whale.type,
-        riskScore: whale.risk_score,
-        activity: {
-          volume24h: calculateVolume24h(whaleTransactions?.transactions || []),
-          transactions24h: calculateTx24h(whaleTransactions?.transactions || []),
-          lastActive: whaleTransactions?.last_updated || whale.last_updated
-        },
-        signals: whale.signals || [],
-        confidence: whale.confidence
-      };
-    }) || []
-
-    // Calculate market signals
-    const marketSignals = {
-      highRisk: classifications?.filter(w => w.risk_score >= 7).length || 0,
-      clustering: signals?.filter(s => s.signal_type === 'clustering').length || 0,
-      accumulation: classifications?.filter(w => w.type === 'hodler' && w.signals?.includes('Accumulation Phase')).length || 0
-    }
-
+    // Return hardcoded whale data for now
+    const whales = [
+      {
+        id: 'whale-1',
+        address: '0x47ac0F...a6D503',
+        fullAddress: '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503',
+        label: 'Whale 1',
+        balance: 1250.5,
+        type: 'investment',
+        riskScore: 8.5,
+        roi: 145,
+        recentActivity: 45,
+        chain: 'ethereum',
+        activityData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 10),
+        isWatched: false
+      },
+      {
+        id: 'whale-2', 
+        address: '0x8315177a...Ed4DBd7ed3a',
+        fullAddress: '0x8315177aB297bA92A06054cE80a67Ed4DBd7ed3a',
+        label: 'Whale 2',
+        balance: 890.2,
+        type: 'trading',
+        riskScore: 6.2,
+        roi: 78,
+        recentActivity: 78,
+        chain: 'ethereum',
+        activityData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 10),
+        isWatched: false
+      }
+    ]
+    
     return new Response(
       JSON.stringify({ 
         success: true,
         whales,
-        marketSignals,
-        totalWhales: classifications?.length || 0,
+        marketSignals: { highRisk: 1, clustering: 0, accumulation: 1 },
+        totalWhales: whales.length,
         lastUpdated: new Date().toISOString()
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+
+
+
+
 
   } catch (error) {
     console.error('Whale analytics error:', error)

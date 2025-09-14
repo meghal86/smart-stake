@@ -15,6 +15,7 @@ interface AddressCardProps {
     riskScore: number;
     whaleInteractions: number;
     lastActivity: Date;
+    group?: string;
     holdings: Array<{
       token: string;
       amount: number;
@@ -72,10 +73,10 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
         <div className="flex items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge className={`${getRiskColor(address.riskScore)} cursor-help flex items-center gap-1`}>
+              <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${getRiskColor(address.riskScore)} cursor-help gap-1`}>
                 Risk: {address.riskScore}/10
                 <HelpCircle className="h-3 w-3" />
-              </Badge>
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs max-w-48">

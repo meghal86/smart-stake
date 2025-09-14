@@ -324,13 +324,13 @@ export default function Home() {
         {/* Predictions strip */}
         {(predictions?.length || 0) > 0 && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
-            {predictions.slice(0, 6).map((p: any) => {
+            {predictions.slice(0, 6).map((p: any, index: number) => {
               const type = (p.prediction_type || '').replace(/_/g, ' ');
               const confidence = Math.round((p.confidence || 0) * 100);
               const isPrice = (p.prediction_type || '') === 'price_movement';
               const color = isPrice ? 'bg-blue-600/15 text-blue-400 border-blue-600/30' : 'bg-teal-600/15 text-teal-400 border-teal-600/30';
               return (
-                <div key={p.id} className={`whitespace-nowrap text-xs px-2 py-1 rounded-full border ${color}`} title={p.explanation || ''}>
+                <div key={p.id || `pred-${index}`} className={`whitespace-nowrap text-xs px-2 py-1 rounded-full border ${color}`} title={p.explanation || ''}>
                   <span className="font-medium mr-1">{p.asset || '—'}</span>
                   <span className="capitalize mr-1">{type}</span>
                   {isPrice && p.predicted_value && (
@@ -538,16 +538,16 @@ export default function Home() {
         ) : (
           // Transaction list
           <>
-            {filteredTransactions.map((transaction) => (
+            {filteredTransactions.map((transaction, index) => (
               viewMode === 'expanded' ? (
                 <WhaleTransactionCard 
-                  key={transaction.id} 
+                  key={`${transaction.id}-${index}`} 
                   transaction={transaction}
                   onClick={() => setSelectedTransaction(transaction)}
                 />
               ) : (
                 <div 
-                  key={transaction.id}
+                  key={`${transaction.id}-${index}`}
                   onClick={() => setSelectedTransaction(transaction)}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                 >
