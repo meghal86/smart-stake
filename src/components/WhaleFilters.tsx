@@ -68,7 +68,7 @@ export const WhaleFilters = ({ filters, onFiltersChange, totalCount, filteredCou
             <SelectItem value="all">All Risk Levels</SelectItem>
             <SelectItem value="high">High Risk (70+)</SelectItem>
             <SelectItem value="medium">Medium Risk (40-69)</SelectItem>
-            <SelectItem value="low">Low Risk (<40)</SelectItem>
+            <SelectItem value="low">Low Risk (&lt;40)</SelectItem>
           </SelectContent>
         </Select>
 

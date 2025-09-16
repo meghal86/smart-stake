@@ -381,7 +381,7 @@ export const CustomAlertCreator = ({ whaleAddress }: { whaleAddress?: string }) 
                 <p className="text-sm">Create an alert to see delivery status here</p>
               </div>
             )}
-          </div>
+          </Card>
         )}
       </div>
     </TooltipProvider>
