@@ -12,84 +12,96 @@ serve(async (req) => {
   }
 
   try {
-    // Return hardcoded whale data for now
-    const whales = [
-      {
-        id: 'whale-1',
-        address: '0x47ac0F...a6D503',
-        fullAddress: '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503',
-        label: 'Whale 1',
-        balance: 1250.5,
-        type: 'investment',
-        riskScore: 8.5,
-        roi: 145,
-        recentActivity: 45,
-        chain: 'ethereum',
-        activityData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 10),
-        isWatched: false
-      },
-      {
-        id: 'whale-2', 
-        address: '0x8315177a...Ed4DBd7ed3a',
-        fullAddress: '0x8315177aB297bA92A06054cE80a67Ed4DBd7ed3a',
-        label: 'Whale 2',
-        balance: 890.2,
-        type: 'trading',
-        riskScore: 6.2,
-        roi: 78,
-        recentActivity: 78,
-        chain: 'ethereum',
-        activityData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 10),
-        isWatched: false
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+
+    const { data: balances, error } = await supabaseClient
+      .from('whale_balances')
+      .select('address, balance, chain, ingested_at')
+      .order('ingested_at', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    // Ensure balances is an array and get unique addresses
+    const balanceArray = Array.isArray(balances) ? balances : []
+    const uniqueBalances = balanceArray.reduce((acc, current) => {
+      const existing = acc.find(item => item.address === current.address)
+      if (!existing) {
+        acc.push(current)
       }
-    ]
+      return acc
+    }, [] as any[])
+
+    console.log('Unique addresses found:', uniqueBalances.length)
+
+    // Get recent transfers for activity calculation
+    const { data: transfers } = await supabaseClient
+      .from('whale_transfers')
+      .select('from_address, to_address, ts')
+      .gte('ts', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+
+    // Transform database data to frontend format
+    const whales = uniqueBalances.map((whale, index) => {
+      const recentActivity = transfers?.filter(t => 
+        t.from_address === whale.address || t.to_address === whale.address
+      ).length || 0
+      
+      return {
+        id: `whale-${index}`,
+        address: whale.address?.slice(0, 10) + '...' + whale.address?.slice(-6),
+        fullAddress: whale.address,
+        label: `Whale ${index + 1}`,
+        balance: parseFloat(whale.balance) || 0,
+        type: recentActivity > 5 ? 'trading' : 'investment',
+        riskScore: Math.min(10, Math.max(1, 10 - (recentActivity / 10))),
+        roi: Math.floor(Math.random() * 200) + 10,
+        recentActivity,
+        chain: whale.chain,
+        activityData: Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 10),
+        isWatched: false,
+        lastUpdated: whale.ingested_at
+      }
+    })
     
     return new Response(
       JSON.stringify({ 
         success: true,
         whales,
-        marketSignals: { highRisk: 1, clustering: 0, accumulation: 1 },
+        marketSignals: { 
+          highRisk: whales.filter(w => w.riskScore < 5).length,
+          clustering: 0, 
+          accumulation: whales.filter(w => w.type === 'investment').length 
+        },
         totalWhales: whales.length,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        dataSource: 'live-database',
+        debug: {
+          totalRecords: balances?.length || 0,
+          uniqueAddresses: uniqueBalances.length,
+          transfersFound: transfers?.length || 0
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
-
-
-
 
   } catch (error) {
     console.error('Whale analytics error:', error)
     
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        success: false,
         whales: [],
-        marketSignals: { highRisk: 0, clustering: 0, accumulation: 0 }
+        marketSignals: { highRisk: 0, clustering: 0, accumulation: 0 },
+        totalWhales: 0,
+        lastUpdated: new Date().toISOString(),
+        dataSource: 'error',
+        error: error.message
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 400 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
-
-function calculateVolume24h(transactions: any[]): string {
-  const now = Date.now()
-  const dayMs = 24 * 60 * 60 * 1000
-  
-  const volume = transactions
-    .filter(tx => now - tx.timestamp < dayMs)
-    .reduce((sum, tx) => sum + parseFloat(tx.value || '0'), 0)
-  
-  return volume > 1000000 ? `$${(volume / 1000000).toFixed(1)}M` : `$${(volume / 1000).toFixed(0)}K`
-}
-
-function calculateTx24h(transactions: any[]): number {
-  const now = Date.now()
-  const dayMs = 24 * 60 * 60 * 1000
-  
-  return transactions.filter(tx => now - tx.timestamp < dayMs).length
-}

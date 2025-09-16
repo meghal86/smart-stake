@@ -6,156 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface BlockchainProvider {
-  name: string;
-  getTransactions(address: string): Promise<any[]>;
-  getBalance(address: string): Promise<string>;
-}
-
-class AlchemyProvider implements BlockchainProvider {
-  name = 'Alchemy';
-  private apiKey = Deno.env.get('ALCHEMY_API_KEY') || '';
-  private baseUrl = `https://eth-mainnet.g.alchemy.com/v2/${this.apiKey}`;
-
-  async getTransactions(address: string): Promise<any[]> {
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'alchemy_getAssetTransfers',
-        params: [{
-          fromAddress: address,
-          category: ['external', 'erc20', 'erc721'],
-          maxCount: 100,
-          order: 'desc'
-        }]
-      })
-    });
-    
-    const data = await response.json();
-    return data.result?.transfers || [];
-  }
-
-  async getBalance(address: string): Promise<string> {
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'eth_getBalance',
-        params: [address, 'latest']
-      })
-    });
-    
-    const data = await response.json();
-    return data.result || '0x0';
-  }
-}
-
-class MoralisProvider implements BlockchainProvider {
-  name = 'Moralis';
-  private apiKey = Deno.env.get('MORALIS_API_KEY') || '';
-  private baseUrl = 'https://deep-index.moralis.io/api/v2.2';
-
-  async getTransactions(address: string): Promise<any[]> {
-    const response = await fetch(`${this.baseUrl}/${address}?chain=eth&limit=100`, {
-      headers: { 'X-API-Key': this.apiKey }
-    });
-    
-    const data = await response.json();
-    return data.result || [];
-  }
-
-  async getBalance(address: string): Promise<string> {
-    const response = await fetch(`${this.baseUrl}/${address}/balance?chain=eth`, {
-      headers: { 'X-API-Key': this.apiKey }
-    });
-    
-    const data = await response.json();
-    return data.balance || '0';
-  }
-}
-
-class BlockchainMonitor {
-  private providers: BlockchainProvider[] = [
-    new AlchemyProvider(),
-    new MoralisProvider()
-  ];
-
-  async getWhaleData(address: string) {
-    // Try providers in order until one succeeds
-    for (const provider of this.providers) {
-      try {
-        console.log(`Trying ${provider.name} for ${address}`);
-        
-        const [transactions, balance] = await Promise.all([
-          provider.getTransactions(address),
-          provider.getBalance(address)
-        ]);
-
-        return {
-          address,
-          transactions: this.normalizeTransactions(transactions),
-          balance: this.hexToEth(balance),
-          provider: provider.name,
-          timestamp: Date.now()
-        };
-      } catch (error) {
-        console.error(`${provider.name} failed:`, error.message);
-        continue;
-      }
-    }
-    
-    throw new Error('All blockchain providers failed');
-  }
-
-  private normalizeTransactions(transactions: any[]): any[] {
-    return transactions.map(tx => ({
-      hash: tx.hash || tx.uniqueId,
-      from: tx.from,
-      to: tx.to,
-      value: tx.value || '0',
-      timestamp: new Date(tx.metadata?.blockTimestamp || Date.now()).getTime(),
-      gasUsed: tx.gasUsed || '0',
-      gasPrice: tx.gasPrice || '0',
-      asset: tx.asset || 'ETH'
-    }));
-  }
-
-  private hexToEth(hexValue: string): number {
-    return parseInt(hexValue, 16) / Math.pow(10, 18);
-  }
-}
-
-function calculateRiskScore(transactions: any[], balance: number): number {
-  const txCount = transactions.length;
-  const avgValue = transactions.reduce((sum, tx) => sum + parseFloat(tx.value || '0'), 0) / txCount;
-  
-  let score = 5; // Base score
-  if (balance > 1000) score += 2; // High balance = lower risk
-  if (txCount < 10) score += 1; // Low activity = lower risk
-  if (avgValue < 10) score += 1; // Small transactions = lower risk
-  
-  return Math.min(10, Math.max(1, score));
-}
-
-function classifyWalletType(transactions: any[]): string {
-  const txCount = transactions.length;
-  const avgGasPrice = transactions.reduce((sum, tx) => sum + parseFloat(tx.gasPrice || '0'), 0) / txCount;
-  
-  if (txCount > 50 && avgGasPrice > 20000000000) return 'trading';
-  return 'investment';
-}
-
-function generateSignals(transactions: any[]): string[] {
-  const signals = [];
-  if (transactions.length > 100) signals.push('High Activity');
-  if (transactions.some(tx => parseFloat(tx.value) > 100)) signals.push('Large Transfers');
-  return signals;
-}
+// Known whale addresses for monitoring
+const WHALE_ADDRESSES = [
+  '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503', // Binance Hot Wallet
+  '0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8', // Bitfinex Hot Wallet
+  '0x8315177aB297bA92A06054cE80a67Ed4DBd7ed3a', // Kraken Hot Wallet
+  '0x742d35Cc6634C0532925a3b8D4C9db96C4b4df93', // Coinbase Hot Wallet
+  '0x40B38765696e3d5d8d9d834D8AaD4bB6e418E489', // Huobi Hot Wallet
+  '0x1111111254EEB25477B68fb85Ed929f73A960582', // 1inch Router
+  '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD', // Uniswap Router
+  '0x28C6c06298d514Db089934071355E5743bf21d60', // Ethereum Foundation
+]
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -163,80 +24,191 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { addresses } = await req.json()
-    
-    if (!addresses || !Array.isArray(addresses)) {
-      throw new Error('Addresses array is required')
+    const alchemyKey = Deno.env.get('ALCHEMY_API_KEY')
+    if (!alchemyKey) {
+      throw new Error('ALCHEMY_API_KEY not configured')
     }
 
-    const monitor = new BlockchainMonitor();
-    const results = [];
+    const results = {
+      balances_updated: 0,
+      transfers_found: 0,
+      errors: [] as string[]
+    }
 
-    // Process addresses in parallel
-    const promises = addresses.map(async (address: string) => {
+    // Fetch current balances for whale addresses
+    for (const address of WHALE_ADDRESSES) {
       try {
-        const whaleData = await monitor.getWhaleData(address);
-        
-        // Store in whale_data_cache
-        const riskScore = calculateRiskScore(whaleData.transactions, whaleData.balance);
-        const walletType = classifyWalletType(whaleData.transactions);
-        
-        await supabaseClient
-          .from('whale_data_cache')
+        // Get ETH balance from Alchemy
+        const balanceResponse = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'eth_getBalance',
+            params: [address, 'latest'],
+            id: 1
+          })
+        })
+
+        const balanceData = await balanceResponse.json()
+        if (balanceData.error) {
+          throw new Error(`Alchemy error: ${balanceData.error.message}`)
+        }
+
+        // Convert hex balance to ETH
+        const balanceWei = parseInt(balanceData.result, 16)
+        const balanceEth = balanceWei / 1e18
+        const balanceUsd = balanceEth * 3420 // Mock ETH price
+
+        // Get latest block number
+        const blockResponse = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'eth_blockNumber',
+            params: [],
+            id: 2
+          })
+        })
+
+        const blockData = await blockResponse.json()
+        const blockNumber = parseInt(blockData.result, 16)
+
+        // Insert/update whale balance
+        const { error: insertError } = await supabase
+          .from('whale_balances')
           .upsert({
-            whale_address: whaleData.address,
+            address,
             chain: 'ethereum',
-            balance: whaleData.balance,
-            transaction_count: whaleData.transactions.length,
-            last_activity: new Date().toISOString(),
-            risk_score: riskScore,
-            wallet_type: walletType,
-            cached_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes
-          });
+            balance: balanceEth.toString(),
+            balance_usd: balanceUsd,
+            ts: new Date().toISOString(),
+            provider: 'alchemy',
+            method: 'eth_getBalance',
+            block_number: blockNumber
+          }, {
+            onConflict: 'idempotency_key',
+            ignoreDuplicates: true
+          })
 
-        return whaleData;
+        if (insertError) {
+          results.errors.push(`Balance insert error for ${address}: ${insertError.message}`)
+        } else {
+          results.balances_updated++
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100))
+
       } catch (error) {
-        console.error(`Failed to process ${address}:`, error.message);
-        return { address, error: error.message };
+        results.errors.push(`Error processing ${address}: ${error.message}`)
       }
-    });
+    }
 
-    const whaleDataResults = await Promise.allSettled(promises);
-    
-    whaleDataResults.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        results.push(result.value);
-      } else {
-        results.push({ address: addresses[index], error: result.reason });
+    // Fetch recent transfers for whale addresses
+    try {
+      const transferResponse = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'alchemy_getAssetTransfers',
+          params: [{
+            fromBlock: '0x' + (await getLatestBlock() - 100).toString(16), // Last 100 blocks
+            toBlock: 'latest',
+            fromAddress: WHALE_ADDRESSES,
+            category: ['external', 'internal'],
+            withMetadata: true,
+            excludeZeroValue: true,
+            maxCount: 100
+          }],
+          id: 3
+        })
+      })
+
+      const transferData = await transferResponse.json()
+      if (transferData.result?.transfers) {
+        for (const transfer of transferData.result.transfers) {
+          try {
+            const value = parseFloat(transfer.value || '0')
+            const valueUsd = value * 3420 // Mock ETH price
+
+            const { error: transferError } = await supabase
+              .from('whale_transfers')
+              .upsert({
+                tx_hash: transfer.hash,
+                from_address: transfer.from,
+                to_address: transfer.to,
+                value: value.toString(),
+                value_usd: valueUsd,
+                chain: 'ethereum',
+                ts: new Date(transfer.metadata?.blockTimestamp || Date.now()).toISOString(),
+                provider: 'alchemy',
+                method: 'alchemy_getAssetTransfers',
+                block_number: parseInt(transfer.blockNum, 16),
+                log_index: 0
+              }, {
+                onConflict: 'idempotency_key',
+                ignoreDuplicates: true
+              })
+
+            if (!transferError) {
+              results.transfers_found++
+            }
+          } catch (error) {
+            results.errors.push(`Transfer processing error: ${error.message}`)
+          }
+        }
       }
-    });
+    } catch (error) {
+      results.errors.push(`Transfer fetch error: ${error.message}`)
+    }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        processed: results.length,
-        results 
+      JSON.stringify({
+        success: true,
+        timestamp: new Date().toISOString(),
+        results,
+        whale_addresses_monitored: WHALE_ADDRESSES.length
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
+    console.error('Blockchain monitor error:', error)
+    
     return new Response(
-      JSON.stringify({ 
-        error: error.message 
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 400 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
       }
     )
   }
 })
+
+async function getLatestBlock(): Promise<number> {
+  const alchemyKey = Deno.env.get('ALCHEMY_API_KEY')
+  const response = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'eth_blockNumber',
+      params: [],
+      id: 1
+    })
+  })
+  const data = await response.json()
+  return parseInt(data.result, 16)
+}

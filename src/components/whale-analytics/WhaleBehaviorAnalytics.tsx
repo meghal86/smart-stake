@@ -438,19 +438,19 @@ export const WhaleBehaviorAnalytics = () => {
               <div className="flex flex-wrap gap-4 text-xs sm:text-sm">
                 <div className="flex items-center gap-1">
                   <TrendingUp className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-medium">{whale.activity.volume24h}</span>
+                  <span className="font-medium">{whale.activity?.volume24h || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Activity className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-medium">{whale.activity.transactions24h}</span>
+                  <span className="font-medium">{whale.activity?.transactions24h || 0}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <History className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-medium">{whale.activity.lastActive}</span>
+                  <span className="font-medium">{whale.activity?.lastActive || 'N/A'}</span>
                 </div>
               </div>
 
-              {whale.signals.length > 0 && (
+              {whale.signals && whale.signals.length > 0 && (
                 <div className="mt-2 sm:mt-3">
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {whale.signals.map((signal, index) => {

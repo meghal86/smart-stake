@@ -1,0 +1,44 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            \.env\.example|
+            package-lock\.json|
+            yarn\.lock
+          )$
+
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.25.0
+    hooks:
+      - id: ggshield
+        language: python
+        stages: [commit]
+
+  - repo: local
+    hooks:
+      - id: env-check
+        name: Check for .env in commits
+        entry: bash -c 'if git diff --cached --name-only | grep -q "^\.env$"; then echo "ERROR: .env file should not be committed"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: secret-scan
+        name: Scan for hardcoded secrets
+        entry: bash -c 'git diff --cached | grep -iE "(api_key|secret|password|token)" | grep -v "your-" && echo "WARNING: Potential secrets detected" || true'
+        language: system
+        pass_filenames: false

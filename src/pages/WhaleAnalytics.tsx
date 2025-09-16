@@ -1,482 +1,589 @@
-import { useState, useEffect } from 'react';
-import { Fish, TrendingUp, Filter, Star, Eye, Info, Bell, X, ExternalLink, Activity, Users, Share2, Globe } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Fish, Info, ExternalLink, Shield, Database, Activity, TrendingUp, Users, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/hooks/useSubscription';
-import { WhaleBehaviorAnalytics } from '@/components/whale-analytics/WhaleBehaviorAnalytics';
+import { assessWhaleRisk } from '@/lib/whaleRiskScore';
 
-interface WhaleWallet {
+// Whale data interface with risk scoring fields
+interface WhaleData {
   id: string;
   address: string;
   fullAddress: string;
   label: string;
-  type: 'trading' | 'investment';
   balance: number;
-  roi: number;
   riskScore: number;
   recentActivity: number;
   chain: string;
-  activityData: number[];
-  isWatched: boolean;
+  // Risk analysis fields
+  reasons: string[];
+  supporting_events: string[];
+  provider: string;
+  method: string;
+  confidence: number;
 }
 
-interface SharedWatchlist {
-  id: string;
-  name: string;
-  description: string;
-  follower_count: number;
-  shared_watchlist_whales: any[];
+// Market metrics interface
+interface MarketMetrics {
+  volume24h: number;
+  activeWhales: number;
+  topSignals: Array<{
+    signal_type: string;
+    confidence: number;
+    value: string;
+  }>;
 }
 
+// Blockchain explorer URLs for different chains
+const getExplorerUrl = (txHash: string, chain: string = 'ethereum'): string => {
+  const explorers = {
+    ethereum: 'https://etherscan.io/tx/',
+    polygon: 'https://polygonscan.com/tx/',
+    bsc: 'https://bscscan.com/tx/'
+  };
+  return (explorers[chain as keyof typeof explorers] || explorers.ethereum) + txHash;
+};
+
+// Risk score color coding
+const getRiskColor = (score: number): string => {
+  if (score >= 70) return 'text-red-600';
+  if (score >= 40) return 'text-yellow-600';
+  return 'text-green-600';
+};
+
+// Risk level badge variant
+const getRiskBadge = (score: number): { variant: 'destructive' | 'default' | 'secondary', label: string } => {
+  if (score >= 70) return { variant: 'destructive', label: 'High Risk' };
+  if (score >= 40) return { variant: 'default', label: 'Medium Risk' };
+  return { variant: 'secondary', label: 'Low Risk' };
+};
+
+// Individual whale card component with inline explainability
+const WhaleCard = ({ whale }: { whale: WhaleData }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showRiskFactors, setShowRiskFactors] = useState(false);
+  const riskBadge = getRiskBadge(whale.riskScore);
+
+  // Get blockchain explorer URL for wallet address
+  const getWalletExplorerUrl = (address: string, chain: string = 'ethereum'): string => {
+    const explorers = {
+      ethereum: 'https://etherscan.io/address/',
+      polygon: 'https://polygonscan.com/address/',
+      bsc: 'https://bscscan.com/address/'
+    };
+    return (explorers[chain as keyof typeof explorers] || explorers.ethereum) + address;
+  };
+
+  return (
+    <Card className="p-4 hover:shadow-md transition-shadow" role="article" aria-label={`Whale ${whale.label}`}>
+      {/* Header with address, risk badge, and inline provenance */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <Fish className="h-5 w-5 text-primary" aria-hidden="true" />
+          <div>
+            <h3 className="font-semibold">{whale.label}</h3>
+            <a
+              href={getWalletExplorerUrl(whale.fullAddress, whale.chain)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1"
+              aria-label={`View wallet ${whale.fullAddress} on blockchain explorer`}
+            >
+              <code>{whale.address}</code>
+              <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+        
+        {/* Inline provenance badges - always visible */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            <Database className="h-3 w-3 mr-1" aria-hidden="true" />
+            {whale.provider}
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            <Shield className="h-3 w-3 mr-1" aria-hidden="true" />
+            {Math.round(whale.confidence * 100)}%
+          </Badge>
+          <Badge variant={riskBadge.variant} className="font-medium">
+            {riskBadge.label}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Metrics grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+        <div>
+          <p className="text-sm text-muted-foreground">Balance</p>
+          <p className="font-medium">{whale.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETH</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Activity</p>
+          <p className="font-medium flex items-center gap-1">
+            <Activity className="h-3 w-3" aria-hidden="true" />
+            {whale.recentActivity}
+          </p>
+        </div>
+        <div className="relative col-span-2 sm:col-span-1">
+          <p className="text-sm text-muted-foreground">Risk Score</p>
+          <div className="flex items-center gap-2">
+            <span className={`font-bold ${getRiskColor(whale.riskScore)}`}>
+              {whale.riskScore}/100
+            </span>
+            <button
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              onFocus={() => setShowTooltip(true)}
+              onBlur={() => setShowTooltip(false)}
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Show detailed risk analysis"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Enhanced tooltip with full details */}
+          {showTooltip && (
+            <div 
+              className="absolute top-full left-0 mt-2 p-4 bg-popover border rounded-lg shadow-lg w-80 z-10"
+              role="tooltip"
+              aria-live="polite"
+            >
+              <div className="text-xs text-muted-foreground mb-2">
+                Method: {whale.method}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Collapsible risk factors panel */}
+      {whale.reasons.length > 0 && whale.reasons[0] !== 'No risk analysis available' && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowRiskFactors(!showRiskFactors)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowRiskFactors(!showRiskFactors);
+              }
+            }}
+            className="w-full text-left p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
+            aria-expanded={showRiskFactors}
+            aria-controls={`risk-factors-${whale.id}`}
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-600" aria-hidden="true" />
+                Risk Factors ({whale.reasons.length})
+              </h4>
+              <span className="text-orange-600 transform transition-transform" style={{
+                transform: showRiskFactors ? 'rotate(180deg)' : 'rotate(0deg)'
+              }}>
+                ▼
+              </span>
+            </div>
+          </button>
+          {showRiskFactors && (
+            <div 
+              id={`risk-factors-${whale.id}`}
+              className="mt-2 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800"
+              role="region"
+              aria-labelledby={`risk-factors-header-${whale.id}`}
+            >
+              <ul className="space-y-1" role="list">
+                {whale.reasons.map((reason, idx) => (
+                  <li key={idx} className="text-sm flex items-start gap-2" role="listitem">
+                    <span className="text-orange-500 mt-1 flex-shrink-0">•</span>
+                    <span className="text-orange-800 dark:text-orange-200">{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Inline supporting events - always visible */}
+      {whale.supporting_events.length > 0 && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+            <ExternalLink className="h-4 w-4 text-blue-600" aria-hidden="true" />
+            Supporting Evidence
+          </h4>
+          <div className="flex flex-wrap gap-2" role="list">
+            {whale.supporting_events.slice(0, 4).map((txHash, idx) => (
+              <a
+                key={idx}
+                href={getExplorerUrl(txHash, whale.chain)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                role="listitem"
+                aria-label={`View transaction ${txHash} on blockchain explorer`}
+              >
+                <code>{txHash.slice(0, 6)}...{txHash.slice(-4)}</code>
+                <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              </a>
+            ))}
+            {whale.supporting_events.length > 4 && (
+              <span className="inline-flex items-center px-2 py-1 bg-muted text-muted-foreground rounded text-xs">
+                +{whale.supporting_events.length - 4} more
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+// Enhanced header component with market metrics
+const EnhancedHeader = ({ metrics }: { metrics: MarketMetrics }) => {
+  return (
+    <div className="space-y-4">
+      {/* Main header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-primary/20 rounded-xl">
+          <Fish className="h-6 w-6 text-primary" aria-hidden="true" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Whale Analytics</h1>
+          <p className="text-muted-foreground">AI-powered whale risk assessment</p>
+        </div>
+      </div>
+
+      {/* Market metrics cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-green-600" aria-hidden="true" />
+            <div>
+              <p className="text-sm text-muted-foreground">24h Volume</p>
+              <p className="text-xl font-bold">${metrics.volume24h.toLocaleString()}M</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <Users className="h-5 w-5 text-blue-600" aria-hidden="true" />
+            <div>
+              <p className="text-sm text-muted-foreground">Active Whales</p>
+              <p className="text-xl font-bold">{metrics.activeWhales}</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-orange-600" aria-hidden="true" />
+            <div>
+              <p className="text-sm text-muted-foreground">Risk Alerts</p>
+              <p className="text-xl font-bold">{metrics.topSignals.length}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Market signals prediction strip */}
+      {metrics.topSignals.length > 0 && (
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-orange-600" aria-hidden="true" />
+            <span className="text-sm font-medium">Current Market Signals</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {metrics.topSignals.map((signal, idx) => (
+              <Badge 
+                key={idx} 
+                variant="outline" 
+                className="whitespace-nowrap flex items-center gap-1"
+              >
+                <span className="capitalize">{signal.signal_type.replace('_', ' ')}</span>
+                <span className="text-xs opacity-70">({Math.round(signal.confidence * 100)}%)</span>
+              </Badge>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+// Main WhaleAnalytics component
 export default function WhaleAnalytics() {
-  const { user } = useAuth();
-  const { planLimits, canAccessFeature } = useSubscription();
-  const whaleAccess = canAccessFeature('whaleAnalytics');
-  const [whales, setWhales] = useState<WhaleWallet[]>([]);
-  const [sharedWatchlists, setSharedWatchlists] = useState<SharedWatchlist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedWhale, setSelectedWhale] = useState<WhaleWallet | null>(null);
-  const [showAlertModal, setShowAlertModal] = useState<string | null>(null);
-  const [riskTooltip, setRiskTooltip] = useState<string | null>(null);
-  const [selectedChain, setSelectedChain] = useState('ethereum');
-  const [supportedChains, setSupportedChains] = useState<string[]>([]);
-  const [watchedAddresses, setWatchedAddresses] = useState<string[]>([]);
+  const [whales, setWhales] = useState<WhaleData[]>([]);
+  const [metrics, setMetrics] = useState<MarketMetrics>({ volume24h: 0, activeWhales: 0, topSignals: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [filterType, setFilterType] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('balance');
-  const [activeView, setActiveView] = useState<'analytics' | 'behavior'>('analytics');
+  // Fetch market metrics from database
+  const fetchMarketMetrics = async (): Promise<MarketMetrics> => {
+    try {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      
+      // Get 24h volume from whale_transfers
+      const { data: transferData } = await supabase
+        .from('whale_transfers')
+        .select('value_usd')
+        .gte('ts', yesterday)
+        .not('value_usd', 'is', null);
+      
+      const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(t.value_usd), 0) / 1000000 || 0;
+      
+      // Get active whales count from recent balances
+      const { count: activeWhales } = await supabase
+        .from('whale_balances')
+        .select('address', { count: 'exact', head: true })
+        .gte('ts', yesterday);
+      
+      // Get top market signals
+      const { data: signalsData } = await supabase
+        .from('whale_signals')
+        .select('signal_type, confidence, value')
+        .gte('ts', yesterday)
+        .order('confidence', { ascending: false })
+        .limit(5);
+      
+      return {
+        volume24h: Math.round(volume24h),
+        activeWhales: activeWhales || 0,
+        topSignals: signalsData || []
+      };
+    } catch (error) {
+      console.error('Failed to fetch market metrics:', error);
+      return {
+        volume24h: 0,
+        activeWhales: 0,
+        topSignals: []
+      };
+    }
+  };
+
+  // Fetch whale data directly from database
+  const fetchWhaleData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch market metrics
+      const metricsResult = await fetchMarketMetrics();
+      setMetrics(metricsResult);
+
+      // Fetch whale balances directly from database
+      const { data: balances, error: balanceError } = await supabase
+        .from('whale_balances')
+        .select('address, balance, balance_usd, chain, ts, provider, method')
+        .order('balance_usd', { ascending: false })
+        .limit(50);
+
+      if (balanceError) {
+        console.error('Balance fetch error:', balanceError);
+        throw new Error('Failed to fetch whale balances');
+      }
+
+      // Fetch whale signals for risk scores
+      const { data: signals } = await supabase
+        .from('whale_signals')
+        .select('address, chain, risk_score, confidence, reasons, supporting_events, provider, method')
+        .order('ts', { ascending: false });
+
+      // Fetch recent transfers for activity calculation
+      const { data: transfers } = await supabase
+        .from('whale_transfers')
+        .select('from_address, to_address, ts')
+        .gte('ts', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+      console.log('Database results:', {
+        balances: balances?.length || 0,
+        signals: signals?.length || 0,
+        transfers: transfers?.length || 0
+      });
+
+      if (!balances || balances.length === 0) {
+        setError('No whale data found in database. Please ensure whale_balances table has data.');
+        setWhales([]);
+        return;
+      }
+
+      // Transform database data to component format
+      const enhancedWhales = balances.map((whale, index) => {
+        // Find corresponding signal data
+        const signal = signals?.find(s => s.address === whale.address && s.chain === whale.chain);
+        
+        // Calculate recent activity
+        const recentActivity = transfers?.filter(t => 
+          t.from_address === whale.address || t.to_address === whale.address
+        ).length || 0;
+
+        return {
+          id: `whale-${index}`,
+          address: whale.address.slice(0, 10) + '...' + whale.address.slice(-6),
+          fullAddress: whale.address,
+          label: `Whale ${index + 1}`,
+          balance: parseFloat(whale.balance) || 0,
+          riskScore: signal?.risk_score || 50,
+          recentActivity,
+          chain: whale.chain,
+          reasons: signal?.reasons || ['No risk analysis available'],
+          supporting_events: signal?.supporting_events || [],
+          provider: signal?.provider || whale.provider,
+          method: signal?.method || whale.method,
+          confidence: signal?.confidence || 0.5
+        };
+      });
+
+      setWhales(enhancedWhales);
+    } catch (err) {
+      console.error('Failed to fetch whale data:', err);
+      setError(`Failed to load whale data: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ingest blockchain data
+  const ingestBlockchainData = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('blockchain-monitor');
+      
+      if (error) throw error;
+      
+      console.log('Blockchain ingestion result:', data);
+      
+      // Refresh whale data after ingestion
+      await fetchWhaleData();
+    } catch (error) {
+      console.error('Blockchain ingestion failed:', error);
+      setError(`Data ingestion failed: ${error.message}`);
+    }
+  };
 
   useEffect(() => {
     fetchWhaleData();
   }, []);
 
-  const fetchWhaleData = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('whale-analytics');
-      if (error) throw error;
-      setWhales(data.whales || []);
-    } catch (error) {
-      console.error('Error fetching whale data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleWatchlist = (id: string) => {
-    setWhales(prev => prev.map(whale => 
-      whale.id === id ? { ...whale, isWatched: !whale.isWatched } : whale
-    ));
-  };
-
-  const getRiskColor = (score: number) => {
-    if (score >= 8) return 'text-green-500';
-    if (score >= 6) return 'text-yellow-500';
-    return 'text-red-500';
-  };
-
-  const getRiskExplanation = (score: number, type: string) => {
-    if (score >= 8) return 'Low risk: Stable holdings and consistent patterns';
-    if (score >= 6) return type === 'trading' ? 'Medium risk: Active trading with DEX exposure' : 'Medium risk: Some volatility in holdings';
-    return 'High risk: Frequent large movements and high DEX exposure';
-  };
-
-  const generateActivityData = () => {
-    return Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 10);
-  };
-
-  const ActivitySparkline = ({ data }: { data: number[] }) => {
-    const max = Math.max(...data);
-    const points = data.map((value, index) => {
-      const x = (index / (data.length - 1)) * 60;
-      const y = 20 - (value / max) * 15;
-      return `${x},${y}`;
-    }).join(' ');
-
-    return (
-      <svg width="60" height="20" className="inline-block">
-        <polyline
-          points={points}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          className="text-primary"
-        />
-      </svg>
-    );
-  };
-
-  const filteredWhales = whales.filter(whale => 
-    filterType === 'all' || whale.type === filterType
-  ).slice(0, whaleAccess === 'limited' ? planLimits.whaleAnalyticsLimit : whales.length);
+  // Memoized sorted whales for performance
+  const sortedWhales = useMemo(() => 
+    [...whales].sort((a, b) => b.riskScore - a.riskScore),
+    [whales]
+  );
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-xl">
-              <Fish className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Whale Analytics</h1>
-              <p className="text-sm text-muted-foreground">Track top crypto whales</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant={activeView === 'analytics' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setActiveView('analytics')}
-            >
-              Analytics
-            </Button>
-            <Button 
-              variant={activeView === 'behavior' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setActiveView('behavior')}
-            >
-              Behavior AI
-            </Button>
-          </div>
-        </div>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Enhanced Header with Market Metrics */}
+      <EnhancedHeader metrics={metrics} />
 
-        {/* Conditional Content */}
-        {activeView === 'behavior' ? (
-          <WhaleBehaviorAnalytics />
-        ) : (
-          <>
-            {/* Filters */}
-            <div className="flex gap-2">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Whales</SelectItem>
-                  <SelectItem value="trading">Trading Wallets</SelectItem>
-                  <SelectItem value="investment">Investment Wallets</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="balance">Balance</SelectItem>
-                  <SelectItem value="roi">ROI</SelectItem>
-                  <SelectItem value="risk">Risk Score</SelectItem>
-                  <SelectItem value="activity">Recent Activity</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button size="icon" variant="outline">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-
-        {/* Whale List */}
-        <div className="space-y-6">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1,2,3,4,5].map(i => (
-                <Card key={i} className="p-4 animate-pulse">
-                  <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </Card>
-              ))}
-            </div>
-          ) : filteredWhales.map((whale) => (
-            <Card key={whale.id} className="p-6 hover:shadow-lg transition-all duration-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Fish className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{whale.label}</h3>
-                    <p className="text-sm text-muted-foreground">{whale.address}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant={whale.type === 'trading' ? 'default' : 'secondary'}>
-                    {whale.type}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowAlertModal(whale.id)}
-                  >
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={whale.isWatched ? 'default' : 'outline'}
-                    onClick={() => toggleWatchlist(whale.id)}
-                  >
-                    {whale.isWatched ? <Eye className="h-4 w-4" /> : <Star className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-4 text-sm">
-                <div className="cursor-pointer" onClick={() => setSelectedWhale(whale)}>
-                  <p className="text-muted-foreground">Balance</p>
-                  <p className="font-medium hover:text-primary">{whale.balance?.toLocaleString() || '0'} ETH</p>
-                </div>
-                <div className="cursor-pointer" onClick={() => setSelectedWhale(whale)}>
-                  <p className="text-muted-foreground">ROI</p>
-                  <p className="font-medium text-green-500 hover:text-green-600">+{whale.roi || 0}%</p>
-                </div>
-                <div className="relative">
-                  <p className="text-muted-foreground">Risk Score</p>
-                  <div className="flex items-center gap-1">
-                    <p className={`font-medium ${getRiskColor(whale.riskScore || 0)}`}>
-                      {whale.riskScore || 0}/10
-                    </p>
-                    <button
-                      onMouseEnter={() => setRiskTooltip(whale.id)}
-                      onMouseLeave={() => setRiskTooltip(null)}
-                      className="text-muted-foreground hover:text-[#14B8A6] transition-colors"
-                      title="Click for risk explanation"
-                    >
-                      <Info size={14} />
-                    </button>
-                    {riskTooltip === whale.id && (
-                      <div className="absolute bottom-full left-0 mb-2 p-3 bg-popover border rounded-lg shadow-xl text-xs w-64 z-10">
-                        <div className="space-y-2">
-                          <p className="font-semibold text-sm">
-                            {whale.riskScore >= 8 ? '🟢 Low Risk Whale' : whale.riskScore >= 6 ? '🟡 Medium Risk Whale' : '🔴 High Risk Whale'}
-                          </p>
-                          <p>{getRiskExplanation(whale.riskScore || 0, whale.type)}</p>
-                          <div className="text-xs text-muted-foreground border-t pt-2">
-                            💡 <strong>Tip:</strong> Lower risk whales typically have more predictable patterns
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-muted-foreground flex items-center gap-1">
-                    Activity
-                    <ActivitySparkline data={generateActivityData()} />
-                  </p>
-                  <p className="font-medium">{whale.recentActivity || 0} txns</p>
-                </div>
-              </div>
+      {/* Loading state */}
+      {loading && (
+        <div className="space-y-4" aria-label="Loading whale data">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="p-4 animate-pulse">
+              <div className="h-4 bg-muted rounded w-1/3 mb-2"></div>
+              <div className="h-3 bg-muted rounded w-1/2"></div>
             </Card>
           ))}
-          {!isLoading && filteredWhales.length === 0 && (
-            <Card className="p-8 text-center">
-              <Fish className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">No Whales Found</h3>
-              <p className="text-muted-foreground">Unable to load whale data at this time.</p>
-            </Card>
-          )}
         </div>
+      )}
 
-        {/* Watchlist Summary */}
-        <Card className="p-4">
-          <h3 className="font-semibold mb-3">Watchlist Summary</h3>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              {whales.filter(w => w.isWatched).length} whales watched
-            </span>
-            <Button variant="outline" size="sm">
-              Manage Alerts
-            </Button>
+      {/* Error state */}
+      {error && (
+        <Card className="p-6 text-center">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+          <h3 className="text-lg font-medium mb-2">No Whale Data Available</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <div className="space-y-3">
+            <button 
+              onClick={fetchWhaleData}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors mr-2"
+            >
+              Retry
+            </button>
+            <div className="text-sm text-muted-foreground mt-4">
+              <p className="mb-2">To populate whale data:</p>
+              <ol className="text-left space-y-1">
+                <li>1. Deploy blockchain-monitor Edge Function</li>
+                <li>2. Configure ALCHEMY_API_KEY in Supabase secrets</li>
+                <li>3. Click "Ingest Live Data" to fetch real blockchain data</li>
+              </ol>
+              <button 
+                onClick={ingestBlockchainData}
+                disabled={loading}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Ingesting...' : 'Ingest Live Data'}
+              </button>
+            </div>
           </div>
         </Card>
+      )}
 
-        {/* Whale Details Modal */}
-        {selectedWhale && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold">{selectedWhale.label} Details</h2>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedWhale(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  {/* Overview */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Wallet Address</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <code className="text-sm bg-muted px-2 py-1 rounded">{selectedWhale.address}</code>
-                        <Button size="sm" variant="outline">
-                          <ExternalLink className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Wallet Type</Label>
-                      <Badge className="mt-1" variant={selectedWhale.type === 'trading' ? 'default' : 'secondary'}>
-                        {selectedWhale.type}
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  {/* Activity Timeline */}
-                  <div>
-                    <Label>30-Day Activity Timeline</Label>
-                    <div className="mt-2 p-4 bg-muted/30 rounded-lg">
-                      <div className="flex items-end gap-1 h-20">
-                        {generateActivityData().map((value, index) => (
-                          <div
-                            key={index}
-                            className="bg-primary rounded-t flex-1"
-                            style={{ height: `${(value / 60) * 100}%` }}
-                            title={`Day ${index + 1}: ${value} transactions`}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                        <span>30 days ago</span>
-                        <span>Today</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Portfolio Breakdown */}
-                  <div>
-                    <Label>Portfolio Breakdown</Label>
-                    <div className="mt-2 space-y-2">
-                      <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                        <span className="text-sm">ETH</span>
-                        <span className="font-medium">{selectedWhale.balance?.toLocaleString()} ETH (85%)</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                        <span className="text-sm">USDC</span>
-                        <span className="font-medium">2.1M USDC (10%)</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                        <span className="text-sm">Other</span>
-                        <span className="font-medium">Various (5%)</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Recent Counterparties */}
-                  <div>
-                    <Label>Recent Counterparties</Label>
-                    <div className="mt-2 space-y-2">
-                      {['Uniswap V3', 'Binance Hot Wallet', '1inch Router', 'Compound'].map((counterparty, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                          <span className="text-sm">{counterparty}</span>
-                          <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 20) + 1} interactions</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+      {/* Whale list */}
+      {!loading && !error && (
+        <div className="space-y-4" role="main" aria-label="Whale analytics results">
+          {sortedWhales.length > 0 ? (
+            <>
+              <div className="mb-4 text-sm text-muted-foreground">
+                Showing {sortedWhales.length} whales from live database
               </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Alert Setup Modal */}
-        {showAlertModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold">Set Whale Alert</h2>
-                  <Button variant="ghost" size="sm" onClick={() => setShowAlertModal(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label>Alert Type</Label>
-                    <Select defaultValue="withdrawal">
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="withdrawal">Large Withdrawal</SelectItem>
-                        <SelectItem value="deposit">Large Deposit</SelectItem>
-                        <SelectItem value="activity">Activity Spike</SelectItem>
-                        <SelectItem value="balance">Balance Change</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label>Threshold Amount (ETH)</Label>
-                    <Input type="number" placeholder="100" className="mt-1" />
-                  </div>
-                  
-                  <div>
-                    <Label>Notification Method</Label>
-                    <Select defaultValue="email">
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="push">Push Notification</SelectItem>
-                        <SelectItem value="both">Both</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex gap-2 pt-4">
-                    <Button className="flex-1">Create Alert</Button>
-                    <Button variant="outline" className="flex-1" onClick={() => setShowAlertModal(null)}>Cancel</Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Community Watchlists */}
-        {sharedWatchlists.length > 0 && (
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Globe className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Community Watchlists</h3>
-            </div>
-            <div className="space-y-3">
-              {sharedWatchlists.map((watchlist) => (
-                <div key={watchlist.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div>
-                    <div className="font-medium">{watchlist.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {watchlist.shared_watchlist_whales?.length || 0} whales • {watchlist.follower_count} followers
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline">
-                      <Users className="h-4 w-4 mr-1" />
-                      Follow
-                    </Button>
-                    <Button size="sm" variant="ghost">
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+              {sortedWhales.map(whale => (
+                <WhaleCard key={whale.id} whale={whale} />
               ))}
+            </>
+          ) : (
+            !loading && !error && (
+              <Card className="p-8 text-center">
+                <Fish className="h-12 w-12 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
+                <h3 className="text-lg font-medium mb-2">No Whales Found</h3>
+                <p className="text-muted-foreground mb-4">No whale data available in the database.</p>
+                <div className="text-sm text-muted-foreground">
+                  <p>Database tables checked:</p>
+                  <ul className="mt-2 space-y-1">
+                    <li>• whale_balances (primary data source)</li>
+                    <li>• whale_signals (risk scores)</li>
+                    <li>• whale_transfers (activity data)</li>
+                  </ul>
+                </div>
+              </Card>
+            )
+          )}
+        </div>
+      )}
+
+      {/* Summary stats and data source info */}
+      {sortedWhales.length > 0 && (
+        <Card className="p-4">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="font-semibold">Risk Summary</h3>
+            <Badge variant="outline" className="text-xs">
+              <Database className="h-3 w-3 mr-1" />
+              Live Data
+            </Badge>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">High Risk</p>
+              <p className="font-medium text-red-600">
+                {sortedWhales.filter(w => w.riskScore >= 70).length}
+              </p>
             </div>
-          </Card>
-        )}
-          </>
-        )}
-      </div>
+            <div>
+              <p className="text-muted-foreground">Medium Risk</p>
+              <p className="font-medium text-yellow-600">
+                {sortedWhales.filter(w => w.riskScore >= 40 && w.riskScore < 70).length}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Low Risk</p>
+              <p className="font-medium text-green-600">
+                {sortedWhales.filter(w => w.riskScore < 40).length}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
