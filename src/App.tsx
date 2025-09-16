@@ -22,6 +22,7 @@ import Yields from "./pages/Yields";
 import Profile from "./pages/Profile";
 import Premium from "./pages/Premium";
 import Debug from "./pages/Debug";
+import NotificationSettings from "./pages/NotificationSettings";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => {
                   <Route path="/subscription/success" element={<SubscriptionSuccess />} />
                   <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
                   <Route path="/debug" element={<Debug />} />
+                  <Route path="/notifications" element={<NotificationSettings />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

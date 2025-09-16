@@ -94,14 +94,34 @@ export default function MultiCoinSentiment() {
 
   const fetchMultiCoinSentiment = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('multi-coin-sentiment');
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('multi-coin-sentiment', {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('No data received from API');
+      }
+      
       console.log('API Response:', data);
-      setCoins(data.data || data);
+      
+      // Handle both response formats
+      const coinData = data.success ? data.data : (data.data || data);
+      if (!coinData || !Array.isArray(coinData)) {
+        throw new Error('Invalid data format received');
+      }
+      
+      setCoins(coinData);
       setError(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch multi-coin sentiment:', error);
-      setError('API failed to load sentiment data');
+      setError(`Failed to load sentiment data: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

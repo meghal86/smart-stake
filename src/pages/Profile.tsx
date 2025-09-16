@@ -16,6 +16,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { AppTutorial } from "@/components/tutorial/AppTutorial";
 import { HelpSupport } from "@/components/support/HelpSupport";
 import { AlertsManager } from "@/components/alerts/AlertsManager";
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -314,24 +315,7 @@ export default function Profile() {
           )}
           
           {activeTab === 'notifications' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div><div className="text-sm font-medium">Whale Alerts</div><div className="text-xs text-muted-foreground">Real-time transaction notifications</div></div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div><div className="text-sm font-medium">Risk Alerts</div><div className="text-xs text-muted-foreground">High-risk wallet notifications</div></div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded">
-                <div><div className="text-sm font-medium">Email Summaries</div><div className="text-xs text-muted-foreground">Weekly activity digest</div></div>
-                <Switch defaultChecked />
-              </div>
-              <Button variant="outline" className="w-full" onClick={() => setShowAlerts(true)}>
-                <Bell className="h-4 w-4 mr-2" />
-                Configure Phone Alerts
-              </Button>
-            </div>
+            <NotificationSettings />
           )}
           
           {activeTab === 'security' && (
