@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/subscription/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!api|_next|_static|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]
