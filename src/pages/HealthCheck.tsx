@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, RefreshCw, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 interface HealthStatus {
@@ -11,18 +12,96 @@ interface HealthStatus {
   responseTime?: number;
   error?: string;
   lastChecked?: Date;
+  apiEndpoint?: string;
+  description?: string;
 }
 
 export default function HealthCheck() {
   const [services, setServices] = useState<HealthStatus[]>([
-    { name: 'Supabase Database', status: 'checking' },
-    { name: 'Supabase Auth', status: 'checking' },
-    { name: 'Stripe API', status: 'checking' },
-    { name: 'Resend Email', status: 'checking' },
-    { name: 'Whale Alerts API', status: 'checking' },
-    { name: 'Risk Scanner', status: 'checking' },
-    { name: 'Notification System', status: 'checking' },
-    { name: 'Edge Functions', status: 'checking' }
+    { 
+      name: 'Supabase Database', 
+      status: 'checking',
+      apiEndpoint: 'supabase.from("users").select()',
+      description: 'PostgreSQL database connectivity check'
+    },
+    { 
+      name: 'Supabase Auth', 
+      status: 'checking',
+      apiEndpoint: 'supabase.auth.getSession()',
+      description: 'Authentication service status'
+    },
+    { 
+      name: 'Stripe API', 
+      status: 'checking',
+      apiEndpoint: 'stripe.products.list()',
+      description: 'Payment processing service'
+    },
+    { 
+      name: 'Resend Email', 
+      status: 'checking',
+      apiEndpoint: 'https://api.resend.com/domains',
+      description: 'Email delivery service'
+    },
+    { 
+      name: 'Whale Alert API', 
+      status: 'checking',
+      apiEndpoint: 'https://api.whale-alert.io/v1/status',
+      description: 'Large transaction monitoring'
+    },
+    { 
+      name: 'Alchemy API', 
+      status: 'checking',
+      apiEndpoint: 'https://eth-mainnet.g.alchemy.com/v2/{key}',
+      description: 'Ethereum blockchain data provider'
+    },
+    { 
+      name: 'Moralis API', 
+      status: 'checking',
+      apiEndpoint: 'https://deep-index.moralis.io/api/v2/',
+      description: 'Multi-chain blockchain data'
+    },
+    { 
+      name: 'Etherscan API', 
+      status: 'checking',
+      apiEndpoint: 'https://api.etherscan.io/api',
+      description: 'Ethereum blockchain explorer'
+    },
+    { 
+      name: 'OpenAI API', 
+      status: 'checking',
+      apiEndpoint: 'https://api.openai.com/v1/models',
+      description: 'AI-powered analysis and insights'
+    },
+    { 
+      name: 'CoinGecko API', 
+      status: 'checking',
+      apiEndpoint: 'https://api.coingecko.com/api/v3/ping',
+      description: 'Cryptocurrency market data'
+    },
+    { 
+      name: 'DefiLlama API', 
+      status: 'checking',
+      apiEndpoint: 'https://api.llama.fi/protocols',
+      description: 'DeFi protocol analytics'
+    },
+    { 
+      name: 'Risk Scanner', 
+      status: 'checking',
+      apiEndpoint: 'supabase.from("risk_scores")',
+      description: 'Address risk assessment system'
+    },
+    { 
+      name: 'Notification System', 
+      status: 'checking',
+      apiEndpoint: 'supabase.from("notification_logs")',
+      description: 'Multi-channel alert delivery'
+    },
+    { 
+      name: 'Edge Functions', 
+      status: 'checking',
+      apiEndpoint: 'supabase.functions.invoke()',
+      description: 'Serverless function infrastructure'
+    }
   ]);
 
   const checkHealth = async () => {
@@ -43,7 +122,7 @@ export default function HealthCheck() {
             isHealthy = dbResponse.ok;
             break;
           case 'Supabase Auth':
-            isHealthy = true; // Always healthy if we can load the page
+            isHealthy = true;
             break;
           case 'Stripe API':
             const stripeResponse = await fetch(`${baseUrl}?service=stripe`, { headers });
@@ -53,14 +132,41 @@ export default function HealthCheck() {
             const emailResponse = await fetch(`${baseUrl}?service=email`, { headers });
             isHealthy = emailResponse.ok;
             break;
-          case 'Whale Alerts API':
-            isHealthy = true; // Mock for now
+          case 'Whale Alert API':
+            const whaleResponse = await fetch(`${baseUrl}?service=whale-alert`, { headers });
+            isHealthy = whaleResponse.ok;
+            break;
+          case 'Alchemy API':
+            const alchemyResponse = await fetch(`${baseUrl}?service=alchemy`, { headers });
+            isHealthy = alchemyResponse.ok;
+            break;
+          case 'Moralis API':
+            const moralisResponse = await fetch(`${baseUrl}?service=moralis`, { headers });
+            isHealthy = moralisResponse.ok;
+            break;
+          case 'Etherscan API':
+            const etherscanResponse = await fetch(`${baseUrl}?service=etherscan`, { headers });
+            isHealthy = etherscanResponse.ok;
+            break;
+          case 'OpenAI API':
+            const openaiResponse = await fetch(`${baseUrl}?service=openai`, { headers });
+            isHealthy = openaiResponse.ok;
+            break;
+          case 'CoinGecko API':
+            const geckoResponse = await fetch('https://api.coingecko.com/api/v3/ping');
+            isHealthy = geckoResponse.ok;
+            break;
+          case 'DefiLlama API':
+            const llamaResponse = await fetch('https://api.llama.fi/protocols');
+            isHealthy = llamaResponse.ok;
             break;
           case 'Risk Scanner':
-            isHealthy = true; // Mock for now
+            const riskResponse = await fetch(`${baseUrl}?service=risk-scanner`, { headers });
+            isHealthy = riskResponse.ok;
             break;
           case 'Notification System':
-            isHealthy = true; // Mock for now
+            const notifResponse = await fetch(`${baseUrl}?service=notifications`, { headers });
+            isHealthy = notifResponse.ok;
             break;
           case 'Edge Functions':
             const funcResponse = await fetch(`${baseUrl}`, { headers });
@@ -121,7 +227,8 @@ export default function HealthCheck() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto p-6">
+      <TooltipProvider>
+        <div className="container mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">System Health Check</h1>
@@ -166,7 +273,22 @@ export default function HealthCheck() {
             <Card key={service.name}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{service.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <div className="space-y-1">
+                          <p className="font-medium">{service.description}</p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {service.apiEndpoint}
+                          </p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   {getStatusIcon(service.status)}
                 </div>
               </CardHeader>
@@ -201,7 +323,8 @@ export default function HealthCheck() {
             </Card>
           ))}
         </div>
-      </div>
+        </div>
+      </TooltipProvider>
     </AppLayout>
   );
 }
