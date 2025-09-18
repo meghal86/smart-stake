@@ -754,92 +754,170 @@ export default function Scanner() {
                   </Card>
                 )}
 
-                {/* WhalePlus Advanced Analysis Tabs */}
-                <Tabs defaultValue="overview" className="space-y-6">
+                {/* Advanced Analysis Sections */}
+                <Tabs defaultValue="risk" className="space-y-6">
                   <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-                    <TabsTrigger value="transactions">Network</TabsTrigger>
-                    <TabsTrigger value="defi">DeFi</TabsTrigger>
-                    <TabsTrigger value="reports">Reports</TabsTrigger>
-                    <TabsTrigger value="notes">Notes</TabsTrigger>
+                    <TabsTrigger value="risk" className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Risk Analysis
+                    </TabsTrigger>
+                    <TabsTrigger value="portfolio" className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Portfolio
+                    </TabsTrigger>
+                    <TabsTrigger value="network" className="flex items-center gap-2">
+                      <Network className="h-4 w-4" />
+                      Network
+                    </TabsTrigger>
+                    <TabsTrigger value="defi" className="flex items-center gap-2">
+                      <Droplets className="h-4 w-4" />
+                      DeFi
+                    </TabsTrigger>
+                    <TabsTrigger value="reports" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Reports
+                    </TabsTrigger>
+                    <TabsTrigger value="notes" className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      Notes
+                    </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="overview" className="space-y-4">
-                    {/* Analysis Details */}
-                    {scanResult.analysis && (
-                      <Card className="p-4">
-                        <h3 className="font-semibold text-foreground mb-4">Detailed Analysis</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Total Transactions:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.totalTransactions?.toLocaleString()}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Wallet Age:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.walletAge} days</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Recent Activity:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.recentActivity} txns</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Unique Contracts:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.uniqueContracts}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Failed Tx Ratio:</span>
-                            <span className="ml-2 font-medium">{(scanResult.analysis.failedTxRatio * 100)?.toFixed(1)}%</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Avg Gas Used:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.avgGasUsed?.toLocaleString()}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Address Poisoning Details */}
-                        {scanResult.analysis.addressPoisoning && (
-                          <div className="mt-4 pt-4 border-t">
-                            <h4 className="font-medium mb-2">Address Poisoning Analysis</h4>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Dust Transactions:</span>
-                                <span className="ml-2 font-medium">{scanResult.analysis.addressPoisoning.dustTransactions}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Zero Value Txns:</span>
-                                <span className="ml-2 font-medium">{scanResult.analysis.addressPoisoning.zeroValueTransactions}</span>
+                  {/* Risk Analysis Tab - Comprehensive Risk Assessment */}
+                  <TabsContent value="risk" className="space-y-6">
+                    <div className="grid gap-6">
+                      {/* AI Risk Breakdown */}
+                      <RiskBreakdown walletAddress={scanResult.address} />
+                      
+                      {/* Technical Analysis Details */}
+                      {scanResult.analysis && (
+                        <Card className="p-6">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Activity className="h-5 w-5" />
+                            Technical Analysis
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Wallet Metrics */}
+                            <div className="space-y-4">
+                              <h4 className="font-medium text-muted-foreground">Wallet Metrics</h4>
+                              <div className="space-y-3">
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Total Transactions:</span>
+                                  <span className="font-medium">{scanResult.analysis.totalTransactions?.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Wallet Age:</span>
+                                  <span className="font-medium">{scanResult.analysis.walletAge} days</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Recent Activity:</span>
+                                  <span className="font-medium">{scanResult.analysis.recentActivity} txns</span>
+                                </div>
                               </div>
                             </div>
+                            
+                            {/* Contract Interactions */}
+                            <div className="space-y-4">
+                              <h4 className="font-medium text-muted-foreground">Contract Activity</h4>
+                              <div className="space-y-3">
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Unique Contracts:</span>
+                                  <span className="font-medium">{scanResult.analysis.uniqueContracts}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Failed Tx Ratio:</span>
+                                  <span className="font-medium">{(scanResult.analysis.failedTxRatio * 100)?.toFixed(1)}%</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-sm">Avg Gas Used:</span>
+                                  <span className="font-medium">{scanResult.analysis.avgGasUsed?.toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Security Analysis */}
+                            <div className="space-y-4">
+                              <h4 className="font-medium text-muted-foreground">Security Analysis</h4>
+                              {scanResult.analysis.addressPoisoning ? (
+                                <div className="space-y-3">
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">Dust Transactions:</span>
+                                    <span className="font-medium text-red-600">{scanResult.analysis.addressPoisoning.dustTransactions}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-sm">Zero Value Txns:</span>
+                                    <span className="font-medium text-red-600">{scanResult.analysis.addressPoisoning.zeroValueTransactions}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-sm text-green-600 flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4" />
+                                  No security threats detected
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </Card>
-                    )}
-                    
-                    <RiskBreakdown walletAddress={scanResult.address} />
-                  </TabsContent>
-
-                  <TabsContent value="portfolio" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <PortfolioValueChart walletAddress={scanResult.address} />
-                      <TokenHoldingsBreakdown walletAddress={scanResult.address} />
+                        </Card>
+                      )}
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="transactions" className="space-y-6">
-                    <TransactionGraph centerAddress={scanResult.address} />
+                  {/* Portfolio Tab - Asset Holdings & Value Analysis */}
+                  <TabsContent value="portfolio" className="space-y-6">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">Portfolio Analysis</h3>
+                        <p className="text-muted-foreground">Comprehensive view of token holdings, value distribution, and performance metrics</p>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <PortfolioValueChart walletAddress={scanResult.address} />
+                        <TokenHoldingsBreakdown walletAddress={scanResult.address} />
+                      </div>
+                    </div>
                   </TabsContent>
 
+                  {/* Network Tab - Transaction Flow & Connections */}
+                  <TabsContent value="network" className="space-y-6">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">Transaction Network Analysis</h3>
+                        <p className="text-muted-foreground">Interactive visualization of transaction flows, counterparty relationships, and network connections</p>
+                      </div>
+                      <TransactionGraph centerAddress={scanResult.address} />
+                    </div>
+                  </TabsContent>
+
+                  {/* DeFi Tab - Protocol Positions & Yield */}
                   <TabsContent value="defi" className="space-y-6">
-                    <DeFiPositions walletAddress={scanResult.address} />
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">DeFi Protocol Analysis</h3>
+                        <p className="text-muted-foreground">Track lending, borrowing, liquidity provision, and staking positions across DeFi protocols</p>
+                      </div>
+                      <DeFiPositions walletAddress={scanResult.address} />
+                    </div>
                   </TabsContent>
 
+                  {/* Reports Tab - Export & Documentation */}
                   <TabsContent value="reports" className="space-y-6">
-                    <ReportExporter walletAddress={scanResult.address} />
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">Professional Reports</h3>
+                        <p className="text-muted-foreground">Generate comprehensive analysis reports in PDF, CSV, or JSON format for compliance and documentation</p>
+                      </div>
+                      <ReportExporter walletAddress={scanResult.address} />
+                    </div>
                   </TabsContent>
 
+                  {/* Notes Tab - Team Collaboration */}
                   <TabsContent value="notes" className="space-y-6">
-                    <WalletAnnotations walletAddress={scanResult.address} />
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">Collaborative Analysis</h3>
+                        <p className="text-muted-foreground">Add annotations, share insights, and collaborate with team members on wallet analysis</p>
+                      </div>
+                      <WalletAnnotations walletAddress={scanResult.address} />
+                    </div>
                   </TabsContent>
                 </Tabs>
                </div>

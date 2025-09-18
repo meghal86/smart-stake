@@ -48,22 +48,47 @@ serve(async (req) => {
     }
 
     if (action === 'verify-payment') {
-      const session = await stripe.checkout.sessions.retrieve(sessionId)
-      if (session.payment_status !== 'paid') {
-        throw new Error('Payment not completed')
+      try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId)
+        
+        if (session.payment_status !== 'paid') {
+          return new Response(JSON.stringify({ error: 'Payment not completed', status: session.payment_status }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        if (!session.subscription) {
+          return new Response(JSON.stringify({ error: 'No subscription found' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        const subscription = await stripe.subscriptions.retrieve(session.subscription)
+        const plan = PRICE_TO_PLAN[subscription.items.data[0].price.id] || 'free'
+
+        const { error: dbError } = await supabase
+          .from('users')
+          .update({ plan })
+          .eq('user_id', userId)
+
+        if (dbError) {
+          return new Response(JSON.stringify({ error: 'Database update failed', details: dbError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
+        return new Response(JSON.stringify({ success: true, plan }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      } catch (stripeError) {
+        return new Response(JSON.stringify({ error: 'Stripe error', details: stripeError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
       }
-
-      const subscription = await stripe.subscriptions.retrieve(session.subscription)
-      const plan = PRICE_TO_PLAN[subscription.items.data[0].price.id] || 'free'
-
-      await supabase
-        .from('users')
-        .update({ plan })
-        .eq('user_id', userId)
-
-      return new Response(JSON.stringify({ success: true, plan }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
     }
 
     return new Response('Invalid action', { status: 400 })

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Simple Subscription</title>
+</head>
+<body>
+    <h1>Testing Simple Subscription Function</h1>
+    <button onclick="testFunction()">Test Verify Payment</button>
+    <div id="result"></div>
+
+    <script>
+        async function testFunction() {
+            const sessionId = 'cs_test_a1rKFfmcOJURVTbtUCmL0OgDF51iga6PEVOiwvF95X8F43QV2n1L97SUaH';
+            const userId = 'test-user-123';
+            
+            try {
+                const response = await fetch('https://rebeznxivaxgserswhbn.supabase.co/functions/v1/simple-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYmV6bnhpdmF4Z3NlcnN3aGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDc0NDIsImV4cCI6MjA3MDk4MzQ0Mn0.u2t2SEmm3rTpseRRdgym3jnaOq7lRLHW531PxPmu6xo'
+                    },
+                    body: JSON.stringify({
+                        action: 'verify-payment',
+                        sessionId,
+                        userId
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<pre>Error: ' + error.message + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>
