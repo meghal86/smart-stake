@@ -127,31 +127,53 @@ serve(async (req) => {
         break
 
       case 'openai':
-        const openaiKey = Deno.env.get('OPENAI_API_KEY')
-        if (!openaiKey) {
-          result = { healthy: false, message: 'OpenAI key not configured', responseTime: Date.now() - startTime }
-        } else {
-          const openaiResponse = await fetch('https://api.openai.com/v1/models', {
-            headers: { 'Authorization': `Bearer ${openaiKey}` }
+        try {
+          const testResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-wallet-analyzer`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              address: '0x742d35Cc6634C0532925a3b8D4C9db4C532925a3',
+              transactionData: { balance: '1.5 ETH', txCount: 45 }
+            })
           })
           result = {
-            healthy: openaiResponse.ok,
-            message: openaiResponse.ok ? 'OpenAI API accessible' : 'OpenAI API error',
+            healthy: testResponse.ok,
+            message: testResponse.ok ? 'OpenAI AI analyzer operational' : 'OpenAI function error',
+            responseTime: Date.now() - startTime
+          }
+        } catch (error) {
+          result = {
+            healthy: false,
+            message: 'OpenAI service not accessible',
             responseTime: Date.now() - startTime
           }
         }
         break
 
       case 'risk-scanner':
-        const riskSupabase = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
-        const { error: riskError } = await riskSupabase.from('risk_scores').select('count').limit(1)
-        result = {
-          healthy: !riskError,
-          message: riskError ? 'Risk scanner table not accessible' : 'Risk scanner operational',
-          responseTime: Date.now() - startTime
+        try {
+          const testResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/auto-risk-scanner`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ address: '0x742d35Cc6634C0532925a3b8D4C9db4C532925a3' })
+          })
+          result = {
+            healthy: testResponse.ok,
+            message: testResponse.ok ? 'Risk scanner operational' : 'Risk scanner function error',
+            responseTime: Date.now() - startTime
+          }
+        } catch (error) {
+          result = {
+            healthy: false,
+            message: 'Risk scanner not accessible',
+            responseTime: Date.now() - startTime
+          }
         }
         break
 

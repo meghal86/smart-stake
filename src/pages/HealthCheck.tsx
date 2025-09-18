@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, RefreshCw, Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 interface HealthStatus {
@@ -14,6 +14,7 @@ interface HealthStatus {
   lastChecked?: Date;
   apiEndpoint?: string;
   description?: string;
+  affectedFeatures?: string[];
 }
 
 export default function HealthCheck() {
@@ -22,85 +23,99 @@ export default function HealthCheck() {
       name: 'Supabase Database', 
       status: 'checking',
       apiEndpoint: 'supabase.from("users").select()',
-      description: 'PostgreSQL database connectivity check'
+      description: 'PostgreSQL database connectivity check',
+      affectedFeatures: ['User authentication', 'Subscription management', 'All data storage', 'User preferences']
     },
     { 
       name: 'Supabase Auth', 
       status: 'checking',
       apiEndpoint: 'supabase.auth.getSession()',
-      description: 'Authentication service status'
+      description: 'Authentication service status',
+      affectedFeatures: ['Login/Signup', 'User sessions', 'Protected pages', 'Profile management']
     },
     { 
       name: 'Stripe API', 
       status: 'checking',
       apiEndpoint: 'stripe.products.list()',
-      description: 'Payment processing service'
+      description: 'Payment processing service',
+      affectedFeatures: ['Subscription checkout', 'Payment verification', 'Plan upgrades', 'Billing management']
     },
     { 
       name: 'Resend Email', 
       status: 'checking',
       apiEndpoint: 'https://api.resend.com/domains',
-      description: 'Email delivery service'
+      description: 'Email delivery service',
+      affectedFeatures: ['Email notifications', 'Whale alerts via email', 'Password reset emails', 'Welcome emails']
     },
     { 
       name: 'Whale Alert API', 
       status: 'checking',
       apiEndpoint: 'https://api.whale-alert.io/v1/status',
-      description: 'Large transaction monitoring'
+      description: 'Large transaction monitoring',
+      affectedFeatures: ['Real-time whale alerts', 'Transaction monitoring', 'Whale dashboard', 'Alert notifications']
     },
     { 
       name: 'Alchemy API', 
       status: 'checking',
       apiEndpoint: 'https://eth-mainnet.g.alchemy.com/v2/{key}',
-      description: 'Ethereum blockchain data provider'
+      description: 'Ethereum blockchain data provider',
+      affectedFeatures: ['Ethereum transaction data', 'Wallet balance checks', 'Smart contract interactions', 'Gas price estimates']
     },
     { 
       name: 'Moralis API', 
       status: 'checking',
       apiEndpoint: 'https://deep-index.moralis.io/api/v2/',
-      description: 'Multi-chain blockchain data'
+      description: 'Multi-chain blockchain data',
+      affectedFeatures: ['Multi-chain support', 'NFT data', 'Token balances', 'Cross-chain analytics']
     },
     { 
       name: 'Etherscan API', 
       status: 'checking',
       apiEndpoint: 'https://api.etherscan.io/api',
-      description: 'Ethereum blockchain explorer'
+      description: 'Ethereum blockchain explorer',
+      affectedFeatures: ['Transaction verification', 'Address labeling', 'Contract verification', 'Historical data']
     },
     { 
       name: 'OpenAI API', 
       status: 'checking',
       apiEndpoint: 'https://api.openai.com/v1/models',
-      description: 'AI-powered analysis and insights'
+      description: 'AI-powered analysis and insights',
+      affectedFeatures: ['AI risk analysis', 'Smart recommendations', 'Sentiment analysis', 'Automated insights']
     },
     { 
       name: 'CoinGecko API', 
       status: 'checking',
       apiEndpoint: 'https://api.coingecko.com/api/v3/ping',
-      description: 'Cryptocurrency market data'
+      description: 'Cryptocurrency market data',
+      affectedFeatures: ['Token prices', 'Market cap data', 'Price charts', 'Market sentiment']
     },
     { 
       name: 'DefiLlama API', 
       status: 'checking',
       apiEndpoint: 'https://api.llama.fi/protocols',
-      description: 'DeFi protocol analytics'
+      description: 'DeFi protocol analytics',
+      affectedFeatures: ['DeFi yield tracking', 'Protocol analytics', 'TVL data', 'Yield farming insights']
     },
     { 
       name: 'Risk Scanner', 
       status: 'checking',
       apiEndpoint: 'supabase.from("risk_scores")',
-      description: 'Address risk assessment system'
+      description: 'Address risk assessment system',
+      affectedFeatures: ['Risk scoring', 'Sanctions screening', 'Address analysis', 'Compliance checks']
     },
     { 
       name: 'Notification System', 
       status: 'checking',
       apiEndpoint: 'supabase.from("notification_logs")',
-      description: 'Multi-channel alert delivery'
+      description: 'Multi-channel alert delivery',
+      affectedFeatures: ['Push notifications', 'SMS alerts', 'Email alerts', 'Alert history']
     },
     { 
       name: 'Edge Functions', 
       status: 'checking',
       apiEndpoint: 'supabase.functions.invoke()',
-      description: 'Serverless function infrastructure'
+      description: 'Serverless function infrastructure',
+      affectedFeatures: ['API processing', 'Background tasks', 'Data processing', 'Webhook handling']
     }
   ]);
 
@@ -227,8 +242,7 @@ export default function HealthCheck() {
 
   return (
     <AppLayout>
-      <TooltipProvider>
-        <div className="container mx-auto p-6">
+      <div className="container mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">System Health Check</h1>
@@ -275,19 +289,42 @@ export default function HealthCheck() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-lg">{service.name}</CardTitle>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <div className="space-y-1">
-                          <p className="font-medium">{service.description}</p>
-                          <p className="text-xs text-muted-foreground font-mono">
-                            {service.apiEndpoint}
-                          </p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="p-1 hover:bg-muted rounded">
+                          <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-medium">{service.name}</h4>
+                            <p className="text-sm text-muted-foreground">{service.description}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium mb-1">API Endpoint:</p>
+                            <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
+                              {service.apiEndpoint}
+                            </p>
+                          </div>
+                          {service.affectedFeatures && (
+                            <div>
+                              <p className="text-xs font-medium text-red-600 mb-2">
+                                ⚠️ If this service fails, these features won't work:
+                              </p>
+                              <ul className="text-xs space-y-1">
+                                {service.affectedFeatures.map((feature, idx) => (
+                                  <li key={idx} className="flex items-start gap-1">
+                                    <span className="text-red-500 mt-0.5">•</span>
+                                    <span>{feature}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
-                      </TooltipContent>
-                    </Tooltip>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   {getStatusIcon(service.status)}
                 </div>
@@ -323,8 +360,7 @@ export default function HealthCheck() {
             </Card>
           ))}
         </div>
-        </div>
-      </TooltipProvider>
+      </div>
     </AppLayout>
   );
 }
