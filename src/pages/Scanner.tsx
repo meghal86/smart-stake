@@ -938,9 +938,6 @@ export default function Scanner() {
                   }}
                 />
                 
-                {/* Feedback Widget - Always visible */}
-                <FeedbackWidget />
-                
                 {/* Advanced Analysis Sections */}
                 <Tabs defaultValue="risk" className="space-y-6">
                   <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 overflow-x-auto">
