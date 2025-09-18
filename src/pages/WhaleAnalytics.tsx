@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { assessWhaleRisk } from '@/lib/whaleRiskScore';
+import { MarketMakerFlowSentinel } from '@/components/premium/MarketMakerFlowSentinel';
 
 // Whale data interface with risk scoring fields
 interface WhaleData {
@@ -475,6 +476,9 @@ export default function WhaleAnalytics() {
     <div className="container mx-auto p-6 space-y-6">
       {/* Enhanced Header with Market Metrics */}
       <EnhancedHeader metrics={metrics} />
+
+      {/* Market Maker Flow Sentinel - Premium Feature */}
+      <MarketMakerFlowSentinel />
 
       {/* Loading state */}
       {loading && (

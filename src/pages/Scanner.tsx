@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare, Bell, Star, Palette } from "lucide-react";
+import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare, Bell, Star, Palette, Image } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { BundleAnalyzer } from "@/components/performance/BundleAnalyzer";
 import { OptimizedChart } from "@/components/performance/OptimizedChart";
 import { RealTimeAlerts } from "@/components/alerts/RealTimeAlerts";
 import { WatchlistManager } from "@/components/watchlist/WatchlistManager";
+import { NFTWhaleTracker } from '@/components/premium/NFTWhaleTracker';
 import { AdvancedAnalytics } from "@/components/analytics/AdvancedAnalytics";
 import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
 import { AuditTrail } from "@/components/audit/AuditTrail";
@@ -940,7 +941,7 @@ export default function Scanner() {
                 
                 {/* Advanced Analysis Sections */}
                 <Tabs defaultValue="risk" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 overflow-x-auto">
+                  <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 overflow-x-auto">
                     <TabsTrigger value="risk" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                       <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Risk Analysis</span>
@@ -957,6 +958,10 @@ export default function Scanner() {
                     <TabsTrigger value="defi" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                       <Droplets className="h-3 w-3 sm:h-4 sm:w-4" />
                       DeFi
+                    </TabsTrigger>
+                    <TabsTrigger value="nft" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Image className="h-3 w-3 sm:h-4 sm:w-4" />
+                      NFT
                     </TabsTrigger>
                     <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                       <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -1114,6 +1119,17 @@ export default function Scanner() {
                         <p className="text-muted-foreground">Track lending, borrowing, liquidity provision, and staking positions across DeFi protocols</p>
                       </div>
                       <DeFiPositions walletAddress={scanResult.address} />
+                    </div>
+                  </TabsContent>
+
+                  {/* NFT Tab - NFT Whale Tracking */}
+                  <TabsContent value="nft" className="space-y-6">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">NFT Whale Activity</h3>
+                        <p className="text-muted-foreground">Monitor high-value NFT transactions and whale collections</p>
+                      </div>
+                      <NFTWhaleTracker />
                     </div>
                   </TabsContent>
 

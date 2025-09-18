@@ -8,6 +8,7 @@ import { PredictionHistory } from '@/components/predictions/PredictionHistory';
 import { ScenarioComparison } from '@/components/predictions/ScenarioComparison';
 import { ExplainabilityPanel } from '@/components/predictions/ExplainabilityPanel';
 import { AlertIntegration } from '@/components/predictions/AlertIntegration';
+import { MultiChannelAlerts } from '@/components/premium/MultiChannelAlerts';
 import { ModelDocumentation } from '@/components/predictions/ModelDocumentation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -221,7 +222,7 @@ export default function WhalePredictions() {
           </TabsContent>
 
           <TabsContent value="alerts">
-            <AlertIntegration />
+            <MultiChannelAlerts />
           </TabsContent>
 
           <TabsContent value="docs">
