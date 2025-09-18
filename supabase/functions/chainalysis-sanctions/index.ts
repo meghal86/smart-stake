@@ -17,36 +17,38 @@ serve(async (req) => {
       throw new Error('Address is required')
     }
 
-    // Chainalysis Sanctions API call
-    const chainalysisResponse = await fetch('https://api.chainalysis.com/api/kyt/v2/addresses', {
-      method: 'POST',
+    // Log the API key (first 10 chars for debugging)
+    const apiKey = Deno.env.get('CHAINALYSIS_API_KEY')
+    console.log('API Key exists:', !!apiKey)
+    console.log('API Key prefix:', apiKey?.substring(0, 10))
+    
+    // Chainalysis Public API - correct format
+    const chainalysisResponse = await fetch(`https://public.chainalysis.com/api/v1/address/${address}`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('CHAINALYSIS_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        address: address,
-        asset: 'ETH'
-      })
+        'X-API-Key': apiKey
+      }
     })
 
+    console.log('Chainalysis response status:', chainalysisResponse.status)
+    
     if (!chainalysisResponse.ok) {
       const errorText = await chainalysisResponse.text()
-      console.error('Chainalysis API error:', errorText)
-      throw new Error(`Chainalysis API error: ${chainalysisResponse.status}`)
+      console.error('Chainalysis API error response:', errorText)
+      console.error('Request headers:', {
+        'X-API-Key': `${apiKey?.substring(0, 10)}...`
+      })
+      throw new Error(`Chainalysis API error: ${chainalysisResponse.status} - ${errorText}`)
     }
 
     const data = await chainalysisResponse.json()
     
-    // Parse Chainalysis response
-    const isSanctioned = data.identifications?.some((id: any) => 
-      id.category === 'sanctions' || 
-      id.category === 'law enforcement'
-    ) || false
+    // Parse Chainalysis Public API response
+    const isSanctioned = data.identifications && data.identifications.length > 0
 
     const sanctionsList = data.identifications
-      ?.filter((id: any) => id.category === 'sanctions' || id.category === 'law enforcement')
-      ?.map((id: any) => id.name || 'Unknown Sanctions List') || []
+      ?.filter((id: any) => id.category === 'sanctions')
+      ?.map((id: any) => id.name || 'OFAC SDN List') || []
 
     const result = {
       isSanctioned,

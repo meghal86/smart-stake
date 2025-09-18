@@ -24,12 +24,12 @@ export function useSanctionsCheck(address: string) {
       setResult(prev => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        // Real Chainalysis API call
+        // Chainalysis API via Supabase Edge Function
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chainalysis-sanctions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
           },
           body: JSON.stringify({ address })
         });

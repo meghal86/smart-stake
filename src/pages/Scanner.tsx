@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare, Bell, Star } from "lucide-react";
+import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare, Bell, Star, Palette } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,10 @@ import { OptimizedChart } from "@/components/performance/OptimizedChart";
 import { RealTimeAlerts } from "@/components/alerts/RealTimeAlerts";
 import { WatchlistManager } from "@/components/watchlist/WatchlistManager";
 import { AdvancedAnalytics } from "@/components/analytics/AdvancedAnalytics";
+import { FeedbackWidget } from "@/components/feedback/FeedbackWidget";
+import { AuditTrail } from "@/components/audit/AuditTrail";
+import { WhiteLabelConfig } from "@/components/branding/WhiteLabelConfig";
+import { ComplianceMonitor } from "@/components/compliance/ComplianceMonitor";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -934,6 +938,9 @@ export default function Scanner() {
                   }}
                 />
                 
+                {/* Feedback Widget - Always visible */}
+                <FeedbackWidget />
+                
                 {/* Advanced Analysis Sections */}
                 <Tabs defaultValue="risk" className="space-y-6">
                   <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 overflow-x-auto">
@@ -973,6 +980,18 @@ export default function Scanner() {
                     <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                       <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                       Analytics
+                    </TabsTrigger>
+                    <TabsTrigger value="audit" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Audit
+                    </TabsTrigger>
+                    <TabsTrigger value="compliance" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Compliance
+                    </TabsTrigger>
+                    <TabsTrigger value="branding" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
+                      Branding
                     </TabsTrigger>
                   </TabsList>
 
@@ -1155,7 +1174,43 @@ export default function Scanner() {
                       <AdvancedAnalytics />
                     </div>
                   </TabsContent>
+
+                  {/* Audit Trail Tab */}
+                  <TabsContent value="audit" className="space-y-6">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">Audit Trail</h3>
+                        <p className="text-muted-foreground">Complete audit log of all user actions and system events</p>
+                      </div>
+                      <AuditTrail />
+                    </div>
+                  </TabsContent>
+
+                  {/* Compliance Monitor Tab */}
+                  <TabsContent value="compliance" className="space-y-6">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">Compliance Monitor</h3>
+                        <p className="text-muted-foreground">Stay updated on regulatory changes and API updates</p>
+                      </div>
+                      <ComplianceMonitor />
+                    </div>
+                  </TabsContent>
+
+                  {/* White Label Branding Tab */}
+                  <TabsContent value="branding" className="space-y-6">
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-semibold mb-2">White Label Configuration</h3>
+                        <p className="text-muted-foreground">Customize branding and appearance for enterprise deployment</p>
+                      </div>
+                      <WhiteLabelConfig />
+                    </div>
+                  </TabsContent>
                 </Tabs>
+                
+                {/* Feedback Widget */}
+                <FeedbackWidget />
                </div>
              )}
            </div>
