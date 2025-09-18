@@ -4,9 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/loading-skeleton";
+import { QuickActions } from "@/components/ui/quick-actions";
 import { ScannerEmptyState } from "@/components/scanner/ScannerEmptyState";
 import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
 import { PlanBadge } from "@/components/subscription/PlanBadge";
+import { SanctionsCheck } from "@/components/compliance/SanctionsCheck";
+import { AlertCenter } from "@/components/alerts/AlertCenter";
+import { PerformanceMonitor } from "@/components/performance/PerformanceMonitor";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -177,12 +182,23 @@ export default function Scanner() {
             )}
 
             {isScanning && (
-              <Card className="p-8 text-center">
-                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                <h2 className="text-lg font-semibold text-foreground mb-2">Scanning Wallet...</h2>
-                <p className="text-muted-foreground">
-                  Analyzing transaction history and risk factors
-                </p>
+              <Card className="p-6 sm:p-8">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-lg font-semibold mb-2">Scanning Wallet...</h2>
+                    <p className="text-muted-foreground text-sm">Analyzing transaction history and risk factors</p>
+                  </div>
+                  
+                  {/* Loading skeleton for mobile */}
+                  <div className="space-y-3 mt-6">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </div>
               </Card>
             )}
 
@@ -203,14 +219,17 @@ export default function Scanner() {
 
             {scanResult && !scanResult.error && (
               <div className="space-y-6">
+                {/* Sanctions Check - Critical Security */}
+                <SanctionsCheck walletAddress={scanResult.address} />
+                
                 {/* Top Summary Zone - Risk Score & Breakdown */}
                 <div className="bg-gradient-to-br from-background to-muted/20 p-1 rounded-xl">
-                  <Card className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  <Card className="p-4 sm:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
                       {/* Risk Score Section */}
                       <div className="text-center lg:text-left">
-                        <div className="flex items-center justify-center lg:justify-start gap-4 mb-4">
-                          <div className={`text-4xl font-bold ${getRiskColorByScore(scanResult.riskScore)}`}>
+                        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2 sm:gap-4 mb-4">
+                          <div className={`text-3xl sm:text-4xl font-bold ${getRiskColorByScore(scanResult.riskScore)}`}>
                             {scanResult.riskScore}/10
                           </div>
                           <div className="flex items-center gap-2">
@@ -254,34 +273,34 @@ export default function Scanner() {
                           </div>
                         </div>
                         
-                        {/* Risk Category Legend */}
-                        <div className="flex items-center justify-center lg:justify-start gap-4 p-3 bg-muted/30 rounded-lg">
-                          <div className="flex items-center gap-2 text-sm">
+                        {/* Risk Category Legend - Mobile Responsive */}
+                        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2 sm:gap-4 p-3 bg-muted/30 rounded-lg">
+                          <div className="flex items-center gap-2 text-xs sm:text-sm">
                             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                             <span className="text-muted-foreground">Low (1-3)</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-xs sm:text-sm">
                             <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                             <span className="text-muted-foreground">Medium (4-6)</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-xs sm:text-sm">
                             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                             <span className="text-muted-foreground">High (7-10)</span>
                           </div>
                         </div>
                       </div>
                       
-                      {/* Metrics Section */}
-                      <div className="grid grid-cols-2 gap-4 text-center lg:text-right">
-                        <div>
-                          <div className="text-sm text-muted-foreground mb-1">Current Balance</div>
-                          <div className="text-xl font-bold text-foreground">
+                      {/* Metrics Section - Mobile Responsive */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center lg:text-right w-full lg:w-auto">
+                        <div className="p-3 bg-muted/20 rounded-lg">
+                          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Current Balance</div>
+                          <div className="text-lg sm:text-xl font-bold text-foreground">
                             {scanResult.totalValue > 0 ? `${scanResult.totalValue.toFixed(4)} ETH` : 'N/A'}
                           </div>
                         </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground mb-1">Avg Transaction</div>
-                          <div className="text-xl font-bold text-foreground">
+                        <div className="p-3 bg-muted/20 rounded-lg">
+                          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Avg Transaction</div>
+                          <div className="text-lg sm:text-xl font-bold text-foreground">
                             {scanResult.avgTxValue > 0 ? `${scanResult.avgTxValue.toFixed(4)} ETH` : 'N/A'}
                           </div>
                         </div>
@@ -754,31 +773,41 @@ export default function Scanner() {
                   </Card>
                 )}
 
+                {/* Quick Actions for Mobile */}
+                <QuickActions 
+                  walletAddress={scanResult.address}
+                  onExport={() => alert('Export functionality')}
+                  onAlert={() => alert('Alert setup')}
+                  onShare={() => alert('Share analysis')}
+                  onBookmark={() => alert('Add to watchlist')}
+                />
+                
                 {/* Advanced Analysis Sections */}
                 <Tabs defaultValue="risk" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="risk" className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Risk Analysis
+                  <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 overflow-x-auto">
+                    <TabsTrigger value="risk" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Risk Analysis</span>
+                      <span className="sm:hidden">Risk</span>
                     </TabsTrigger>
-                    <TabsTrigger value="portfolio" className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4" />
+                    <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                       Portfolio
                     </TabsTrigger>
-                    <TabsTrigger value="network" className="flex items-center gap-2">
-                      <Network className="h-4 w-4" />
+                    <TabsTrigger value="network" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Network className="h-3 w-3 sm:h-4 sm:w-4" />
                       Network
                     </TabsTrigger>
-                    <TabsTrigger value="defi" className="flex items-center gap-2">
-                      <Droplets className="h-4 w-4" />
+                    <TabsTrigger value="defi" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Droplets className="h-3 w-3 sm:h-4 sm:w-4" />
                       DeFi
                     </TabsTrigger>
-                    <TabsTrigger value="reports" className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
+                    <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                       Reports
                     </TabsTrigger>
-                    <TabsTrigger value="notes" className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
+                    <TabsTrigger value="notes" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                       Notes
                     </TabsTrigger>
                   </TabsList>
@@ -788,6 +817,12 @@ export default function Scanner() {
                     <div className="grid gap-6">
                       {/* AI Risk Breakdown */}
                       <RiskBreakdown walletAddress={scanResult.address} />
+                      
+                      {/* Alert Center Integration */}
+                      <AlertCenter walletAddress={scanResult.address} />
+                      
+                      {/* Performance Monitoring */}
+                      <PerformanceMonitor />
                       
                       {/* Technical Analysis Details */}
                       {scanResult.analysis && (
