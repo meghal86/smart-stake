@@ -48,11 +48,13 @@ export function useWhalePreferences() {
     if (!user) return;
 
     const updatedPreferences = { ...preferences, ...newPreferences };
+    console.log('Updating preferences from:', preferences, 'to:', updatedPreferences);
     setPreferences(updatedPreferences);
 
     try {
       // Store in localStorage as fallback
       localStorage.setItem(`whale_prefs_${user.id}`, JSON.stringify(updatedPreferences));
+      console.log('Preferences stored in localStorage');
     } catch (error) {
       console.error('Error updating preferences:', error);
       setPreferences(preferences);

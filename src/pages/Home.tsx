@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertQuickActions } from "@/components/alerts/AlertQuickActions";
 import { LiveDataStatus } from "@/components/whale/LiveDataStatus";
 import { WhalePreferencesModal } from "@/components/whale/WhalePreferencesModal";
+import { useWhalePreferences } from "@/hooks/useWhalePreferences";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -75,6 +76,7 @@ const mockTransactions = [
 export default function Home() {
   const { user } = useAuth();
   const { userPlan, canAccessFeature, getUpgradeMessage } = useSubscription();
+  const { preferences } = useWhalePreferences();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChain, setSelectedChain] = useState("all");
@@ -202,7 +204,7 @@ export default function Home() {
     navigator.clipboard.writeText(text);
   };
 
-  // Filter transactions based on search query, chain, amount, and whale size
+  // Filter transactions based on search query, chain, amount, whale size, and preferences
   const filteredTransactions = transactions.filter((transaction) => {
     // Search filter (token, address)
     const searchLower = searchQuery.toLowerCase();
@@ -212,13 +214,22 @@ export default function Home() {
       transaction.toAddress.toLowerCase().includes(searchLower) ||
       transaction.chain.toLowerCase().includes(searchLower);
     
-    // Chain filter
+    // Chain filter (combine UI filter with preferences)
     const matchesChain = selectedChain === 'all' || 
       transaction.chain.toLowerCase() === selectedChain.toLowerCase();
     
-    // Amount filter
-    const minAmountNum = parseFloat(minAmount) || 0;
+    // Preferences chain filter
+    const matchesPreferredChains = preferences.preferredChains.length === 0 ||
+      preferences.preferredChains.includes(transaction.chain.toLowerCase());
+    
+    // Amount filter (use preferences minimum if no manual filter set)
+    const minAmountNum = parseFloat(minAmount) || preferences.minAmountUsd;
     const matchesAmount = transaction.amountUSD >= minAmountNum;
+    
+    // Exchange filter from preferences
+    const isExchangeTransaction = transaction.fromType?.toLowerCase().includes('exchange') ||
+      transaction.toType?.toLowerCase().includes('exchange');
+    const matchesExchangeFilter = !preferences.excludeExchanges || !isExchangeTransaction;
     
     // Whale size filter
     const matchesWhaleFilter = 
@@ -226,7 +237,7 @@ export default function Home() {
       (whaleFilter === 'large' && transaction.amountUSD >= 5000000) ||
       (whaleFilter === 'mega' && transaction.amountUSD >= 10000000);
     
-    return matchesSearch && matchesChain && matchesAmount && matchesWhaleFilter;
+    return matchesSearch && matchesChain && matchesPreferredChains && matchesAmount && matchesExchangeFilter && matchesWhaleFilter;
   });
 
   useEffect(() => {
@@ -564,6 +575,9 @@ export default function Home() {
               />
               
               <WhalePreferencesModal />
+              <div className="text-xs text-muted-foreground px-2">
+                Min: ${(preferences.minAmountUsd / 1000000).toFixed(1)}M
+              </div>
             </div>
           </div>
         </div>

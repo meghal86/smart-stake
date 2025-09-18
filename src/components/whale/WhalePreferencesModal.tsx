@@ -14,7 +14,9 @@ export function WhalePreferencesModal() {
   const [localPrefs, setLocalPrefs] = useState(preferences);
 
   const handleSave = async () => {
+    console.log('Saving preferences:', localPrefs);
     await updatePreferences(localPrefs);
+    console.log('Preferences saved successfully');
     setIsOpen(false);
   };
 
