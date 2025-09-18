@@ -193,7 +193,7 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
             : transaction.type === "sell"
             ? "border-l-4 border-l-red-500 hover:border-red-500/30"
             : "border-l-4 border-l-blue-500 hover:border-blue-500/30"
-        } ${isMegaTransaction ? 'animate-bounce shadow-2xl ring-2 ring-yellow-400' : isLargeTransaction ? 'animate-pulse shadow-lg' : ''} hover:shadow-lg hover:scale-[1.02]`}
+        } ${isMegaTransaction ? 'shadow-2xl ring-1 ring-yellow-400/50 border-yellow-400/30' : isLargeTransaction ? 'shadow-lg border-blue-400/30' : ''} hover:shadow-lg hover:scale-[1.02]`}
         onClick={onClick}
       >
       <div className="flex items-start justify-between mb-3">
@@ -343,8 +343,8 @@ export function WhaleTransactionCard({ transaction, onClick }: WhaleTransactionC
           {formatAmount(transaction.amountUSD)}
           {isMegaTransaction && (
             <div className="ml-2 flex items-center gap-1">
-              <span className="text-yellow-400 animate-spin">⚡</span>
-              <span className="text-xs bg-yellow-400 text-black px-2 py-0.5 rounded-full font-bold animate-pulse">
+              <span className="text-yellow-400">💥</span>
+              <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-400 text-black px-2 py-0.5 rounded-full font-bold">
                 MEGA WHALE
               </span>
             </div>
