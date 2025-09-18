@@ -32,24 +32,10 @@ export function useWhalePreferences() {
 
   const loadPreferences = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading preferences:', error);
-        return;
-      }
-
-      if (data) {
-        setPreferences({
-          minAmountUsd: data.whale_min_amount || defaultPreferences.minAmountUsd,
-          preferredChains: data.whale_chains || defaultPreferences.preferredChains,
-          excludeExchanges: data.whale_exclude_exchanges || defaultPreferences.excludeExchanges,
-          notificationEnabled: data.whale_notifications || defaultPreferences.notificationEnabled
-        });
+      // Try to load from localStorage first as fallback
+      const stored = localStorage.getItem(`whale_prefs_${user?.id}`);
+      if (stored) {
+        setPreferences(JSON.parse(stored));
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
@@ -65,22 +51,8 @@ export function useWhalePreferences() {
     setPreferences(updatedPreferences);
 
     try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          whale_min_amount: updatedPreferences.minAmountUsd,
-          whale_chains: updatedPreferences.preferredChains,
-          whale_exclude_exchanges: updatedPreferences.excludeExchanges,
-          whale_notifications: updatedPreferences.notificationEnabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error updating preferences:', error);
-        // Revert on error
-        setPreferences(preferences);
-      }
+      // Store in localStorage as fallback
+      localStorage.setItem(`whale_prefs_${user.id}`, JSON.stringify(updatedPreferences));
     } catch (error) {
       console.error('Error updating preferences:', error);
       setPreferences(preferences);

@@ -86,7 +86,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
-  const [viewMode, setViewMode] = useState<'expanded' | 'compact'>('expanded');
+  const [viewMode, setViewMode] = useState<'expanded' | 'compact' | 'summary'>('expanded');
+  const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [apiHealth, setApiHealth] = useState<'healthy' | 'degraded' | 'down'>('healthy');
   const [lastApiUpdate, setLastApiUpdate] = useState<string>('');
@@ -201,7 +202,7 @@ export default function Home() {
     navigator.clipboard.writeText(text);
   };
 
-  // Filter transactions based on search query, chain, and minimum amount
+  // Filter transactions based on search query, chain, amount, and whale size
   const filteredTransactions = transactions.filter((transaction) => {
     // Search filter (token, address)
     const searchLower = searchQuery.toLowerCase();
@@ -219,7 +220,13 @@ export default function Home() {
     const minAmountNum = parseFloat(minAmount) || 0;
     const matchesAmount = transaction.amountUSD >= minAmountNum;
     
-    return matchesSearch && matchesChain && matchesAmount;
+    // Whale size filter
+    const matchesWhaleFilter = 
+      whaleFilter === 'all' ||
+      (whaleFilter === 'large' && transaction.amountUSD >= 5000000) ||
+      (whaleFilter === 'mega' && transaction.amountUSD >= 10000000);
+    
+    return matchesSearch && matchesChain && matchesAmount && matchesWhaleFilter;
   });
 
   useEffect(() => {
@@ -305,7 +312,15 @@ export default function Home() {
                   onClick={() => setViewMode('expanded')}
                   className="text-xs px-2"
                 >
-                  Expanded
+                  Full
+                </Button>
+                <Button
+                  size="sm"
+                  variant={viewMode === 'summary' ? 'default' : 'ghost'}
+                  onClick={() => setViewMode('summary')}
+                  className="text-xs px-2"
+                >
+                  Summary
                 </Button>
                 <Button
                   size="sm"
@@ -313,7 +328,33 @@ export default function Home() {
                   onClick={() => setViewMode('compact')}
                   className="text-xs px-2"
                 >
-                  Compact
+                  Minimal
+                </Button>
+              </div>
+              <div className="flex border rounded-lg p-1">
+                <Button
+                  size="sm"
+                  variant={whaleFilter === 'all' ? 'default' : 'ghost'}
+                  onClick={() => setWhaleFilter('all')}
+                  className="text-xs px-2"
+                >
+                  All
+                </Button>
+                <Button
+                  size="sm"
+                  variant={whaleFilter === 'large' ? 'default' : 'ghost'}
+                  onClick={() => setWhaleFilter('large')}
+                  className="text-xs px-2"
+                >
+                  $5M+
+                </Button>
+                <Button
+                  size="sm"
+                  variant={whaleFilter === 'mega' ? 'default' : 'ghost'}
+                  onClick={() => setWhaleFilter('mega')}
+                  className="text-xs px-2"
+                >
+                  $10M+
                 </Button>
               </div>
               <PlanBadge plan={userPlan.plan} />
@@ -444,23 +485,42 @@ export default function Home() {
             Alert Templates
           </h3>
           <div className="flex gap-2 overflow-x-auto">
-            <Button size="sm" variant="outline" onClick={() => setMinAmount('10000000')} className="shrink-0">
-              💥 $10M+ Mega Whales
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                const amount = prompt('Enter minimum amount (USD):', '10000000');
+                if (amount) setMinAmount(amount);
+              }} 
+              className="shrink-0"
+            >
+              💥 Custom Amount
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setMinAmount('5000000')} className="shrink-0">
-              🐋 $5M+ Large Whales
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                const chain = prompt('Enter chain (ethereum, tron, xrp, etc.):', 'ethereum');
+                if (chain) setSelectedChain(chain.toLowerCase());
+              }} 
+              className="shrink-0"
+            >
+              🔗 Custom Chain
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setMinAmount('1000000')} className="shrink-0">
-              🐟 $1M+ Whales
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setSelectedChain('ethereum')} className="shrink-0">
-              Ξ ETH Only
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setSelectedChain('tron')} className="shrink-0">
-              ⚡ TRX Only
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => alert('USDT Alert: $5M+ transfers')} className="shrink-0">
-              🚨 USDT $5M+
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                const token = prompt('Enter token symbol:', 'USDT');
+                const amount = prompt('Enter minimum amount:', '5000000');
+                if (token && amount) {
+                  setSearchQuery(token);
+                  setMinAmount(amount);
+                }
+              }} 
+              className="shrink-0"
+            >
+              🎯 Custom Token
             </Button>
           </div>
         </div>
@@ -538,38 +598,78 @@ export default function Home() {
         ) : (
           // Transaction list
           <>
-            {filteredTransactions.map((transaction, index) => (
-              viewMode === 'expanded' ? (
-                <WhaleTransactionCard 
-                  key={`${transaction.id}-${index}`} 
-                  transaction={transaction}
-                  onClick={() => setSelectedTransaction(transaction)}
-                />
-              ) : (
-                <div 
-                  key={`${transaction.id}-${index}`}
-                  onClick={() => setSelectedTransaction(transaction)}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      transaction.type === 'buy' ? 'bg-green-500' :
-                      transaction.type === 'sell' ? 'bg-red-500' : 'bg-blue-500'
-                    }`} />
+            {filteredTransactions.map((transaction, index) => {
+              const isMegaTransaction = transaction.amountUSD > 10000000;
+              const isLargeTransaction = transaction.amountUSD > 5000000;
+              
+              if (viewMode === 'expanded') {
+                return (
+                  <WhaleTransactionCard 
+                    key={`${transaction.id}-${index}`} 
+                    transaction={transaction}
+                    onClick={() => setSelectedTransaction(transaction)}
+                  />
+                );
+              } else if (viewMode === 'summary') {
+                return (
+                  <div 
+                    key={`${transaction.id}-${index}`}
+                    onClick={() => setSelectedTransaction(transaction)}
+                    className={`p-4 border rounded-lg hover:bg-muted/30 cursor-pointer transition-all group ${
+                      transaction.type === "buy" 
+                        ? "border-l-4 border-l-green-500" 
+                        : transaction.type === "sell"
+                        ? "border-l-4 border-l-red-500"
+                        : "border-l-4 border-l-blue-500"
+                    } ${isMegaTransaction ? 'shadow-xl ring-2 ring-yellow-400/60 border-yellow-400/40 bg-gradient-to-r from-yellow-50/20 to-orange-50/20' : isLargeTransaction ? 'shadow-lg ring-1 ring-blue-400/40 border-blue-400/30 bg-blue-50/10' : ''}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 ${
+                          transaction.type === 'buy' ? 'bg-green-500 border-green-300' :
+                          transaction.type === 'sell' ? 'bg-red-500 border-red-300' : 'bg-blue-500 border-blue-300'
+                        }`} />
+                        <div className="flex items-center gap-2">
+                          {transaction.amountUSD > 10000000 && <span className="text-yellow-500">💥</span>}
+                          {transaction.amountUSD > 5000000 && transaction.amountUSD <= 10000000 && <span className="text-blue-500">🐋</span>}
+                          <span className="font-mono font-bold text-lg">
+                            ${(transaction.amountUSD / 1000000).toFixed(1)}M
+                          </span>
+                          <span className="text-sm font-medium">{transaction.token}</span>
+                          <span className="text-xs px-2 py-1 bg-muted rounded-full">{transaction.chain}</span>
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatTime(transaction.timestamp)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else {
+                return (
+                  <div 
+                    key={`${transaction.id}-${index}`}
+                    onClick={() => setSelectedTransaction(transaction)}
+                    className="flex items-center justify-between p-2 border-b hover:bg-muted/20 cursor-pointer transition-colors"
+                  >
                     <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        transaction.type === 'buy' ? 'bg-green-500' :
+                        transaction.type === 'sell' ? 'bg-red-500' : 'bg-blue-500'
+                      }`} />
                       {transaction.amountUSD > 10000000 && <span className="text-yellow-400">💥</span>}
-                      <span className="font-mono text-sm">
+                      <span className="font-mono text-xs">
                         ${(transaction.amountUSD / 1000000).toFixed(1)}M
                       </span>
                       <span className="text-xs text-muted-foreground">{transaction.token}</span>
                     </div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatTime(transaction.timestamp)}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatTime(transaction.timestamp)}
-                  </div>
-                </div>
-              )
-            ))}
+                );
+              }
+            })}
             {/* Show end of feed message only for real data */}
             {error === null && !isLoading && !isMockData && filteredTransactions.length > 0 && (
               <div className="text-center py-8">
