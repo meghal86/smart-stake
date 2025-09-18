@@ -1,13 +1,23 @@
 import React, { useState } from "react";
-import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network } from "lucide-react";
+import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScannerEmptyState } from "@/components/scanner/ScannerEmptyState";
 import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
 import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
+
+// Import WhalePlus components
+import { TokenHoldingsBreakdown } from "@/components/portfolio/TokenHoldingsBreakdown";
+import { PortfolioValueChart } from "@/components/portfolio/PortfolioValueChart";
+import { TransactionGraph } from "@/components/transaction/TransactionGraph";
+import { DeFiPositions } from "@/components/defi/DeFiPositions";
+import { RiskBreakdown } from "@/components/risk/RiskBreakdown";
+import { ReportExporter } from "@/components/reports/ReportExporter";
+import { WalletAnnotations } from "@/components/collaboration/WalletAnnotations";
 
 
 
@@ -744,55 +754,94 @@ export default function Scanner() {
                   </Card>
                 )}
 
-                {/* Analysis Details */}
-                {scanResult.analysis && (
-                  <Card className="p-4">
-                    <h3 className="font-semibold text-foreground mb-4">Detailed Analysis</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Total Transactions:</span>
-                        <span className="ml-2 font-medium">{scanResult.analysis.totalTransactions?.toLocaleString()}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Wallet Age:</span>
-                        <span className="ml-2 font-medium">{scanResult.analysis.walletAge} days</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Recent Activity:</span>
-                        <span className="ml-2 font-medium">{scanResult.analysis.recentActivity} txns</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Unique Contracts:</span>
-                        <span className="ml-2 font-medium">{scanResult.analysis.uniqueContracts}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Failed Tx Ratio:</span>
-                        <span className="ml-2 font-medium">{(scanResult.analysis.failedTxRatio * 100)?.toFixed(1)}%</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Avg Gas Used:</span>
-                        <span className="ml-2 font-medium">{scanResult.analysis.avgGasUsed?.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Address Poisoning Details */}
-                    {scanResult.analysis.addressPoisoning && (
-                      <div className="mt-4 pt-4 border-t">
-                        <h4 className="font-medium mb-2">Address Poisoning Analysis</h4>
+                {/* WhalePlus Advanced Analysis Tabs */}
+                <Tabs defaultValue="overview" className="space-y-6">
+                  <TabsList className="grid w-full grid-cols-6">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+                    <TabsTrigger value="transactions">Network</TabsTrigger>
+                    <TabsTrigger value="defi">DeFi</TabsTrigger>
+                    <TabsTrigger value="reports">Reports</TabsTrigger>
+                    <TabsTrigger value="notes">Notes</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="overview" className="space-y-4">
+                    {/* Analysis Details */}
+                    {scanResult.analysis && (
+                      <Card className="p-4">
+                        <h3 className="font-semibold text-foreground mb-4">Detailed Analysis</h3>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <span className="text-muted-foreground">Dust Transactions:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.addressPoisoning.dustTransactions}</span>
+                            <span className="text-muted-foreground">Total Transactions:</span>
+                            <span className="ml-2 font-medium">{scanResult.analysis.totalTransactions?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Zero Value Txns:</span>
-                            <span className="ml-2 font-medium">{scanResult.analysis.addressPoisoning.zeroValueTransactions}</span>
+                            <span className="text-muted-foreground">Wallet Age:</span>
+                            <span className="ml-2 font-medium">{scanResult.analysis.walletAge} days</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Recent Activity:</span>
+                            <span className="ml-2 font-medium">{scanResult.analysis.recentActivity} txns</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Unique Contracts:</span>
+                            <span className="ml-2 font-medium">{scanResult.analysis.uniqueContracts}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Failed Tx Ratio:</span>
+                            <span className="ml-2 font-medium">{(scanResult.analysis.failedTxRatio * 100)?.toFixed(1)}%</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Avg Gas Used:</span>
+                            <span className="ml-2 font-medium">{scanResult.analysis.avgGasUsed?.toLocaleString()}</span>
                           </div>
                         </div>
-                      </div>
+                        
+                        {/* Address Poisoning Details */}
+                        {scanResult.analysis.addressPoisoning && (
+                          <div className="mt-4 pt-4 border-t">
+                            <h4 className="font-medium mb-2">Address Poisoning Analysis</h4>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Dust Transactions:</span>
+                                <span className="ml-2 font-medium">{scanResult.analysis.addressPoisoning.dustTransactions}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Zero Value Txns:</span>
+                                <span className="ml-2 font-medium">{scanResult.analysis.addressPoisoning.zeroValueTransactions}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Card>
                     )}
-                  </Card>
-                )}
+                    
+                    <RiskBreakdown walletAddress={scanResult.address} />
+                  </TabsContent>
+
+                  <TabsContent value="portfolio" className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <PortfolioValueChart walletAddress={scanResult.address} />
+                      <TokenHoldingsBreakdown walletAddress={scanResult.address} />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="transactions" className="space-y-6">
+                    <TransactionGraph centerAddress={scanResult.address} />
+                  </TabsContent>
+
+                  <TabsContent value="defi" className="space-y-6">
+                    <DeFiPositions walletAddress={scanResult.address} />
+                  </TabsContent>
+
+                  <TabsContent value="reports" className="space-y-6">
+                    <ReportExporter walletAddress={scanResult.address} />
+                  </TabsContent>
+
+                  <TabsContent value="notes" className="space-y-6">
+                    <WalletAnnotations walletAddress={scanResult.address} />
+                  </TabsContent>
+                </Tabs>
                </div>
              )}
            </div>

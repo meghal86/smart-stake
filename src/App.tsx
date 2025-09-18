@@ -23,6 +23,7 @@ import Profile from "./pages/Profile";
 import Premium from "./pages/Premium";
 import Debug from "./pages/Debug";
 import NotificationSettings from "./pages/NotificationSettings";
+import WalletAnalysis from "./pages/WalletAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,8 @@ const App = () => {
                   <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
                   <Route path="/debug" element={<Debug />} />
                   <Route path="/notifications" element={<NotificationSettings />} />
+                  <Route path="/analysis" element={<WalletAnalysis />} />
+                  <Route path="/analysis/:address" element={<WalletAnalysis />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
