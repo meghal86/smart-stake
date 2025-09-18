@@ -32,21 +32,25 @@ export default function HealthCheck() {
         let isHealthy = false;
         
         const baseUrl = 'https://rebeznxivaxgserswhbn.supabase.co/functions/v1/health-check';
+        const headers = {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Content-Type': 'application/json'
+        };
         
         switch (service.name) {
           case 'Supabase Database':
-            const dbResponse = await fetch(`${baseUrl}?service=database`);
+            const dbResponse = await fetch(`${baseUrl}?service=database`, { headers });
             isHealthy = dbResponse.ok;
             break;
           case 'Supabase Auth':
             isHealthy = true; // Always healthy if we can load the page
             break;
           case 'Stripe API':
-            const stripeResponse = await fetch(`${baseUrl}?service=stripe`);
+            const stripeResponse = await fetch(`${baseUrl}?service=stripe`, { headers });
             isHealthy = stripeResponse.ok;
             break;
           case 'Resend Email':
-            const emailResponse = await fetch(`${baseUrl}?service=email`);
+            const emailResponse = await fetch(`${baseUrl}?service=email`, { headers });
             isHealthy = emailResponse.ok;
             break;
           case 'Whale Alerts API':
@@ -59,7 +63,7 @@ export default function HealthCheck() {
             isHealthy = true; // Mock for now
             break;
           case 'Edge Functions':
-            const funcResponse = await fetch(`${baseUrl}`);
+            const funcResponse = await fetch(`${baseUrl}`, { headers });
             isHealthy = funcResponse.ok;
             break;
         }
