@@ -17,6 +17,11 @@ import { ProgressIndicator } from "@/components/ui/progress-indicator";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
 import { EnhancedErrorBoundary } from "@/components/ui/enhanced-error-boundary";
 import { useToast } from "@/hooks/useToast";
+import { useCache } from "@/hooks/useCache";
+import { useDebounce, useDebouncedCallback } from "@/hooks/useDebounce";
+import { CacheManager } from "@/components/performance/CacheManager";
+import { BundleAnalyzer } from "@/components/performance/BundleAnalyzer";
+import { OptimizedChart } from "@/components/performance/OptimizedChart";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -39,6 +44,20 @@ export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
   const [scanProgress, setScanProgress] = useState(0);
+  
+  // Debounce wallet address input for performance
+  const debouncedWalletAddress = useDebounce(walletAddress, 300);
+  
+  // Cache wallet scan results
+  const { data: cachedScanResult, loading: cacheLoading, refresh: refreshCache } = useCache(
+    `wallet_scan_${debouncedWalletAddress}`,
+    async () => {
+      if (!debouncedWalletAddress) return null;
+      // This would normally call the actual scan API
+      return null;
+    },
+    { ttl: 10 * 60 * 1000 } // 10 minutes cache
+  );
   const [showRiskTooltip, setShowRiskTooltip] = useState(false);
   const [selectedTrendDay, setSelectedTrendDay] = useState<number | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
@@ -47,9 +66,25 @@ export default function Scanner() {
   const scannerAccess = canAccessFeature('scanner');
   const canUsePremiumScanner = scannerAccess === 'full' || scannerAccess === 'limited';
 
-  const handleScan = async () => {
-    if (!walletAddress) return;
+  // Debounced scan function for performance
+  const debouncedScan = useDebouncedCallback(async (address: string) => {
+    if (!address) return;
     
+    // Check cache first
+    if (cachedScanResult && !isScanning) {
+      setScanResult(cachedScanResult);
+      toast({
+        title: "Cached Result",
+        description: "Loaded from cache for faster performance",
+        variant: "success"
+      });
+      return;
+    }
+    
+    await performScan(address);
+  }, 500);
+  
+  const performScan = async (address: string) => {
     // Check daily scan limit for free users
     if (userPlan.plan === 'free' && dailyScansUsed >= planLimits.walletScansPerDay) {
       toast({
@@ -142,6 +177,10 @@ export default function Scanner() {
       setIsScanning(false);
       setScanProgress(0);
     }
+  };
+  
+  const handleScan = () => {
+    debouncedScan(walletAddress);
   };
 
   const getRiskColor = (level: string) => {
@@ -912,7 +951,11 @@ export default function Scanner() {
                       <AlertCenter walletAddress={scanResult.address} />
                       
                       {/* Performance Monitoring */}
-                      <PerformanceMonitor />
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <PerformanceMonitor />
+                        <CacheManager />
+                        <BundleAnalyzer />
+                      </div>
                       
                       {/* Technical Analysis Details */}
                       {scanResult.analysis && (

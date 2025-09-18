@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, PieChart as PieChartIcon } from 'lucide-react';
+import { OptimizedChart } from '@/components/performance/OptimizedChart';
+import { LazyComponent } from '@/hooks/useLazyLoad';
+import { Skeleton } from '@/components/ui/loading-skeleton';
 
 interface PortfolioData {
   date: string;
@@ -34,10 +37,27 @@ export function PortfolioValueChart({ walletAddress }: PortfolioValueChartProps)
     { name: 'NFTs', value: 30000, color: '#9945FF' },
   ];
 
-  const currentValue = portfolioData[portfolioData.length - 1]?.totalValue || 0;
-  const previousValue = portfolioData[portfolioData.length - 2]?.totalValue || 0;
-  const change = currentValue - previousValue;
-  const changePercent = ((change / previousValue) * 100);
+  // Memoize calculations for performance
+  const { currentValue, previousValue, change, changePercent, chartData } = useMemo(() => {
+    const current = portfolioData[portfolioData.length - 1]?.totalValue || 0;
+    const previous = portfolioData[portfolioData.length - 2]?.totalValue || 0;
+    const diff = current - previous;
+    const percent = ((diff / previous) * 100);
+    
+    // Transform data for optimized chart
+    const optimizedData = portfolioData.map(item => ({
+      date: item.date,
+      value: item.totalValue
+    }));
+    
+    return {
+      currentValue: current,
+      previousValue: previous,
+      change: diff,
+      changePercent: percent,
+      chartData: optimizedData
+    };
+  }, [portfolioData]);
 
   return (
     <Card className="p-6">
