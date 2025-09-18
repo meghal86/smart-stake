@@ -12,6 +12,11 @@ import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { SanctionsCheck } from "@/components/compliance/SanctionsCheck";
 import { AlertCenter } from "@/components/alerts/AlertCenter";
 import { PerformanceMonitor } from "@/components/performance/PerformanceMonitor";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { ProgressIndicator } from "@/components/ui/progress-indicator";
+import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
+import { EnhancedErrorBoundary } from "@/components/ui/enhanced-error-boundary";
+import { useToast } from "@/hooks/useToast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -28,10 +33,12 @@ import { WalletAnnotations } from "@/components/collaboration/WalletAnnotations"
 
 export default function Scanner() {
   const { userPlan, planLimits, canAccessFeature, getUpgradeMessage } = useSubscription();
+  const { toast } = useToast();
   const [dailyScansUsed, setDailyScansUsed] = useState(0);
   const [walletAddress, setWalletAddress] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
+  const [scanProgress, setScanProgress] = useState(0);
   const [showRiskTooltip, setShowRiskTooltip] = useState(false);
   const [selectedTrendDay, setSelectedTrendDay] = useState<number | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
@@ -45,11 +52,28 @@ export default function Scanner() {
     
     // Check daily scan limit for free users
     if (userPlan.plan === 'free' && dailyScansUsed >= planLimits.walletScansPerDay) {
-      alert(`Daily scan limit reached (${planLimits.walletScansPerDay}/day). Upgrade to Pro for unlimited scans.`);
+      toast({
+        title: "Daily Limit Reached",
+        description: `You've used ${planLimits.walletScansPerDay} scans today. Upgrade to Pro for unlimited scans.`,
+        variant: "destructive"
+      });
       return;
     }
     
     setIsScanning(true);
+    setScanProgress(0);
+    
+    // Simulate progress steps
+    const progressSteps = [
+      { delay: 500, progress: 1, message: "Validating address..." },
+      { delay: 1000, progress: 2, message: "Fetching transaction data..." },
+      { delay: 1500, progress: 3, message: "Analyzing risk factors..." },
+      { delay: 2000, progress: 4, message: "Generating report..." }
+    ];
+    
+    progressSteps.forEach(step => {
+      setTimeout(() => setScanProgress(step.progress), step.delay);
+    });
     
     try {
       const { data, error } = await supabase.functions.invoke('riskScan', {
@@ -97,11 +121,26 @@ export default function Scanner() {
       if (userPlan.plan === 'free') {
         setDailyScansUsed(prev => prev + 1);
       }
+      
+      // Show success toast
+      toast({
+        title: "Scan Complete",
+        description: "Wallet analysis completed successfully",
+        variant: "success"
+      });
     } catch (error) {
       console.error('Error scanning wallet:', error);
       setScanResult({ error: error.message || 'Failed to scan wallet' });
+      
+      // Show error toast
+      toast({
+        title: "Scan Failed",
+        description: error.message || 'Failed to scan wallet. Please try again.',
+        variant: "destructive"
+      });
     } finally {
       setIsScanning(false);
+      setScanProgress(0);
     }
   };
 
@@ -123,9 +162,48 @@ export default function Scanner() {
     return XCircle;
   };
 
+  // Keyboard shortcuts
+  const shortcuts = [
+    {
+      key: 'ctrl+k',
+      description: 'Focus search input',
+      action: () => {
+        const input = document.querySelector('input[placeholder*="wallet"]') as HTMLInputElement;
+        input?.focus();
+      }
+    },
+    {
+      key: 'ctrl+enter',
+      description: 'Start scan',
+      action: () => {
+        if (walletAddress && !isScanning) {
+          handleScan();
+        }
+      }
+    },
+    {
+      key: 'ctrl+r',
+      description: 'Reset scan',
+      action: () => {
+        setScanResult(null);
+        setWalletAddress('');
+      }
+    }
+  ];
+
   return (
-    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
-      <div className="p-4">
+    <EnhancedErrorBoundary
+      onError={(error, errorInfo) => {
+        toast({
+          title: "Application Error",
+          description: "An unexpected error occurred. Please try refreshing the page.",
+          variant: "destructive"
+        });
+      }}
+    >
+      <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
+        <KeyboardShortcuts shortcuts={shortcuts} />
+        <div className="p-4">
         <PlanBadge plan={userPlan.plan} />
         {!canUsePremiumScanner ? (
           <UpgradePrompt
@@ -183,17 +261,28 @@ export default function Scanner() {
 
             {isScanning && (
               <Card className="p-6 sm:p-8">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-                  </div>
+                <div className="space-y-6">
                   <div className="text-center">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
                     <h2 className="text-lg font-semibold mb-2">Scanning Wallet...</h2>
                     <p className="text-muted-foreground text-sm">Analyzing transaction history and risk factors</p>
                   </div>
                   
+                  {/* Progress Indicator */}
+                  <ProgressIndicator
+                    steps={[
+                      { id: '1', title: 'Validating Address', description: 'Checking address format and network' },
+                      { id: '2', title: 'Fetching Data', description: 'Retrieving transaction history' },
+                      { id: '3', title: 'Risk Analysis', description: 'Analyzing patterns and connections' },
+                      { id: '4', title: 'Generating Report', description: 'Compiling results and recommendations' }
+                    ]}
+                    currentStep={scanProgress}
+                  />
+                  
                   {/* Loading skeleton for mobile */}
-                  <div className="space-y-3 mt-6">
+                  <div className="space-y-3">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
@@ -232,6 +321,7 @@ export default function Scanner() {
                           <div className={`text-3xl sm:text-4xl font-bold ${getRiskColorByScore(scanResult.riskScore)}`}>
                             {scanResult.riskScore}/10
                           </div>
+                          <HelpTooltip content="Risk score is calculated based on transaction patterns, counterparty analysis, and compliance factors. Higher scores indicate greater risk." />
                           <div className="flex items-center gap-2">
                             {React.createElement(getRiskIcon(scanResult.riskScore), { 
                               size: 24, 
@@ -959,7 +1049,8 @@ export default function Scanner() {
              )}
            </div>
          )}
-       </div>
-     </div>
-   );
+        </div>
+      </div>
+    </EnhancedErrorBoundary>
+  );
  }
