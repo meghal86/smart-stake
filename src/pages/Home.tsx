@@ -36,42 +36,7 @@ const formatTime = (timestamp: Date) => {
   return `${days}d ago`;
 };
 
-// Mock data for whale transactions
-const mockTransactions = [
-  {
-    id: "1",
-    fromAddress: "0x1234567890abcdef1234567890abcdef12345678",
-    toAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
-    amountUSD: 2500000,
-    token: "ETH",
-    chain: "Ethereum",
-    timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-    txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-    type: "buy" as const,
-  },
-  {
-    id: "2",
-    fromAddress: "0x9876543210fedcba9876543210fedcba98765432",
-    toAddress: "0xfedcba9876543210fedcba9876543210fedcba98",
-    amountUSD: 1800000,
-    token: "USDC",
-    chain: "Polygon",
-    timestamp: new Date(Date.now() - 900000), // 15 minutes ago
-    txHash: "0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210fe",
-    type: "sell" as const,
-  },
-  {
-    id: "3",
-    fromAddress: "0x5555555555555555555555555555555555555555",
-    toAddress: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    amountUSD: 950000,
-    token: "BTC",
-    chain: "Bitcoin",
-    timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
-    txHash: "0x5555555555555555555555555555555555555555555555555555555555555555",
-    type: "buy" as const,
-  },
-];
+
 
 export default function Home() {
   const { user } = useAuth();
@@ -82,7 +47,7 @@ export default function Home() {
   const [selectedChain, setSelectedChain] = useState("all");
   const [dailyAlertsCount, setDailyAlertsCount] = useState(0);
   const [minAmount, setMinAmount] = useState("");
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [isMockData, setIsMockData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,72 +73,71 @@ export default function Home() {
       setError(null);
       setIsLoading(true);
       
+      console.log('Fetching whale transactions...');
+      
       // Fetch from whale alerts API
       const { data, error } = await supabase.functions.invoke('whale-alerts');
       
+      console.log('API Response:', { data, error });
+      
       if (error) {
-        console.log('Whale Alert API error, using database fallback:', error);
-        
-        // Fallback to database
-        const { data: alerts, error: alertsError } = await supabase
-          .from('alerts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (alertsError) {
-          console.log('Database fallback failed, using mock data:', alertsError.message);
-          return;
-        }
-
-        const transformedTransactions = alerts?.map((alert, index) => ({
-          id: alert.id || alert.tx_hash,
-          fromAddress: alert.from_addr || "0x0000000000000000000000000000000000000000",
-          toAddress: alert.to_addr || "0x0000000000000000000000000000000000000000",
-          amountUSD: Number(alert.amount_usd) || 0,
-          token: alert.token || 'ETH',
-          chain: alert.chain || 'Ethereum',
-          timestamp: new Date(alert.timestamp || alert.created_at),
-          txHash: alert.tx_hash || `0x${index.toString().padStart(64, '0')}`,
-          type: alert.tx_type === 'buy' ? "buy" as const : alert.tx_type === 'sell' ? "sell" as const : "transfer" as const,
-          fromType: alert.from_type,
-          toType: alert.to_type,
-          txType: alert.tx_type,
-        })) || [];
-
-        if (transformedTransactions.length > 0) {
-          setTransactions(transformedTransactions);
-          setIsMockData(false);
-        }
-        return;
+        console.error('Whale Alert API error:', error);
+        throw new Error('API call failed');
+      }
+      
+      if (!data || !data.transactions) {
+        console.error('No transaction data received:', data);
+        throw new Error('No transaction data');
       }
 
       // Use fresh API data with transaction classification
-      const apiTransactions = data.transactions?.map((tx: any) => ({
-        id: tx.hash || tx.tx_hash || tx.id,
-        fromAddress: tx.from?.address || tx.from_addr || "0x0000000000000000000000000000000000000000",
-        toAddress: tx.to?.address || tx.to_addr || "0x0000000000000000000000000000000000000000",
-        amountUSD: Number(tx.amount_usd || tx.amount) || 0,
-        token: tx.symbol || tx.token || 'ETH',
-        chain: tx.blockchain || tx.chain || 'Ethereum',
-        timestamp: new Date(tx.timestamp * 1000),
-        txHash: tx.hash || tx.tx_hash,
-        type: tx.transaction_type === 'transfer' ? "transfer" as const : tx.tx_type === 'buy' ? "buy" as const : tx.tx_type === 'sell' ? "sell" as const : "transfer" as const,
-        fromType: tx.from?.owner_type || tx.from_type || undefined,
-        toType: tx.to?.owner_type || tx.to_type || undefined,
-        fromName: tx.from?.owner || tx.from_owner || undefined,
-        toName: tx.to?.owner || tx.to_owner || undefined,
-        txType: tx.transaction_type || tx.tx_type || 'transfer',
-      })) || [];
+      const apiTransactions = data.transactions?.map((tx: any) => {
+        // Determine transaction type based on context
+        let txType = "transfer" as const;
+        if (tx.from?.owner_type === 'exchange' && tx.to?.owner_type !== 'exchange') {
+          txType = "buy" as const;
+        } else if (tx.from?.owner_type !== 'exchange' && tx.to?.owner_type === 'exchange') {
+          txType = "sell" as const;
+        }
+        
+        const timestamp = new Date();
+        console.log('Raw timestamp:', tx.timestamp, 'Current time:', Date.now(), 'Converted:', new Date(tx.timestamp * 1000));
+        
+        return {
+          id: tx.hash || tx.tx_hash || tx.id,
+          fromAddress: tx.from?.address || tx.from_addr || "0x0000000000000000000000000000000000000000",
+          toAddress: tx.to?.address || tx.to_addr || "0x0000000000000000000000000000000000000000",
+          amountUSD: Number(tx.amount_usd || tx.amount) || 0,
+          token: (tx.symbol || tx.token || 'ETH').toUpperCase(),
+          chain: (tx.blockchain || tx.chain || 'Ethereum').charAt(0).toUpperCase() + (tx.blockchain || tx.chain || 'Ethereum').slice(1),
+          timestamp,
+          txHash: tx.hash || tx.tx_hash,
+          type: txType,
+          fromType: tx.from?.owner_type || tx.from_type || undefined,
+          toType: tx.to?.owner_type || tx.to_type || undefined,
+          fromName: tx.from?.owner || tx.from_owner || undefined,
+          toName: tx.to?.owner || tx.to_owner || undefined,
+          txType: tx.transaction_type || tx.tx_type || 'transfer',
+        };
+      }) || [];
 
-      if (apiTransactions.length > 0) {
-        setTransactions(apiTransactions);
-        setIsMockData(false);
-        setApiHealth('healthy');
-        setLastApiUpdate(new Date().toISOString());
-      }
+      console.log(`Processed ${apiTransactions.length} API transactions`);
+      console.log('Sample transaction:', apiTransactions[0]);
+      console.log('Sample timestamp:', data.transactions[0]?.timestamp, 'Current time:', Date.now());
+      console.log('Time diff:', Date.now() - (data.transactions[0]?.timestamp * 1000), 'ms');
+      
+      // Always update with API data, even if empty
+      setTransactions(apiTransactions);
+      setIsMockData(false);
+      setApiHealth('healthy');
+      setLastApiUpdate(new Date().toISOString());
+      console.log('Successfully loaded real whale data:', apiTransactions.length, 'transactions');
     } catch (err) {
-      console.log('Error fetching whale data, using mock data:', err);
+      console.error('Error fetching whale data:', err);
+      setApiHealth('down');
+      setError('Unable to fetch whale data. Please check API configuration.');
+      setTransactions([]);
+      setIsMockData(false);
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
@@ -237,21 +201,40 @@ export default function Home() {
       (whaleFilter === 'large' && transaction.amountUSD >= 5000000) ||
       (whaleFilter === 'mega' && transaction.amountUSD >= 10000000);
     
-    return matchesSearch && matchesChain && matchesPreferredChains && matchesAmount && matchesExchangeFilter && matchesWhaleFilter;
+    const passes = matchesSearch && matchesChain && matchesPreferredChains && matchesAmount && matchesExchangeFilter && matchesWhaleFilter;
+    
+    // Debug logging for first few transactions
+    if (transactions.indexOf(transaction) < 5) {
+      console.log(`Transaction ${transaction.id}:`, {
+        amountUSD: transaction.amountUSD,
+        minAmountNum,
+        matchesAmount,
+        matchesChain,
+        matchesPreferredChains,
+        matchesExchangeFilter,
+        matchesWhaleFilter,
+        passes
+      });
+    }
+    
+    return passes;
   });
+  
+  console.log(`Filtered ${transactions.length} transactions to ${filteredTransactions.length}`);
 
   useEffect(() => {
+    // Always try to fetch real data first
+    fetchTransactions();
+    fetchPredictions();
+    
     if (user) {
-      // Logged users get real API data
-      fetchTransactions();
-      fetchPredictions();
+      // Logged users get frequent updates
       const interval = setInterval(fetchTransactions, 120000);
       return () => clearInterval(interval);
     } else {
-      // Non-logged users get mock data (Free Plan)
-      setTransactions(mockTransactions);
-      setIsMockData(true);
-      setIsLoading(false);
+      // Non-logged users get less frequent updates but still real data
+      const interval = setInterval(fetchTransactions, 300000); // 5 minutes
+      return () => clearInterval(interval);
     }
   }, [user]);
 
@@ -575,6 +558,19 @@ export default function Home() {
               />
               
               <WhalePreferencesModal />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedChain("all");
+                  setMinAmount("");
+                  setWhaleFilter("all");
+                }}
+                className="text-xs"
+              >
+                Reset
+              </Button>
               <div className="text-xs text-muted-foreground px-2">
                 Min: ${(preferences.minAmountUsd / 1000000).toFixed(1)}M
               </div>
