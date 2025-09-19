@@ -5,7 +5,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/((?!api|_next|_static|favicon.ico).*)",
+      "source": "/((?!api|_next|_static|favicon.ico|manifest.json|sw.js|robots.txt|.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|json|txt)).*)",
       "destination": "/index.html"
     }
   ]
