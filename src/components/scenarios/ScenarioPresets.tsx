@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Zap, TrendingUp, ArrowRightLeft } from 'lucide-react';
 import { ScenarioInputs } from './ScenarioForm';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { logPresetClick } from '@/lib/biEvents';
 
 interface PresetScenario {
   id: string;
@@ -79,12 +80,16 @@ export function ScenarioPresets({ onSelectPreset, userTier }: ScenarioPresetsPro
   };
 
   const handlePresetClick = (preset: any) => {
+    // Analytics tracking
     track('preset_clicked', {
       preset_name: preset.name,
       asset: preset.inputs.asset,
       timeframe: preset.inputs.timeframe,
       tier_required: preset.tier
     });
+    
+    // BI attribution logging
+    logPresetClick(preset.name, preset.inputs.asset);
     
     if (canAccessPreset(preset.tier)) {
       onSelectPreset(preset.inputs);

@@ -28,6 +28,9 @@ import HealthCheck from "./pages/HealthCheck";
 import PremiumTest from "./pages/PremiumTest";
 import SubscriptionTest from "./pages/SubscriptionTest";
 import PredictionsScenarios from "./pages/PredictionsScenarios";
+import AdminBI from "./pages/AdminBI";
+import AdminOps from "./pages/AdminOps";
+import HealthEndpoint from "./pages/HealthEndpoint";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +87,9 @@ const App = () => {
                   <Route path="/premium-test" element={<PremiumTest />} />
                   <Route path="/subscription-test" element={<SubscriptionTest />} />
                   <Route path="/predictions-scenarios" element={<PredictionsScenarios />} />
+                  <Route path="/admin/bi" element={<AdminBI />} />
+                  <Route path="/admin/ops" element={<AdminOps />} />
+                  <Route path="/admin/ops/health" element={<HealthEndpoint />} />
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, Download, Lock, Share, Bell, Shield } from 'l
 import { PriceConeChart } from './PriceConeChart';
 import { useTier } from '@/hooks/useTier';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { logFeatureLock } from '@/lib/biEvents';
 
 export interface ScenarioResult {
   headline: string;
@@ -65,6 +66,11 @@ export function ScenarioResult({ result, onExport, onShare, onPromoteToAlert }: 
           <div className="text-sm text-muted-foreground mt-1">
             {Math.round(result.confidence * 100)}% confidence
           </div>
+          {result.explainer && (
+            <div className="mt-2 text-sm text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
+              {result.explainer}
+            </div>
+          )}
           <div className="mt-2 text-xs text-muted-foreground">
             Calibrated probability; {Math.round(result.confidence * 100)}% of similar predictions landed within the cone
           </div>
@@ -180,6 +186,7 @@ export function ScenarioResult({ result, onExport, onShare, onPromoteToAlert }: 
             <div className="absolute inset-0 flex items-center justify-center">
               <Button size="sm" onClick={() => {
                 track('feature_locked_view', { feature: 'forensics' });
+                logFeatureLock('forensics');
                 window.location.href = '/subscription';
               }}>
                 Upgrade to Enterprise

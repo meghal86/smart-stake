@@ -14,3 +14,9 @@ jobs:
           curl -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/drift-daily" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json"
+      
+      - name: Run Upgrade Forecasting
+        run: |
+          curl -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/forecast-upgrades" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json"

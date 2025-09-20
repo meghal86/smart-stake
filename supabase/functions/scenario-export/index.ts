@@ -13,63 +13,121 @@ serve(async (req) => {
   }
 
   try {
+    // Enforce Premium+ tier for exports
+    const { user, tier, error } = await enforceTier(req, 'premium');
+    if (error) {
+      return new Response(JSON.stringify({
+        error: "Upgrade required: export requires premium+ subscription",
+        code: "TIER_REQUIRED",
+        required_tier: "premium"
+      }), { 
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { scenarioId, format = 'csv' } = await req.json();
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Enforce Premium+ tier for exports
-    const { userId, tier } = await enforceTier(supabase, 'export');
-
-    const { scenarioId, format } = await req.json();
-
-    // Get scenario data
-    const { data: scenario, error } = await supabase
-      .from('scenarios')
-      .select('name, inputs, last_result')
+    // Fetch scenario data
+    const { data: scenario } = await supabase
+      .from('scenario_runs')
+      .select('*')
       .eq('id', scenarioId)
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .single();
 
-    if (error || !scenario) {
-      throw new Error('Scenario not found');
-    }
-
-    // Generate CSV export
-    if (format === 'csv') {
-      const csvData = [
-        'Name,Asset,Direction,Whale Count,Transaction Size,Timeframe,Market Condition,Delta %,Confidence,Liquidity Impact,Volatility Risk,Model Version',
-        [
-          scenario.name,
-          scenario.inputs.asset,
-          scenario.inputs.direction,
-          scenario.inputs.whaleCount,
-          scenario.inputs.txnSize,
-          scenario.inputs.timeframe,
-          scenario.inputs.marketCondition,
-          scenario.last_result?.deltaPct || 0,
-          scenario.last_result?.confidence || 0,
-          scenario.last_result?.liquidityImpact || 0,
-          scenario.last_result?.volatilityRisk || 0,
-          'scn-0.3.1'
-        ].join(',')
-      ].join('\n');
-
-      return new Response(csvData, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="${scenario.name}.csv"`
-        }
+    if (!scenario) {
+      return new Response(JSON.stringify({ error: 'Scenario not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    throw new Error('Unsupported format');
+    // Generate export with metadata stamps
+    const exportData = generateExportData(scenario, user, tier);
+    
+    if (format === 'csv') {
+      const csv = generateCSV(exportData);
+      return new Response(csv, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="scenario-${scenarioId}.csv"`
+        }
+      });
+    } else {
+      // PDF generation would go here
+      return new Response(JSON.stringify({ error: 'PDF export not implemented' }), {
+        status: 501,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
   } catch (error) {
+    console.error('Export failed:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
+      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
-})
+});
+
+function generateExportData(scenario: any, user: any, tier: string) {
+  const timestamp = new Date().toISOString();
+  
+  return {
+    // Metadata stamps for auditability
+    export_metadata: {
+      prediction_id: scenario.id,
+      model_version: scenario.model_version || 'scn-v1.0',
+      user_tier: tier,
+      exported_at: timestamp,
+      exported_by: user.id
+    },
+    
+    // Scenario data
+    scenario_data: {
+      asset: scenario.inputs?.asset,
+      timeframe: scenario.inputs?.timeframe,
+      prediction_delta: scenario.outputs?.deltaPct,
+      confidence: scenario.confidence,
+      created_at: scenario.created_at,
+      features: scenario.outputs?.features || {}
+    }
+  };
+}
+
+function generateCSV(data: any): string {
+  const { export_metadata, scenario_data } = data;
+  
+  let csv = '# WhalePlus Scenario Export\n';
+  csv += `# Exported: ${export_metadata.exported_at}\n`;
+  csv += `# Prediction ID: ${export_metadata.prediction_id}\n`;
+  csv += `# Model Version: ${export_metadata.model_version}\n`;
+  csv += `# User Tier: ${export_metadata.user_tier}\n`;
+  csv += '#\n';
+  
+  // Headers
+  csv += 'Field,Value\n';
+  
+  // Data rows
+  csv += `Asset,${scenario_data.asset}\n`;
+  csv += `Timeframe,${scenario_data.timeframe}\n`;
+  csv += `Prediction Delta %,${scenario_data.prediction_delta}\n`;
+  csv += `Confidence,${scenario_data.confidence}\n`;
+  csv += `Created At,${scenario_data.created_at}\n`;
+  
+  // Features
+  if (scenario_data.features) {
+    Object.entries(scenario_data.features).forEach(([key, value]) => {
+      csv += `Feature: ${key},${value}\n`;
+    });
+  }
+  
+  return csv;
+}

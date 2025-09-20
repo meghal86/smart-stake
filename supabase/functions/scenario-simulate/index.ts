@@ -122,10 +122,13 @@ class ScenarioSimulator {
         backtestMedianImpact: backtest.medianImpact,
         priceCone,
         spillover,
+        explainer: this.generateExplainer(inputs, impact),
+        shouldAlert: await this.checkAlertQuality(inputs.asset, impact.confidence, Math.abs(impact.deltaPct)),
         provenance: {
           features: Object.keys(impact.features),
           sources: ['alchemy', 'coingecko'],
-          window: inputs.timeframe
+          window: inputs.timeframe,
+          model_version: 'scn-v1.0'
         },
         quality: { status: 'ok' },
         _cache: 'miss',
@@ -138,6 +141,9 @@ class ScenarioSimulator {
       if (userId) {
         await this.logRun(inputs, result, userId);
       }
+
+      // Log performance metrics
+      await this.logMetrics(result._latency_ms, result._cache, 'scn-v1.0');
 
       return result;
       
@@ -281,6 +287,41 @@ class ScenarioSimulator {
     return spillovers;
   }
 
+  private generateExplainer(inputs: ScenarioInputs, impact: any): string {
+    const topFeatures = Object.entries(impact.features)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 2);
+    
+    const featureNames = {
+      whale_volume: 'whale activity',
+      market_pressure: 'market conditions', 
+      cex_flows: 'exchange flows',
+      time_clustering: 'transaction clustering'
+    };
+    
+    const direction = inputs.direction === 'accumulation' ? 'buying pressure' : 'selling pressure';
+    const topFeature = featureNames[topFeatures[0]?.[0] as keyof typeof featureNames] || 'market factors';
+    const secondFeature = featureNames[topFeatures[1]?.[0] as keyof typeof featureNames] || 'flow patterns';
+    
+    return `Driven by ${direction} with elevated ${topFeature} and ${secondFeature}.`;
+  }
+
+  private async checkAlertQuality(asset: string, confidence: number, expectedImpact: number): Promise<boolean> {
+    try {
+      const { data } = await this.supabase
+        .rpc('should_fire_alert', {
+          p_asset: asset,
+          p_confidence: confidence,
+          p_expected_impact: expectedImpact
+        });
+      
+      return data || false;
+    } catch (error) {
+      console.error('Alert quality check failed:', error);
+      return false;
+    }
+  }
+
   private async logRun(inputs: ScenarioInputs, result: any, userId: string) {
     try {
       await this.supabase
@@ -295,10 +336,24 @@ class ScenarioSimulator {
           volatility_risk: result.volatilityRisk,
           backtest_count: result.backtestCount,
           backtest_median_impact: result.backtestMedianImpact,
-          model_version: 'v2.0'
+          model_version: 'scn-v1.0'
         });
     } catch (error) {
       console.error('Failed to log scenario run:', error);
+    }
+  }
+
+  private async logMetrics(latencyMs: number, cacheStatus: string, modelVersion: string) {
+    try {
+      await this.supabase
+        .from('request_metrics')
+        .insert({
+          latency_ms: latencyMs,
+          cache_status: cacheStatus,
+          model_version: modelVersion
+        });
+    } catch (error) {
+      console.error('Failed to log metrics:', error);
     }
   }
 }

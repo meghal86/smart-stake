@@ -28,3 +28,25 @@ SELECT cron.schedule(
   '*/30 * * * *',  -- Every 30 minutes
   'SELECT cleanup_scenario_cache();'
 );
+
+-- Schedule nightly upgrade forecasting
+SELECT cron.schedule(
+  'forecast-upgrades-nightly',
+  '0 3 * * *',  -- Daily at 3 AM UTC
+  $$
+  SELECT net.http_post(
+    url := current_setting('app.supabase_url') || '/functions/v1/forecast-upgrades',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || current_setting('app.service_role_key'),
+      'Content-Type', 'application/json'
+    )
+  );
+  $$
+);
+
+-- Schedule prediction outcome labeling
+SELECT cron.schedule(
+  'label-prediction-outcomes',
+  '*/15 * * * *',  -- Every 15 minutes
+  'SELECT label_prediction_outcomes();'
+);
