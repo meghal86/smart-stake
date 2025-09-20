@@ -25,6 +25,7 @@ import { QuotaProgressBar } from '@/components/ui/QuotaProgressBar';
 import { StickyMarketHeader } from '@/components/predictions/StickyMarketHeader';
 import { PredictionSkeleton } from '@/components/ui/PredictionSkeleton';
 import { EnterpriseCTAStrip } from '@/components/predictions/EnterpriseCTAStrip';
+import { ScenariosPage } from '@/components/scenarios/ScenariosPage';
 import { useTier } from '@/hooks/useTier';
 import { useQuota } from '@/hooks/useQuota';
 import { PredictionHistory } from '@/components/predictions/PredictionHistory';
@@ -266,23 +267,7 @@ export default function PredictionsScenarios() {
             </TabsContent>
 
             <TabsContent value="scenarios" className="space-y-4">
-              {canAccessFeature('scenarioBuilder') ? (
-                <>
-                  <ScenarioComparison />
-                  <ScenarioResults results={scenarioResults} />
-                </>
-              ) : (
-                <Card className="p-8 text-center">
-                  <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">Pro Feature</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Scenario Builder requires a Pro subscription
-                  </p>
-                  <Button onClick={() => window.location.href = '/subscription'}>
-                    Upgrade to Pro
-                  </Button>
-                </Card>
-              )}
+              <ScenariosPage />
             </TabsContent>
 
             <TabsContent value="alerts">

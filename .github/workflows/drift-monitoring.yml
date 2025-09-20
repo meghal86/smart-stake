@@ -1,0 +1,16 @@
+name: Daily Drift Monitoring
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Drift Monitoring
+        run: |
+          curl -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/drift-daily" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json"
