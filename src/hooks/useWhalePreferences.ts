@@ -10,8 +10,8 @@ interface WhalePreferences {
 }
 
 const defaultPreferences: WhalePreferences = {
-  minAmountUsd: 1000000,
-  preferredChains: ['ethereum'],
+  minAmountUsd: 500000,
+  preferredChains: [],
   excludeExchanges: false,
   notificationEnabled: true
 };

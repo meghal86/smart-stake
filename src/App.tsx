@@ -26,6 +26,8 @@ import NotificationSettings from "./pages/NotificationSettings";
 import WalletAnalysis from "./pages/WalletAnalysis";
 import HealthCheck from "./pages/HealthCheck";
 import PremiumTest from "./pages/PremiumTest";
+import SubscriptionTest from "./pages/SubscriptionTest";
+import PredictionsScenarios from "./pages/PredictionsScenarios";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,8 @@ const App = () => {
                   <Route path="/analysis" element={<WalletAnalysis />} />
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
                   <Route path="/premium-test" element={<PremiumTest />} />
+                  <Route path="/subscription-test" element={<SubscriptionTest />} />
+                  <Route path="/predictions-scenarios" element={<PredictionsScenarios />} />
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -21,6 +21,7 @@ import { useWhalePreferences } from "@/hooks/useWhalePreferences";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertTeaserCard } from "@/components/AlertTeaserCard";
 
 // Utility function to format time
 const formatTime = (timestamp: Date) => {
@@ -41,7 +42,7 @@ const formatTime = (timestamp: Date) => {
 export default function Home() {
   const { user } = useAuth();
   const { userPlan, canAccessFeature, getUpgradeMessage } = useSubscription();
-  const { preferences } = useWhalePreferences();
+  const { preferences, updatePreferences } = useWhalePreferences();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChain, setSelectedChain] = useState("all");
@@ -85,13 +86,21 @@ export default function Home() {
         throw new Error('API call failed');
       }
       
-      if (!data || !data.transactions) {
+      // Handle different response formats
+      let transactions = [];
+      if (data?.transactions) {
+        transactions = data.transactions;
+      } else if (Array.isArray(data)) {
+        transactions = data;
+      } else {
         console.error('No transaction data received:', data);
         throw new Error('No transaction data');
       }
 
+      console.log('Processing transactions:', transactions.length);
+
       // Use fresh API data with transaction classification
-      const apiTransactions = data.transactions?.map((tx: any) => {
+      const apiTransactions = transactions.map((tx: any, index: number) => {
         // Determine transaction type based on context
         let txType = "transfer" as const;
         if (tx.from?.owner_type === 'exchange' && tx.to?.owner_type !== 'exchange') {
@@ -100,18 +109,17 @@ export default function Home() {
           txType = "sell" as const;
         }
         
-        const timestamp = new Date();
-        console.log('Raw timestamp:', tx.timestamp, 'Current time:', Date.now(), 'Converted:', new Date(tx.timestamp * 1000));
+        const timestamp = new Date(tx.timestamp * 1000);
         
         return {
-          id: tx.hash || tx.tx_hash || tx.id,
+          id: tx.hash || tx.tx_hash || tx.id || `tx_${index}_${Date.now()}`,
           fromAddress: tx.from?.address || tx.from_addr || "0x0000000000000000000000000000000000000000",
           toAddress: tx.to?.address || tx.to_addr || "0x0000000000000000000000000000000000000000",
           amountUSD: Number(tx.amount_usd || tx.amount) || 0,
           token: (tx.symbol || tx.token || 'ETH').toUpperCase(),
           chain: (tx.blockchain || tx.chain || 'Ethereum').charAt(0).toUpperCase() + (tx.blockchain || tx.chain || 'Ethereum').slice(1),
           timestamp,
-          txHash: tx.hash || tx.tx_hash,
+          txHash: tx.hash || tx.tx_hash || `0x${index}_${Date.now()}`,
           type: txType,
           fromType: tx.from?.owner_type || tx.from_type || undefined,
           toType: tx.to?.owner_type || tx.to_type || undefined,
@@ -119,12 +127,11 @@ export default function Home() {
           toName: tx.to?.owner || tx.to_owner || undefined,
           txType: tx.transaction_type || tx.tx_type || 'transfer',
         };
-      }) || [];
+      });
 
       console.log(`Processed ${apiTransactions.length} API transactions`);
       console.log('Sample transaction:', apiTransactions[0]);
-      console.log('Sample timestamp:', data.transactions[0]?.timestamp, 'Current time:', Date.now());
-      console.log('Time diff:', Date.now() - (data.transactions[0]?.timestamp * 1000), 'ms');
+      console.log('Sample raw transaction:', transactions[0]);
       
       // Always update with API data, even if empty
       setTransactions(apiTransactions);
@@ -132,12 +139,50 @@ export default function Home() {
       setApiHealth('healthy');
       setLastApiUpdate(new Date().toISOString());
       console.log('Successfully loaded real whale data:', apiTransactions.length, 'transactions');
+      console.log('State updated with transactions:', apiTransactions.slice(0, 2));
     } catch (err) {
       console.error('Error fetching whale data:', err);
       setApiHealth('down');
       setError('Unable to fetch whale data. Please check API configuration.');
-      setTransactions([]);
-      setIsMockData(false);
+      
+      // Fallback to mock data
+      const mockData = [
+        {
+          id: "1",
+          fromAddress: "0x1234567890abcdef1234567890abcdef12345678",
+          toAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
+          amountUSD: 2500000,
+          token: "ETH",
+          chain: "Ethereum",
+          timestamp: new Date(Date.now() - 300000),
+          txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+          type: "buy" as const,
+        },
+        {
+          id: "2",
+          fromAddress: "0x9876543210fedcba9876543210fedcba98765432",
+          toAddress: "0xfedcba9876543210fedcba9876543210fedcba98",
+          amountUSD: 1800000,
+          token: "USDC",
+          chain: "Polygon",
+          timestamp: new Date(Date.now() - 900000),
+          txHash: "0xfedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210fe",
+          type: "sell" as const,
+        },
+        {
+          id: "3",
+          fromAddress: "0x5555555555555555555555555555555555555555",
+          toAddress: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          amountUSD: 950000,
+          token: "BTC",
+          chain: "Bitcoin",
+          timestamp: new Date(Date.now() - 1800000),
+          txHash: "0x5555555555555555555555555555555555555555555555555555555555555555",
+          type: "buy" as const,
+        },
+      ];
+      setTransactions(mockData);
+      setIsMockData(true);
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
@@ -187,7 +232,7 @@ export default function Home() {
       preferences.preferredChains.includes(transaction.chain.toLowerCase());
     
     // Amount filter (use preferences minimum if no manual filter set)
-    const minAmountNum = parseFloat(minAmount) || preferences.minAmountUsd;
+    const minAmountNum = parseFloat(minAmount) || preferences.minAmountUsd || 0;
     const matchesAmount = transaction.amountUSD >= minAmountNum;
     
     // Exchange filter from preferences
@@ -204,25 +249,27 @@ export default function Home() {
     const passes = matchesSearch && matchesChain && matchesPreferredChains && matchesAmount && matchesExchangeFilter && matchesWhaleFilter;
     
     // Debug logging for first few transactions
-    if (transactions.indexOf(transaction) < 5) {
-      console.log(`Transaction ${transaction.id}:`, {
-        amountUSD: transaction.amountUSD,
-        minAmountNum,
-        matchesAmount,
+    if (transactions.indexOf(transaction) < 3) {
+      console.log(`Transaction ${transaction.id} filter check:`, {
+        matchesSearch,
         matchesChain,
         matchesPreferredChains,
+        matchesAmount: `${transaction.amountUSD} >= ${minAmountNum}`,
         matchesExchangeFilter,
         matchesWhaleFilter,
-        passes
+        passes,
+        transaction: { token: transaction.token, chain: transaction.chain, amountUSD: transaction.amountUSD }
       });
     }
     
     return passes;
   });
   
-  console.log(`Filtered ${transactions.length} transactions to ${filteredTransactions.length}`);
+  // Debug logging
+  console.log(`Filtering: ${transactions.length} total -> ${filteredTransactions.length} filtered`);
 
   useEffect(() => {
+    console.log('Home component mounted, fetching transactions...');
     // Always try to fetch real data first
     fetchTransactions();
     fetchPredictions();
@@ -237,6 +284,17 @@ export default function Home() {
       return () => clearInterval(interval);
     }
   }, [user]);
+  
+  // Debug effect to log state changes
+  useEffect(() => {
+    console.log('Transactions state updated:', { 
+      count: transactions.length, 
+      isMockData, 
+      isLoading, 
+      error,
+      sample: transactions[0] 
+    });
+  }, [transactions, isMockData, isLoading, error]);
 
   // Derived 24h stats
   const now = Date.now();
@@ -378,6 +436,12 @@ export default function Home() {
           </div>
         )}
 
+        {/* Alert Teaser Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AlertTeaserCard plan="premium" />
+          <AlertTeaserCard plan="enterprise" />
+        </div>
+
         {/* Plan-based alert counter */}
         {isLimitedAccess && (
           <Alert>
@@ -458,7 +522,7 @@ export default function Home() {
                       size="sm" 
                       variant="outline"
                       onClick={() => {
-                        alert('Alert Wizard: Step 1 - Choose alert type (Price, Volume, Whale Activity)');
+                        navigate('/?tab=predictions');
                         setAlertCenterOpen(false);
                       }}
                     >
@@ -566,10 +630,18 @@ export default function Home() {
                   setSelectedChain("all");
                   setMinAmount("");
                   setWhaleFilter("all");
+                  // Reset preferences to show all transactions
+                  if (user) {
+                    updatePreferences({ 
+                      minAmountUsd: 0, 
+                      preferredChains: [], 
+                      excludeExchanges: false 
+                    });
+                  }
                 }}
                 className="text-xs"
               >
-                Reset
+                Reset All
               </Button>
               <div className="text-xs text-muted-foreground px-2">
                 Min: ${(preferences.minAmountUsd / 1000000).toFixed(1)}M

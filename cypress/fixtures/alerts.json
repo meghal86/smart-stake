@@ -1,0 +1,40 @@
+{
+  "transactions": [
+    {
+      "id": "tx_1",
+      "hash": "0x1234567890abcdef",
+      "from": {
+        "address": "0xabcd1234",
+        "owner": "Binance",
+        "owner_type": "exchange"
+      },
+      "to": {
+        "address": "0xefgh5678", 
+        "owner": "Unknown Whale",
+        "owner_type": "unknown"
+      },
+      "amount_usd": 5000000,
+      "symbol": "ETH",
+      "blockchain": "ethereum",
+      "timestamp": 1705747200
+    },
+    {
+      "id": "tx_2",
+      "hash": "0xfedcba0987654321",
+      "from": {
+        "address": "0xijkl9012",
+        "owner": "Whale Wallet",
+        "owner_type": "unknown"
+      },
+      "to": {
+        "address": "0xmnop3456",
+        "owner": "Coinbase",
+        "owner_type": "exchange"
+      },
+      "amount_usd": 12000000,
+      "symbol": "BTC",
+      "blockchain": "bitcoin", 
+      "timestamp": 1705747260
+    }
+  ]
+}

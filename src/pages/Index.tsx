@@ -18,6 +18,10 @@ import WhaleAnalytics from "./WhaleAnalytics";
 import WhalePredictions from "./WhalePredictions";
 import { TeamManagement } from "@/components/team/TeamManagement";
 import { PredictiveAnalytics } from "@/components/analytics/PredictiveAnalytics";
+import MarketDashboard from "./MarketDashboard";
+import PredictionsScenarios from "./PredictionsScenarios";
+import ScannerCompliance from "./ScannerCompliance";
+import ReportsExports from "./ReportsExports";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -90,30 +94,27 @@ const Index = () => {
     switch (activeTab) {
       case "home":
         return <Home />;
+      case "market":
+        return <MarketDashboard />;
+      case "predictions":
+        return <PredictionsScenarios />;
+      case "scanner":
+        return <ScannerCompliance />;
+      case "reports":
+        return <ReportsExports />;
+      case "profile":
+        return <Profile />;
+      // Legacy routes for backward compatibility
       case "portfolio":
         return <Portfolio />;
       case "sentiment":
         return <MultiCoinSentiment />;
-      case "multi-sentiment":
-        return <MultiCoinSentiment />;
-      case "basic-sentiment":
-        return <MarketSentiment />;
       case "whales":
         return <WhaleAnalytics />;
-      case "predictions":
-        return <WhalePredictions />;
-      case "team":
-        return <TeamManagement />;
-      case "analytics":
-        return <PredictiveAnalytics />;
       case "yields":
         return <Yields />;
-      case "scanner":
-        return <Scanner />;
       case "premium":
         return <Premium />;
-      case "profile":
-        return <Profile />;
       default:
         return <Home />;
     }

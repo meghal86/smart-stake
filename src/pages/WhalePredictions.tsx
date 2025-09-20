@@ -1,18 +1,30 @@
 import { useState, useEffect } from 'react';
-import { Brain, History, Settings, Save, Bell, Download, Info, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Brain, History, Settings, Save, Bell, Download, Info, TrendingUp, AlertTriangle, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PredictionHistory } from '@/components/predictions/PredictionHistory';
 import { ScenarioComparison } from '@/components/predictions/ScenarioComparison';
 import { ExplainabilityPanel } from '@/components/predictions/ExplainabilityPanel';
 import { AlertIntegration } from '@/components/predictions/AlertIntegration';
 import { MultiChannelAlerts } from '@/components/premium/MultiChannelAlerts';
 import { ModelDocumentation } from '@/components/predictions/ModelDocumentation';
+import OutcomeBadge from '@/components/predictions/OutcomeBadge';
+import { ConfidenceBar } from '@/components/predictions/ConfidenceBar';
+import { TieredPredictionCard } from '@/components/predictions/TieredPredictionCard';
+import { TestPredictionCard } from '@/components/TestPredictionCard';
+import { ClusterCard } from '@/components/predictions/ClusterCard';
+import { OneClickAlert } from '@/components/predictions/OneClickAlert';
+import { ExportReportButtons } from '@/components/predictions/ExportReportButtons';
+import { LearnWhy } from '@/components/predictions/LearnWhy';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { usePredictionOutcomes } from '@/hooks/usePredictionOutcomes';
+import { usePredictionClusters, PredictionCluster } from '@/hooks/usePredictionClusters';
 import { supabase } from '@/integrations/supabase/client';
+import { track } from '@/lib/analytics';
 
 interface Prediction {
   id: string;
@@ -24,8 +36,29 @@ interface Prediction {
   predicted_value: number;
   actual_value?: number;
   outcome?: 'correct' | 'incorrect' | 'pending';
-  features: Record<string, number>;
+  features: Record<string, { score: number } | number>;
   explanation: string;
+  context?: {
+    whale_count: number;
+    tx_count: number;
+    net_inflow_usd: number;
+  };
+  provenance?: {
+    sources: string[];
+    block_number: number;
+    window: string;
+    queried_at: string;
+    tx_hashes_sample: string[];
+  };
+  quality?: {
+    status: 'ok' | 'degraded' | 'fallback';
+    reason?: string;
+  };
+  basis_price?: number;
+  target_price?: number;
+  delta_pct?: number;
+  direction?: string;
+  horizon_hours?: number;
 }
 
 export default function WhalePredictions() {
@@ -35,63 +68,110 @@ export default function WhalePredictions() {
   const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
   const [activeTab, setActiveTab] = useState('current');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCluster, setSelectedCluster] = useState<PredictionCluster | null>(null);
+  const [filteredPredictions, setFilteredPredictions] = useState<Prediction[]>([]);
+  
+  const { outcomes } = usePredictionOutcomes(predictions.map(p => p.id));
+  
+  // Debug predictions state
+  useEffect(() => {
+    console.log('🎯 Current Predictions State:', {
+      count: predictions.length,
+      predictions: predictions.map(p => ({
+        id: p.id,
+        asset: p.asset,
+        confidence: p.confidence,
+        type: p.prediction_type
+      }))
+    });
+  }, [predictions]);
+  const { clusters } = usePredictionClusters();
 
   useEffect(() => {
     fetchPredictions();
     
-    // Set up real-time updates every 30 seconds
-    const interval = setInterval(fetchPredictions, 30000);
+    // Set up real-time updates every 1 minute
+    const interval = setInterval(fetchPredictions, 60000);
     
     return () => clearInterval(interval);
   }, []);
 
   const fetchPredictions = async () => {
     try {
-      // Fetch live predictions from edge function
+      console.log('🔄 Fetching whale predictions from API...');
       const { data, error } = await supabase.functions.invoke('whale-predictions');
       
+      console.log('📡 Raw API Response:', {
+        data,
+        error,
+        hasData: !!data,
+        hasPredictions: !!(data?.predictions),
+        predictionsCount: data?.predictions?.length || 0
+      });
+      
       if (error) {
-        console.error('Error fetching predictions:', error);
-        console.log('🔄 Displaying fallback predictions due to API error');
-        // Generate minimal predictions on error
-        const fallbackPredictions: Prediction[] = [
-          {
-            id: 'fallback_1',
-            timestamp: new Date().toISOString(),
-            asset: 'ETH',
-            chain: 'ethereum',
-            prediction_type: 'whale_activity',
-            confidence: 0.75,
-            predicted_value: 1,
-            features: {
-              whale_volume: 0.8,
-              market_sentiment: 0.6,
-              technical_indicators: 0.7
-            },
-            explanation: 'Live whale data analysis - moderate accumulation detected'
-          }
-        ];
-        setPredictions(fallbackPredictions);
+        console.error('❌ API Error Details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        setPredictions([]);
         return;
       }
       
       if (data?.predictions && Array.isArray(data.predictions)) {
-        console.log('✅ Displaying live whale predictions from API:', data.predictions.length, 'predictions');
+        console.log('✅ Processing predictions:', data.predictions.length);
+        data.predictions.forEach((pred, index) => {
+          console.log(`📊 Prediction ${index + 1}:`, {
+            id: pred.id,
+            asset: pred.asset,
+            type: pred.prediction_type,
+            confidence: pred.confidence,
+            features: pred.features,
+            explanation: pred.explanation?.substring(0, 100) + '...'
+          });
+        });
         setPredictions(data.predictions);
       } else {
-        console.log('⚠️ No predictions received from API, showing empty state');
+        console.log('⚠️ No valid predictions in response:', {
+          dataType: typeof data,
+          predictionsType: typeof data?.predictions,
+          isArray: Array.isArray(data?.predictions)
+        });
         setPredictions([]);
       }
     } catch (error) {
-      console.error('Error fetching predictions:', error);
+      console.error('💥 Fetch Error:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       setPredictions([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const currentPredictions = predictions.filter(p => !p.outcome || p.outcome === 'pending');
+  const currentPredictions = (selectedCluster ? filteredPredictions : predictions).filter(p => !p.outcome || p.outcome === 'pending');
   const historicalPredictions = predictions.filter(p => p.outcome && p.outcome !== 'pending');
+
+  useEffect(() => {
+    if (selectedCluster) {
+      const filtered = predictions.filter(p => selectedCluster.assets.includes(p.asset));
+      setFilteredPredictions(filtered);
+    } else {
+      setFilteredPredictions(predictions);
+    }
+  }, [selectedCluster, predictions]);
+
+  const handleClusterClick = (cluster: PredictionCluster) => {
+    setSelectedCluster(selectedCluster?.id === cluster.id ? null : cluster);
+  };
+
+  const getOutcome = (predictionId: string) => {
+    return outcomes.find(o => o.prediction_id === predictionId);
+  };
 
   if (!canAccessFeature('whalePredictions')) {
     return (
@@ -127,10 +207,7 @@ export default function WhalePredictions() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" />
-              Export
-            </Button>
+            <ExportReportButtons predictions={predictions} />
             <Button variant="outline" size="sm">
               <Settings className="h-4 w-4 mr-1" />
               Settings
@@ -149,6 +226,23 @@ export default function WhalePredictions() {
           </TabsList>
 
           <TabsContent value="current" className="space-y-4">
+            {/* Prediction Clusters */}
+            {clusters.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Signal Clusters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {clusters.map(cluster => (
+                    <ClusterCard
+                      key={cluster.id}
+                      cluster={cluster}
+                      onClick={handleClusterClick}
+                      isSelected={selectedCluster?.id === cluster.id}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Current Predictions */}
             <div className="grid gap-4">
               {isLoading ? (
@@ -161,54 +255,7 @@ export default function WhalePredictions() {
                   ))}
                 </div>
               ) : currentPredictions.map((prediction) => (
-                <Card key={prediction.id} className="p-6 hover:shadow-lg transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline">{prediction.asset}</Badge>
-                      <Badge variant={prediction.confidence > 0.8 ? 'default' : 'secondary'}>
-                        {Math.round(prediction.confidence * 100)}% confidence
-                      </Badge>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setSelectedPrediction(prediction)}
-                      >
-                        <Info className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Bell className="h-4 w-4 mr-1" />
-                        Alert
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold mb-1">
-                        {prediction.prediction_type === 'price_movement' && 'Price Movement Prediction'}
-                        {prediction.prediction_type === 'volume_spike' && 'Volume Spike Prediction'}
-                        {prediction.prediction_type === 'whale_activity' && 'Whale Activity Prediction'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">{prediction.explanation}</p>
-                    </div>
-                    
-                    {prediction.prediction_type === 'price_movement' && (
-                      <div className="flex items-center gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Predicted Price: </span>
-                          <span className="font-medium">${prediction.predicted_value}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Timeframe: </span>
-                          <span className="font-medium">24h</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+                <TestPredictionCard key={prediction.id} />
               ))}
             </div>
           </TabsContent>
@@ -232,11 +279,37 @@ export default function WhalePredictions() {
 
         {/* Explainability Panel */}
         {selectedPrediction && (
-          <ExplainabilityPanel 
-            prediction={selectedPrediction}
-            onClose={() => setSelectedPrediction(null)}
-          />
+          <div className="space-y-4">
+            <ExplainabilityPanel 
+              prediction={selectedPrediction}
+              onClose={() => setSelectedPrediction(null)}
+            />
+            <div className="md:block hidden">
+              <LearnWhy topic="whale-volume" />
+            </div>
+            <div className="md:hidden">
+              <Accordion type="single" collapsible>
+                <AccordionItem value="features">
+                  <AccordionTrigger className="text-sm">Feature Importance</AccordionTrigger>
+                  <AccordionContent>
+                    <LearnWhy topic="whale-volume" />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
         )}
+
+        {/* Mobile FAB for Scenario Builder */}
+        <div className="md:hidden fixed bottom-5 right-5 z-50">
+          <Button 
+            size="lg" 
+            className="rounded-full h-14 w-14 shadow-lg"
+            onClick={() => setActiveTab('scenarios')}
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { ContextualTooltip, useContextualTooltips } from '@/components/ui/ContextualTooltip';
 
 // Type definitions for whale data
 interface WhaleData {
@@ -245,7 +246,7 @@ const WhaleCard: React.FC<{ whale: WhaleData }> = ({ whale }) => {
   const riskBadge = getRiskBadge(whale.riskScore);
 
   return (
-    <div style={styles.card}>
+    <div style={styles.card} data-tooltip="whale-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <svg style={{ width: '20px', height: '20px', color: '#3b82f6' }} fill="currentColor" viewBox="0 0 20 20">
@@ -379,6 +380,37 @@ const WhaleAnalyticsDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<MarketMetrics>({ volume24h: 0, activeWhales: 0, riskAlerts: 0, topSignals: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { activeTooltip, startTooltip, completeTooltip } = useContextualTooltips();
+
+  const tooltipSteps = [
+    {
+      id: 'metrics',
+      target: '[data-tooltip="metrics"]',
+      title: 'Market Metrics',
+      content: 'These cards show real-time whale activity metrics including 24h volume, active whales, and risk alerts.',
+      position: 'bottom' as const
+    },
+    {
+      id: 'whale-card',
+      target: '[data-tooltip="whale-card"]',
+      title: 'Whale Analysis',
+      content: 'Each card shows a whale address with balance, risk score, and recent activity. Click risk factors to see detailed analysis.',
+      position: 'top' as const
+    },
+    {
+      id: 'risk-summary',
+      target: '[data-tooltip="risk-summary"]',
+      title: 'Risk Summary',
+      content: 'Overview of risk distribution across all tracked whales. High risk whales require immediate attention.',
+      position: 'top' as const
+    }
+  ];
+
+  useEffect(() => {
+    if (!loading && whales.length > 0) {
+      setTimeout(() => startTooltip('whale-analytics'), 1000);
+    }
+  }, [loading, whales.length, startTooltip]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -435,7 +467,13 @@ const WhaleAnalyticsDashboard: React.FC = () => {
   }
 
   return (
-    <div style={styles.container}>
+    <>
+      <ContextualTooltip
+        steps={tooltipSteps}
+        isActive={activeTooltip === 'whale-analytics'}
+        onComplete={() => completeTooltip('whale-analytics')}
+      />
+      <div style={styles.container}>
       <div style={styles.header}>
         <svg style={{width: '32px', height: '32px', color: '#3b82f6'}} fill="currentColor" viewBox="0 0 20 20">
           <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
@@ -446,7 +484,7 @@ const WhaleAnalyticsDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div style={styles.metricsGrid}>
+      <div style={styles.metricsGrid} data-tooltip="metrics">
         <div style={styles.metricCard}>
           <svg style={{...styles.metricIcon, color: '#16a34a'}} fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
@@ -522,7 +560,7 @@ const WhaleAnalyticsDashboard: React.FC = () => {
       </div>
 
       {sortedWhales.length > 0 && (
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }} data-tooltip="risk-summary">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#111827' }}>Risk Summary</h3>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '12px', border: '1px solid #e5e7eb', borderRadius: '4px', backgroundColor: '#f9fafb', whiteSpace: 'nowrap', color: '#6b7280' }}>
@@ -551,7 +589,8 @@ const WhaleAnalyticsDashboard: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,0 +1,34 @@
+{
+  "predictions": [
+    {
+      "id": "pred_1",
+      "timestamp": "2025-01-21T10:00:00Z",
+      "asset": "ETH",
+      "chain": "ethereum",
+      "prediction_type": "whale_activity",
+      "confidence": 0.85,
+      "predicted_value": 1,
+      "features": {
+        "whale_volume": 0.8,
+        "market_sentiment": 0.7,
+        "technical_indicators": 0.75
+      },
+      "explanation": "Strong whale accumulation detected"
+    },
+    {
+      "id": "pred_2",
+      "timestamp": "2025-01-21T10:15:00Z",
+      "asset": "BTC",
+      "chain": "bitcoin",
+      "prediction_type": "price_movement",
+      "confidence": 0.72,
+      "predicted_value": 98500,
+      "features": {
+        "whale_volume": 0.65,
+        "market_sentiment": 0.8,
+        "technical_indicators": 0.7
+      },
+      "explanation": "Cross-chain whale correlation detected"
+    }
+  ]
+}

@@ -1,135 +1,149 @@
-import { useState } from 'react';
-import { CheckCircle, XCircle, Clock, Filter, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Download, TrendingUp } from 'lucide-react';
+import OutcomeBadge from './OutcomeBadge';
 
-interface Prediction {
+interface HistoricalPrediction {
   id: string;
-  timestamp: string;
+  date: string;
   asset: string;
-  prediction_type: string;
   confidence: number;
-  predicted_value: number;
-  actual_value?: number;
-  outcome?: 'correct' | 'incorrect' | 'pending';
-  explanation: string;
+  accuracy: number;
+  realized_return: number;
+  was_correct: boolean;
 }
 
-interface PredictionHistoryProps {
-  predictions: Prediction[];
-}
+const mockHistoryData = [
+  { date: '2025-01-15', accuracy: 75, confidence: 82 },
+  { date: '2025-01-16', accuracy: 78, confidence: 85 },
+  { date: '2025-01-17', accuracy: 72, confidence: 79 },
+  { date: '2025-01-18', accuracy: 80, confidence: 88 },
+  { date: '2025-01-19', accuracy: 76, confidence: 83 },
+  { date: '2025-01-20', accuracy: 82, confidence: 87 },
+  { date: '2025-01-21', accuracy: 79, confidence: 84 }
+];
 
-export function PredictionHistory({ predictions }: PredictionHistoryProps) {
-  const [filterAsset, setFilterAsset] = useState('all');
-  const [filterOutcome, setFilterOutcome] = useState('all');
-  const [sortBy, setSortBy] = useState('timestamp');
+const mockPredictions: HistoricalPrediction[] = [
+  {
+    id: '1',
+    date: '2025-01-20',
+    asset: 'ETH',
+    confidence: 0.85,
+    accuracy: 82,
+    realized_return: 0.032,
+    was_correct: true
+  },
+  {
+    id: '2',
+    date: '2025-01-19',
+    asset: 'BTC',
+    confidence: 0.78,
+    accuracy: 75,
+    realized_return: -0.015,
+    was_correct: false
+  }
+];
 
-  const filteredPredictions = predictions
-    .filter(p => filterAsset === 'all' || p.asset === filterAsset)
-    .filter(p => filterOutcome === 'all' || p.outcome === filterOutcome)
-    .sort((a, b) => {
-      if (sortBy === 'timestamp') return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      if (sortBy === 'confidence') return b.confidence - a.confidence;
-      return 0;
-    });
+export function PredictionHistory() {
+  const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
-  const accuracy = predictions.length > 0 
-    ? (predictions.filter(p => p.outcome === 'correct').length / predictions.filter(p => p.outcome !== 'pending').length) * 100 
-    : 0;
-
-  const getOutcomeIcon = (outcome?: string) => {
-    switch (outcome) {
-      case 'correct': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'incorrect': return <XCircle className="h-4 w-4 text-red-500" />;
-      default: return <Clock className="h-4 w-4 text-yellow-500" />;
-    }
+  const handleExport = () => {
+    const csv = [
+      'Date,Asset,Confidence,Accuracy,Return,Correct',
+      ...mockPredictions.map(p => 
+        `${p.date},${p.asset},${p.confidence},${p.accuracy}%,${p.realized_return},${p.was_correct}`
+      )
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prediction-history-${selectedPeriod}.csv`;
+    a.click();
   };
 
   return (
-    <div className="space-y-4">
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-green-500">{Math.round(accuracy)}%</div>
-          <div className="text-sm text-muted-foreground">Accuracy Rate</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold">{predictions.length}</div>
-          <div className="text-sm text-muted-foreground">Total Predictions</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold">{predictions.filter(p => p.confidence > 0.8).length}</div>
-          <div className="text-sm text-muted-foreground">High Confidence</div>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-2">
-        <Select value={filterAsset} onValueChange={setFilterAsset}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Asset" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Assets</SelectItem>
-            <SelectItem value="ETH">ETH</SelectItem>
-            <SelectItem value="BTC">BTC</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="space-y-6">
+      {/* Period Selection */}
+      <div className="flex items-center justify-between">
+        <Tabs value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as any)}>
+          <TabsList>
+            <TabsTrigger value="7d">7 Days</TabsTrigger>
+            <TabsTrigger value="30d">30 Days</TabsTrigger>
+            <TabsTrigger value="90d">90 Days</TabsTrigger>
+          </TabsList>
+        </Tabs>
         
-        <Select value={filterOutcome} onValueChange={setFilterOutcome}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Outcome" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Outcomes</SelectItem>
-            <SelectItem value="correct">Correct</SelectItem>
-            <SelectItem value="incorrect">Incorrect</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="timestamp">Date</SelectItem>
-            <SelectItem value="confidence">Confidence</SelectItem>
-          </SelectContent>
-        </Select>
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <Download className="h-4 w-4 mr-1" />
+          Export CSV
+        </Button>
       </div>
 
-      {/* Predictions List */}
-      <div className="space-y-3">
-        {filteredPredictions.map((prediction) => (
-          <Card key={prediction.id} className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {getOutcomeIcon(prediction.outcome)}
+      {/* Accuracy Trend Chart */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Accuracy vs Confidence Trend</h3>
+        </div>
+        
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={mockHistoryData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis domain={[60, 100]} />
+            <Tooltip />
+            <Line 
+              type="monotone" 
+              dataKey="accuracy" 
+              stroke="#10b981" 
+              strokeWidth={2}
+              name="Accuracy %"
+            />
+            <Line 
+              type="monotone" 
+              dataKey="confidence" 
+              stroke="#3b82f6" 
+              strokeWidth={2}
+              name="Confidence %"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* Historical Predictions List */}
+      <Card className="p-6">
+        <h3 className="font-semibold mb-4">Recent Predictions</h3>
+        
+        <div className="space-y-3">
+          {mockPredictions.map((prediction) => (
+            <div key={prediction.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-3">
                 <Badge variant="outline">{prediction.asset}</Badge>
+                <span className="text-sm">{prediction.date}</span>
                 <span className="text-sm text-muted-foreground">
-                  {new Date(prediction.timestamp).toLocaleDateString()}
+                  Confidence: {Math.round(prediction.confidence * 100)}%
                 </span>
               </div>
-              <Badge variant={prediction.confidence > 0.8 ? 'default' : 'secondary'}>
-                {Math.round(prediction.confidence * 100)}%
-              </Badge>
-            </div>
-            
-            <div className="text-sm space-y-1">
-              <p>{prediction.explanation}</p>
-              <div className="flex gap-4 text-muted-foreground">
-                <span>Predicted: {prediction.predicted_value}</span>
-                {prediction.actual_value && (
-                  <span>Actual: {prediction.actual_value}</span>
-                )}
+              
+              <div className="flex items-center gap-2">
+                <OutcomeBadge 
+                  wasCorrect={prediction.was_correct}
+                  pct={prediction.realized_return}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {prediction.accuracy}% accuracy
+                </span>
               </div>
             </div>
-          </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }

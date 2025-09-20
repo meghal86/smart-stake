@@ -1,0 +1,45 @@
+{
+  "flows": [
+    {
+      "id": "flow_1",
+      "timestamp": "2024-01-20T10:00:00Z",
+      "source_exchange": "Binance",
+      "source_address": "0xbinance123",
+      "destination_mm": "Wintermute",
+      "destination_address": "0xwintermute456",
+      "token": "ETH",
+      "amount": 1000,
+      "amount_usd": 2500000,
+      "flow_type": "inbound",
+      "confidence_score": 0.89,
+      "market_impact_prediction": 2.3,
+      "signal_strength": "strong"
+    },
+    {
+      "id": "flow_2",
+      "timestamp": "2024-01-20T10:15:00Z", 
+      "source_exchange": "Coinbase",
+      "source_address": "0xcoinbase789",
+      "destination_mm": "Jump Trading",
+      "destination_address": "0xjump012",
+      "token": "BTC",
+      "amount": 50,
+      "amount_usd": 1800000,
+      "flow_type": "outbound",
+      "confidence_score": 0.76,
+      "market_impact_prediction": 1.8,
+      "signal_strength": "moderate"
+    }
+  ],
+  "signals": [
+    {
+      "id": "signal_1",
+      "flow_id": "flow_1",
+      "signal_type": "accumulation",
+      "confidence": 0.89,
+      "predicted_price_impact": 2.3,
+      "timeframe": "2-4 hours",
+      "reasoning": ["Large inbound flow", "Historical pattern match", "Low liquidity window"]
+    }
+  ]
+}

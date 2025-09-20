@@ -1,0 +1,22 @@
+[
+  {
+    "id": "cluster_1",
+    "label": "ETH Upside Cluster",
+    "assets": ["ETH", "BTC"],
+    "signal_count": 3,
+    "direction": "long",
+    "confidence": 0.85,
+    "rationale": "Strong accumulation pattern detected",
+    "created_at": "2025-01-21T10:00:00Z"
+  },
+  {
+    "id": "cluster_2",
+    "label": "DeFi Momentum",
+    "assets": ["ETH"],
+    "signal_count": 2,
+    "direction": "long",
+    "confidence": 0.72,
+    "rationale": "Increased DeFi activity driving demand",
+    "created_at": "2025-01-21T10:05:00Z"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "outcome_1",
+    "prediction_id": "pred_1",
+    "asset": "ETH",
+    "horizon_min": 360,
+    "predicted_direction": "long",
+    "predicted_ts": "2025-01-21T10:00:00Z",
+    "realized_return": 0.032,
+    "was_correct": true,
+    "realized_ts": "2025-01-21T16:00:00Z",
+    "created_at": "2025-01-21T16:00:00Z"
+  },
+  {
+    "id": "outcome_2",
+    "prediction_id": "pred_2",
+    "asset": "BTC",
+    "horizon_min": 360,
+    "predicted_direction": "long",
+    "predicted_ts": "2025-01-21T10:15:00Z",
+    "realized_return": -0.015,
+    "was_correct": false,
+    "realized_ts": "2025-01-21T16:15:00Z",
+    "created_at": "2025-01-21T16:15:00Z"
+  }
+]

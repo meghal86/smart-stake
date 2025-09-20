@@ -234,6 +234,23 @@
       brightness(1.3)
       drop-shadow(0 2px 8px rgba(0,255,255,0.3));
   }
+  
+  /* ROI Highlighting Glow Effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsla(var(--primary), 0.3), 0 0 40px hsla(var(--primary), 0.1);
+  }
+  
+  .glow-green {
+    box-shadow: 0 0 20px hsla(142, 76%, 36%, 0.3), 0 0 40px hsla(142, 76%, 36%, 0.1);
+  }
+  
+  .dark .glow-primary {
+    box-shadow: 0 0 25px hsla(var(--primary), 0.4), 0 0 50px hsla(var(--primary), 0.15);
+  }
+  
+  .dark .glow-green {
+    box-shadow: 0 0 25px hsla(142, 76%, 36%, 0.4), 0 0 50px hsla(142, 76%, 36%, 0.15);
+  }
 }
 
 /* Mobile viewport optimizations */
