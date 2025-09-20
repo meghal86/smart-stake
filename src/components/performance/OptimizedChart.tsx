@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { LazyComponent } from '@/hooks/useLazyLoad';
+// import { LazyComponent } from '@/hooks/useLazyLoad'; // Temporarily disabled
 import { Skeleton } from '@/components/ui/loading-skeleton';
 
 interface DataPoint {

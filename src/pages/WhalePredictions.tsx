@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Brain, History, Settings, Save, Bell, Download, Info, TrendingUp, AlertTriangle, Plus } from 'lucide-react';
+import { Brain, History, Settings, Save, Bell, Download, Info, TrendingUp, AlertTriangle, Plus, Activity } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -377,7 +377,7 @@ export default function WhalePredictions() {
                     Refresh Predictions
                   </Button>
                 </Card>
-              )
+              )}
             </div>
           </TabsContent>
 

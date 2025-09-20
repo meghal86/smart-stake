@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, PieChart as PieChartIcon } from 'lucide-react';
 import { OptimizedChart } from '@/components/performance/OptimizedChart';
-import { LazyComponent } from '@/hooks/useLazyLoad';
+// import { LazyComponent } from '@/hooks/useLazyLoad'; // Temporarily disabled
 import { Skeleton } from '@/components/ui/loading-skeleton';
 
 interface PortfolioData {
