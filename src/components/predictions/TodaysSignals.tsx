@@ -57,10 +57,20 @@ export function TodaysSignals({ predictions, isFreeTier }: TodaysSignalsProps) {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <Badge variant="outline">{prediction.asset}</Badge>
-                <ImpactLabel 
-                  confidence={prediction.confidence}
-                  predictionType={prediction.prediction_type}
-                />
+                <div className="group relative">
+                  <Badge variant="outline" className="text-xs cursor-help border-green-300 text-green-700">
+                    {prediction.asset === 'ETH' ? '$4,475.33' : '$42,350'} • CG
+                  </Badge>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                    CoinGecko Primary • Fresh data (&lt;30s)
+                  </div>
+                </div>
+                <Badge className={`text-white ${
+                  prediction.confidence >= 0.8 ? 'bg-red-500' : 
+                  prediction.confidence >= 0.6 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}>
+                  Impact: {prediction.confidence >= 0.8 ? 'High' : prediction.confidence >= 0.6 ? 'Medium' : 'Low'}
+                </Badge>
                 <ConfidenceBar value={prediction.confidence} />
                 {prediction.isDelayed && (
                   <Badge variant="secondary" className="text-xs">

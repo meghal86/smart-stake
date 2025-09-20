@@ -20,6 +20,13 @@ import { PredictionTypeCard } from '@/components/predictions/PredictionTypeCard'
 import { ModelPerformanceSummary } from '@/components/predictions/ModelPerformanceSummary';
 import { ScenarioResults } from '@/components/predictions/ScenarioResults';
 import { TodaysSignals } from '@/components/predictions/TodaysSignals';
+import { TieredPredictionCard } from '@/components/predictions/TieredPredictionCard';
+import { QuotaProgressBar } from '@/components/ui/QuotaProgressBar';
+import { StickyMarketHeader } from '@/components/predictions/StickyMarketHeader';
+import { PredictionSkeleton } from '@/components/ui/PredictionSkeleton';
+import { EnterpriseCTAStrip } from '@/components/predictions/EnterpriseCTAStrip';
+import { useTier } from '@/hooks/useTier';
+import { useQuota } from '@/hooks/useQuota';
 import { PredictionHistory } from '@/components/predictions/PredictionHistory';
 import { AlertsManager } from '@/components/predictions/AlertsManager';
 import { ScenarioComparison } from '@/components/predictions/ScenarioComparison';
@@ -48,6 +55,8 @@ interface Prediction {
 export default function PredictionsScenarios() {
   const { user } = useAuth();
   const { canAccessFeature } = useSubscription();
+  const { tier, isGuest, features } = useTier();
+  const { canUsePredictions } = useQuota();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [activeTab, setActiveTab] = useState('predictions');
   const [predictionsSubTab, setPredictionsSubTab] = useState<'today' | 'history'>('today');
@@ -169,12 +178,18 @@ export default function PredictionsScenarios() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <QuotaProgressBar />
               <div className="hidden lg:block">
                 <ModelPerformanceSummary />
               </div>
               <ExportReportButtons predictions={predictions} />
             </div>
           </div>
+
+          {/* Sticky Market Header */}
+          <StickyMarketHeader />
+
+
 
           {/* Main Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -215,16 +230,39 @@ export default function PredictionsScenarios() {
               </div>
 
               {predictionsSubTab === 'today' ? (
-                <TodaysSignals 
-                  predictions={processedPredictions}
-                  isFreeTier={!canAccessFeature('realTimePredictions')}
-                />
+                <div className="space-y-3">
+                  {isLoading ? (
+                    <>  
+                      <PredictionSkeleton />
+                      <PredictionSkeleton />
+                      <PredictionSkeleton />
+                    </>
+                  ) : processedPredictions.length > 0 ? (
+                    processedPredictions.map((prediction) => (
+                      <TieredPredictionCard key={prediction.id} prediction={prediction}>
+                        {/* Content handled by TieredPredictionCard */}
+                      </TieredPredictionCard>
+                    ))
+                  ) : (
+                    <div className="text-center py-12">
+                      <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-lg font-medium mb-2">No whale signals detected</h3>
+                      <p className="text-muted-foreground mb-4">
+                        No whale signals detected in the last 6h. Set an alert to be the first to know.
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <Button variant="outline" size="sm">ETH High-Impact Only</Button>
+                        <Button variant="outline" size="sm">BTC Whale Activity</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <PredictionHistory />
               )}
 
-              {/* Enterprise Teaser */}
-              <EnterpriseTeaser />
+              {/* Enterprise CTA Strip */}
+              <EnterpriseCTAStrip />
             </TabsContent>
 
             <TabsContent value="scenarios" className="space-y-4">

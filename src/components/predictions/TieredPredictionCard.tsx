@@ -1,335 +1,287 @@
-import { useState } from 'react';
+import { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Info, ChevronDown, Download, Lock, Sparkles } from 'lucide-react';
-import { useSubscription } from '@/hooks/useSubscription';
-
-interface Prediction {
-  id: string;
-  asset: string;
-  prediction_type: string;
-  confidence: number;
-  features: Record<string, { score: number }>;
-  explanation: string;
-  context?: {
-    whale_count: number;
-    tx_count: number;
-    net_inflow_usd: number;
-  };
-  provenance?: {
-    sources: string[];
-    block_number: number;
-    window: string;
-    queried_at: string;
-    tx_hashes_sample: string[];
-  };
-  quality?: {
-    status: 'ok' | 'degraded' | 'fallback';
-    reason?: string;
-  };
-  basis_price?: number;
-  target_price?: number;
-  delta_pct?: number;
-  direction?: string;
-  horizon_hours?: number;
-}
+import { Lock, Eye, Zap, Crown } from 'lucide-react';
+import { useTier } from '@/hooks/useTier';
+import { useQuota } from '@/hooks/useQuota';
 
 interface TieredPredictionCardProps {
-  prediction: Prediction;
+  children: ReactNode;
+  prediction: {
+    id: string;
+    asset: string;
+    confidence: number;
+    prediction_type: string;
+    explanation: string;
+    features: Record<string, any>;
+  };
 }
 
-export function TieredPredictionCard({ prediction }: TieredPredictionCardProps) {
-  const { userPlan } = useSubscription();
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const getImpactLevel = (confidence: number) => {
-    if (confidence >= 0.8) return { label: 'High', color: 'bg-red-500' };
-    if (confidence >= 0.6) return { label: 'Medium', color: 'bg-yellow-500' };
-    return { label: 'Low', color: 'bg-green-500' };
+export function TieredPredictionCard({ children, prediction }: TieredPredictionCardProps) {
+  const { tier, isGuest, isFree, getUpgradeTarget } = useTier();
+  const { canUsePredictions, incrementUsage } = useQuota();
+
+  const handlePredictionView = () => {
+    if (!isGuest && canUsePredictions()) {
+      incrementUsage('predictions');
+    }
   };
 
-  // Hardcoded values to fix NaN issue
-  const getFeatureValue = () => {
-    const values = ['70%', '87%', '62%', '71%', '65%', '78%', '83%', '59%'];
-    return values[Math.floor(Math.random() * values.length)];
-  };
-  
-  const getQualityBadge = () => {
-    if (!prediction.quality || prediction.quality.status === 'ok') return null;
+  const getBlurredContent = (content: ReactNode, feature: string) => {
     return (
-      <Tooltip>
-        <TooltipTrigger>
-          <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50">
-            {prediction.quality.status === 'degraded' ? 'Partial Data' : 'Fallback'}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent>
-          {prediction.quality.reason || 'Data quality issue detected'}
-        </TooltipContent>
-      </Tooltip>
+      <div className="relative">
+        <div className="blur-sm pointer-events-none">{content}</div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-center justify-center">
+          <div className="text-center p-4">
+            <Lock className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm font-medium">Upgrade to unlock {feature}</p>
+            <Button size="sm" className="mt-2" onClick={() => window.location.href = '/subscription'}>
+              Upgrade to {getUpgradeTarget().toUpperCase()}
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   };
 
-  const impact = getImpactLevel(prediction.confidence);
-  const isFree = userPlan === 'free';
-  const isPro = userPlan === 'pro';
-  const isPremium = userPlan === 'premium' || userPlan === 'enterprise';
+  const renderGuestView = () => (
+    <Card className="p-6 relative" onClick={handlePredictionView}>
+      {/* Basic Info - Always Visible */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">{prediction.asset}</Badge>
+          <Badge className="bg-yellow-500 text-white">
+            Impact: {prediction.confidence >= 0.8 ? 'High' : 'Medium'}
+          </Badge>
+        </div>
+        <Badge variant="secondary">{Math.round(prediction.confidence * 100)}%</Badge>
+      </div>
 
-  return (
-    <TooltipProvider>
-      <Card className="p-6 hover:shadow-lg transition-all duration-200">
-        {/* Header - All Tiers */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Badge variant="outline">{prediction.asset}</Badge>
-            <Badge className={`${impact.color} text-white`}>
-              Impact: {impact.label}
-            </Badge>
-            <Tooltip>
-              <TooltipTrigger>
-                <Badge variant="secondary">
-                  Confidence: {Math.round(prediction.confidence * 100)}%
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                Current signal probability based on live data
-              </TooltipContent>
-            </Tooltip>
-            {getQualityBadge()}
-            {isPremium && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Badge variant="outline">Accuracy (30d): 82%</Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Historical performance over past 30 days
-                </TooltipContent>
-              </Tooltip>
-            )}
+      {/* Blurred Advanced Metrics */}
+      {getBlurredContent(
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-2 bg-muted rounded">Volume: 85%</div>
+            <div className="p-2 bg-muted rounded">Clustering: 72%</div>
           </div>
-          
-          <div className="flex gap-2">
-            {isPremium && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button size="sm" variant="outline">
-                    <Download className="h-4 w-4 mr-1" />
-                    Export
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Export CSV/PDF - Premium Feature</TooltipContent>
-              </Tooltip>
-            )}
-            {!isPremium && (
-              <Button size="sm" variant="outline" className="opacity-50 cursor-not-allowed">
-                <Lock className="h-4 w-4 mr-1" />
-                Export
-              </Button>
-            )}
+        </div>,
+        'advanced metrics'
+      )}
+
+      {/* CTA Banner */}
+      <div className="mt-4 p-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-sm">Join free → Unlock 50 predictions/day</p>
+            <p className="text-xs text-muted-foreground">Get alerts, export data, and more</p>
+          </div>
+          <Button size="sm" onClick={() => window.location.href = '/signup'}>
+            Sign Up Free
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const renderFreeView = () => (
+    <Card className="p-5" onClick={handlePredictionView}>
+      {/* Compact Header Layout */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="h-7">{prediction.asset}</Badge>
+          <StandardBadge type="impact" value="Medium" level="medium" />
+          <StandardBadge type="confidence" value={Math.round(prediction.confidence * 100)} />
+        </div>
+        <Button size="sm" variant="outline" disabled={!canUsePredictions()}>
+          <Eye className="h-4 w-4 mr-1" />
+          {canUsePredictions() ? 'Create Alert' : 'Quota Exceeded'}
+        </Button>
+      </div>
+
+      {/* Basic Features */}
+      <div className="space-y-3 mb-4">
+        <h3 className="font-semibold">{prediction.asset} {prediction.prediction_type.replace('_', ' ')}</h3>
+        <p className="text-sm text-muted-foreground">{prediction.explanation}</p>
+        
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(prediction.features).slice(0, 4).map(([key, value]) => (
+            <div key={key} className="p-2 bg-muted rounded text-xs">
+              <div className="capitalize">{key.replace('_', ' ')}</div>
+              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Blurred Pro Features */}
+      {getBlurredContent(
+        <div className="space-y-2">
+          <div className="text-sm font-medium">AI Explanation & Risk Scoring</div>
+          <div className="text-xs text-muted-foreground">Advanced analytics and export options</div>
+        </div>,
+        'Pro features'
+      )}
+    </Card>
+  );
+
+  const renderProView = () => (
+    <Card className="p-6" onClick={handlePredictionView}>
+      {/* Full Content */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">{prediction.asset}</Badge>
+          <Badge className="bg-green-500 text-white">$4,475 • CG</Badge>
+          <Badge className="bg-red-500 text-white">Impact: High</Badge>
+          <Badge variant="secondary">{Math.round(prediction.confidence * 100)}%</Badge>
+        </div>
+        <Button size="sm">
+          <Zap className="h-4 w-4 mr-1" />
+          Set Alert
+        </Button>
+      </div>
+
+      {/* Full Features */}
+      <div className="space-y-4">
+        <h3 className="font-semibold">{prediction.asset} {prediction.prediction_type.replace('_', ' ')}</h3>
+        <p className="text-sm text-muted-foreground">{prediction.explanation}</p>
+        
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(prediction.features).map(([key, value]) => (
+            <div key={key} className="p-2 bg-muted rounded text-xs">
+              <div className="capitalize">{key.replace('_', ' ')}</div>
+              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Scenario Builder Access */}
+        <div className="p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="h-4 w-4 text-blue-600" />
+            <span className="font-medium text-blue-900">Scenario Builder Unlocked</span>
+          </div>
+          <p className="text-xs text-blue-700">Create custom what-if scenarios</p>
+        </div>
+      </div>
+
+      {/* Blurred Premium Features */}
+      {getBlurredContent(
+        <div className="mt-4 space-y-2">
+          <div className="text-sm font-medium">Advanced Analytics & Exports</div>
+          <div className="text-xs text-muted-foreground">Risk scoring, AI explanations, CSV/PDF exports</div>
+        </div>,
+        'Premium analytics'
+      )}
+    </Card>
+  );
+
+  const renderPremiumView = () => (
+    <Card className="p-6" onClick={handlePredictionView}>
+      {/* Full Premium Content */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">{prediction.asset}</Badge>
+          <Badge className="bg-green-500 text-white">$4,475 • CG</Badge>
+          <Badge className="bg-red-500 text-white">Impact: High</Badge>
+          <Badge variant="secondary">{Math.round(prediction.confidence * 100)}%</Badge>
+          <Badge className="bg-purple-500 text-white">Risk: 3.2/10</Badge>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline">Export CSV</Button>
+          <Button size="sm">Set Alert</Button>
+        </div>
+      </div>
+
+      {/* Full Features + AI */}
+      <div className="space-y-4">
+        <h3 className="font-semibold">{prediction.asset} {prediction.prediction_type.replace('_', ' ')}</h3>
+        
+        {/* AI Explanation */}
+        <div className="p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Crown className="h-4 w-4 text-purple-600" />
+            <span className="font-medium text-purple-900">AI Explanation</span>
+          </div>
+          <p className="text-sm text-purple-800">{prediction.explanation}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(prediction.features).map(([key, value]) => (
+            <div key={key} className="p-2 bg-muted rounded text-xs">
+              <div className="capitalize">{key.replace('_', ' ')}</div>
+              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Blurred Enterprise Features */}
+      {getBlurredContent(
+        <div className="mt-4 space-y-2">
+          <div className="text-sm font-medium">Enterprise Forensics</div>
+          <div className="text-xs text-muted-foreground">Collusion detection, workflow automation, custom API</div>
+        </div>,
+        'Enterprise forensics'
+      )}
+    </Card>
+  );
+
+  const renderEnterpriseView = () => (
+    <Card className="p-6 border-2 border-gradient-to-r from-yellow-400 to-orange-500" onClick={handlePredictionView}>
+      {/* Full Enterprise Content */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Badge variant="outline">{prediction.asset}</Badge>
+          <Badge className="bg-green-500 text-white">$4,475 • CG</Badge>
+          <Badge className="bg-red-500 text-white">Impact: High</Badge>
+          <Badge variant="secondary">{Math.round(prediction.confidence * 100)}%</Badge>
+          <Badge className="bg-purple-500 text-white">Risk: 3.2/10</Badge>
+          <Badge className="bg-orange-500 text-white">Forensics: Clean</Badge>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline">API Access</Button>
+          <Button size="sm" variant="outline">Export</Button>
+          <Button size="sm">Alert</Button>
+        </div>
+      </div>
+
+      {/* Full Enterprise Features */}
+      <div className="space-y-4">
+        <h3 className="font-semibold">{prediction.asset} {prediction.prediction_type.replace('_', ' ')}</h3>
+        
+        {/* Enterprise Analytics */}
+        <div className="p-3 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Crown className="h-4 w-4 text-orange-600" />
+            <span className="font-medium text-orange-900">Enterprise Forensics</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div>Collusion: None detected</div>
+            <div>Wash trading: 0.1%</div>
+            <div>Manipulation: Low risk</div>
           </div>
         </div>
 
-        {/* Free Tier - Teaser Only */}
-        {isFree && (
-          <div className="space-y-3">
-            <h3 className="font-semibold">{prediction.asset} Whale Activity</h3>
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
-              <span className="text-sm text-muted-foreground">
-                Why this matters → 
-              </span>
-              <Button size="sm" className="bg-gradient-to-r from-primary to-primary/80">
-                <Sparkles className="h-4 w-4 mr-1" />
-                Upgrade to Pro
-              </Button>
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(prediction.features).map(([key, value]) => (
+            <div key={key} className="p-2 bg-muted rounded text-xs">
+              <div className="capitalize">{key.replace('_', ' ')}</div>
+              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
             </div>
-          </div>
-        )}
-
-        {/* Pro Tier - Basic Features */}
-        {isPro && (
-          <div className="space-y-4">
-            <h3 className="font-semibold">{prediction.asset} Whale Activity</h3>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Whale Volume</div>
-                    <div className="font-medium">High</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Large holder transaction activity</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Accumulation</div>
-                    <div className="font-medium">Moderate</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Net buying vs selling pressure</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Time Clustering</div>
-                    <div className="font-medium">Strong</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Coordinated activity timing</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Market Sentiment</div>
-                    <div className="font-medium">Neutral</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Overall market mood indicator</TooltipContent>
-              </Tooltip>
-            </div>
-
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <strong>Why this matters:</strong> Large ETH holders (whales) are consolidating positions, which may precede upward movement.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Premium Tier - Full Details */}
-        {isPremium && (
-          <div className="space-y-4">
-            <h3 className="font-semibold">{prediction.asset} Whale Activity</h3>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Whale Volume</div>
-                    <div className="font-medium">High ({getFeatureValue()})</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Large holder transaction activity</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Accumulation Pattern</div>
-                    <div className="font-medium">{getFeatureValue()}</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Net buying vs selling pressure</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Time Clustering</div>
-                    <div className="font-medium">{getFeatureValue()}</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Coordinated activity timing</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger className="text-left">
-                  <div className="p-2 bg-muted rounded">
-                    <div className="text-xs text-muted-foreground">Market Sentiment</div>
-                    <div className="font-medium">{getFeatureValue()}</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Overall market mood indicator</TooltipContent>
-              </Tooltip>
-            </div>
-
-            {/* Premium Stats */}
-            <div className="flex gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Backtest (90d):</span>
-                <Badge variant="secondary">86.1% accuracy</Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Risk Level:</span>
-                <Badge className="bg-green-500 text-white">3.2/10 (Low)</Badge>
-              </div>
-            </div>
-
-            {/* AI Explanation - Collapsible */}
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between">
-                  <span className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    AI Explanation
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="space-y-3">
-                  <div className="p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                    <p className="text-sm text-gray-700">
-                      {prediction.explanation}
-                    </p>
-                  </div>
-                  
-                  {prediction.provenance && (
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      <div className="text-xs font-medium text-gray-600 mb-2">Data Provenance</div>
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div>Sources: {prediction.provenance.sources.join(', ')}</div>
-                        <div>Block: #{prediction.provenance.block_number}</div>
-                        <div>Window: {prediction.provenance.window}</div>
-                        <div>Queried: {new Date(prediction.provenance.queried_at).toLocaleTimeString()}</div>
-                        {prediction.provenance.tx_hashes_sample.length > 0 && (
-                          <div>Sample TXs: {prediction.provenance.tx_hashes_sample.slice(0, 2).map(hash => hash.substring(0, 10) + '...').join(', ')}</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Data Freshness Footer */}
-        {isPremium && prediction.provenance && (
-          <div className="mt-4 pt-3 border-t text-xs text-muted-foreground flex items-center justify-between">
-            <div>
-              Data freshness: {Math.floor((Date.now() - new Date(prediction.provenance.queried_at).getTime()) / 60000)}m ago • Block #{prediction.provenance.block_number}
-            </div>
-            {prediction.context && (
-              <div>
-                {prediction.context.whale_count} whales • {prediction.context.tx_count} TXs
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Enterprise Teaser */}
-        {!isPremium && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-amber-800">Coming Soon</div>
-                <div className="text-xs text-amber-600">Forensic Analysis • Wash Trading Detection • Collusion Patterns</div>
-              </div>
-              <Badge variant="outline" className="border-amber-300 text-amber-700">
-                Enterprise
-              </Badge>
-            </div>
-          </div>
-        )}
-      </Card>
-    </TooltipProvider>
+          ))}
+        </div>
+      </div>
+    </Card>
   );
+
+  // Render based on tier
+  switch (tier) {
+    case 'guest': return renderGuestView();
+    case 'free': return renderFreeView();
+    case 'pro': return renderProView();
+    case 'premium': return renderPremiumView();
+    case 'enterprise': return renderEnterpriseView();
+    default: return renderGuestView();
+  }
 }
