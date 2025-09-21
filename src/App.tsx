@@ -8,11 +8,15 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import SignupNew from "./pages/SignupNew";
+import Welcome from "./pages/Welcome";
+import SignupTest from "./pages/SignupTest";
 import Subscription from "./pages/Subscription";
 import ManageSubscription from "./pages/ManageSubscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
@@ -41,14 +45,30 @@ const App = () => {
     setShowSplash(false);
   };
 
-  // Add error boundary for development
+  // Add error boundary and suppress extension errors
   useEffect(() => {
+    // Suppress extension errors globally
+    suppressExtensionErrors();
+
     const handleError = (event: ErrorEvent) => {
-      console.error('Global error caught:', event.error);
+      if (!event.filename?.includes('chrome-extension://')) {
+        console.error('Global error caught:', event.error);
+      }
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
+      // Handle auth errors
+      if (event.reason?.message?.includes('Invalid Refresh Token')) {
+        console.log('Clearing invalid auth tokens...');
+        localStorage.removeItem('sb-rebeznxivaxgserswhbn-auth-token');
+        sessionStorage.clear();
+        event.preventDefault();
+        return;
+      }
+      
+      if (!event.reason?.message?.includes('chrome-extension://')) {
+        console.error('Unhandled promise rejection:', event.reason);
+      }
     };
 
     window.addEventListener('error', handleError);
@@ -75,7 +95,10 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/signup-old" element={<Signup />} />
+                  <Route path="/signup" element={<SignupNew />} />
+                  <Route path="/welcome" element={<Welcome />} />
+                  <Route path="/signup-test" element={<SignupTest />} />
                   <Route path="/subscription" element={<Subscription />} />
                   <Route path="/subscription/manage" element={<ManageSubscription />} />
                   <Route path="/subscription/success" element={<SubscriptionSuccess />} />

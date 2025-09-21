@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StandardBadge } from '@/components/ui/StandardBadge';
 import { Lock, Eye, Zap, Crown } from 'lucide-react';
 import { useTier } from '@/hooks/useTier';
 import { useQuota } from '@/hooks/useQuota';
@@ -29,6 +30,9 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
   };
 
   const getBlurredContent = (content: ReactNode, feature: string) => {
+    // Business logic: Free → Premium, Premium/Pro → Enterprise
+    const targetTier = tier === 'free' ? 'premium' : 'enterprise';
+    
     return (
       <div className="relative">
         <div className="blur-sm pointer-events-none">{content}</div>
@@ -37,7 +41,7 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
             <Lock className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
             <p className="text-sm font-medium">Upgrade to unlock {feature}</p>
             <Button size="sm" className="mt-2" onClick={() => window.location.href = '/subscription'}>
-              Upgrade to {getUpgradeTarget().toUpperCase()}
+              Upgrade to {targetTier.toUpperCase()}
             </Button>
           </div>
         </div>
@@ -114,13 +118,13 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
         </div>
       </div>
 
-      {/* Blurred Pro Features */}
+      {/* Blurred Premium Features */}
       {getBlurredContent(
         <div className="space-y-2">
           <div className="text-sm font-medium">AI Explanation & Risk Scoring</div>
           <div className="text-xs text-muted-foreground">Advanced analytics and export options</div>
         </div>,
-        'Pro features'
+        'Premium features'
       )}
     </Card>
   );
@@ -165,13 +169,13 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
         </div>
       </div>
 
-      {/* Blurred Premium Features */}
+      {/* Blurred Enterprise Features */}
       {getBlurredContent(
         <div className="mt-4 space-y-2">
-          <div className="text-sm font-medium">Advanced Analytics & Exports</div>
-          <div className="text-xs text-muted-foreground">Risk scoring, AI explanations, CSV/PDF exports</div>
+          <div className="text-sm font-medium">Enterprise Forensics</div>
+          <div className="text-xs text-muted-foreground">Collusion detection, workflow automation, custom API</div>
         </div>,
-        'Premium analytics'
+        'Enterprise forensics'
       )}
     </Card>
   );

@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Apple, Check, Crown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, Apple, Check, Crown, CreditCard } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Logo } from '@/components/ui/Logo';
-import { supabase } from '../integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
+import { useSignupFlow } from '@/hooks/useSignupFlow';
+import { isStripeConfigured } from '@/utils/stripeConfig';
 
-const Signup: React.FC = () => {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+const cardElementOptions = {
+  style: {
+    base: {
+      fontSize: '16px',
+      color: '#424770',
+      '::placeholder': {
+        color: '#aab7c4',
+      },
+    },
+  },
+};
+
+const SignupForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,168 +37,105 @@ const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium'>('free');
-  const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const validatePassword = (password: string) => {
-    const minLength = password.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
-    return {
-      minLength,
-      hasUpperCase,
-      hasLowerCase,
-      hasNumbers,
-      hasSpecialChar,
-      isValid: minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar
-    };
-  };
+  const stripe = useStripe();
+  const elements = useElements();
+  const { signupUser, signupWithOAuth, validatePassword, isLoading, error, setError } = useSignupFlow();
 
   const passwordValidation = validatePassword(password);
 
-  const handleEmailSignup = async (e: React.FormEvent) => {
+  // Auto-focus first input and validate Stripe config
+  useEffect(() => {
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+      emailInput.focus();
+    }
+    
+    if (!isStripeConfigured) {
+      console.warn('Stripe is not properly configured. Premium signup may not work.');
+    }
+
+    // Suppress extension errors
+    const originalError = console.error;
+    console.error = (...args) => {
+      if (args[0]?.includes?.('chrome-extension://')) return;
+      originalError.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
 
     // Validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
-      setIsLoading(false);
       return;
     }
 
     if (!passwordValidation.isValid) {
       setError('Password does not meet security requirements');
-      setIsLoading(false);
       return;
     }
 
     if (!acceptTerms) {
       setError('Please accept the Terms of Service and Privacy Policy');
-      setIsLoading(false);
       return;
     }
 
-    try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email: email.trim(), 
-        password,
-        options: {
-          data: {
-            plan: selectedPlan,
-          }
-        }
-      });
-      
-      if (error) {
-        setError(error.message);
-        toast({
-          variant: "destructive",
-          title: "Signup Failed",
-          description: error.message,
-        });
-      } else {
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account.",
-        });
-        
-        // If premium plan selected, redirect to subscription page
-        if (selectedPlan === 'premium' && data.user) {
-          window.location.href = '/subscription?plan=premium';
-        } else {
-          window.location.href = '/';
-        }
+    let paymentMethodId;
+
+    // Handle Stripe payment for premium plan
+    if (selectedPlan === 'premium' && stripe && elements) {
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setError('Payment information is required for Premium plan');
+        return;
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+
+      const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
       });
-    } finally {
-      setIsLoading(false);
+
+      if (stripeError) {
+        setError(stripeError.message || 'Payment setup failed');
+        return;
+      }
+
+      paymentMethodId = paymentMethod.id;
     }
+
+    // Create account
+    await signupUser({
+      email,
+      password,
+      plan: selectedPlan,
+      paymentMethodId,
+    });
   };
 
   const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: selectedPlan === 'premium' 
-            ? `${window.location.origin}/subscription?plan=premium`
-            : `${window.location.origin}/`,
-          queryParams: {
-            plan: selectedPlan,
-          }
-        }
-      });
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Google Sign Up Failed",
-          description: error.message,
-        });
-      }
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to sign up with Google. Please try again.",
-      });
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    await signupWithOAuth('google', selectedPlan);
+    setIsGoogleLoading(false);
   };
 
   const handleAppleSignup = async () => {
     setIsAppleLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: selectedPlan === 'premium' 
-            ? `${window.location.origin}/subscription?plan=premium`
-            : `${window.location.origin}/`,
-          queryParams: {
-            plan: selectedPlan,
-          }
-        }
-      });
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Apple Sign Up Failed",
-          description: error.message,
-        });
-      }
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to sign up with Apple. Please try again.",
-      });
-    } finally {
-      setIsAppleLoading(false);
-    }
+    await signupWithOAuth('apple', selectedPlan);
+    setIsAppleLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-lg space-y-6">
         {/* Logo and Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
@@ -206,11 +159,10 @@ const Signup: React.FC = () => {
                 <div className="text-center">
                   <h3 className="font-semibold text-lg">Free Plan</h3>
                   <p className="text-3xl font-bold">$0</p>
-                  <p className="text-sm text-muted-foreground">Forever free</p>
+                  <p className="text-sm text-muted-foreground">Sign up free forever</p>
                 </div>
                 <ul className="text-sm space-y-1">
-                  <li>• Up to 50 alerts/day</li>
-                  <li>• Basic whale activity only</li>
+                  <li>• 50 alerts/day</li>
                   <li>• No email/webhook alerts</li>
                   <li>• Community support</li>
                 </ul>
@@ -219,7 +171,7 @@ const Signup: React.FC = () => {
           </Card>
           
           <Card 
-            className={`cursor-pointer transition-all relative ${selectedPlan === 'premium' ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'} ${selectedPlan === 'premium' ? 'bg-primary/5' : ''}`}
+            className={`cursor-pointer transition-all relative ${selectedPlan === 'premium' ? 'ring-2 ring-primary shadow-lg bg-primary/5' : 'hover:shadow-md'}`}
             onClick={() => setSelectedPlan('premium')}
             role="button"
             tabIndex={0}
@@ -242,7 +194,7 @@ const Signup: React.FC = () => {
                   <li>• Unlimited alerts</li>
                   <li>• Email/webhook delivery</li>
                   <li>• Predictions + Scenarios + Exports</li>
-                  <li>• 90-day history & advanced AI explainers</li>
+                  <li>• 90-day history & AI explainers</li>
                 </ul>
                 <div className="pt-2 border-t">
                   <p className="text-xs italic text-muted-foreground">"WhalePlus alerts helped me catch 3 major ETH moves last month."</p>
@@ -255,9 +207,6 @@ const Signup: React.FC = () => {
         <Card className="border-0 shadow-lg">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl text-center">Sign Up</CardTitle>
-            <CardDescription className="text-center">
-              Choose your preferred sign up method
-            </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-4">
@@ -267,7 +216,7 @@ const Signup: React.FC = () => {
                 variant="outline"
                 className="w-full h-11"
                 onClick={handleGoogleSignup}
-                disabled={isGoogleLoading || isAppleLoading}
+                disabled={isGoogleLoading || isAppleLoading || isLoading}
               >
                 {isGoogleLoading ? (
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
@@ -286,7 +235,7 @@ const Signup: React.FC = () => {
                 variant="outline"
                 className="w-full h-11"
                 onClick={handleAppleSignup}
-                disabled={isAppleLoading || isGoogleLoading}
+                disabled={isAppleLoading || isGoogleLoading || isLoading}
               >
                 {isAppleLoading ? (
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
@@ -307,7 +256,7 @@ const Signup: React.FC = () => {
             </div>
 
             {/* Email Signup Form */}
-            <form onSubmit={handleEmailSignup} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off" data-form-type="signup">
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -327,6 +276,8 @@ const Signup: React.FC = () => {
                     className="pl-10"
                     required
                     disabled={isLoading}
+                    autoComplete="username"
+                    data-lpignore="true"
                   />
                 </div>
               </div>
@@ -344,6 +295,8 @@ const Signup: React.FC = () => {
                     className="pl-10 pr-10"
                     required
                     disabled={isLoading}
+                    autoComplete="new-password"
+                    data-lpignore="true"
                   />
                   <Button
                     type="button"
@@ -401,6 +354,8 @@ const Signup: React.FC = () => {
                     className="pl-10 pr-10"
                     required
                     disabled={isLoading}
+                    autoComplete="new-password"
+                    data-lpignore="true"
                   />
                   <Button
                     type="button"
@@ -421,6 +376,20 @@ const Signup: React.FC = () => {
                   <p className="text-xs text-red-500">Passwords do not match</p>
                 )}
               </div>
+
+              {/* Stripe Payment Fields for Premium */}
+              {selectedPlan === 'premium' && (
+                <div className="space-y-2">
+                  <Label>Payment Information</Label>
+                  <div className="border rounded-md p-3 bg-background">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Secure payment powered by Stripe</span>
+                    </div>
+                    <CardElement options={cardElementOptions} />
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-start space-x-2">
                 <Checkbox 
@@ -462,15 +431,19 @@ const Signup: React.FC = () => {
                     Creating account...
                   </>
                 ) : selectedPlan === 'premium' ? (
-                  'Upgrade Now'
+                  'Create Premium Account'
                 ) : (
-                  'Start Free'
+                  'Sign Up Free'
                 )}
               </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                30s signup • cancel anytime • secure Stripe checkout
+              </p>
             </form>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4 pt-4">
+          <div className="p-6 pt-0">
             <div className="text-center">
               <span className="text-sm text-muted-foreground">Already have an account? </span>
               <Button variant="outline" size="sm" asChild>
@@ -479,13 +452,19 @@ const Signup: React.FC = () => {
                 </Link>
               </Button>
             </div>
-          </CardFooter>
+          </div>
         </Card>
-
-
       </div>
     </div>
   );
 };
 
-export default Signup;
+const SignupNew: React.FC = () => {
+  return (
+    <Elements stripe={stripePromise}>
+      <SignupForm />
+    </Elements>
+  );
+};
+
+export default SignupNew;

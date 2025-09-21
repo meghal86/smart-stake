@@ -85,15 +85,25 @@ export function useTier() {
 
   const fetchUserTier = async () => {
     try {
-      const { data } = await supabase
+      // Use the same approach as useSubscription which works
+      const { data, error } = await supabase
         .from('users')
         .select('plan')
         .eq('user_id', user?.id)
         .single();
 
-      const plan = data?.plan || 'free';
-      setTier(plan as UserTier);
+      console.log('useTier database query result:', { data, error });
+      
+      if (data?.plan) {
+        console.log('useTier using database plan:', data.plan);
+        setTier(data.plan as UserTier);
+      } else {
+        // Fallback to free if no plan found
+        console.log('useTier fallback to free');
+        setTier('free');
+      }
     } catch (error) {
+      console.log('useTier error, defaulting to free:', error);
       setTier('free');
     } finally {
       setLoading(false);
@@ -109,7 +119,7 @@ export function useTier() {
   const getUpgradeTarget = (): UserTier => {
     switch (tier) {
       case 'guest': return 'free';
-      case 'free': return 'pro';
+      case 'free': return 'premium'; // Skip Pro, go directly to Premium
       case 'pro': return 'premium';
       case 'premium': return 'enterprise';
       default: return 'enterprise';

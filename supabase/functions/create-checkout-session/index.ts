@@ -14,25 +14,8 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔍 Checking Stripe key availability...');
-    
-    // Get Stripe secret key from environment variables
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeSecretKey) {
-      console.error('STRIPE_SECRET_KEY environment variable not found');
-      return new Response(
-        JSON.stringify({ error: 'Stripe configuration error - API key not found' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-    
-    console.log('Stripe key found, length:', stripeSecretKey.length);
-
     // Initialize Stripe
-    const stripe = new Stripe(stripeSecretKey, {
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
@@ -42,39 +25,63 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
+    // Get user from JWT token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    // Get user from token
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { priceId, userId, successUrl, cancelUrl } = await req.json();
+
+    if (!priceId || !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required parameters' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Create or retrieve Stripe customer
+    let customer;
     
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+    // Check if user already has a Stripe customer ID
+    const { data: userData } = await supabaseClient
+      .from('users')
+      .select('stripe_customer_id, email')
+      .eq('user_id', userId)
+      .single();
+
+    if (userData?.stripe_customer_id) {
+      customer = await stripe.customers.retrieve(userData.stripe_customer_id);
+    } else {
+      // Create new customer
+      customer = await stripe.customers.create({
+        email: userData?.email,
+        metadata: {
+          user_id: userId,
+        },
+      });
+
+      // Update user with Stripe customer ID
+      await supabaseClient
+        .from('users')
+        .update({ stripe_customer_id: customer.id })
+        .eq('user_id', userId);
     }
 
-    const { priceId, successUrl, cancelUrl } = await req.json();
 
-    if (!priceId) {
-      return new Response(
-        JSON.stringify({ error: 'Price ID is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
 
-    console.log('Creating checkout session for user:', user.id, 'with price:', priceId);
-
-    // Create Stripe checkout session
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
+      customer: customer.id,
       payment_method_types: ['card'],
       line_items: [
         {
@@ -83,40 +90,36 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: successUrl || `${req.headers.get('origin')}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${req.headers.get('origin')}/subscription`,
-      customer_email: user.email,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
-        user_id: user.id,
+        user_id: userId,
       },
       subscription_data: {
         metadata: {
-          user_id: user.id,
+          user_id: userId,
         },
       },
-      allow_promotion_codes: true,
-      billing_address_collection: 'required',
     });
 
-    console.log('Checkout session created:', session.id);
-
     return new Response(
-      JSON.stringify({
-        sessionId: session.id,
+      JSON.stringify({ 
         url: session.url,
+        sessionId: session.id 
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
   } catch (error) {
     console.error('Error creating checkout session:', error);
+    
     return new Response(
-      JSON.stringify({ error: 'Failed to create checkout session', details: error.message }),
+      JSON.stringify({ error: 'Failed to create checkout session' }),
       { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

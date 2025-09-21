@@ -128,9 +128,9 @@ async function handleCheckoutSessionCompleted(session, supabaseClient, stripe) {
   
   // Map price IDs to plans
   if (priceId === 'price_1S0HB3JwuQyqUsks8bKNUt6M') {
-    plan = 'pro'; // Pro plan
+    plan = 'pro'; // Pro plan ($9.99)
   } else if (priceId === 'price_1S0HBOJwuQyqUsksDCs7SbPB') {
-    plan = 'premium'; // Premium plan
+    plan = 'premium'; // Premium plan ($19.99)
   }
 
   console.log('Determined plan:', plan, 'for price ID:', priceId);
@@ -238,9 +238,9 @@ async function handleSubscriptionUpdated(subscription, supabaseClient) {
     
     // Map price IDs to plans
     if (priceId === 'price_1S0HB3JwuQyqUsks8bKNUt6M') {
-      plan = 'pro'; // Pro plan
+      plan = 'pro'; // Pro plan ($9.99)
     } else if (priceId === 'price_1S0HBOJwuQyqUsksDCs7SbPB') {
-      plan = 'premium'; // Premium plan
+      plan = 'premium'; // Premium plan ($19.99)
     }
   }
 

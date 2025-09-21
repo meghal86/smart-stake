@@ -1,5 +1,6 @@
 {
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "installCommand": "npm ci --legacy-peer-deps || npm install --legacy-peer-deps"
 }

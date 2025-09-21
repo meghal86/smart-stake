@@ -28,6 +28,7 @@ import { usePredictionOutcomes } from '@/hooks/usePredictionOutcomes';
 import { usePredictionClusters, PredictionCluster } from '@/hooks/usePredictionClusters';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
+import { TierDebug } from '@/components/debug/TierDebug';
 
 interface Prediction {
   id: string;
@@ -463,6 +464,9 @@ export default function WhalePredictions() {
           </Button>
         </div>
       </div>
+      
+      {/* Debug Component - Remove in production */}
+      <TierDebug />
     </div>
   );
 }
