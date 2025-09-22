@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Fish, Info, ExternalLink, Shield, Database, Activity, TrendingUp, Users, AlertTriangle } from 'lucide-react';
+import { Fish, Info, ExternalLink, Shield, Database, Activity, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,16 +24,7 @@ interface WhaleData {
   confidence: number;
 }
 
-// Market metrics interface
-interface MarketMetrics {
-  volume24h: number;
-  activeWhales: number;
-  topSignals: Array<{
-    signal_type: string;
-    confidence: number;
-    value: string;
-  }>;
-}
+
 
 // Blockchain explorer URLs for different chains
 const getExplorerUrl = (txHash: string, chain: string = 'ethereum'): string => {
@@ -239,8 +230,8 @@ const WhaleCard = ({ whale }: { whale: WhaleData }) => {
   );
 };
 
-// Enhanced header component with market metrics
-const EnhancedHeader = ({ metrics }: { metrics: MarketMetrics }) => {
+// Simple header component without market metrics
+const SimpleHeader = () => {
   return (
     <div className="space-y-4">
       {/* Main header */}
@@ -250,64 +241,9 @@ const EnhancedHeader = ({ metrics }: { metrics: MarketMetrics }) => {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Whale Analytics</h1>
-          <p className="text-muted-foreground">AI-powered whale risk assessment</p>
+          <p className="text-muted-foreground">AI-powered whale risk assessment and detailed analysis</p>
         </div>
       </div>
-
-      {/* Market metrics cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="h-5 w-5 text-green-600" aria-hidden="true" />
-            <div>
-              <p className="text-sm text-muted-foreground">24h Volume</p>
-              <p className="text-xl font-bold">${metrics.volume24h.toLocaleString()}M</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 text-blue-600" aria-hidden="true" />
-            <div>
-              <p className="text-sm text-muted-foreground">Active Whales</p>
-              <p className="text-xl font-bold">{metrics.activeWhales}</p>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-orange-600" aria-hidden="true" />
-            <div>
-              <p className="text-sm text-muted-foreground">Risk Alerts</p>
-              <p className="text-xl font-bold">{metrics.topSignals.length}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Market signals prediction strip */}
-      {metrics.topSignals.length > 0 && (
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="h-4 w-4 text-orange-600" aria-hidden="true" />
-            <span className="text-sm font-medium">Current Market Signals</span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {metrics.topSignals.map((signal, idx) => (
-              <Badge 
-                key={idx} 
-                variant="outline" 
-                className="whitespace-nowrap flex items-center gap-1"
-              >
-                <span className="capitalize">{signal.signal_type.replace('_', ' ')}</span>
-                <span className="text-xs opacity-70">({Math.round(signal.confidence * 100)}%)</span>
-              </Badge>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
@@ -315,52 +251,11 @@ const EnhancedHeader = ({ metrics }: { metrics: MarketMetrics }) => {
 // Main WhaleAnalytics component
 export default function WhaleAnalytics() {
   const [whales, setWhales] = useState<WhaleData[]>([]);
-  const [metrics, setMetrics] = useState<MarketMetrics>({ volume24h: 0, activeWhales: 0, topSignals: [] });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch market metrics from database
-  const fetchMarketMetrics = async (): Promise<MarketMetrics> => {
-    try {
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      
-      // Get 24h volume from whale_transfers
-      const { data: transferData } = await supabase
-        .from('whale_transfers')
-        .select('value_usd')
-        .gte('ts', yesterday)
-        .not('value_usd', 'is', null);
-      
-      const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(t.value_usd), 0) / 1000000 || 0;
-      
-      // Get active whales count from recent balances
-      const { count: activeWhales } = await supabase
-        .from('whale_balances')
-        .select('address', { count: 'exact', head: true })
-        .gte('ts', yesterday);
-      
-      // Get top market signals
-      const { data: signalsData } = await supabase
-        .from('whale_signals')
-        .select('signal_type, confidence, value')
-        .gte('ts', yesterday)
-        .order('confidence', { ascending: false })
-        .limit(5);
-      
-      return {
-        volume24h: Math.round(volume24h),
-        activeWhales: activeWhales || 0,
-        topSignals: signalsData || []
-      };
-    } catch (error) {
-      console.error('Failed to fetch market metrics:', error);
-      return {
-        volume24h: 0,
-        activeWhales: 0,
-        topSignals: []
-      };
-    }
-  };
+
 
   // Fetch whale data directly from database
   const fetchWhaleData = async () => {
@@ -368,9 +263,7 @@ export default function WhaleAnalytics() {
       setLoading(true);
       setError(null);
 
-      // Fetch market metrics
-      const metricsResult = await fetchMarketMetrics();
-      setMetrics(metricsResult);
+
 
       // Fetch whale balances directly from database
       const { data: balances, error: balanceError } = await supabase
@@ -474,8 +367,8 @@ export default function WhaleAnalytics() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Enhanced Header with Market Metrics */}
-      <EnhancedHeader metrics={metrics} />
+      {/* Simple Header */}
+      <SimpleHeader />
 
 
 

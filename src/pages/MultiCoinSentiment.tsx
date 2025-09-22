@@ -49,7 +49,7 @@ export default function MultiCoinSentiment() {
 
   useEffect(() => {
     fetchMultiCoinSentiment();
-    const interval = setInterval(fetchMultiCoinSentiment, 120000); // Update every 2 minutes
+    const interval = setInterval(fetchMultiCoinSentiment, 300000); // Update every 5 minutes
     return () => clearInterval(interval);
   }, []);
 
@@ -250,15 +250,35 @@ export default function MultiCoinSentiment() {
     const [selectedNews, setSelectedNews] = useState<any>(null);
     const [showNewsModal, setShowNewsModal] = useState(false);
     
-    // Fetch real news data
+    // Fetch real news data with caching
     useEffect(() => {
       const fetchNews = async () => {
+        // Check cache first (10 minutes)
+        const cacheKey = `crypto-news-${coin.id}`;
+        const cached = localStorage.getItem(cacheKey);
+        const cacheTime = localStorage.getItem(`${cacheKey}-time`);
+        
+        if (cached && cacheTime) {
+          const age = Date.now() - parseInt(cacheTime);
+          if (age < 10 * 60 * 1000) { // 10 minutes cache
+            setRealNews(JSON.parse(cached));
+            setNewsLoading(false);
+            return;
+          }
+        }
+        
         try {
           const { data, error } = await supabase.functions.invoke('crypto-news', {
             body: { coinSymbol: coin.id.toUpperCase() }
           });
           if (error) throw error;
-          setRealNews(data.news || []);
+          
+          const newsData = data.news || [];
+          setRealNews(newsData);
+          
+          // Cache the result
+          localStorage.setItem(cacheKey, JSON.stringify(newsData));
+          localStorage.setItem(`${cacheKey}-time`, Date.now().toString());
         } catch (error) {
           console.error('Failed to fetch news:', error);
           setRealNews([]);

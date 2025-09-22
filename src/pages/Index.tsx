@@ -104,13 +104,11 @@ const Index = () => {
         return <ReportsExports />;
       case "profile":
         return <Profile />;
-      // Legacy routes for backward compatibility
+      // Legacy routes now handled by MarketDashboard
       case "portfolio":
-        return <Portfolio />;
       case "sentiment":
-        return <MultiCoinSentiment />;
       case "whales":
-        return <WhaleAnalytics />;
+        return <MarketDashboard />;
       case "yields":
         return <Yields />;
       case "premium":
