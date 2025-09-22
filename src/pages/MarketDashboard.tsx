@@ -27,6 +27,9 @@ import MultiCoinSentiment from './MultiCoinSentiment';
 import Portfolio from './Portfolio';
 import { StickyToolbar } from '@/components/market/StickyToolbar';
 import { KpiSummary } from '@/components/market/KpiSummary';
+import { KpiCustomizer } from '@/components/market/KpiCustomizer';
+import { QuickWidgets } from '@/components/mobile/QuickWidgets';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { FreshnessBadge } from '@/components/market/FreshnessBadge';
 import { RightActivityFeed } from '@/components/market/RightActivityFeed';
 import { FloatingActionButton } from '@/components/market/FloatingActionButton';
@@ -37,6 +40,8 @@ export default function MarketDashboard() {
   const { userPlan } = useSubscription();
   const { track } = useAnalytics();
   const { isCompact } = useCompactView();
+  const { isEnabled } = useFeatureFlags();
+  const [selectedKpis, setSelectedKpis] = useState(['volume', 'whales', 'risk', 'score']);
   
   // Toolbar state
   const [timeframe, setTimeframe] = useState(searchParams.get('tf') || '24h');
@@ -157,8 +162,30 @@ export default function MarketDashboard() {
     const hasSeenTour = localStorage.getItem(`tour_completed_${user.id}`);
     
     if (!hasSeenTour) {
-      // Show tour after a short delay
-      setTimeout(() => setShowTour(true), 2000);
+      // Show tour after elements are loaded, longer delay on mobile
+      const isMobile = window.innerWidth < 768;
+      const delay = isMobile ? 4000 : 2000;
+      
+      setTimeout(() => {
+        // Ensure all tour target elements exist before starting
+        const tourElements = [
+          '[data-tour="kpis"]',
+          '[data-tour="tabs"]',
+          '[data-tour="activity-feed"]'
+        ];
+        
+        const allElementsExist = tourElements.every(selector => {
+          const element = document.querySelector(selector);
+          return element && element.offsetParent !== null; // Check if visible
+        });
+        
+        if (allElementsExist) {
+          setShowTour(true);
+        } else {
+          // Retry after another second if elements not ready
+          setTimeout(() => setShowTour(true), 1000);
+        }
+      }, delay);
     }
   }, [user]);
 
@@ -357,6 +384,17 @@ export default function MarketDashboard() {
           />
         </ErrorBoundary>
 
+        {/* Mobile Quick Widgets */}
+        <QuickWidgets
+          marketMood={enhancedMarketData?.marketMood}
+          topWhales={[
+            { address: '0x1234...5678', balance: 15000000, change: 2.3 },
+            { address: '0xabcd...efgh', balance: 12500000, change: -1.2 },
+            { address: '0x9876...5432', balance: 11200000, change: 4.1 }
+          ]}
+          portfolioPnL={{ value: 125000, change: 8500, percentage: 7.3 }}
+        />
+
         {/* Main Dashboard Content */}
         <div className="flex-1 p-4 space-y-6 pb-20">
           {/* Enhanced Header with KPIs */}
@@ -416,19 +454,27 @@ export default function MarketDashboard() {
                 </div>
               </div>
 
-              <KpiSummary
-                volume24h={kpiData.volume24h}
-                activeWhales={kpiData.activeWhales}
-                riskAlerts={kpiData.riskAlerts}
-                avgRiskScore={kpiData.avgRiskScore}
-                loading={kpiData.loading}
-                volumeDelta={kpiData.volumeDelta}
-                whalesDelta={kpiData.whalesDelta}
-                riskAlertsDelta={kpiData.riskAlertsDelta}
-                riskScoreDelta={kpiData.riskScoreDelta}
-                onCreateAlert={handleCreateAlert}
-                onCardClick={handleKpiCardClick}
-              />
+              <div className="flex items-center justify-between">
+                <KpiSummary
+                  volume24h={kpiData.volume24h}
+                  activeWhales={kpiData.activeWhales}
+                  riskAlerts={kpiData.riskAlerts}
+                  avgRiskScore={kpiData.avgRiskScore}
+                  loading={kpiData.loading}
+                  volumeDelta={kpiData.volumeDelta}
+                  whalesDelta={kpiData.whalesDelta}
+                  riskAlertsDelta={kpiData.riskAlertsDelta}
+                  riskScoreDelta={kpiData.riskScoreDelta}
+                  onCreateAlert={handleCreateAlert}
+                  onCardClick={handleKpiCardClick}
+                />
+                {isEnabled('custom_kpi_cards') && (
+                  <KpiCustomizer
+                    selectedKpis={selectedKpis}
+                    onKpisChange={setSelectedKpis}
+                  />
+                )}
+              </div>
             </div>
           </ErrorBoundary>
 
