@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bookmark, Star, Share, Trash2, Plus } from 'lucide-react';
+import { Bookmark, Star, Share, Trash2, Plus, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SavedView {
@@ -38,6 +39,7 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
   const { user } = useAuth();
   const { userPlan } = useSubscription();
   const { toast } = useToast();
+  const { track } = useAnalytics();
 
   // Load saved views
   useEffect(() => {
@@ -124,6 +126,7 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
       setIsOpen(false);
       loadSavedViews();
       onSaveView(newViewName);
+      track('saved_view_created', { name: newViewName, state: currentState, plan: userPlan.plan });
     } catch (error) {
       toast({
         title: 'Save Failed',
@@ -174,13 +177,30 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
       return;
     }
 
-    const shareUrl = `${window.location.origin}/?shared=${view.id}`;
-    await navigator.clipboard.writeText(shareUrl);
-    
-    toast({
-      title: 'Link Copied',
-      description: 'Shareable link copied to clipboard.'
-    });
+    try {
+      const shareUrl = `${window.location.origin}${window.location.pathname}?` + 
+        new URLSearchParams({
+          tf: view.url_state.timeframe,
+          chain: view.url_state.chain,
+          search: view.url_state.searchQuery,
+          marketTab: view.url_state.activeTab
+        }).toString();
+      
+      await navigator.clipboard.writeText(shareUrl);
+      track('saved_view_shared', { viewId: view.id, name: view.name });
+      
+      toast({
+        title: 'Link Copied',
+        description: 'Shareable link copied to clipboard.'
+      });
+    } catch (error) {
+      console.error('Failed to share view:', error);
+      toast({
+        title: 'Share Failed',
+        description: 'Failed to copy share link.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const deleteView = async (viewId: string) => {

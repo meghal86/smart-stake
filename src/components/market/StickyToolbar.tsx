@@ -12,6 +12,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { formatTimestamp } from '@/utils/timeFormat';
 import { SavedViewsManager } from './SavedViewsManager';
+import { calculateMarketMood } from '@/utils/marketMood';
+import { HelpOverlay } from './HelpOverlay';
 
 interface StickyToolbarProps {
   timeframe: string;
@@ -42,6 +44,7 @@ export function StickyToolbar({
   const { data: pricesData, isLoading: pricesLoading, error: pricesError } = usePricesSummary(['BTC', 'ETH']);
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const debouncedSearch = useDebounce(localSearch, 250);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     onSearchChange(debouncedSearch);
@@ -55,7 +58,7 @@ export function StickyToolbar({
       }
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        alert('Keyboard shortcuts:\n/ - Focus search\n? - Show help');
+        setShowHelp(true);
       }
     };
 
@@ -229,13 +232,15 @@ export function StickyToolbar({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => alert('Keyboard shortcuts:\n/ - Focus search\n? - Show help')}
+            onClick={() => setShowHelp(true)}
             className={`${isCompact ? 'h-7 w-7' : 'h-8 w-8'} p-0`}
           >
             <HelpCircle className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'}`} />
           </Button>
         </div>
       </div>
+      
+      <HelpOverlay isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }

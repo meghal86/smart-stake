@@ -10,6 +10,7 @@ import { CompactViewProvider } from "@/contexts/CompactViewContext";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
+import { DevInfo } from "@/components/DevInfo";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -37,7 +38,17 @@ import AdminBI from "./pages/AdminBI";
 import AdminOps from "./pages/AdminOps";
 import HealthEndpoint from "./pages/HealthEndpoint";
 
-const queryClient = new QueryClient();
+// POLISH: Enhanced React Query configuration with retry logic
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 15000),
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -90,6 +101,7 @@ const App = () => {
               <TooltipProvider>
               <Toaster />
               <Sonner />
+              <DevInfo />
               {showSplash && (
                 <SplashScreen onComplete={handleSplashComplete} duration={5000} />
               )}
