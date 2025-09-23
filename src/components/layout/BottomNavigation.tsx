@@ -1,4 +1,4 @@
-import { Home, Activity, Fish, TrendingUp, Shield, Users, Brain, Twitter, Briefcase, ChevronUp } from "lucide-react";
+import { Home, Activity, Fish, TrendingUp, Shield, Users, Brain, Twitter, Briefcase, ChevronUp, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,10 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { id: "home", label: "Alerts", icon: Home },
   { id: "market", label: "Market", icon: TrendingUp },
+  { id: "portfolio", label: "Portfolio", icon: Briefcase, isPremium: true },
   { id: "predictions", label: "Predictions", icon: Activity, isPremium: true },
   { id: "scanner", label: "Scanner", icon: Shield, isPremium: true },
-  { id: "reports", label: "Reports", icon: Briefcase, isPremium: true },
+  { id: "reports", label: "Reports", icon: FileText, isPremium: true },
   { id: "profile", label: "Settings", icon: Users },
 ];
 

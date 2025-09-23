@@ -12,6 +12,7 @@ import Scanner from "./Scanner";
 import Premium from "./Premium";
 import Profile from "./Profile";
 import Portfolio from "./Portfolio";
+import PortfolioEnhanced from "./PortfolioEnhanced";
 import MarketSentiment from "./MarketSentiment";
 import MultiCoinSentiment from "./MultiCoinSentiment";
 import WhaleAnalytics from "./WhaleAnalytics";
@@ -104,8 +105,9 @@ const Index = () => {
         return <ReportsExports />;
       case "profile":
         return <Profile />;
-      // Legacy routes now handled by MarketDashboard
       case "portfolio":
+        return <PortfolioEnhanced />;
+      // Legacy routes now handled by MarketDashboard
       case "sentiment":
       case "whales":
         return <MarketDashboard />;

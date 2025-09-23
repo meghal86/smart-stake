@@ -295,6 +295,11 @@ export const UserHeader = () => {
                   {actualPlan === 'free' ? 'Upgrade to Premium' : 'Premium Features'}
                 </DropdownMenuItem>
                 
+                <DropdownMenuItem onClick={() => navigate('/plans')}>
+                  <Crown className="mr-2 h-4 w-4" />
+                  View Plans
+                </DropdownMenuItem>
+                
                 <DropdownMenuSeparator />
                 
                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600">

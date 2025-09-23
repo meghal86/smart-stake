@@ -19,6 +19,7 @@ import { CounterpartyGraph } from '@/components/market/CounterpartyGraph';
 import { PerformanceMonitor } from '@/components/market/PerformanceMonitor';
 import { GuidedTour } from '@/components/market/GuidedTour';
 import { SentimentCorrelationHeatmap } from '@/components/market/SentimentCorrelationHeatmap';
+import { MobileSentimentCorrelation } from '@/components/market/MobileSentimentCorrelation';
 import { MobileActivityDrawer } from '@/components/market/MobileActivityDrawer';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToCSV, exportToPDF, prepareWhaleAnalyticsExport, preparePortfolioExport } from '@/utils/exportUtils';
@@ -607,8 +608,11 @@ export default function MarketDashboard() {
 
                     <TabsContent value="correlation" className="mt-5">
                       <div className="space-y-4">
-                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4 overflow-hidden">
-                          <div className="w-full overflow-x-auto">
+                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4">
+                          <div className="block lg:hidden">
+                            <MobileSentimentCorrelation coins={sentimentCoins.length > 0 ? sentimentCoins : mockSentimentCoins} />
+                          </div>
+                          <div className="hidden lg:block overflow-x-auto">
                             <SentimentCorrelationHeatmap coins={sentimentCoins.length > 0 ? sentimentCoins : mockSentimentCoins} />
                           </div>
                         </div>

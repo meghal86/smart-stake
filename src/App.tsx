@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CompactViewProvider } from "@/contexts/CompactViewContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
@@ -37,6 +38,8 @@ import PredictionsScenarios from "./pages/PredictionsScenarios";
 import AdminBI from "./pages/AdminBI";
 import AdminOps from "./pages/AdminOps";
 import HealthEndpoint from "./pages/HealthEndpoint";
+import PortfolioEnhanced from "./pages/PortfolioEnhanced";
+import Plans from "./pages/Plans";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -98,6 +101,7 @@ const App = () => {
         <ThemeProvider>
           <CompactViewProvider>
             <AuthProvider>
+              <SubscriptionProvider>
               <TooltipProvider>
               <Toaster />
               <Sonner />
@@ -128,10 +132,13 @@ const App = () => {
                   <Route path="/admin/ops" element={<AdminOps />} />
                   <Route path="/admin/ops/health" element={<HealthEndpoint />} />
                   <Route path="/health" element={<HealthCheck />} />
+                  <Route path="/portfolio-enhanced" element={<PortfolioEnhanced />} />
+                  <Route path="/plans" element={<Plans />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
               </TooltipProvider>
+              </SubscriptionProvider>
             </AuthProvider>
           </CompactViewProvider>
         </ThemeProvider>

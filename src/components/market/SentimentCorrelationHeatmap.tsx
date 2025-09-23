@@ -201,6 +201,23 @@ export function SentimentCorrelationHeatmap({ coins }: SentimentCorrelationHeatm
           </div>
         </div>
       </Card>
+
+      {/* Premium Upsell for Desktop - Only show for non-premium users */}
+      {userPlan.plan === 'free' && (
+        <Card className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+          <div className="text-center">
+            <Lock className="h-8 w-8 mx-auto mb-3 text-amber-500" />
+            <h4 className="font-semibold mb-2">Unlock Advanced AI Insights</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Get AI-powered correlation analysis, predictive insights, and advanced clustering algorithms
+            </p>
+            <button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg font-medium">
+              <Lock className="h-4 w-4 mr-2 inline" />
+              Upgrade to Premium
+            </button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
