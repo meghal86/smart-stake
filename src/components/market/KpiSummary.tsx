@@ -4,7 +4,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { useCompactView } from '@/contexts/CompactViewContext';
 
 interface KpiSummaryProps {
   volume24h: number;
@@ -34,14 +33,19 @@ export function KpiSummary({
   onCardClick 
 }: KpiSummaryProps) {
   const { track } = useAnalytics();
-  const { isCompact } = useCompactView();
+
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: window.innerWidth < 640 ? 'repeat(2, 1fr)' : window.innerWidth < 1024 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+        gap: window.innerWidth < 640 ? '4px' : '8px',
+        marginBottom: window.innerWidth < 640 ? '12px' : '24px'
+      }}>
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="p-4">
-            <Skeleton className="h-4 w-16 mb-2" />
-            <Skeleton className="h-8 w-24" />
+          <Card key={i} style={{ padding: window.innerWidth < 640 ? '6px' : '12px' }}>
+            <Skeleton className="h-3 w-12 mb-1" />
+            <Skeleton className="h-4 w-16" />
           </Card>
         ))}
       </div>
@@ -49,43 +53,10 @@ export function KpiSummary({
   }
 
   const formatVolume = (vol: number) => {
-    if (vol >= 1e9) return `$${(vol / 1e9).toFixed(2)}B`;
-    if (vol >= 1e6) return `$${(vol / 1e6).toFixed(2)}M`;
-    if (vol >= 1e3) return `$${(vol / 1e3).toFixed(2)}K`;
+    if (vol >= 1e9) return `$${(vol / 1e9).toFixed(1)}B`;
+    if (vol >= 1e6) return `$${(vol / 1e6).toFixed(1)}M`;
+    if (vol >= 1e3) return `$${(vol / 1e3).toFixed(1)}K`;
     return `$${vol.toFixed(0)}`;
-  };
-
-  // Generate sparkline data for 24h trend
-  const generateSparklineData = (baseValue: number, delta: number) => {
-    const points = [];
-    let current = baseValue * 0.9;
-    for (let i = 0; i < 24; i++) {
-      current += (Math.random() - 0.5) * (baseValue * 0.1) + (delta / 24);
-      points.push(Math.max(0, current));
-    }
-    return points;
-  };
-
-  const Sparkline = ({ data, color = '#3b82f6' }: { data: number[]; color?: string }) => {
-    if (data.length === 0) return null;
-    
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-    
-    return (
-      <svg width={isCompact ? "40" : "60"} height={isCompact ? "16" : "24"} className="inline-block">
-        <polyline
-          points={data.map((value, index) => 
-            `${(index / (data.length - 1)) * (isCompact ? 40 : 60)},${(isCompact ? 16 : 24) - ((value - min) / range) * (isCompact ? 16 : 24)}`
-          ).join(' ')}
-          fill="none"
-          stroke={color}
-          strokeWidth={isCompact ? "1" : "1.5"}
-          opacity="0.8"
-        />
-      </svg>
-    );
   };
 
   const getRiskColor = (score: number) => {
@@ -100,50 +71,45 @@ export function KpiSummary({
     return { text: `${sign}${delta.toFixed(1)}%`, color };
   };
 
+  const isMobile = window.innerWidth < 640;
+  const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+
   const kpiCards = [
     {
       id: 'volume',
-      title: '24h Volume',
+      title: isMobile ? 'Vol' : '24h Volume',
       value: formatVolume(volume24h),
       delta: volumeDelta,
-      icon: <DollarSign className={`${isCompact ? 'h-4 w-4' : 'h-5 w-5'}`} />,
+      icon: <DollarSign style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
       color: 'text-green-600',
-      borderColor: 'border-l-green-500',
-      sparklineData: generateSparklineData(volume24h, volumeDelta * 1000000),
-      sparklineColor: '#10b981'
+      borderColor: 'border-l-green-500'
     },
     {
       id: 'whales',
-      title: 'Active Whales',
-      value: activeWhales.toLocaleString(),
+      title: isMobile ? 'Whales' : 'Active Whales',
+      value: isMobile ? `${Math.round(activeWhales/1000)}k` : activeWhales.toLocaleString(),
       delta: whalesDelta,
-      icon: <Fish className={`${isCompact ? 'h-4 w-4' : 'h-5 w-5'}`} />,
+      icon: <Fish style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
       color: 'text-blue-600',
-      borderColor: 'border-l-blue-500',
-      sparklineData: generateSparklineData(activeWhales, whalesDelta),
-      sparklineColor: '#3b82f6'
+      borderColor: 'border-l-blue-500'
     },
     {
       id: 'risk',
-      title: 'Risk Alerts',
+      title: isMobile ? 'Alerts' : 'Risk Alerts',
       value: riskAlerts.toString(),
       delta: riskAlertsDelta,
-      icon: <AlertTriangle className={`${isCompact ? 'h-4 w-4' : 'h-5 w-5'}`} />,
+      icon: <AlertTriangle style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
       color: 'text-orange-600',
-      borderColor: 'border-l-orange-500',
-      sparklineData: generateSparklineData(riskAlerts, riskAlertsDelta),
-      sparklineColor: '#f59e0b'
+      borderColor: 'border-l-orange-500'
     },
     {
       id: 'score',
-      title: 'Avg Risk Score',
-      value: `${avgRiskScore.toFixed(1)}/100`,
+      title: isMobile ? 'Risk' : 'Risk Score',
+      value: `${avgRiskScore.toFixed(0)}`,
       delta: riskScoreDelta,
-      icon: <Activity className={`${isCompact ? 'h-4 w-4' : 'h-5 w-5'}`} />,
+      icon: <Activity style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
       color: getRiskColor(avgRiskScore),
-      borderColor: avgRiskScore > 70 ? 'border-l-red-500' : avgRiskScore > 40 ? 'border-l-yellow-500' : 'border-l-green-500',
-      sparklineData: generateSparklineData(avgRiskScore, riskScoreDelta),
-      sparklineColor: avgRiskScore > 70 ? '#dc2626' : avgRiskScore > 40 ? '#d97706' : '#059669'
+      borderColor: avgRiskScore > 70 ? 'border-l-red-500' : avgRiskScore > 40 ? 'border-l-yellow-500' : 'border-l-green-500'
     }
   ];
 
@@ -162,67 +128,101 @@ export function KpiSummary({
   };
 
   return (
-    <div className={`grid grid-cols-2 md:grid-cols-4 ${isCompact ? 'gap-2' : 'gap-4'} mb-6`}>
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+      gap: isMobile ? '4px' : isTablet ? '8px' : '16px',
+      marginBottom: isMobile ? '12px' : '24px'
+    }}>
       {kpiCards.map((card) => (
-        <Tooltip key={card.id}>
-          <TooltipTrigger asChild>
-            <Card 
-              className={`${isCompact ? 'p-3' : 'p-4'} cursor-pointer hover:bg-muted/50 hover:shadow-md transition-all duration-200 group border-l-4 ${card.borderColor} kpi-card`}
-              onClick={() => handleCardClick(card.id)}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className={`flex items-center ${isCompact ? 'gap-1' : 'gap-2'}`}>
-                  <div className={`${card.color}`}>
-                    {card.icon}
-                  </div>
-                  <span className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>{card.title}</span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className={`${isCompact ? 'h-5 w-5' : 'h-6 w-6'} p-0 opacity-0 group-hover:opacity-100 transition-opacity`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAlertClick(card.id, card.title, card.value);
+        <Card 
+          key={card.id}
+          className={`cursor-pointer hover:bg-muted/50 hover:shadow-md transition-all duration-200 group ${card.borderColor}`}
+          style={{ 
+            padding: isMobile ? '6px' : isTablet ? '8px' : '16px',
+            borderLeftWidth: isMobile ? '2px' : '4px'
+          }}
+          onClick={() => handleCardClick(card.id)}
+        >
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            marginBottom: isMobile ? '2px' : '8px' 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, flex: 1 }}>
+              <div className={card.color} style={{ flexShrink: 0 }}>
+                {card.icon}
+              </div>
+              <span 
+                className="text-muted-foreground"
+                style={{ 
+                  fontSize: isMobile ? '10px' : '12px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {card.title}
+              </span>
+            </div>
+            {!isMobile && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAlertClick(card.id, card.title, card.value);
+                }}
+              >
+                <Bell className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          
+          <div 
+            className={`font-bold kpi-value ${card.color}`}
+            style={{ 
+              fontSize: isMobile ? '12px' : isTablet ? '16px' : '20px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              marginBottom: isMobile ? '2px' : '8px'
+            }}
+          >
+            {loading ? '...' : card.value}
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div 
+                className={formatDelta(card.delta).color}
+                style={{ 
+                  fontSize: '10px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {formatDelta(card.delta).text}
+              </div>
+              {!isMobile && (
+                <div 
+                  className="text-muted-foreground opacity-70"
+                  style={{ 
+                    fontSize: '10px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  <Bell className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'}`} />
-                </Button>
-              </div>
-              
-              <div className={`${isCompact ? 'text-lg' : 'text-2xl'} font-bold kpi-value ${card.color}`}>
-                {loading ? '...' : card.value}
-              </div>
-              
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex flex-col">
-                  <div className={`${isCompact ? 'text-xs' : 'text-sm'} ${formatDelta(card.delta).color}`}>
-                    {formatDelta(card.delta).text}
-                  </div>
-                  {/* POLISH: Microcopy for baseline clarity */}
-                  <div className={`${isCompact ? 'text-xs' : 'text-xs'} text-muted-foreground opacity-70`}>
-                    {card.id === 'volume' ? 'vs 24h avg' : 
-                     card.id === 'whales' ? 'vs yesterday' :
-                     card.id === 'risk' ? 'vs yesterday' : 'vs yesterday'}
-                  </div>
+                  vs yesterday
                 </div>
-                <Sparkline data={card.sparklineData} color={card.sparklineColor} />
-              </div>
-            </Card>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="text-sm">
-              <div className="font-medium">{card.title}</div>
-              <div>Click to drill down and explore details</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                24h change: {formatDelta(card.delta).text}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Click bell icon to set up alerts
-              </div>
+              )}
             </div>
-          </TooltipContent>
-        </Tooltip>
+          </div>
+        </Card>
       ))}
     </div>
   );

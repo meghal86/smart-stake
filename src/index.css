@@ -261,6 +261,28 @@
     -ms-text-size-adjust: 100%;
   }
   
+  /* Force all cards to be compact on mobile */
+  .card, [data-radix-collection-item] {
+    padding: 0.5rem !important;
+    margin: 0.25rem 0 !important;
+  }
+  
+  /* Make all text smaller on mobile */
+  .text-2xl {
+    font-size: 1rem !important;
+    line-height: 1.25rem !important;
+  }
+  
+  .text-xl {
+    font-size: 0.875rem !important;
+    line-height: 1.125rem !important;
+  }
+  
+  .text-lg {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+  
   /* Optimize tap targets for mobile */
   button, 
   [role="button"], 
@@ -288,6 +310,20 @@
     margin: 1rem;
     max-height: calc(100vh - 2rem);
     border-radius: 1rem;
+  }
+  
+  /* Force grid gaps to be smaller */
+  .grid {
+    gap: 0.25rem !important;
+  }
+  
+  /* Make containers more compact */
+  .space-y-4 > * + * {
+    margin-top: 0.5rem !important;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 0.75rem !important;
   }
 }
 

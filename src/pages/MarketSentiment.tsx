@@ -156,8 +156,8 @@ export default function MarketSentiment() {
   const fearSparkline = [35, 42, 38, 45, 42];
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
-      <div className="p-4 space-y-4">
+    <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20 overflow-x-hidden">
+      <div className="p-2 sm:p-4 space-y-3 sm:space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -219,7 +219,7 @@ export default function MarketSentiment() {
         )}
 
         {/* Fear & Greed Index */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <h3 className="font-semibold">Fear & Greed Index</h3>
@@ -240,7 +240,7 @@ export default function MarketSentiment() {
         </Card>
 
         {/* Market Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -309,7 +309,7 @@ export default function MarketSentiment() {
         </div>
 
         {/* Global Market Data */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -356,7 +356,7 @@ export default function MarketSentiment() {
         </div>
 
         {/* Market Dominance */}
-        <Card className="p-4">
+        <Card className="p-2 sm:p-4">
           <div className="flex items-center gap-1 mb-3">
             <h3 className="font-semibold">Market Dominance</h3>
             <TooltipProvider>
@@ -389,7 +389,7 @@ export default function MarketSentiment() {
         </Card>
 
         {/* Sentiment Summary */}
-        <Card className="p-4">
+        <Card className="p-2 sm:p-4">
           <h3 className="font-semibold mb-3">Market Summary</h3>
           <p className="text-sm text-muted-foreground mb-4">{getSentimentSummary()}</p>
           

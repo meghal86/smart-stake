@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useWindowSize } from '@/hooks/use-mobile';
 import { TrendingUp, Fish, Briefcase, Download, FileText, BarChart3, Layers } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ export default function MarketDashboard() {
   const { track } = useAnalytics();
   const { isCompact } = useCompactView();
   const { isEnabled } = useFeatureFlags();
+  const { width: windowWidth } = useWindowSize();
   const [selectedKpis, setSelectedKpis] = useState(['volume', 'whales', 'risk', 'score']);
   
   // Toolbar state
@@ -366,7 +368,7 @@ export default function MarketDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background to-background/80">
+    <div className="flex min-h-screen bg-gradient-to-br from-background to-background/80 overflow-x-hidden">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Sticky Toolbar */}
@@ -396,10 +398,23 @@ export default function MarketDashboard() {
         />
 
         {/* Main Dashboard Content */}
-        <div className="flex-1 p-4 space-y-6 pb-20">
+        <div 
+          className="flex-1 pb-20 overflow-x-hidden"
+          style={{
+            padding: window.innerWidth < 640 ? '4px' : '16px',
+            gap: window.innerWidth < 640 ? '8px' : '24px',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           {/* Enhanced Header with KPIs */}
           <ErrorBoundary>
-            <div className="space-y-4" data-tour="kpis">
+            <div 
+              data-tour="kpis"
+              style={{
+                marginBottom: window.innerWidth < 640 ? '8px' : '16px'
+              }}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/20 rounded-xl">
@@ -487,31 +502,47 @@ export default function MarketDashboard() {
               }
               track('market_tab_changed', { from: activeTab, to: value });
             }} className="w-full" data-tour="tabs">
-              <TabsList className={`grid w-full ${hasAccessedSentiment ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
-                <TabsTrigger value="whales" className="flex items-center gap-1 sm:gap-2">
-                  <Fish className="h-4 w-4" />
-                  <span className="hidden sm:inline">Whale Analytics</span>
-                  <span className="sm:hidden">Whales</span>
-                  {userPlan.plan === 'free' && <span className="text-xs opacity-60 hidden sm:inline">(Limited)</span>}
+              <TabsList 
+                className="grid w-full"
+                style={{
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: window.innerWidth < 640 ? '2px' : '4px',
+                  height: window.innerWidth < 640 ? '28px' : '40px'
+                }}
+              >
+                <TabsTrigger 
+                  value="whales" 
+                  className="flex items-center gap-1"
+                  style={{
+                    fontSize: window.innerWidth < 640 ? '10px' : '14px',
+                    padding: window.innerWidth < 640 ? '4px' : '12px'
+                  }}
+                >
+                  <Fish style={{ width: window.innerWidth < 640 ? '12px' : '16px', height: window.innerWidth < 640 ? '12px' : '16px' }} />
+                  <span>{window.innerWidth < 640 ? 'Whales' : 'Whale Analytics'}</span>
                 </TabsTrigger>
-                <TabsTrigger value="sentiment" className="flex items-center gap-1 sm:gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sentiment</span>
-                  <span className="sm:hidden">Mood</span>
-                  {userPlan.plan === 'free' && <span className="text-xs opacity-60 hidden sm:inline">(Top 10)</span>}
+                <TabsTrigger 
+                  value="sentiment" 
+                  className="flex items-center gap-1"
+                  style={{
+                    fontSize: window.innerWidth < 640 ? '10px' : '14px',
+                    padding: window.innerWidth < 640 ? '4px' : '12px'
+                  }}
+                >
+                  <TrendingUp style={{ width: window.innerWidth < 640 ? '12px' : '16px', height: window.innerWidth < 640 ? '12px' : '16px' }} />
+                  <span>{window.innerWidth < 640 ? 'Mood' : 'Sentiment'}</span>
                 </TabsTrigger>
                 {hasAccessedSentiment && (
-                  <TabsTrigger value="correlation" className="flex items-center gap-1 sm:gap-2">
-                    <BarChart3 className="h-4 w-4" />
+                  <TabsTrigger value="correlation" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
+                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden xs:inline sm:hidden">Corr</span>
                     <span className="hidden sm:inline">Correlation</span>
-                    <span className="sm:hidden">Corr</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2">
-                  <Briefcase className="h-4 w-4" />
+                <TabsTrigger value="portfolio" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
+                  <Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline sm:hidden">Port</span>
                   <span className="hidden sm:inline">Portfolio</span>
-                  <span className="sm:hidden">Port</span>
-                  {userPlan.plan === 'free' && <span className="text-xs opacity-60 hidden sm:inline">(1 Wallet)</span>}
                 </TabsTrigger>
               </TabsList>
 
