@@ -159,7 +159,7 @@ export default function MarketSentiment() {
     <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/20 rounded-xl">
               <Activity className="h-6 w-6 text-primary" />
@@ -186,7 +186,7 @@ export default function MarketSentiment() {
         {showSettings && (
           <Card className="p-4 mb-4">
             <h3 className="font-semibold mb-3">Alert Settings</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label className="text-xs">Fear & Greed Threshold</Label>
                 <Input 
@@ -223,7 +223,9 @@ export default function MarketSentiment() {
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <h3 className="font-semibold">Fear & Greed Index</h3>
-              <Sparkline data={fearSparkline} color="#8b5cf6" />
+              <div className="hidden sm:block">
+                <Sparkline data={fearSparkline} color="#8b5cf6" />
+              </div>
             </div>
             <div className="relative w-32 h-32 mx-auto mb-4">
               <Progress value={sentimentData.fearGreedIndex} className="w-full" />
@@ -238,7 +240,7 @@ export default function MarketSentiment() {
         </Card>
 
         {/* Market Overview */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -256,8 +258,10 @@ export default function MarketSentiment() {
                   </TooltipProvider>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold">${sentimentData.btcPrice.toLocaleString()}</p>
-                  <Sparkline data={btcSparkline} color="#f97316" />
+                  <p className="text-base sm:text-lg font-bold">${sentimentData.btcPrice.toLocaleString()}</p>
+                  <div className="hidden sm:block">
+                    <Sparkline data={btcSparkline} color="#f97316" />
+                  </div>
                 </div>
                 <p className={`text-xs ${(sentimentData.btcChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {(sentimentData.btcChange24h || 0) >= 0 ? '+' : ''}{(sentimentData.btcChange24h || 0).toFixed(2)}% 24h
@@ -287,8 +291,10 @@ export default function MarketSentiment() {
                   </TooltipProvider>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold">${sentimentData.ethPrice.toLocaleString()}</p>
-                  <Sparkline data={ethSparkline} color="#3b82f6" />
+                  <p className="text-base sm:text-lg font-bold">${sentimentData.ethPrice.toLocaleString()}</p>
+                  <div className="hidden sm:block">
+                    <Sparkline data={ethSparkline} color="#3b82f6" />
+                  </div>
                 </div>
                 <p className={`text-xs ${(sentimentData.ethChange24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {(sentimentData.ethChange24h || 0) >= 0 ? '+' : ''}{(sentimentData.ethChange24h || 0).toFixed(2)}% 24h
@@ -303,7 +309,7 @@ export default function MarketSentiment() {
         </div>
 
         {/* Global Market Data */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -320,7 +326,7 @@ export default function MarketSentiment() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <p className="text-lg font-bold">{formatNumber(sentimentData.marketCap, 2)}</p>
+                <p className="text-base sm:text-lg font-bold">{formatNumber(sentimentData.marketCap, 2)}</p>
               </div>
               <BarChart3 className="h-5 w-5 text-blue-500" />
             </div>
@@ -342,7 +348,7 @@ export default function MarketSentiment() {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <p className="text-lg font-bold">{formatNumber(sentimentData.totalVolume, 1)}</p>
+                <p className="text-base sm:text-lg font-bold">{formatNumber(sentimentData.totalVolume, 1)}</p>
               </div>
               <DollarSign className="h-5 w-5 text-purple-500" />
             </div>

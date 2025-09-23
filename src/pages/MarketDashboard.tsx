@@ -487,33 +487,37 @@ export default function MarketDashboard() {
               }
               track('market_tab_changed', { from: activeTab, to: value });
             }} className="w-full" data-tour="tabs">
-              <TabsList className={`grid w-full ${hasAccessedSentiment ? 'grid-cols-4' : 'grid-cols-3'}`}>
-                <TabsTrigger value="whales" className="flex items-center gap-2">
+              <TabsList className={`grid w-full ${hasAccessedSentiment ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+                <TabsTrigger value="whales" className="flex items-center gap-1 sm:gap-2">
                   <Fish className="h-4 w-4" />
-                  Whale Analytics
-                  {userPlan.plan === 'free' && <span className="text-xs opacity-60">(Limited)</span>}
+                  <span className="hidden sm:inline">Whale Analytics</span>
+                  <span className="sm:hidden">Whales</span>
+                  {userPlan.plan === 'free' && <span className="text-xs opacity-60 hidden sm:inline">(Limited)</span>}
                 </TabsTrigger>
-                <TabsTrigger value="sentiment" className="flex items-center gap-2">
+                <TabsTrigger value="sentiment" className="flex items-center gap-1 sm:gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  Sentiment
-                  {userPlan.plan === 'free' && <span className="text-xs opacity-60">(Top 10)</span>}
+                  <span className="hidden sm:inline">Sentiment</span>
+                  <span className="sm:hidden">Mood</span>
+                  {userPlan.plan === 'free' && <span className="text-xs opacity-60 hidden sm:inline">(Top 10)</span>}
                 </TabsTrigger>
                 {hasAccessedSentiment && (
-                  <TabsTrigger value="correlation" className="flex items-center gap-2">
+                  <TabsTrigger value="correlation" className="flex items-center gap-1 sm:gap-2">
                     <BarChart3 className="h-4 w-4" />
-                    Correlation
+                    <span className="hidden sm:inline">Correlation</span>
+                    <span className="sm:hidden">Corr</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="portfolio" className="flex items-center gap-2">
+                <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2">
                   <Briefcase className="h-4 w-4" />
-                  Portfolio
-                  {userPlan.plan === 'free' && <span className="text-xs opacity-60">(1 Wallet)</span>}
+                  <span className="hidden sm:inline">Portfolio</span>
+                  <span className="sm:hidden">Port</span>
+                  {userPlan.plan === 'free' && <span className="text-xs opacity-60 hidden sm:inline">(1 Wallet)</span>}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="whales" className="mt-6">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                       {userPlan.plan !== 'free' && (
                         <WhaleClustering
@@ -532,7 +536,7 @@ export default function MarketDashboard() {
                         className="flex items-center gap-1"
                       >
                         <FileText className="h-4 w-4" />
-                        CSV
+                        <span className="hidden sm:inline">CSV</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -541,7 +545,7 @@ export default function MarketDashboard() {
                         className="flex items-center gap-1"
                       >
                         <Download className="h-4 w-4" />
-                        PDF
+                        <span className="hidden sm:inline">PDF</span>
                       </Button>
                     </div>
                   </div>
@@ -571,7 +575,7 @@ export default function MarketDashboard() {
                       className="flex items-center gap-1"
                     >
                       <FileText className="h-4 w-4" />
-                      CSV
+                      <span className="hidden sm:inline">CSV</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -580,7 +584,7 @@ export default function MarketDashboard() {
                       className="flex items-center gap-1"
                     >
                       <Download className="h-4 w-4" />
-                      PDF
+                      <span className="hidden sm:inline">PDF</span>
                     </Button>
                   </div>
                   <Portfolio />

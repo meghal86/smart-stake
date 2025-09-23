@@ -85,13 +85,13 @@ export function StickyToolbar({
 
   return (
     <div className={`sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b ${isCompact ? 'py-2' : ''}`} data-tour="toolbar">
-      <div className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'p-4'} gap-4`}>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between ${isCompact ? 'px-3 py-2' : 'p-4'} gap-2 sm:gap-4`}>
+        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <Tooltip>
               <TooltipTrigger>
-                <Badge variant="outline" className={`font-mono ${isCompact ? 'text-xs px-2 py-1' : ''}`}>
-                  BTC ${pricesLoading ? '...' : btcPrice.toLocaleString()}
+                <Badge variant="outline" className={`font-mono ${isCompact ? 'text-xs px-2 py-1' : ''} whitespace-nowrap`}>
+                  <span className="hidden sm:inline">BTC </span>${pricesLoading ? '...' : btcPrice.toLocaleString()}
                   <span className={btcChange >= 0 ? 'text-green-500 ml-1' : 'text-red-500 ml-1'}>
                     {btcChange >= 0 ? '+' : ''}{btcChange.toFixed(2)}%
                   </span>
@@ -110,8 +110,8 @@ export function StickyToolbar({
             
             <Tooltip>
               <TooltipTrigger>
-                <Badge variant="outline" className={`font-mono ${isCompact ? 'text-xs px-2 py-1' : ''}`}>
-                  ETH ${pricesLoading ? '...' : ethPrice.toLocaleString()}
+                <Badge variant="outline" className={`font-mono ${isCompact ? 'text-xs px-2 py-1' : ''} whitespace-nowrap`}>
+                  <span className="hidden sm:inline">ETH </span>${pricesLoading ? '...' : ethPrice.toLocaleString()}
                   <span className={ethChange >= 0 ? 'text-green-500 ml-1' : 'text-red-500 ml-1'}>
                     {ethChange >= 0 ? '+' : ''}{ethChange.toFixed(2)}%
                   </span>
@@ -131,8 +131,8 @@ export function StickyToolbar({
           
           <Tooltip>
             <TooltipTrigger>
-              <Badge variant="secondary" className={`${moodColor} ${isCompact ? 'text-xs px-2 py-1' : ''}`}>
-                Market Mood: {marketMood}% • {pricesError ? 'Cached' : 'Live'}
+              <Badge variant="secondary" className={`${moodColor} ${isCompact ? 'text-xs px-2 py-1' : ''} whitespace-nowrap`}>
+                <span className="hidden sm:inline">Market Mood: </span>{marketMood}% <span className="hidden sm:inline">• {pricesError ? 'Cached' : 'Live'}</span>
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
@@ -147,7 +147,7 @@ export function StickyToolbar({
           </Tooltip>
         </div>
 
-        <div className={`flex items-center ${isCompact ? 'gap-2' : 'gap-3'}`}>
+        <div className={`flex items-center ${isCompact ? 'gap-1' : 'gap-2'} sm:gap-3 overflow-x-auto`}>
           <Select value={timeframe} onValueChange={onTimeframeChange}>
             <SelectTrigger className={isCompact ? 'w-16 h-8' : 'w-20'}>
               <Clock className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
@@ -177,10 +177,10 @@ export function StickyToolbar({
             <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
             <Input
               id="market-search"
-              placeholder={isCompact ? "Search..." : "addr: tx: asset: risk: chain:"}
+              placeholder={isCompact ? "Search..." : window.innerWidth < 640 ? "Search..." : "addr: tx: asset: risk: chain:"}
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className={`${isCompact ? 'pl-8 w-48 h-8 text-sm' : 'pl-10 w-64'}`}
+              className={`${isCompact ? 'pl-8 w-32 sm:w-48 h-8 text-sm' : 'pl-10 w-40 sm:w-64'}`}
             />
             {localSearch && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50">
@@ -198,7 +198,7 @@ export function StickyToolbar({
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           <Tooltip>
             <TooltipTrigger>
               <Button
