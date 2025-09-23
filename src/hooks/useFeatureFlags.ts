@@ -1,6 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-
 interface FeatureFlag {
   key: string;
   enabled: boolean;
@@ -20,38 +17,15 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
 };
 
 export function useFeatureFlags() {
-  const { data: flags, isLoading } = useQuery({
-    queryKey: ['feature-flags'],
-    queryFn: async (): Promise<Record<string, boolean>> => {
-      try {
-        const { data, error } = await supabase
-          .from('feature_flags')
-          .select('key, enabled, config');
-        
-        if (error) throw error;
-        
-        const flagMap: Record<string, boolean> = { ...DEFAULT_FLAGS };
-        data?.forEach((flag: FeatureFlag) => {
-          flagMap[flag.key] = flag.enabled;
-        });
-        
-        return flagMap;
-      } catch (error) {
-        console.warn('Failed to load feature flags, using defaults:', error);
-        return DEFAULT_FLAGS;
-      }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
-  });
+  const flags = DEFAULT_FLAGS;
 
   const isEnabled = (flagKey: string): boolean => {
-    return flags?.[flagKey] ?? DEFAULT_FLAGS[flagKey] ?? false;
+    return flags?.[flagKey] ?? false;
   };
 
   return {
-    flags: flags ?? DEFAULT_FLAGS,
+    flags,
     isEnabled,
-    isLoading
+    isLoading: false
   };
 }
