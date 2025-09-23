@@ -74,15 +74,18 @@ export function useEnhancedPortfolio(addresses: string[]) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEnhancedData = useCallback(async () => {
+  const fetchEnhancedData = async () => {
     if (addresses.length === 0) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      // Use mock data for demonstration (no API calls)
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
+      // Skip live data for now to prevent infinite loops
+      // TODO: Re-enable when live data is stable
+      
+      // Fallback to mock data
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const mockData: EnhancedPortfolioData = {
         totalValue: 125000,
@@ -167,11 +170,11 @@ export function useEnhancedPortfolio(addresses: string[]) {
     } finally {
       setLoading(false);
     }
-  }, [addresses]);
+  };
 
   useEffect(() => {
     fetchEnhancedData();
-  }, [fetchEnhancedData]);
+  }, [addresses.join(',')]);
 
   const simulateScenario = useCallback(async (scenario: any) => {
     // Mock simulation logic
@@ -221,10 +224,10 @@ export function useEnhancedPortfolio(addresses: string[]) {
   };
 }
 
-function generateMockBenchmarkData() {
+// Static benchmark data to prevent infinite re-renders
+const STATIC_BENCHMARK_DATA = (() => {
   const data = [];
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 30);
+  const startDate = new Date('2024-01-01');
   
   for (let i = 0; i < 30; i++) {
     const date = new Date(startDate);
@@ -232,46 +235,108 @@ function generateMockBenchmarkData() {
     
     data.push({
       date: date.toISOString().split('T')[0],
-      portfolio: Math.random() * 20 - 5, // -5% to +15%
-      ethereum: Math.random() * 15 - 3,  // -3% to +12%
-      bitcoin: Math.random() * 12 - 2,   // -2% to +10%
-      solana: Math.random() * 25 - 8     // -8% to +17%
+      portfolio: 5.2 + (i * 0.3) + Math.sin(i * 0.2) * 2,
+      ethereum: 3.1 + (i * 0.25) + Math.sin(i * 0.15) * 1.5,
+      bitcoin: 2.8 + (i * 0.2) + Math.sin(i * 0.1) * 1.2,
+      solana: 1.5 + (i * 0.4) + Math.sin(i * 0.25) * 3
     });
   }
   
   return data;
+})();
+
+function generateMockBenchmarkData() {
+  return STATIC_BENCHMARK_DATA;
 }
 
-function generateMockWhaleInteractions() {
+// Static whale interactions to prevent infinite re-renders
+const STATIC_WHALE_INTERACTIONS = (() => {
   const interactions = [];
   const types = ['CEX_INFLOW', 'CEX_OUTFLOW', 'DEX_SWAP', 'STABLECOIN_MINT', 'LARGE_TRANSFER', 'STAKING'] as const;
   const tokens = ['ETH', 'BTC', 'SOL', 'LINK', 'MATIC'];
   const impacts = ['high', 'medium', 'low'] as const;
   
   for (let i = 0; i < 15; i++) {
-    const timestamp = new Date();
-    timestamp.setHours(timestamp.getHours() - Math.random() * 48);
-    
-    const type = types[Math.floor(Math.random() * types.length)];
-    const token = tokens[Math.floor(Math.random() * tokens.length)];
-    const impact = impacts[Math.floor(Math.random() * impacts.length)];
-    const amount = Math.random() * 1000000;
-    const value = amount * (Math.random() * 3000 + 100);
+    const timestamp = new Date('2024-01-01');
+    timestamp.setHours(timestamp.getHours() - i * 3);
     
     interactions.push({
       id: `interaction-${i}`,
       timestamp,
-      type,
-      token,
-      amount,
-      value,
-      whaleAddress: `0x${Math.random().toString(16).substr(2, 40)}`,
-      impact,
-      portfolioEffect: (Math.random() - 0.5) * 10,
-      description: `Large ${type.toLowerCase().replace('_', ' ')} of ${token} detected`,
-      txHash: `0x${Math.random().toString(16).substr(2, 64)}`
+      type: types[i % types.length],
+      token: tokens[i % tokens.length],
+      amount: 500000 + (i * 50000),
+      value: (500000 + (i * 50000)) * (2000 + i * 100),
+      whaleAddress: `0x${'a'.repeat(40)}${i}`,
+      impact: impacts[i % impacts.length],
+      portfolioEffect: (i % 3 - 1) * 2.5,
+      description: `Large ${types[i % types.length].toLowerCase().replace('_', ' ')} of ${tokens[i % tokens.length]} detected`,
+      txHash: `0x${'b'.repeat(63)}${i}`
     });
   }
   
   return interactions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+})();
+
+function generateMockWhaleInteractions() {
+  return STATIC_WHALE_INTERACTIONS;
+}
+
+function convertLiveDataToEnhanced(liveData: any, addresses: string[]): EnhancedPortfolioData {
+  const firstAddress = addresses[0];
+  const portfolioData = liveData[firstAddress];
+  
+  if (!portfolioData) {
+    throw new Error('No portfolio data available');
+  }
+
+  // Convert live data to enhanced format
+  const chainBreakdown = [
+    { name: 'Ethereum', value: portfolioData.total_value_usd * 0.6, percentage: 60, color: '#627EEA' },
+    { name: 'Bitcoin', value: portfolioData.total_value_usd * 0.2, percentage: 20, color: '#F7931A' },
+    { name: 'Solana', value: portfolioData.total_value_usd * 0.12, percentage: 12, color: '#9945FF' },
+    { name: 'Polygon', value: portfolioData.total_value_usd * 0.08, percentage: 8, color: '#8247E5' }
+  ];
+
+  const topTokens = portfolioData.tokens.slice(0, 5).map((token: any, index: number) => ({
+    symbol: token.symbol,
+    percentage: (token.value_usd / portfolioData.total_value_usd) * 100,
+    value: token.value_usd,
+    risk: index < 2 ? 'low' as const : index < 4 ? 'medium' as const : 'high' as const
+  }));
+
+  return {
+    totalValue: portfolioData.total_value_usd,
+    pnl24h: portfolioData.total_value_usd * 0.02, // 2% gain
+    pnlPercent: 2.04,
+    riskScore: portfolioData.risk_score,
+    riskChange: -0.3,
+    whaleActivity: portfolioData.whale_interactions,
+    chainBreakdown,
+    topTokens,
+    concentrationScore: Math.max(60, topTokens[0]?.percentage || 0),
+    diversificationTrend: 2.1,
+    benchmarkData: generateMockBenchmarkData(),
+    riskFactors: [
+      {
+        name: 'Live Portfolio Risk',
+        score: portfolioData.risk_score,
+        change: 0.5,
+        impact: 'medium' as const,
+        description: 'Real-time risk assessment based on current holdings'
+      }
+    ],
+    whaleInfluence: 23.5,
+    marketCorrelation: 0.72,
+    liquidityRisk: 3.2,
+    upcomingUnlocks: [],
+    liquidityData: portfolioData.tokens.slice(0, 4).map((token: any) => ({
+      token: token.symbol,
+      totalLiquidity: Math.random() * 1000000000,
+      dailyVolume: Math.random() * 500000000,
+      liquidityRatio: Math.random() * 5 + 1,
+      risk: Math.random() > 0.7 ? 'high' as const : Math.random() > 0.4 ? 'medium' as const : 'low' as const
+    })),
+    whaleInteractions: generateMockWhaleInteractions()
+  };
 }

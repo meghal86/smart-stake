@@ -31,6 +31,7 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
 
   const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   const formatValue = (value: number) => {
+    if (!value && value !== 0) return '$0';
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
     if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
     return `$${value.toFixed(0)}`;

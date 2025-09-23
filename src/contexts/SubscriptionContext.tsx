@@ -49,7 +49,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('plan, stripe_subscription_id, trial_active, trial_expiry')
+        .select('plan, stripe_subscription_id')
         .eq('user_id', user.id)
         .single();
 
@@ -65,8 +65,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         setSubscription({
           tier: (data.plan as SubscriptionTier) || 'premium',
           isActive: true,
-          trialActive: data.trial_active || false,
-          trialExpiry: data.trial_expiry ? new Date(data.trial_expiry) : undefined,
+          trialActive: false,
           stripeSubscriptionId: data.stripe_subscription_id
         });
       }
