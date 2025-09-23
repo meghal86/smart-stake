@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CoinSentiment {
   id: string;
@@ -46,6 +47,7 @@ export default function MultiCoinSentiment() {
   const [activeAlerts, setActiveAlerts] = useState<Record<string, number>>({}); // coin -> alert count
   const [newNews, setNewNews] = useState<Record<string, boolean>>({}); // coin -> has new news
   const coinsPerPage = 20;
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchMultiCoinSentiment();
@@ -91,6 +93,12 @@ export default function MultiCoinSentiment() {
   }, [coins, searchTerm, filterSentiment, sortBy, favorites, showFavoritesOnly]);
 
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isMobile && viewMode !== 'grid') {
+      setViewMode('grid');
+    }
+  }, [isMobile, viewMode]);
 
   const fetchMultiCoinSentiment = async () => {
     try {
@@ -918,32 +926,34 @@ export default function MultiCoinSentiment() {
     <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold">Multi-Coin Sentiment</h1>
             <p className="text-sm text-muted-foreground">Real-time sentiment analysis for top 20 cryptocurrencies</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('table')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <div className="relative w-full sm:flex-1 sm:min-w-[220px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search coins..."
@@ -954,7 +964,7 @@ export default function MultiCoinSentiment() {
           </div>
           
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -965,7 +975,7 @@ export default function MultiCoinSentiment() {
           </Select>
           
           <Select value={filterSentiment} onValueChange={(value) => setFilterSentiment(value as any)}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>
@@ -980,7 +990,7 @@ export default function MultiCoinSentiment() {
             variant={showFavoritesOnly ? "default" : "outline"}
             size="sm"
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 justify-center sm:w-auto w-full"
           >
             <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
             Favorites

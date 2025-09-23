@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWindowSize } from '@/hooks/use-mobile';
-import { TrendingUp, Fish, Briefcase, Download, FileText, BarChart3, Layers } from 'lucide-react';
+import { TrendingUp, Fish, Briefcase, Download, FileText, BarChart3 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -34,6 +34,7 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { FreshnessBadge } from '@/components/market/FreshnessBadge';
 import { RightActivityFeed } from '@/components/market/RightActivityFeed';
 import { FloatingActionButton } from '@/components/market/FloatingActionButton';
+import { cn } from '@/lib/utils';
 
 export default function MarketDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,7 +44,11 @@ export default function MarketDashboard() {
   const { isCompact } = useCompactView();
   const { isEnabled } = useFeatureFlags();
   const { width: windowWidth } = useWindowSize();
+  const isMobile = windowWidth < 640;
+  const isDesktop = windowWidth >= 1024;
   const [selectedKpis, setSelectedKpis] = useState(['volume', 'whales', 'risk', 'score']);
+  const headingClass = cn('font-bold', isCompact ? 'text-lg' : 'text-xl');
+  const subheadingClass = cn('text-muted-foreground', isCompact ? 'text-xs' : 'text-sm');
   
   // Toolbar state
   const [timeframe, setTimeframe] = useState(searchParams.get('tf') || '24h');
@@ -67,7 +72,7 @@ export default function MarketDashboard() {
   const dataFreshness = useDataFreshness(enhancedMarketData?.refreshedAt || marketData?.data?.refreshed_at);
   
   // Realtime whale events
-  const { events: realtimeEvents, isConnected: realtimeConnected, lastEventTime, eventCount } = useRealtimeWhales(20);
+  const { isConnected: realtimeConnected, lastEventTime, eventCount } = useRealtimeWhales(20);
   
   // Portfolio data
   const { data: portfolioData, isLoading: portfolioLoading } = usePortfolioSummary();
@@ -104,6 +109,11 @@ export default function MarketDashboard() {
     lastUpdate: marketData?.data?.refreshed_at || new Date().toISOString(),
     provider: marketData?.meta?.source || 'loading'
   };
+
+  const {
+    relative: marketLastUpdatedRelative,
+    absolute: marketLastUpdatedAbsolute
+  } = formatTimestamp(performanceMetrics.lastUpdate);
   
   // Transform enhanced market data for KPI component
   const kpiData = {
@@ -164,9 +174,8 @@ export default function MarketDashboard() {
     const hasSeenTour = localStorage.getItem(`tour_completed_${user.id}`);
     
     if (!hasSeenTour) {
-      // Show tour after elements are loaded, longer delay on mobile
-      const isMobile = window.innerWidth < 768;
-      const delay = isMobile ? 4000 : 2000;
+      // Show tour after elements are loaded, longer delay on smaller screens
+      const delay = windowWidth < 768 ? 4000 : 2000;
       
       setTimeout(() => {
         // Ensure all tour target elements exist before starting
@@ -189,7 +198,7 @@ export default function MarketDashboard() {
         }
       }, delay);
     }
-  }, [user]);
+  }, [user, windowWidth]);
 
   // Analytics tracking
   useEffect(() => {
@@ -362,16 +371,9 @@ export default function MarketDashboard() {
     setSearchQuery(`addr:${addressList}`);
   };
   
-  const handleWhaleGraphOpen = (address: string) => {
-    setSelectedWhaleForGraph(address);
-    track('counterparty_graph_opened', { address });
-  };
-
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background to-background/80 overflow-x-hidden">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Sticky Toolbar */}
+    <div className="flex min-h-screen bg-gradient-to-b from-background via-background/95 to-background">
+      <div className="flex w-full flex-col">
         <ErrorBoundary>
           <StickyToolbar
             timeframe={timeframe}
@@ -386,286 +388,307 @@ export default function MarketDashboard() {
           />
         </ErrorBoundary>
 
-        {/* Mobile Quick Widgets */}
-        <QuickWidgets
-          marketMood={enhancedMarketData?.marketMood}
-          topWhales={[
-            { address: '0x1234...5678', balance: 15000000, change: 2.3 },
-            { address: '0xabcd...efgh', balance: 12500000, change: -1.2 },
-            { address: '0x9876...5432', balance: 11200000, change: 4.1 }
-          ]}
-          portfolioPnL={{ value: 125000, change: 8500, percentage: 7.3 }}
-        />
-
-        {/* Main Dashboard Content */}
-        <div 
-          className="flex-1 pb-20 overflow-x-hidden"
-          style={{
-            padding: window.innerWidth < 640 ? '4px' : '16px',
-            gap: window.innerWidth < 640 ? '8px' : '24px',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-        >
-          {/* Enhanced Header with KPIs */}
-          <ErrorBoundary>
-            <div 
-              data-tour="kpis"
-              style={{
-                marginBottom: window.innerWidth < 640 ? '8px' : '16px'
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/20 rounded-xl">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h1 className={`${isCompact ? 'text-lg' : 'text-xl'} font-bold`}>Market Dashboard</h1>
-                    <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>Bloomberg-grade market intelligence</p>
-                    {enhancedMarketData?.marketMood && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium ${enhancedMarketData.marketMood.color}`}>
-                          {enhancedMarketData.marketMood.label} ({enhancedMarketData.marketMood.mood}%)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <div aria-live="polite" aria-label="Data freshness indicator">
-                      <FreshnessBadge
-                        isLive={dataFreshness.isLive}
-                        lastUpdate={marketData?.data?.refreshed_at || ''}
-                        provider={marketData?.meta?.source || 'loading'}
-                      />
-                    </div>
-                    <div aria-live="polite" aria-label="Whale events activity counter">
-                      <RealtimeIndicator
-                        isConnected={realtimeConnected}
-                        lastEventTime={lastEventTime}
-                        eventCount={eventCount}
-                        section="whale events"
-                      />
-                    </div>
-                    {portfolioData && (
-                      <RealtimeIndicator
-                        isConnected={true}
-                        lastEventTime={new Date(portfolioData.data.last_activity)}
-                        eventCount={portfolioData.data.monitored_addresses}
-                        section="portfolio"
-                      />
-                    )}
-                  </div>
-                  
-                  {userPlan.plan !== 'free' && (
-                    <PerformanceMonitor 
-                      metrics={performanceMetrics}
-                      isAdmin={user?.email?.includes('admin')}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <KpiSummary
-                  volume24h={kpiData.volume24h}
-                  activeWhales={kpiData.activeWhales}
-                  riskAlerts={kpiData.riskAlerts}
-                  avgRiskScore={kpiData.avgRiskScore}
-                  loading={kpiData.loading}
-                  volumeDelta={kpiData.volumeDelta}
-                  whalesDelta={kpiData.whalesDelta}
-                  riskAlertsDelta={kpiData.riskAlertsDelta}
-                  riskScoreDelta={kpiData.riskScoreDelta}
-                  onCreateAlert={handleCreateAlert}
-                  onCardClick={handleKpiCardClick}
-                />
-                {isEnabled('custom_kpi_cards') && (
-                  <KpiCustomizer
-                    selectedKpis={selectedKpis}
-                    onKpisChange={setSelectedKpis}
+        <main className="flex-1 pb-24">
+          <div className="mx-auto w-full max-w-[1920px] px-3 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-12">
+            {!isDesktop && (
+              <ErrorBoundary>
+                <div className="mb-4 md:mb-6 lg:hidden">
+                  <QuickWidgets
+                    marketMood={enhancedMarketData?.marketMood}
+                    topWhales={[
+                      { address: '0x1234...5678', balance: 15000000, change: 2.3 },
+                      { address: '0xabcd...efgh', balance: 12500000, change: -1.2 },
+                      { address: '0x9876...5432', balance: 11200000, change: 4.1 }
+                    ]}
+                    portfolioPnL={{ value: 125000, change: 8500, percentage: 7.3 }}
                   />
-                )}
-              </div>
-            </div>
-          </ErrorBoundary>
+                </div>
+              </ErrorBoundary>
+            )}
 
-          {/* Enhanced Tabs */}
-          <ErrorBoundary>
-            <Tabs value={activeTab} onValueChange={(value) => {
-              setActiveTab(value);
-              if (value === 'sentiment' || value === 'correlation') {
-                setHasAccessedSentiment(true);
-              }
-              track('market_tab_changed', { from: activeTab, to: value });
-            }} className="w-full" data-tour="tabs">
-              <TabsList 
-                className="grid w-full"
-                style={{
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: window.innerWidth < 640 ? '2px' : '4px',
-                  height: window.innerWidth < 640 ? '28px' : '40px'
-                }}
-              >
-                <TabsTrigger 
-                  value="whales" 
-                  className="flex items-center gap-1"
-                  style={{
-                    fontSize: window.innerWidth < 640 ? '10px' : '14px',
-                    padding: window.innerWidth < 640 ? '4px' : '12px'
-                  }}
-                >
-                  <Fish style={{ width: window.innerWidth < 640 ? '12px' : '16px', height: window.innerWidth < 640 ? '12px' : '16px' }} />
-                  <span>{window.innerWidth < 640 ? 'Whales' : 'Whale Analytics'}</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="sentiment" 
-                  className="flex items-center gap-1"
-                  style={{
-                    fontSize: window.innerWidth < 640 ? '10px' : '14px',
-                    padding: window.innerWidth < 640 ? '4px' : '12px'
-                  }}
-                >
-                  <TrendingUp style={{ width: window.innerWidth < 640 ? '12px' : '16px', height: window.innerWidth < 640 ? '12px' : '16px' }} />
-                  <span>{window.innerWidth < 640 ? 'Mood' : 'Sentiment'}</span>
-                </TabsTrigger>
-                {hasAccessedSentiment && (
-                  <TabsTrigger value="correlation" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
-                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden xs:inline sm:hidden">Corr</span>
-                    <span className="hidden sm:inline">Correlation</span>
-                  </TabsTrigger>
-                )}
-                <TabsTrigger value="portfolio" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3">
-                  <Briefcase className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden xs:inline sm:hidden">Port</span>
-                  <span className="hidden sm:inline">Portfolio</span>
-                </TabsTrigger>
-              </TabsList>
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr),minmax(300px,1fr)] xl:items-start">
+              <section className="flex flex-col gap-6 min-w-0 overflow-hidden">
+                <ErrorBoundary>
+                  <header
+                    className="rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur-sm sm:p-6"
+                    data-tour="kpis"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="rounded-xl bg-primary/15 p-2">
+                            <TrendingUp className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h1 className={headingClass}>Market Dashboard</h1>
+                            <p className={subheadingClass}>Bloomberg-grade market intelligence</p>
+                            {enhancedMarketData?.marketMood && (
+                              <div className="mt-1 flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                <span className={enhancedMarketData.marketMood.color}>
+                                  {enhancedMarketData.marketMood.label} ({enhancedMarketData.marketMood.mood}%)
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+                          <span title={marketLastUpdatedAbsolute}>Updated {marketLastUpdatedRelative}</span>
+                          <span className="hidden xs:inline">•</span>
+                          <span className="hidden xs:inline">Source {marketData?.meta?.source || 'loading'}</span>
+                        </div>
+                      </div>
 
-              <TabsContent value="whales" className="mt-6">
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      {userPlan.plan !== 'free' && (
-                        <WhaleClustering
-                          transactions={whaleTransactions}
-                          enabled={clusteringEnabled}
-                          onToggle={() => setClusteringEnabled(!clusteringEnabled)}
-                          onClusterSelect={handleClusterSelect}
+                      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:w-auto">
+                        <div className="flex flex-wrap items-center gap-2" aria-live="polite">
+                          <FreshnessBadge
+                            isLive={dataFreshness.isLive}
+                            lastUpdate={marketData?.data?.refreshed_at || ''}
+                            provider={marketData?.meta?.source || 'loading'}
+                          />
+                          <RealtimeIndicator
+                            isConnected={realtimeConnected}
+                            lastEventTime={lastEventTime}
+                            eventCount={eventCount}
+                            section="whale events"
+                          />
+                          {portfolioData && (
+                            <RealtimeIndicator
+                              isConnected
+                              lastEventTime={new Date(portfolioData.data.last_activity)}
+                              eventCount={portfolioData.data.monitored_addresses}
+                              section="portfolio"
+                            />
+                          )}
+                        </div>
+
+                        {userPlan.plan !== 'free' && !isMobile && (
+                          <PerformanceMonitor
+                            metrics={performanceMetrics}
+                            isAdmin={user?.email?.includes('admin')}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-stretch">
+                      <div className="flex-1">
+                        <KpiSummary
+                          volume24h={kpiData.volume24h}
+                          activeWhales={kpiData.activeWhales}
+                          riskAlerts={kpiData.riskAlerts}
+                          avgRiskScore={kpiData.avgRiskScore}
+                          loading={kpiData.loading}
+                          volumeDelta={kpiData.volumeDelta}
+                          whalesDelta={kpiData.whalesDelta}
+                          riskAlertsDelta={kpiData.riskAlertsDelta}
+                          riskScoreDelta={kpiData.riskScoreDelta}
+                          onCreateAlert={handleCreateAlert}
+                          onCardClick={handleKpiCardClick}
                         />
+                      </div>
+                      {isEnabled('custom_kpi_cards') && (
+                        <div className="lg:w-[260px]">
+                          <KpiCustomizer
+                            selectedKpis={selectedKpis}
+                            onKpisChange={setSelectedKpis}
+                          />
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleExportWhales('csv')}
-                        className="flex items-center gap-1"
+                  </header>
+                </ErrorBoundary>
+
+                <ErrorBoundary>
+                  <Tabs
+                    value={activeTab}
+                    onValueChange={(value) => {
+                      setActiveTab(value);
+                      if (value === 'sentiment' || value === 'correlation') {
+                        setHasAccessedSentiment(true);
+                      }
+                      track('market_tab_changed', { from: activeTab, to: value });
+                    }}
+                    className="w-full"
+                    data-tour="tabs"
+                  >
+                    <div className="pb-1 sm:pb-0">
+                      <TabsList
+                        aria-label="Market dashboard sections"
+                        className="flex flex-wrap gap-1 rounded-2xl bg-muted/40 p-1 sm:gap-2"
                       >
-                        <FileText className="h-4 w-4" />
-                        <span className="hidden sm:inline">CSV</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleExportWhales('pdf')}
-                        className="flex items-center gap-1"
-                      >
-                        <Download className="h-4 w-4" />
-                        <span className="hidden sm:inline">PDF</span>
-                      </Button>
+                        <TabsTrigger
+                          value="whales"
+                          className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                          style={{ minHeight: '48px' }}
+                        >
+                          <Fish className="h-4 w-4" />
+                          <span className="hidden sm:inline">Whale Analytics</span>
+                          <span className="sm:hidden">Whales</span>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="sentiment"
+                          className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                          style={{ minHeight: '48px' }}
+                        >
+                          <TrendingUp className="h-4 w-4" />
+                          <span className="hidden sm:inline">Sentiment</span>
+                          <span className="sm:hidden">Mood</span>
+                        </TabsTrigger>
+                        {hasAccessedSentiment && (
+                          <TabsTrigger
+                            value="correlation"
+                            className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                            style={{ minHeight: '48px' }}
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            <span className="hidden sm:inline">Correlation</span>
+                            <span className="sm:hidden">Corr</span>
+                          </TabsTrigger>
+                        )}
+                        <TabsTrigger
+                          value="portfolio"
+                          className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                          style={{ minHeight: '48px' }}
+                        >
+                          <Briefcase className="h-4 w-4" />
+                          <span className="hidden sm:inline">Portfolio</span>
+                          <span className="sm:hidden">Port</span>
+                        </TabsTrigger>
+                      </TabsList>
                     </div>
-                  </div>
-                  <WhaleAnalytics />
-                </div>
-              </TabsContent>
 
-              <TabsContent value="sentiment" className="mt-6">
-                <div className="space-y-4">
-                  <MultiCoinSentiment />
-                </div>
-              </TabsContent>
+                    <TabsContent value="whales" className="mt-6">
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="flex flex-wrap items-center gap-2 pt-6 sm:pt-0">
+                            {userPlan.plan !== 'free' && (
+                              <WhaleClustering
+                                transactions={whaleTransactions}
+                                enabled={clusteringEnabled}
+                                onToggle={() => setClusteringEnabled(!clusteringEnabled)}
+                                onClusterSelect={handleClusterSelect}
+                              />
+                            )}
+                          </div>
+                        <div className="flex flex-wrap items-center gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                              onClick={() => handleExportWhales('csv')}
+                              className="flex items-center gap-1"
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span className="text-xs sm:text-sm">CSV</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleExportWhales('pdf')}
+                              className="flex items-center gap-1"
+                            >
+                              <Download className="h-4 w-4" />
+                              <span className="text-xs sm:text-sm">PDF</span>
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4">
+                          <WhaleAnalytics />
+                        </div>
+                      </div>
+                    </TabsContent>
 
-              <TabsContent value="correlation" className="mt-6">
-                <div className="space-y-4">
-                  <SentimentCorrelationHeatmap coins={sentimentCoins.length > 0 ? sentimentCoins : mockSentimentCoins} />
-                </div>
-              </TabsContent>
+                    <TabsContent value="sentiment" className="mt-5">
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4">
+                          <MultiCoinSentiment />
+                        </div>
+                      </div>
+                    </TabsContent>
 
-              <TabsContent value="portfolio" className="mt-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleExportPortfolio('csv')}
-                      className="flex items-center gap-1"
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span className="hidden sm:inline">CSV</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleExportPortfolio('pdf')}
-                      className="flex items-center gap-1"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">PDF</span>
-                    </Button>
-                  </div>
-                  <Portfolio />
-                </div>
-              </TabsContent>
-            </Tabs>
-          </ErrorBoundary>
-        </div>
+                    <TabsContent value="correlation" className="mt-5">
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4 overflow-hidden">
+                          <div className="w-full overflow-x-auto">
+                            <SentimentCorrelationHeatmap coins={sentimentCoins.length > 0 ? sentimentCoins : mockSentimentCoins} />
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="portfolio" className="mt-5">
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleExportPortfolio('csv')}
+                            className="flex items-center gap-1"
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span className="text-xs sm:text-sm">CSV</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleExportPortfolio('pdf')}
+                            className="flex items-center gap-1"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span className="text-xs sm:text-sm">PDF</span>
+                          </Button>
+                        </div>
+                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4">
+                          <div className="w-full max-w-full overflow-x-auto">
+                            <div className="min-w-0" style={{ maxWidth: '100vw' }}>
+                              <Portfolio />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </ErrorBoundary>
+              </section>
+
+              <aside className="hidden xl:block" data-tour="activity-feed">
+                <ErrorBoundary>
+                  <RightActivityFeed onItemClick={handleActivityItemClick} />
+                </ErrorBoundary>
+              </aside>
+            </div>
+          </div>
+        </main>
+
+        <ErrorBoundary>
+          <MobileActivityDrawer onItemClick={handleActivityItemClick} />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <FloatingActionButton
+            visible={activeTab === 'portfolio'}
+            onWalletAdded={handleWalletAdded}
+          />
+        </ErrorBoundary>
+
+        {selectedWhaleForGraph && (
+          <CounterpartyGraph
+            whaleAddress={selectedWhaleForGraph}
+            transactions={whaleTransactions.filter(tx =>
+              tx.fromAddress === selectedWhaleForGraph || tx.toAddress === selectedWhaleForGraph
+            )}
+            isOpen={!!selectedWhaleForGraph}
+            onClose={() => setSelectedWhaleForGraph(null)}
+          />
+        )}
+
+        <GuidedTour
+          isOpen={showTour}
+          onClose={() => setShowTour(false)}
+          onComplete={() => {
+            track('guided_tour_completed', { userId: user?.id });
+          }}
+        />
       </div>
-
-      {/* Right Activity Feed - Desktop */}
-      <ErrorBoundary>
-        <div className="hidden lg:block" data-tour="activity-feed">
-          <RightActivityFeed onItemClick={handleActivityItemClick} />
-        </div>
-      </ErrorBoundary>
-
-      {/* Mobile Activity Drawer */}
-      <ErrorBoundary>
-        <MobileActivityDrawer onItemClick={handleActivityItemClick} />
-      </ErrorBoundary>
-
-      {/* Floating Action Button (Portfolio tab only) */}
-      <ErrorBoundary>
-        <FloatingActionButton
-          visible={activeTab === 'portfolio'}
-          onWalletAdded={handleWalletAdded}
-        />
-      </ErrorBoundary>
-      
-      {/* Counterparty Graph Modal */}
-      {selectedWhaleForGraph && (
-        <CounterpartyGraph
-          whaleAddress={selectedWhaleForGraph}
-          transactions={whaleTransactions.filter(tx => 
-            tx.fromAddress === selectedWhaleForGraph || tx.toAddress === selectedWhaleForGraph
-          )}
-          isOpen={!!selectedWhaleForGraph}
-          onClose={() => setSelectedWhaleForGraph(null)}
-        />
-      )}
-      
-      {/* Guided Tour */}
-      <GuidedTour
-        isOpen={showTour}
-        onClose={() => setShowTour(false)}
-        onComplete={() => {
-          track('guided_tour_completed', { userId: user?.id });
-        }}
-      />
     </div>
   );
 }

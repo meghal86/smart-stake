@@ -1,9 +1,12 @@
-import { TrendingUp, Fish, AlertTriangle, Target, Bell, DollarSign, Activity } from 'lucide-react';
+import type { ComponentType } from 'react';
+import { AlertTriangle, Bell, DollarSign, Activity, Fish } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface KpiSummaryProps {
   volume24h: number;
@@ -19,99 +22,167 @@ interface KpiSummaryProps {
   onCardClick?: (type: string) => void;
 }
 
-export function KpiSummary({ 
-  volume24h, 
-  activeWhales, 
-  riskAlerts, 
-  avgRiskScore, 
-  loading, 
+type DeltaDescriptor = {
+  text: string;
+  color: string;
+  trend: 'up' | 'down' | 'flat';
+};
+
+type KpiCard = {
+  id: string;
+  label: string;
+  shortLabel: string;
+  value: string;
+  delta: DeltaDescriptor;
+  icon: ComponentType<{ className?: string }>;
+  accentText: string;
+  accentRing: string;
+  accentCard: string;
+  description: string;
+};
+
+const compactCurrency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  maximumFractionDigits: 1
+});
+
+const compactNumber = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  maximumFractionDigits: 1
+});
+
+const fullNumber = new Intl.NumberFormat('en-US');
+
+const formatDelta = (delta: number): DeltaDescriptor => {
+  if (!Number.isFinite(delta)) {
+    return { text: '—', color: 'text-muted-foreground', trend: 'flat' };
+  }
+  if (delta > 0) {
+    return { text: `+${delta.toFixed(1)}%`, color: 'text-emerald-500', trend: 'up' };
+  }
+  if (delta < 0) {
+    return { text: `${delta.toFixed(1)}%`, color: 'text-red-500', trend: 'down' };
+  }
+  return { text: '0.0%', color: 'text-muted-foreground', trend: 'flat' };
+};
+
+export function KpiSummary({
+  volume24h,
+  activeWhales,
+  riskAlerts,
+  avgRiskScore,
+  loading,
   volumeDelta = 0,
   whalesDelta = 0,
   riskAlertsDelta = 0,
   riskScoreDelta = 0,
-  onCreateAlert, 
-  onCardClick 
+  onCreateAlert,
+  onCardClick
 }: KpiSummaryProps) {
   const { track } = useAnalytics();
+  const isMobile = useIsMobile();
+  const showAllCards = !isMobile;
+
+  const riskTone = avgRiskScore >= 70
+    ? {
+        accentText: 'text-red-600',
+        accentRing: 'bg-red-500/15',
+        accentCard: 'ring-1 ring-inset ring-red-200/70 hover:ring-red-300/80 shadow-[0_18px_48px_-26px_rgba(248,113,113,0.75)]',
+        badgeBg: 'bg-red-500/10',
+        badgeText: 'text-red-600'
+      }
+    : avgRiskScore >= 40
+      ? {
+          accentText: 'text-amber-600',
+          accentRing: 'bg-amber-500/15',
+          accentCard: 'ring-1 ring-inset ring-amber-200/70 hover:ring-amber-300/80 shadow-[0_18px_48px_-26px_rgba(245,158,11,0.55)]',
+          badgeBg: 'bg-amber-500/10',
+          badgeText: 'text-amber-600'
+        }
+      : {
+          accentText: 'text-emerald-600',
+          accentRing: 'bg-emerald-500/15',
+          accentCard: 'ring-1 ring-inset ring-emerald-200/70 hover:ring-emerald-300/80 shadow-[0_18px_48px_-26px_rgba(16,185,129,0.55)]',
+          badgeBg: 'bg-emerald-500/10',
+          badgeText: 'text-emerald-600'
+        };
+
+  const cards: KpiCard[] = [
+    {
+      id: 'volume',
+      label: '24h Volume',
+      shortLabel: 'Volume',
+      value: compactCurrency.format(volume24h),
+      delta: formatDelta(volumeDelta),
+      icon: DollarSign,
+      accentText: 'text-emerald-600',
+      accentRing: 'bg-emerald-500/15',
+      accentCard: 'ring-1 ring-inset ring-emerald-200/70 hover:ring-emerald-300/80 shadow-[0_18px_48px_-26px_rgba(16,185,129,0.55)]',
+      description: 'Cross-venue liquidity'
+    },
+    {
+      id: 'whales',
+      label: 'Active Whales',
+      shortLabel: 'Whales',
+      value: isMobile ? compactNumber.format(activeWhales) : fullNumber.format(activeWhales),
+      delta: formatDelta(whalesDelta),
+      icon: Fish,
+      accentText: 'text-sky-600',
+      accentRing: 'bg-sky-500/15',
+      accentCard: 'ring-1 ring-inset ring-sky-200/70 hover:ring-sky-300/80 shadow-[0_18px_48px_-26px_rgba(14,165,233,0.45)]',
+      description: 'Addresses > $1M tracked'
+    },
+    {
+      id: 'risk',
+      label: 'Risk Alerts',
+      shortLabel: 'Alerts',
+      value: fullNumber.format(riskAlerts),
+      delta: formatDelta(riskAlertsDelta),
+      icon: AlertTriangle,
+      accentText: 'text-amber-600',
+      accentRing: 'bg-amber-500/15',
+      accentCard: 'ring-1 ring-inset ring-amber-200/70 hover:ring-amber-300/80 shadow-[0_18px_48px_-26px_rgba(245,158,11,0.55)]',
+      description: 'Triggered last 24h'
+    },
+    {
+      id: 'score',
+      label: 'Risk Score',
+      shortLabel: 'Risk',
+      value: avgRiskScore.toFixed(0),
+      delta: formatDelta(riskScoreDelta),
+      icon: Activity,
+      accentText: riskTone.accentText,
+      accentRing: riskTone.accentRing,
+      accentCard: riskTone.accentCard,
+      description: 'Composite risk index'
+    }
+  ];
+
+  const cardsToRender = showAllCards ? cards : cards.filter(card => card.id !== 'score');
+  const mobileRiskSummary: DeltaDescriptor = formatDelta(riskScoreDelta);
+
+  const gridClasses = cn(
+    'grid gap-2 sm:gap-3 lg:gap-4',
+    'grid-cols-1 sm:grid-cols-2',
+    showAllCards ? 'lg:grid-cols-3 xl:grid-cols-4' : 'lg:grid-cols-3'
+  );
 
   if (loading) {
+    const skeletonCount = cardsToRender.length || (showAllCards ? 4 : 3);
     return (
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: window.innerWidth < 640 ? 'repeat(2, 1fr)' : window.innerWidth < 1024 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-        gap: window.innerWidth < 640 ? '4px' : '8px',
-        marginBottom: window.innerWidth < 640 ? '12px' : '24px'
-      }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} style={{ padding: window.innerWidth < 640 ? '6px' : '12px' }}>
-            <Skeleton className="h-3 w-12 mb-1" />
-            <Skeleton className="h-4 w-16" />
+      <div className={gridClasses} aria-hidden>
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <Card key={`kpi-skeleton-${index}`} className="rounded-2xl border border-border/50 bg-card/60 p-4 shadow-sm">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="mt-3 h-6 w-24" />
+            <Skeleton className="mt-2 h-3 w-16" />
           </Card>
         ))}
       </div>
     );
   }
-
-  const formatVolume = (vol: number) => {
-    if (vol >= 1e9) return `$${(vol / 1e9).toFixed(1)}B`;
-    if (vol >= 1e6) return `$${(vol / 1e6).toFixed(1)}M`;
-    if (vol >= 1e3) return `$${(vol / 1e3).toFixed(1)}K`;
-    return `$${vol.toFixed(0)}`;
-  };
-
-  const getRiskColor = (score: number) => {
-    if (score >= 70) return 'text-red-500';
-    if (score >= 40) return 'text-yellow-500';
-    return 'text-green-500';
-  };
-  
-  const formatDelta = (delta: number) => {
-    const sign = delta >= 0 ? '+' : '';
-    const color = delta >= 0 ? 'text-green-500' : 'text-red-500';
-    return { text: `${sign}${delta.toFixed(1)}%`, color };
-  };
-
-  const isMobile = window.innerWidth < 640;
-  const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
-
-  const kpiCards = [
-    {
-      id: 'volume',
-      title: isMobile ? 'Vol' : '24h Volume',
-      value: formatVolume(volume24h),
-      delta: volumeDelta,
-      icon: <DollarSign style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
-      color: 'text-green-600',
-      borderColor: 'border-l-green-500'
-    },
-    {
-      id: 'whales',
-      title: isMobile ? 'Whales' : 'Active Whales',
-      value: isMobile ? `${Math.round(activeWhales/1000)}k` : activeWhales.toLocaleString(),
-      delta: whalesDelta,
-      icon: <Fish style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
-      color: 'text-blue-600',
-      borderColor: 'border-l-blue-500'
-    },
-    {
-      id: 'risk',
-      title: isMobile ? 'Alerts' : 'Risk Alerts',
-      value: riskAlerts.toString(),
-      delta: riskAlertsDelta,
-      icon: <AlertTriangle style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
-      color: 'text-orange-600',
-      borderColor: 'border-l-orange-500'
-    },
-    {
-      id: 'score',
-      title: isMobile ? 'Risk' : 'Risk Score',
-      value: `${avgRiskScore.toFixed(0)}`,
-      delta: riskScoreDelta,
-      icon: <Activity style={{ width: isMobile ? '12px' : '16px', height: isMobile ? '12px' : '16px' }} />,
-      color: getRiskColor(avgRiskScore),
-      borderColor: avgRiskScore > 70 ? 'border-l-red-500' : avgRiskScore > 40 ? 'border-l-yellow-500' : 'border-l-green-500'
-    }
-  ];
 
   const handleCardClick = (cardId: string) => {
     track('kpi_card_clicked', { cardId, currentTab: 'market' });
@@ -128,102 +199,100 @@ export function KpiSummary({
   };
 
   return (
-    <div style={{ 
-      display: 'grid', 
-      gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-      gap: isMobile ? '4px' : isTablet ? '8px' : '16px',
-      marginBottom: isMobile ? '12px' : '24px'
-    }}>
-      {kpiCards.map((card) => (
-        <Card 
-          key={card.id}
-          className={`cursor-pointer hover:bg-muted/50 hover:shadow-md transition-all duration-200 group ${card.borderColor}`}
-          style={{ 
-            padding: isMobile ? '6px' : isTablet ? '8px' : '16px',
-            borderLeftWidth: isMobile ? '2px' : '4px'
-          }}
-          onClick={() => handleCardClick(card.id)}
-        >
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            marginBottom: isMobile ? '2px' : '8px' 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, flex: 1 }}>
-              <div className={card.color} style={{ flexShrink: 0 }}>
-                {card.icon}
-              </div>
-              <span 
-                className="text-muted-foreground"
-                style={{ 
-                  fontSize: isMobile ? '10px' : '12px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {card.title}
-              </span>
-            </div>
-            {!isMobile && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAlertClick(card.id, card.title, card.value);
-                }}
-              >
-                <Bell className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-          
-          <div 
-            className={`font-bold kpi-value ${card.color}`}
-            style={{ 
-              fontSize: isMobile ? '12px' : isTablet ? '16px' : '20px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              marginBottom: isMobile ? '2px' : '8px'
+    <div className={gridClasses} role="list">
+      {cardsToRender.map((card) => {
+        const Icon = card.icon;
+        const title = isMobile ? card.shortLabel : card.label;
+
+        return (
+          <Card
+            key={card.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => handleCardClick(card.id)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleCardClick(card.id);
+              }
             }}
+            className={cn(
+              'group relative flex flex-col gap-3 rounded-3xl border border-white/40 bg-white/95 p-3 shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-border/60 dark:bg-card/80',
+              'hover:-translate-y-0.5 focus-visible:-translate-y-0.5 hover:shadow-[0_18px_40px_-18px_rgba(15,23,42,0.18)] sm:p-4',
+              card.accentCard
+            )}
           >
-            {loading ? '...' : card.value}
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div 
-                className={formatDelta(card.delta).color}
-                style={{ 
-                  fontSize: '10px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {formatDelta(card.delta).text}
-              </div>
-              {!isMobile && (
-                <div 
-                  className="text-muted-foreground opacity-70"
-                  style={{ 
-                    fontSize: '10px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  vs yesterday
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className={cn('rounded-xl p-2 transition-colors duration-200', card.accentRing, card.accentText)}>
+                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+                    {title}
+                  </span>
+                  <span className={cn('text-lg font-semibold sm:text-xl xl:text-2xl', card.accentText)}>
+                    {card.value}
+                  </span>
+                </div>
+              </div>
+
+              {!isMobile && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleAlertClick(card.id, card.label, card.value);
+                      }}
+                      aria-label={`Create alert for ${card.label}`}
+                    >
+                      <Bell className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="text-xs font-medium">Create alert</span>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
-          </div>
-        </Card>
-      ))}
+
+            <div className="flex items-center justify-between text-xs sm:text-sm">
+              <span className={cn('font-medium', card.delta.color)}>{card.delta.text}</span>
+              <span className="text-muted-foreground">vs prior 24h</span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground sm:text-xs">
+              <span>{card.description}</span>
+              {card.id === 'risk' && !showAllCards && (
+                <Tooltip>
+                  <TooltipTrigger className="font-medium text-foreground underline underline-offset-2">
+                    Risk {avgRiskScore.toFixed(0)}
+                  </TooltipTrigger>
+                  <TooltipContent className="space-y-1 text-xs">
+                    <p className="font-medium">Composite risk score</p>
+                    <p className={mobileRiskSummary.color}>{mobileRiskSummary.text}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {card.id === 'risk' && showAllCards && (
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide',
+                    riskTone.badgeBg,
+                    riskTone.badgeText
+                  )}
+                >
+                  Risk {avgRiskScore.toFixed(0)}
+                </span>
+              )}
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 }

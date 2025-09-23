@@ -157,7 +157,7 @@ export default function Portfolio() {
       <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
       <div className="p-4 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/20 rounded-xl">
               <Briefcase className="h-6 w-6 text-primary" />
@@ -167,24 +167,25 @@ export default function Portfolio() {
               <p className="text-sm text-muted-foreground">Track your addresses & whale interactions</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               variant="outline" 
               onClick={refetch} 
               disabled={dataLoading}
-              className="hover:bg-[#14B8A6]/10"
+              className="hover:bg-[#14B8A6]/10 flex-shrink-0"
+              size="sm"
             >
               <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
             </Button>
             {addresses.length > 0 && (
-              <Button variant="outline" onClick={exportToCSV}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
+              <Button variant="outline" onClick={exportToCSV} size="sm" className="flex-shrink-0">
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Export</span>
               </Button>
             )}
-            <Button onClick={() => setShowAddModal(true)} className="bg-[#14B8A6] hover:bg-[#0F9488]">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Address
+            <Button onClick={() => setShowAddModal(true)} className="bg-[#14B8A6] hover:bg-[#0F9488] flex-shrink-0" size="sm">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Address</span>
             </Button>
           </div>
         </div>
@@ -215,10 +216,10 @@ export default function Portfolio() {
             </div>
             
             {addresses.length > 1 && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={filterBy} onValueChange={(value: any) => setFilterBy(value)}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-24 sm:w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,7 +235,7 @@ export default function Portfolio() {
                 
                 <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                 <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                  <SelectTrigger className="w-28">
+                  <SelectTrigger className="w-20 sm:w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
