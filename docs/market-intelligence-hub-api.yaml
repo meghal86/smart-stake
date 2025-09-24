@@ -1,0 +1,769 @@
+openapi: 3.0.3
+info:
+  title: Market Intelligence Hub API
+  description: |
+    Bloomberg Terminal-style market intelligence API that combines whale tracking, 
+    risk analysis, and real-time alerts into a unified interface.
+    
+    ## Features
+    - Real-time market health monitoring
+    - Whale cluster analysis and behavioral tracking  
+    - Alert stream with intelligent ranking
+    - Export functionality for premium users
+    - Watchlist management
+    
+    ## Authentication
+    All endpoints require Bearer token authentication via Supabase Auth.
+    
+  version: 1.0.0
+  contact:
+    name: WhalePlus Engineering
+    email: engineering@whaleplus.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://your-project.supabase.co/functions/v1
+    description: Production server
+  - url: http://localhost:54321/functions/v1  
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /market-intelligence-hub/summary:
+    get:
+      summary: Get market summary
+      description: |
+        Returns comprehensive market health data including mood index, volume, 
+        active whales, risk metrics, and top critical alerts.
+      operationId: getMarketSummary
+      tags:
+        - Market Data
+      responses:
+        '200':
+          description: Market summary data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketSummary'
+              example:
+                marketMoodIndex: 65
+                volume24h: 1500000000
+                volumeDelta: 12.5
+                activeWhales: 892
+                whalesDelta: 8.2
+                riskIndex: 45
+                topAlerts:
+                  - id: "alert-123"
+                    severity: "High"
+                    title: "Large ETH Movement"
+                    description: "25M USDT transferred to Binance"
+                    timestamp: "2025-01-25T10:30:00Z"
+                    chain: "ETH"
+                refreshedAt: "2025-01-25T10:35:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /market-intelligence-hub/clusters:
+    post:
+      summary: Get whale clusters
+      description: |
+        Returns whale address clusters grouped by behavior patterns 
+        (CEX inflow, DeFi, dormant, accumulation, distribution).
+      operationId: getWhaleClusters
+      tags:
+        - Whale Intelligence
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chain:
+                  type: string
+                  enum: [all, ETH, BTC, SOL, MATIC]
+                  default: all
+                  description: Blockchain to filter by
+                window:
+                  type: string
+                  enum: [1h, 24h, 7d, 30d]
+                  default: 24h
+                  description: Time window for analysis
+            example:
+              chain: "ETH"
+              window: "24h"
+      responses:
+        '200':
+          description: List of whale clusters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WhaleCluster'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /market-intelligence-hub/clusters/{clusterId}:
+    get:
+      summary: Get whale cluster details
+      description: Returns detailed information about a specific whale cluster including member addresses.
+      operationId: getWhaleClusterDetails
+      tags:
+        - Whale Intelligence
+      parameters:
+        - name: clusterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique cluster identifier
+      responses:
+        '200':
+          description: Detailed cluster information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhaleClusterDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /market-intelligence-hub/alerts:
+    post:
+      summary: Get alerts stream
+      description: |
+        Returns paginated real-time alerts with filtering and ranking.
+        Supports both stream and grouped views.
+      operationId: getAlertsStream
+      tags:
+        - Alerts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  $ref: '#/components/schemas/AlertFilters'
+                cursor:
+                  type: string
+                  description: Pagination cursor for next page
+                userId:
+                  type: string
+                  format: uuid
+                  description: User ID for personalized alerts
+            example:
+              filters:
+                severity: ["High", "Medium"]
+                chains: ["ETH", "BTC"]
+                minUsd: 1000000
+              cursor: "2025-01-25T10:00:00Z"
+              userId: "user-123"
+      responses:
+        '200':
+          description: Paginated alerts stream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertStream'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /market-intelligence-hub/rank-alert:
+    post:
+      summary: Rank alert importance
+      description: |
+        Updates alert ranking based on user feedback and ML scoring.
+        Used to improve alert quality over time.
+      operationId: rankAlert
+      tags:
+        - Alerts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - alertId
+                - score
+                - reasons
+              properties:
+                alertId:
+                  type: string
+                  format: uuid
+                  description: Alert to rank
+                score:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  description: Importance score (0-1)
+                reasons:
+                  type: array
+                  items:
+                    type: string
+                  description: Ranking rationale
+            example:
+              alertId: "alert-123"
+              score: 0.85
+              reasons: ["large_amount", "exchange_impact", "timing"]
+      responses:
+        '200':
+          description: Alert ranking updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  severity:
+                    type: string
+                    enum: [High, Medium, Info]
+                  score:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /market-intelligence-hub/export:
+    post:
+      summary: Export data
+      description: |
+        Exports market intelligence data in CSV or PDF format.
+        Premium feature only.
+      operationId: exportData
+      tags:
+        - Export
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+            example:
+              type: "alerts"
+              format: "csv"
+              filters:
+                severity: ["High"]
+                dateRange:
+                  start: "2025-01-20T00:00:00Z"
+                  end: "2025-01-25T23:59:59Z"
+              userId: "user-123"
+      responses:
+        '200':
+          description: Export data generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  format:
+                    type: string
+                  type:
+                    type: string
+                  exportedAt:
+                    type: string
+                    format: date-time
+        '403':
+          description: Premium subscription required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Export feature requires premium subscription"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /watchlist:
+    get:
+      summary: Get user watchlist
+      description: Returns all watchlist items for the authenticated user.
+      operationId: getWatchlist
+      tags:
+        - Watchlist
+      responses:
+        '200':
+          description: User watchlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WatchlistItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Add to watchlist
+      description: Adds an entity (address, token, or cluster) to user's watchlist.
+      operationId: addToWatchlist
+      tags:
+        - Watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - entityType
+                - entityId
+              properties:
+                entityType:
+                  type: string
+                  enum: [address, token, cluster]
+                entityId:
+                  type: string
+                label:
+                  type: string
+                  description: Optional custom label
+            example:
+              entityType: "address"
+              entityId: "0x1234567890abcdef"
+              label: "Whale #1"
+      responses:
+        '201':
+          description: Item added to watchlist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistItem'
+        '409':
+          description: Item already in watchlist
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /watchlist/{itemId}:
+    delete:
+      summary: Remove from watchlist
+      description: Removes an item from user's watchlist.
+      operationId: removeFromWatchlist
+      tags:
+        - Watchlist
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item removed from watchlist
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+
+  schemas:
+    MarketSummary:
+      type: object
+      required:
+        - marketMoodIndex
+        - volume24h
+        - volumeDelta
+        - activeWhales
+        - whalesDelta
+        - riskIndex
+        - topAlerts
+        - refreshedAt
+      properties:
+        marketMoodIndex:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Overall market sentiment (0-100)
+        volume24h:
+          type: number
+          description: 24-hour trading volume in USD
+        volumeDelta:
+          type: number
+          description: Volume change percentage vs previous 24h
+        activeWhales:
+          type: integer
+          description: Number of active whale addresses
+        whalesDelta:
+          type: number
+          description: Active whales change percentage
+        riskIndex:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Composite risk score (0-100)
+        topAlerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+          maxItems: 3
+          description: Top 3 critical alerts
+        refreshedAt:
+          type: string
+          format: date-time
+          description: Data refresh timestamp
+
+    WhaleCluster:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - membersCount
+        - sumBalanceUsd
+        - riskScore
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CEX_INFLOW, DEFI, DORMANT, ACCUMULATION, DISTRIBUTION]
+        name:
+          type: string
+          description: Human-readable cluster name
+        membersCount:
+          type: integer
+          minimum: 0
+          description: Number of addresses in cluster
+        sumBalanceUsd:
+          type: number
+          minimum: 0
+          description: Total USD value of cluster
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Cluster risk assessment
+        stats:
+          type: object
+          properties:
+            avgBalance:
+              type: number
+            medianBalance:
+              type: number
+            totalTransactions24h:
+              type: integer
+            netFlow24h:
+              type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WhaleClusterDetails:
+      allOf:
+        - $ref: '#/components/schemas/WhaleCluster'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/WhaleAddress'
+
+    WhaleAddress:
+      type: object
+      required:
+        - id
+        - address
+        - balanceUsd
+        - riskScore
+        - lastActivityTs
+      properties:
+        id:
+          type: string
+          format: uuid
+        address:
+          type: string
+          pattern: '^0x[a-fA-F0-9]{40}$'
+          description: Ethereum address
+        labels:
+          type: array
+          items:
+            type: string
+          description: Address labels/tags
+        balanceUsd:
+          type: number
+          minimum: 0
+          description: Current USD balance
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Risk assessment score
+        riskFactors:
+          type: array
+          items:
+            type: string
+          description: Risk factor explanations
+        lastActivityTs:
+          type: string
+          format: date-time
+          description: Last transaction timestamp
+        clusterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated cluster ID
+
+    Alert:
+      type: object
+      required:
+        - id
+        - timestamp
+        - chain
+        - token
+        - usdAmount
+        - fromEntity
+        - toEntity
+        - severity
+        - score
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        chain:
+          type: string
+          description: Blockchain network
+        token:
+          type: string
+          description: Token symbol
+        usdAmount:
+          type: number
+          minimum: 0
+          description: Transaction amount in USD
+        fromEntity:
+          type: string
+          description: Source entity/address
+        toEntity:
+          type: string
+          description: Destination entity/address
+        severity:
+          type: string
+          enum: [High, Medium, Info]
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Alert importance score
+        reasons:
+          type: array
+          items:
+            type: string
+          description: Alert trigger reasons
+        clusterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated whale cluster
+        isRead:
+          type: boolean
+          default: false
+
+    AlertFilters:
+      type: object
+      properties:
+        severity:
+          type: array
+          items:
+            type: string
+            enum: [High, Medium, Info]
+        chains:
+          type: array
+          items:
+            type: string
+        tokens:
+          type: array
+          items:
+            type: string
+        minUsd:
+          type: number
+          minimum: 0
+        entities:
+          type: array
+          items:
+            type: string
+        cursor:
+          type: string
+          description: Pagination cursor
+
+    AlertStream:
+      type: object
+      required:
+        - alerts
+        - cursor
+        - hasMore
+        - totalCount
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        cursor:
+          type: string
+          nullable: true
+          description: Next page cursor
+        hasMore:
+          type: boolean
+          description: More results available
+        totalCount:
+          type: integer
+          description: Total matching alerts
+
+    ExportRequest:
+      type: object
+      required:
+        - type
+        - format
+        - userId
+      properties:
+        type:
+          type: string
+          enum: [alerts, clusters, whales]
+        format:
+          type: string
+          enum: [csv, pdf]
+        filters:
+          type: object
+          description: Export filters (type-specific)
+        dateRange:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        userId:
+          type: string
+          format: uuid
+
+    WatchlistItem:
+      type: object
+      required:
+        - id
+        - userId
+        - entityType
+        - entityId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        entityType:
+          type: string
+          enum: [address, token, cluster]
+        entityId:
+          type: string
+          description: Entity identifier
+        label:
+          type: string
+          nullable: true
+          description: Custom label
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid request parameters"
+            code: "INVALID_PARAMS"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Authentication required"
+            code: "UNAUTHORIZED"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+            code: "NOT_FOUND"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal server error"
+            code: "INTERNAL_ERROR"
+
+tags:
+  - name: Market Data
+    description: Market health and summary endpoints
+  - name: Whale Intelligence
+    description: Whale cluster analysis and tracking
+  - name: Alerts
+    description: Real-time alert stream and ranking
+  - name: Export
+    description: Data export functionality (Premium)
+  - name: Watchlist
+    description: User watchlist management

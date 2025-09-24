@@ -87,7 +87,7 @@ export function StickyToolbar({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Badge variant="outline" className={`font-mono ${isCompact ? 'text-xs px-2 py-1' : ''}`}>
                   BTC ${pricesLoading ? '...' : btcPrice.toLocaleString()}
                   <span className={btcChange >= 0 ? 'text-green-500 ml-1' : 'text-red-500 ml-1'}>
@@ -107,7 +107,7 @@ export function StickyToolbar({
             </Tooltip>
             
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Badge variant="outline" className={`font-mono ${isCompact ? 'text-xs px-2 py-1' : ''}`}>
                   ETH ${pricesLoading ? '...' : ethPrice.toLocaleString()}
                   <span className={ethChange >= 0 ? 'text-green-500 ml-1' : 'text-red-500 ml-1'}>
@@ -128,7 +128,7 @@ export function StickyToolbar({
           </div>
           
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Badge variant="secondary" className={`${moodColor} ${isCompact ? 'text-xs px-2 py-1' : ''}`}>
                 Market Mood: {marketMood}% • {pricesError ? 'Cached' : 'Live'}
               </Badge>
@@ -191,7 +191,7 @@ export function StickyToolbar({
 
         <div className="flex items-center gap-2">
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Button
                 variant={isCompact ? 'default' : 'ghost'}
                 size="sm"

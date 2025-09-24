@@ -14,6 +14,8 @@ interface MobileDrawerProps {
   onTimeframeChange: (value: string) => void;
   onChainChange: (value: string) => void;
   onSearchChange: (value: string) => void;
+  activeView: string;
+  onViewChange: (view: string) => void;
 }
 
 export function MobileDrawer({
@@ -24,7 +26,9 @@ export function MobileDrawer({
   searchQuery,
   onTimeframeChange,
   onChainChange,
-  onSearchChange
+  onSearchChange,
+  activeView,
+  onViewChange
 }: MobileDrawerProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
 
@@ -43,10 +47,44 @@ export function MobileDrawer({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
-            Filters & Search
+            Market Hub Menu
           </SheetTitle>
         </SheetHeader>
-        
+        {/* Navigation Tabs */}
+        <div className="flex gap-2 mt-4 mb-6">
+          <Button
+            variant={activeView === 'overview' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1"
+            onClick={() => { onViewChange('overview'); onClose(); }}
+          >
+            Overview
+          </Button>
+          <Button
+            variant={activeView === 'whales' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1"
+            onClick={() => { onViewChange('whales'); onClose(); }}
+          >
+            Whales
+          </Button>
+          <Button
+            variant={activeView === 'sentiment' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1"
+            onClick={() => { onViewChange('sentiment'); onClose(); }}
+          >
+            Sentiment
+          </Button>
+          <Button
+            variant={activeView === 'analysis' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1"
+            onClick={() => { onViewChange('analysis'); onClose(); }}
+          >
+            Analysis
+          </Button>
+        </div>
         <div className="space-y-6 mt-6">
           {/* Search */}
           <div className="space-y-2">

@@ -88,7 +88,11 @@ const Index = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    navigate(`/?tab=${tab}`);
+    if (tab === 'hub') {
+      navigate('/market/hub');
+    } else {
+      navigate(`/?tab=${tab}`);
+    }
   };
   
   const renderContent = () => {

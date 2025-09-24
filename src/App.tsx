@@ -40,6 +40,7 @@ import AdminOps from "./pages/AdminOps";
 import HealthEndpoint from "./pages/HealthEndpoint";
 import PortfolioEnhanced from "./pages/PortfolioEnhanced";
 import Plans from "./pages/Plans";
+import MarketHub from "./pages/MarketHub";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -134,6 +135,7 @@ const App = () => {
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="/portfolio-enhanced" element={<PortfolioEnhanced />} />
                   <Route path="/plans" element={<Plans />} />
+                  <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

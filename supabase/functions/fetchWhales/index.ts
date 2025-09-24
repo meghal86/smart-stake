@@ -80,7 +80,8 @@ serve(async (req) => {
         success: true,
         processedTransactions: whaleTransactions.length,
         highValueAlerts: highValueAlerts.length,
-        proUsersNotified: proUsers?.length || 0
+        proUsersNotified: proUsers?.length || 0,
+        transactions: whaleTransactions // Always include whale transaction data array
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

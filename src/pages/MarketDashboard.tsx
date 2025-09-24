@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWindowSize } from '@/hooks/use-mobile';
-import { TrendingUp, Fish, Briefcase, Download, FileText, BarChart3 } from 'lucide-react';
+import { TrendingUp, Fish, Briefcase, Download, FileText, BarChart3, Zap } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -21,6 +21,8 @@ import { GuidedTour } from '@/components/market/GuidedTour';
 import { SentimentCorrelationHeatmap } from '@/components/market/SentimentCorrelationHeatmap';
 import { MobileSentimentCorrelation } from '@/components/market/MobileSentimentCorrelation';
 import { MobileActivityDrawer } from '@/components/market/MobileActivityDrawer';
+import { MarketIntelligenceHub } from '@/components/market/MarketIntelligenceHub';
+import { MobileMarketIntelligence } from '@/components/market/MobileMarketIntelligence';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToCSV, exportToPDF, prepareWhaleAnalyticsExport, preparePortfolioExport } from '@/utils/exportUtils';
 import { formatTimestamp } from '@/utils/timeFormat';
@@ -64,7 +66,7 @@ export default function MarketDashboard() {
       return legacyTab;
     }
     
-    return marketTab || 'whales';
+    return marketTab || 'intelligence';
   });
   
   // Enhanced market data with React Query
@@ -147,7 +149,7 @@ export default function MarketDashboard() {
     if (searchQuery) params.set('search', searchQuery);
     else params.delete('search');
     
-    if (activeTab !== 'whales') params.set('marketTab', activeTab);
+    if (activeTab !== 'intelligence') params.set('marketTab', activeTab);
     else params.delete('marketTab');
     
     setSearchParams(params, { replace: true });
@@ -518,6 +520,15 @@ export default function MarketDashboard() {
                         className="flex flex-wrap gap-1 rounded-2xl bg-muted/40 p-1 sm:gap-2"
                       >
                         <TabsTrigger
+                          value="intelligence"
+                          className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+                          style={{ minHeight: '48px' }}
+                        >
+                          <Zap className="h-4 w-4" />
+                          <span className="hidden sm:inline">Intelligence Hub</span>
+                          <span className="sm:hidden">Intel</span>
+                        </TabsTrigger>
+                        <TabsTrigger
                           value="whales"
                           className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                           style={{ minHeight: '48px' }}
@@ -557,6 +568,18 @@ export default function MarketDashboard() {
                         </TabsTrigger>
                       </TabsList>
                     </div>
+
+                    <TabsContent value="intelligence" className="mt-6">
+                      <div className="space-y-4">
+                        {isMobile ? (
+                          <MobileMarketIntelligence />
+                        ) : (
+                          <div className="rounded-2xl border border-border/40 bg-card/80 shadow-sm backdrop-blur-sm overflow-hidden">
+                            <MarketIntelligenceHub />
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
 
                     <TabsContent value="whales" className="mt-6">
                       <div className="space-y-4">
