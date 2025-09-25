@@ -109,40 +109,60 @@ export default function MarketHub() {
     retry: 3
   });
 
-  // Fetch chain risk data with fallback
-  const { data: chainRisk, isLoading: chainRiskLoading } = useQuery({
-    queryKey: ['chain-risk', timeWindow],
+  // Fetch real market summary with quantitative data
+  const { data: marketSummary, isLoading: marketSummaryLoading } = useQuery({
+    queryKey: ['market-summary-quant', timeWindow],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('market-summary-enhanced', {
-          body: { window: timeWindow, include_chain_risk: true }
-        });
-        if (error) throw error;
-        console.log('Chain risk API response:', data);
-        console.log('Returning chainRisk:', data?.chainRisk);
-        return data?.chainRisk || {
-          chains: [
-            { chain: 'BTC', risk: 22, components: { cexInflow: 9, netOutflow: 7, dormantWake: 6 } },
-            { chain: 'ETH', risk: 45, components: { cexInflow: 18, netOutflow: 14, dormantWake: 13 } },
-            { chain: 'SOL', risk: 67, components: { cexInflow: 27, netOutflow: 20, dormantWake: 20 } },
-            { chain: 'OTHERS', risk: null, reason: 'insufficient_data' }
-          ]
-        };
-      } catch (error) {
-        console.error('Chain risk API error:', error);
-        // Return fallback data on error
-        return {
-          chains: [
-            { chain: 'BTC', risk: 22, components: { cexInflow: 9, netOutflow: 7, dormantWake: 6 } },
-            { chain: 'ETH', risk: 45, components: { cexInflow: 18, netOutflow: 14, dormantWake: 13 } },
-            { chain: 'SOL', risk: 67, components: { cexInflow: 27, netOutflow: 20, dormantWake: 20 } },
-            { chain: 'OTHERS', risk: null, reason: 'insufficient_data' }
-          ]
-        };
-      }
+      const { data, error } = await supabase.functions.invoke('market-summary-enhanced', {
+        body: { window: timeWindow, include_chain_risk: false }
+      });
+      if (error) throw error;
+      return data;
     },
     refetchInterval: timeWindow === '24h' ? 30000 : 300000,
-    retry: 1
+    retry: 3
+  });
+
+  // Fetch real chain risk data with quantitative calculation
+  const { data: chainRisk, isLoading: chainRiskLoading } = useQuery({
+    queryKey: ['chain-risk-quant', timeWindow],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('market-chain-risk-quant', {
+        body: { window: timeWindow }
+      });
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: timeWindow === '24h' ? 30000 : 300000,
+    retry: 2,
+    // Fallback data if API fails
+    placeholderData: {
+      chains: [
+        { chain: 'BTC', risk: null, reason: 'loading', components: null },
+        { chain: 'ETH', risk: null, reason: 'loading', components: null },
+        { chain: 'SOL', risk: null, reason: 'loading', components: null },
+        { chain: 'OTHERS', risk: null, reason: 'loading', components: null }
+      ],
+      performance: { coverage: 0, responseTimeMs: 0 }
+    }
+  });
+
+  // Fetch real alerts stream with classification
+  const { data: alertsStream, isLoading: alertsLoading } = useQuery({
+    queryKey: ['alerts-stream-quant', timeWindow, alertFilters],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('alerts-stream', {
+        body: { 
+          filters: alertFilters,
+          window: timeWindow,
+          limit: 50
+        }
+      });
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 15000, // 15 seconds for real-time alerts
+    retry: 2
   });
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
@@ -157,7 +177,6 @@ export default function MarketHub() {
   });
 
   // Debug log to check alerts data
-  const alertsStream: any[] = [];
   console.log('AlertsStream data:', alertsStream);
 
   // Refetch functions
@@ -167,8 +186,7 @@ export default function MarketHub() {
   const refetchAlerts = () => {};
   const refetchAll = () => {};
 
-  // Placeholder for marketSummary to prevent ReferenceError
-  const marketSummary: any = {};
+  // Real market summary data from API
   // Shared refreshedAt across all modules
   const refreshedAt = marketSummary?.refreshedAt || chainRisk?.refreshedAt || new Date().toISOString();
   const refreshedMinutesAgo = Math.floor((Date.now() - new Date(refreshedAt).getTime()) / 60000);
@@ -224,10 +242,10 @@ export default function MarketHub() {
             <div className="flex flex-col h-full min-h-0">
               {activeView === 'overview' && (
                 <MobileOverview 
-                  marketSummary={{}}
+                  marketSummary={marketSummary}
                   whaleClusters={whaleClusters}
                   chainRisk={chainRisk}
-                  loading={clustersLoading || chainRiskLoading}
+                  loading={marketSummaryLoading || clustersLoading || chainRiskLoading}
                   onTopAlertClick={handleTopAlertClick}
                   timeWindow={timeWindow}
                 />
@@ -336,10 +354,10 @@ export default function MarketHub() {
                 <div className="p-6">
                   {activeView === 'overview' && (
                     <DesktopOverview 
-                      marketSummary={{}}
+                      marketSummary={marketSummary}
                       whaleClusters={whaleClusters}
                       chainRisk={chainRisk}
-                      loading={clustersLoading || chainRiskLoading}
+                      loading={marketSummaryLoading || clustersLoading || chainRiskLoading}
                       onTopAlertClick={handleTopAlertClick}
                       timeWindow={timeWindow}
                     />

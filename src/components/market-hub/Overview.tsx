@@ -205,9 +205,13 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
 // Top 4 Cards Implementation with Exact Formulas
 
 function MarketMoodCard({ data, mobile }: { data: any; mobile?: boolean }) {
-  const mood = data?.marketMood || 65;
-  const delta = data?.marketMoodDelta || 2.3;
-  const sparklineData = data?.moodTrend || [58, 61, 59, 63, 67, 65, 68, 65];
+  console.log('MarketMoodCard received data:', data);
+  const mood = data?.marketMood || 0;
+  const delta = data?.marketMoodDelta || 0;
+  const sparklineData = data?.moodTrend || [];
+  
+  // Show loading state if no real data
+  const isLoading = !data?.marketMood;
   
   return (
     <Card className={mobile ? "p-3" : "p-6"}>
@@ -243,9 +247,12 @@ function MarketMoodCard({ data, mobile }: { data: any; mobile?: boolean }) {
 }
 
 function VolumeCard({ data, mobile }: { data: any; mobile?: boolean }) {
-  const volume = data?.volume24h || 1500000000;
-  const delta = data?.volumeDelta || 12.5;
-  const sparklineData = data?.volumeTrend || [1.2, 1.4, 1.3, 1.6, 1.5, 1.7, 1.4, 1.5];
+  console.log('VolumeCard received data:', data);
+  const volume = data?.volume24h || 0;
+  const delta = data?.volumeDelta || 0;
+  const sparklineData = data?.volumeTrend || [];
+  
+  const isLoading = !data?.volume24h;
   
   return (
     <Card className={mobile ? "p-3" : "p-6"}>
@@ -280,9 +287,11 @@ function VolumeCard({ data, mobile }: { data: any; mobile?: boolean }) {
 }
 
 function ActiveWhalesCard({ data, mobile }: { data: any; mobile?: boolean }) {
-  const whales = data?.activeWhales || 892;
-  const delta = data?.whalesDelta || 8.2;
-  const sparklineData = data?.whalesTrend || [820, 850, 830, 870, 890, 880, 900, 892];
+  const whales = data?.activeWhales || 0;
+  const delta = data?.whalesDelta || 0;
+  const sparklineData = data?.whalesTrend || [];
+  
+  const isLoading = !data?.activeWhales;
   
   return (
     <Card className={mobile ? "p-3" : "p-6"}>
@@ -315,15 +324,10 @@ function ActiveWhalesCard({ data, mobile }: { data: any; mobile?: boolean }) {
 }
 
 function MarketRiskCard({ data, onTopAlertClick, mobile }: { data: any; onTopAlertClick: (id: string) => void; mobile?: boolean }) {
-  // Market Risk Index Formula:
-  // weight by 24h flow share per chain: risk = Σ_chain (chain_risk_index_0_100 * flow_share_chain)
+  const risk = data?.riskIndex || 0;
+  const topAlerts = data?.topAlerts || [];
   
-  const risk = data?.riskIndex || 45;
-  const topAlerts = data?.topAlerts || [
-    { id: '1', title: 'Large ETH outflow from Binance' },
-    { id: '2', title: 'Dormant wallet activated: $50M' },
-    { id: '3', title: 'Unusual DeFi activity spike' }
-  ];
+  const isLoading = !data?.riskIndex;
   
   return (
     <Card className={`cursor-pointer hover:shadow-md transition-shadow ${mobile ? "p-3" : "p-6"}`}>
@@ -486,7 +490,11 @@ function BehavioralClusters({ clusters, mobile, timeWindow }: { clusters: any; m
                     </p>
                   </div>
                   <div className="space-y-1">
-                    {showTxCount ? (
+                    {cluster.isEmpty ? (
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        No transactions
+                      </p>
+                    ) : showTxCount ? (
                       <p className="text-sm font-semibold text-muted-foreground">
                         {txCount} tx in 24h
                       </p>
@@ -495,11 +503,13 @@ function BehavioralClusters({ clusters, mobile, timeWindow }: { clusters: any; m
                         {((Math.abs(cluster.netFlow24h || 0) / 35000000) * 100).toFixed(1)}% of total
                       </p>
                     )}
-                    <div className="flex items-center gap-1 text-xs">
-                      <span className={(cluster.netFlow24h || 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        ${Math.abs((cluster.netFlow24h || 0) / 1e6).toFixed(1)}M {(cluster.netFlow24h || 0) >= 0 ? 'in' : 'out'} (24h)
-                      </span>
-                    </div>
+                    {!cluster.isEmpty && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className={(cluster.netFlow24h || 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          ${Math.abs((cluster.netFlow24h || 0) / 1e6).toFixed(1)}M {(cluster.netFlow24h || 0) >= 0 ? 'in' : 'out'} (24h)
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -775,16 +785,28 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
                 {!mobile && (
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 bg-background border rounded-lg p-3 shadow-lg text-left opacity-0 group-hover:opacity-100 transition-opacity z-[60] min-w-[220px] pointer-events-none safe-area-inset-bottom">
                     <div className="text-xs space-y-1">
-                      <div className="font-medium mb-2">{chain} Risk Analysis:</div>
+                      <div className="font-medium mb-2 flex items-center gap-2">
+                        {chain} Risk Analysis
+                        {chainInfo?.enriched && (
+                          <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-xs font-mono">EA</span>
+                        )}
+                      </div>
                       {risk === null ? (
                         <div className="text-muted-foreground">
-                          Low whale coverage (under 3 whales tracked)
+                          {chain === 'OTHERS' ? 
+                            'Volume-weighted aggregate of non-BTC/ETH/SOL chains' :
+                            'Low coverage (under 3 whales tracked or no valid transfers in window)'
+                          }
                         </div>
                       ) : (
                         <>
+                          {chainInfo?.enriched && (
+                            <div className="text-blue-600 text-xs mb-2">
+                              Flow enhanced by Whale Alert
+                            </div>
+                          )}
                           {components && (
                             <>
-                              {/* Sorted components by contribution */}
                               {[
                                 { name: 'CEX Inflow', value: components.cexInflow },
                                 { name: 'Net Outflow', value: components.netOutflow },
@@ -811,6 +833,11 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
                                 {risk >= 67 ? 'High CEX inflows + dormant activity' :
                                  risk >= 34 ? 'Moderate whale activity detected' :
                                  'Normal whale flow patterns'}
+                              </div>
+                            )}
+                            {chain === 'OTHERS' && data?.chains && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Includes {data.chains.filter(c => !['BTC','ETH','SOL'].includes(c.chain)).length} chains
                               </div>
                             )}
                           </div>

@@ -232,36 +232,33 @@ async function getChainQuantiles(supabaseClient: any, chain: string): Promise<Ch
 
 function ensureAllClusters(existingClusters: any[], whaleData: any[]) {
   const clusterTypes = ['DORMANT_WAKING', 'CEX_INFLOW', 'DEFI_ACTIVITY', 'DISTRIBUTION', 'ACCUMULATION'];
-  const result = [...existingClusters];
+  const existingTypes = new Set(existingClusters.map(c => c.type));
   
-  // Add missing clusters with sample data from whale transactions
+  const allClusters = [...existingClusters];
+  
+  // Add empty cluster cards for missing types
   clusterTypes.forEach(type => {
-    if (!result.find(c => c.type === type)) {
-      const sampleTxs = whaleData.slice(0, Math.floor(Math.random() * 5) + 3);
-      const totalValue = sampleTxs.reduce((sum, tx) => sum + (tx.amount_usd || 0), 0);
-      
-      result.push({
+    if (!existingTypes.has(type)) {
+      allClusters.push({
         id: `cluster_${type.toLowerCase()}`,
-        type: type,
+        type,
         name: formatClusterName(type),
-        membersCount: sampleTxs.length,
-        addressesCount: sampleTxs.length,
-        sumBalanceUsd: totalValue,
-        netFlow24h: type === 'ACCUMULATION' ? totalValue * 0.3 : -totalValue * 0.2,
-        riskScore: type === 'DORMANT_WAKING' ? 85 : type === 'CEX_INFLOW' ? 75 : 45,
-        confidence: type === 'DORMANT_WAKING' ? 0.9 : 0.7,
-        members: sampleTxs.map(tx => ({
-          address: tx.from?.address || 'unknown',
-          balanceUsd: tx.amount_usd || 0,
-          riskScore: Math.floor(Math.random() * 100),
-          reasonCodes: [type.toLowerCase().replace('_', ' ')],
-          lastActivityTs: new Date().toISOString()
-        }))
+        membersCount: 0,
+        addressesCount: 0,
+        sumBalanceUsd: 0,
+        netFlow24h: 0,
+        riskScore: 0,
+        confidence: 0,
+        members: [],
+        alerts: [],
+        isEmpty: true
       });
     }
   });
   
-  return result.sort((a, b) => clusterTypes.indexOf(a.type) - clusterTypes.indexOf(b.type));
+  return allClusters.sort((a, b) => {
+    return clusterTypes.indexOf(a.type) - clusterTypes.indexOf(b.type);
+  });
 }
 
 async function classifyWhaleAlerts(transactions: any[], chain: string): Promise<Array<any & ClusterResult>> {

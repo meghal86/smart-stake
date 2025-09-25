@@ -6,49 +6,108 @@ export function ClusterTransactionsList({ clusterId }: { clusterId: string }) {
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['whale-transactions', clusterId],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('whale-alerts');
-      if (error) throw error;
-      
-      // Filter transactions based on cluster type
-      const allTxs = data?.transactions || [];
       const clusterType = clusterId.replace('cluster_', '').toUpperCase();
       
-      let filteredTxs = [];
-      
-      switch (clusterType) {
-        case 'DORMANT_WAKING':
-          // Show largest transactions (dormant whales awakening)
-          filteredTxs = allTxs.filter(tx => tx.amount_usd > 2000000).slice(0, 5);
-          break;
-        case 'CEX_INFLOW':
-          // Show transactions to exchanges
-          filteredTxs = allTxs.filter(tx => 
-            tx.to?.owner && ['Binance', 'Coinbase', 'OKX', 'Kraken', 'BitGet'].includes(tx.to.owner)
-          ).slice(0, 5);
-          break;
-        case 'DEFI_ACTIVITY':
-          // Show DeFi-related transactions
-          filteredTxs = allTxs.filter(tx => 
-            tx.blockchain === 'ethereum' && tx.amount_usd > 1000000
-          ).slice(0, 5);
-          break;
-        case 'DISTRIBUTION':
-          // Show transactions to unknown addresses
-          filteredTxs = allTxs.filter(tx => 
-            tx.to?.owner === 'unknown' && tx.amount_usd > 500000
-          ).slice(0, 5);
-          break;
-        case 'ACCUMULATION':
-          // Show remaining transactions
-          filteredTxs = allTxs.filter(tx => tx.amount_usd > 500000).slice(5, 10);
-          break;
-        default:
-          filteredTxs = allTxs.slice(0, 5);
+      // Try to get real whale alert data first
+      try {
+        const { data: whaleAlertData } = await supabase
+          .from('whale_alert_events')
+          .select('*')
+          .gte('detected_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order('detected_at', { ascending: false })
+          .limit(20);
+        
+        if (whaleAlertData && whaleAlertData.length > 0) {
+          return filterTransactionsByCluster(whaleAlertData, clusterType);
+        }
+      } catch (error) {
+        console.log('No whale alert data available');
       }
       
-      return filteredTxs;
+      // Fallback to alerts table
+      try {
+        const { data: alertsData } = await supabase
+          .from('alerts')
+          .select('*')
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (alertsData && alertsData.length > 0) {
+          return convertAlertsToTransactions(alertsData, clusterType);
+        }
+      } catch (error) {
+        console.log('No alerts data available');
+      }
+      
+      return [];
     }
   });
+  
+  function filterTransactionsByCluster(whaleAlertData: any[], clusterType: string) {
+    let filtered = [];
+    
+    switch (clusterType) {
+      case 'DORMANT_WAKING':
+        filtered = whaleAlertData.filter(tx => tx.amount_usd > 2000000).slice(0, 5);
+        break;
+      case 'CEX_INFLOW':
+        filtered = whaleAlertData.filter(tx => {
+          const toEntity = tx.labels?.to_entity?.toLowerCase() || '';
+          return ['binance', 'coinbase', 'okx', 'kraken', 'bitget'].some(ex => toEntity.includes(ex));
+        }).slice(0, 5);
+        break;
+      case 'DEFI_ACTIVITY':
+        filtered = whaleAlertData.filter(tx => 
+          tx.chain === 'ETH' && tx.amount_usd > 1000000
+        ).slice(0, 5);
+        break;
+      case 'DISTRIBUTION':
+        filtered = whaleAlertData.filter(tx => 
+          (!tx.labels?.to_entity || tx.labels.to_entity === 'unknown') && tx.amount_usd > 500000
+        ).slice(0, 5);
+        break;
+      case 'ACCUMULATION':
+        filtered = whaleAlertData.filter(tx => tx.amount_usd > 500000).slice(0, 5);
+        break;
+      default:
+        filtered = whaleAlertData.slice(0, 5);
+    }
+    
+    return filtered.map(tx => ({
+      hash: tx.tx_hash,
+      amount_usd: tx.amount_usd,
+      symbol: tx.symbol,
+      blockchain: tx.chain?.toLowerCase(),
+      timestamp: tx.detected_at,
+      from: {
+        address: tx.from_addr,
+        owner: tx.labels?.from_entity || 'unknown'
+      },
+      to: {
+        address: tx.to_addr,
+        owner: tx.labels?.to_entity || 'unknown'
+      }
+    }));
+  }
+  
+  function convertAlertsToTransactions(alertsData: any[], clusterType: string) {
+    return alertsData.slice(0, 5).map(alert => ({
+      hash: alert.id,
+      amount_usd: alert.amount_usd,
+      symbol: alert.token || 'UNKNOWN',
+      blockchain: alert.chain?.toLowerCase() || 'ethereum',
+      timestamp: alert.created_at,
+      from: {
+        address: alert.from_addr,
+        owner: 'unknown'
+      },
+      to: {
+        address: alert.to_addr,
+        owner: 'unknown'
+      }
+    }));
+  }
 
   if (isLoading) {
     return (
