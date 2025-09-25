@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useClusterStore } from '@/stores/clusterStore';
 import { 
   Bell, 
   Zap, 
@@ -22,10 +23,9 @@ export function AlertsSidebar({
   loading, 
   filters, 
   onFiltersChange, 
-  selectedAlert, 
-  onAlertSelect, 
   timeWindow 
 }: any) {
+  const { selectedAlert, setSelectedAlert, selectedCluster, setSelectedCluster, setChain } = useClusterStore();
   // AI Digest with fallback data
   const aiDigest = {
     bullets: [
@@ -38,8 +38,18 @@ export function AlertsSidebar({
   const handleFilterChange = (key: string, value: any) => {
     const newFilters = { ...filters, [key]: value };
     onFiltersChange(newFilters);
+    
+    // Update shared store for filter coherence
+    if (key === 'chain') {
+      setChain(value);
+    }
+    
     // Persist filters to localStorage
     localStorage.setItem('whaleplus_alert_filters', JSON.stringify(newFilters));
+  };
+  
+  const handleAlertSelect = (alertId: string) => {
+    setSelectedAlert(alertId);
   };
 
   // Load persisted filters on mount
@@ -188,7 +198,7 @@ export function AlertsSidebar({
                 key={alert.id}
                 alert={alert}
                 isSelected={selectedAlert === alert.id}
-                onClick={() => onAlertSelect(alert.id)}
+                onClick={() => handleAlertSelect(alert.id)}
               />
             ))}
             

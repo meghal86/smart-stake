@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkline } from '@/components/ui/sparkline';
 import { useState, useEffect } from 'react';
-import { ClusterTransactionsList } from './ClusterTransactionsList';
+import { ClusterPanel } from '@/components/market/ClusterPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -192,10 +192,8 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
       {/* Heatmap - Swipeable Cards */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Chain Risk</h2>
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-4 pb-4 snap-x snap-mandatory">
-            <ChainRiskHeatmap data={chainRisk} mobile timeWindow={timeWindow} />
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          <ChainRiskHeatmap data={chainRisk} mobile timeWindow={timeWindow} />
         </div>
       </div>
     </div>
@@ -639,8 +637,9 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
                   url.searchParams.set('window', window);
                   globalThis.history.pushState({}, '', url.toString());
                   
-                  // Trigger a custom event to update all components
+                  // Trigger events to update both chain risk and clusters
                   globalThis.dispatchEvent(new CustomEvent('timeWindowChange', { detail: { window } }));
+                  globalThis.dispatchEvent(new CustomEvent('clusterTimeWindowChange', { detail: { window } }));
                   
                   // Analytics
                   if (typeof gtag !== 'undefined') {
@@ -704,7 +703,7 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
                 </div>
                 <div>
                   <p className={`font-medium ${mobile ? 'text-xs' : 'text-sm'}`}>
-                    {risk === null ? 'No data' : 
+                    {risk === null ? 'Low whale coverage (<3 whales tracked)' : 
                      risk >= 67 ? 'High Risk' :
                      risk >= 34 ? 'Watch' : 'Safe'
                     }
@@ -715,7 +714,7 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
                         <svg className="w-3 h-3 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
-                        <p className="text-xs text-muted-foreground" title="Insufficient whale data for this chain">Low whale coverage (under 3 whales tracked)</p>
+                        <p className="text-xs text-blue-600 cursor-pointer" onClick={() => alert('Whale Alert enrichment enables expanded coverage across more chains and addresses')} title="Click to learn more">Enable Whale Alert enrichment to expand coverage</p>
                       </div>
                     </div>
                   )}
@@ -1028,16 +1027,13 @@ function ClusterDetailsPanel({ cluster, onClose }: { cluster: any; onClose: () =
           </div>
         </div>
         
-        {/* Transactions List */}
+        {/* Enhanced Transactions Panel */}
         {showTransactions && (
           <div className="mt-6 pt-4 border-t">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-sm text-muted-foreground">SAMPLE TRANSACTIONS</h4>
-              <div className="text-xs text-muted-foreground">
-                Showing recent activity from this cluster
-              </div>
-            </div>
-            <ClusterTransactionsList clusterId={cluster.id} />
+            <ClusterPanel 
+              clusterId={cluster.id}
+              onClose={() => setShowTransactions(false)}
+            />
           </div>
         )}
       </CardContent>
