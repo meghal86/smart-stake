@@ -32,7 +32,9 @@ export function useWhaleClusters(chain?: string, window = '24h') {
   return useQuery({
     queryKey: ['whales', 'clusters', chain, window],
     queryFn: async (): Promise<WhaleCluster[]> => {
-      const { data, error } = await supabase.functions.invoke('whale-clusters');
+      const { data, error } = await supabase.functions.invoke('whale-clusters', {
+        body: { chain, window }
+      });
       if (error) throw error;
       return data;
     },

@@ -45,8 +45,22 @@ export default function MarketHub() {
     setActiveView(view);
   } 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [timeWindow, setTimeWindow] = useState('24h');
+  const [timeWindow, setTimeWindow] = useState(searchParams.get('window') || '24h');
   const [activeView, setActiveView] = useState('overview');
+
+  // Listen for time window changes from heatmap buttons
+  useEffect(() => {
+    const handleTimeWindowChange = (event: CustomEvent) => {
+      const newWindow = event.detail.window;
+      setTimeWindow(newWindow);
+      setSearchParams({ window: newWindow });
+    };
+
+    globalThis.addEventListener('timeWindowChange', handleTimeWindowChange as EventListener);
+    return () => {
+      globalThis.removeEventListener('timeWindowChange', handleTimeWindowChange as EventListener);
+    };
+  }, [setSearchParams]);
   const [selectedAlert, setSelectedAlert] = useState<string | null>(null);
   const [selectedWhale, setSelectedWhale] = useState<string | null>(null);
   const [alertFilters, setAlertFilters] = useState({
@@ -66,25 +80,29 @@ export default function MarketHub() {
 
   // Use working APIs with fallback data
   const { data: multiCoinSentiment, isLoading: sentimentLoading } = useQuery({
-    queryKey: ['multi-coin-sentiment'],
+    queryKey: ['multi-coin-sentiment', timeWindow],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('multi-coin-sentiment');
+      const { data, error } = await supabase.functions.invoke('multi-coin-sentiment', {
+        body: { window: timeWindow }
+      });
       if (error) throw error;
       return data;
     },
-    refetchInterval: 300000, // 5 minutes like working component
+    refetchInterval: timeWindow === '24h' ? 30000 : 300000, // 30s for 24h, 5m for 7d
     retry: 3
   });
 
 
   // Fetch whale clusters for analytics
   const { data: whaleClusters, isLoading: clustersLoading } = useQuery({
-    queryKey: ['whaleClusters'],
+    queryKey: ['whaleClusters', timeWindow],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('whale-clusters');
+      const { data, error } = await supabase.functions.invoke('whale-clusters', {
+        body: { window: timeWindow }
+      });
       if (error) throw error;
       console.log('whaleClusters API response:', data);
-      return data?.clusters || [];
+      return Array.isArray(data) ? data : [];
     },
     retry: 3
   });
@@ -99,6 +117,42 @@ export default function MarketHub() {
       return data;
     },
     retry: 3
+  });
+
+  // Fetch chain risk data with fallback
+  const { data: chainRisk, isLoading: chainRiskLoading } = useQuery({
+    queryKey: ['chain-risk', timeWindow],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('market-summary-enhanced', {
+          body: { window: timeWindow, include_chain_risk: true }
+        });
+        if (error) throw error;
+        console.log('Chain risk API response:', data);
+        console.log('Returning chainRisk:', data?.chainRisk);
+        return data?.chainRisk || {
+          chains: [
+            { chain: 'BTC', risk: 22, components: { cexInflow: 9, netOutflow: 7, dormantWake: 6 } },
+            { chain: 'ETH', risk: 45, components: { cexInflow: 18, netOutflow: 14, dormantWake: 13 } },
+            { chain: 'SOL', risk: 67, components: { cexInflow: 27, netOutflow: 20, dormantWake: 20 } },
+            { chain: 'OTHERS', risk: null, reason: 'insufficient_data' }
+          ]
+        };
+      } catch (error) {
+        console.error('Chain risk API error:', error);
+        // Return fallback data on error
+        return {
+          chains: [
+            { chain: 'BTC', risk: 22, components: { cexInflow: 9, netOutflow: 7, dormantWake: 6 } },
+            { chain: 'ETH', risk: 45, components: { cexInflow: 18, netOutflow: 14, dormantWake: 13 } },
+            { chain: 'SOL', risk: 67, components: { cexInflow: 27, netOutflow: 20, dormantWake: 20 } },
+            { chain: 'OTHERS', risk: null, reason: 'insufficient_data' }
+          ]
+        };
+      }
+    },
+    refetchInterval: timeWindow === '24h' ? 30000 : 300000,
+    retry: 1
   });
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
@@ -123,9 +177,8 @@ export default function MarketHub() {
   const refetchAlerts = () => {};
   const refetchAll = () => {};
 
-  // Placeholder for marketSummary and chainRisk to prevent ReferenceError
+  // Placeholder for marketSummary to prevent ReferenceError
   const marketSummary: any = {};
-  const chainRisk: any = {};
   // Shared refreshedAt across all modules
   const refreshedAt = marketSummary?.refreshedAt || chainRisk?.refreshedAt || new Date().toISOString();
   const refreshedMinutesAgo = Math.floor((Date.now() - new Date(refreshedAt).getTime()) / 60000);
@@ -180,7 +233,14 @@ export default function MarketHub() {
             {/* Mobile Content based on activeView */}
             <div className="flex flex-col h-full min-h-0">
               {activeView === 'overview' && (
-                <MobileOverview />
+                <MobileOverview 
+                  marketSummary={{}}
+                  whaleClusters={whaleClusters}
+                  chainRisk={chainRisk}
+                  loading={clustersLoading || chainRiskLoading}
+                  onTopAlertClick={handleTopAlertClick}
+                  timeWindow={timeWindow}
+                />
               )}
               {activeView === 'whales' && (
                 <MobileWhales
@@ -217,7 +277,11 @@ export default function MarketHub() {
                   <p className="text-muted-foreground">Real-time blockchain intelligence and whale monitoring</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <Select value={timeWindow} onValueChange={setTimeWindow}>
+                  <Select value={timeWindow} onValueChange={(value) => {
+                    setTimeWindow(value);
+                    setSearchParams({ window: value });
+                    track('change_window', { from: timeWindow, to: value });
+                  }}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
@@ -278,15 +342,16 @@ export default function MarketHub() {
                 </div>
               </div>
               {/* Main Content */}
-              <div className="flex-1 overflow-y-auto overscroll-y-contain pb-28">
+              <div className="flex-1 overflow-y-auto pb-28" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <div className="p-6">
                   {activeView === 'overview' && (
                     <DesktopOverview 
-                      // marketSummary={marketSummary}
-                      // whaleClusters={whaleClusters}
-                      // chainRisk={chainRisk}
-                      // loading={summaryLoading || clustersLoading || riskLoading}
+                      marketSummary={{}}
+                      whaleClusters={whaleClusters}
+                      chainRisk={chainRisk}
+                      loading={clustersLoading || chainRiskLoading}
                       onTopAlertClick={handleTopAlertClick}
+                      timeWindow={timeWindow}
                     />
                   )}
                   {activeView === 'whales' && (

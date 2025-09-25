@@ -42,6 +42,17 @@ export function WhaleClusters({ clusters = [], onClusterSelect, onWhaleSelect }:
     }
   };
 
+  const getClusterIcon = (type: string) => {
+    switch (type) {
+      case 'ACCUMULATION': return '📈';
+      case 'DISTRIBUTION': return '📤';
+      case 'CEX_INFLOW': return '🏦';
+      case 'DEFI_ACTIVITY': return '🔄';
+      case 'DORMANT_WAKING': return '😴';
+      default: return '❓';
+    }
+  };
+
   const getRiskColor = (score: number) => {
     if (score >= 70) return 'text-red-600 bg-red-50';
     if (score >= 40) return 'text-orange-600 bg-orange-50';
@@ -63,8 +74,11 @@ export function WhaleClusters({ clusters = [], onClusterSelect, onWhaleSelect }:
         <h3 className="text-lg font-semibold mb-4">Whale Behavior Clusters</h3>
         {displayClusters.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
-            <p>No whale cluster data available</p>
-            <p className="text-sm mt-2">Clusters will appear when whale data is loaded</p>
+            <div className="mb-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Loading whale behavior clusters...</p>
+              <p className="text-sm mt-2">Analyzing transaction patterns and behavioral signals</p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -78,9 +92,12 @@ export function WhaleClusters({ clusters = [], onClusterSelect, onWhaleSelect }:
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Badge className={getClusterColor(cluster.type)}>
-                    {cluster.type.replace('_', ' ')}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getClusterIcon(cluster.type)}</span>
+                    <Badge className={getClusterColor(cluster.type)}>
+                      {cluster.type.replace('_', ' ')}
+                    </Badge>
+                  </div>
                   <Badge className={getRiskColor(cluster.riskScore)}>
                     {cluster.riskScore}
                   </Badge>

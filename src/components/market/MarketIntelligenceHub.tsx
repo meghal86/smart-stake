@@ -11,6 +11,8 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useEnhancedMarketData } from '@/hooks/useEnhancedMarketData';
 import { useMarketSummary, useWhaleClusters, useAlertsStream } from '@/hooks/useMarketIntelligence';
+import { WhaleClusters } from '@/components/market-hub/WhaleClusters';
+import { WhaleClusteringDebug } from '@/components/debug/WhaleClusteringDebug';
 import { cn } from '@/lib/utils';
 
 // Types
@@ -89,7 +91,10 @@ export function MarketIntelligenceHub() {
   const { data: whaleClusters, isLoading: clustersLoading } = useWhaleClusters();
   const { data: alertsStream, isLoading: alertsLoading } = useAlertsStream(alertFilters);
 
-  // Live data only
+  // Live data only - log for debugging
+  console.log('whaleClusters data:', whaleClusters);
+  console.log('whaleClusters length:', whaleClusters?.length);
+  console.log('whaleClusters first item:', whaleClusters?.[0]);
   const clusters = whaleClusters || [];
   const alerts = alertsStream?.alerts || [];
 
@@ -258,94 +263,29 @@ export function MarketIntelligenceHub() {
             </div>
           </section>
 
+          {/* Debug Component - Remove in production */}
+          <section className="px-4 lg:px-6 mb-4">
+            <WhaleClusteringDebug />
+          </section>
+
           {/* Whale Behavior Layer */}
           <section className="px-4 lg:px-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Whale Clusters</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              </div>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
+              <h4 className="font-medium mb-2">Debug Info:</h4>
+              <p className="text-sm">Clusters loading: {clustersLoading ? 'Yes' : 'No'}</p>
+              <p className="text-sm">Clusters data: {clusters ? `${clusters.length} items` : 'null'}</p>
+              <p className="text-sm">Raw data: {JSON.stringify(clusters?.[0], null, 2)}</p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-              {clusters.map((cluster) => (
-                <Card 
-                  key={cluster.id}
-                  className={cn(
-                    "p-4 cursor-pointer transition-all hover:shadow-md",
-                    selectedCluster === cluster.id && "ring-2 ring-primary"
-                  )}
-                  onClick={() => handleClusterSelect(cluster.id)}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-sm">{cluster.name}</h3>
-                      <Badge className={getRiskColor(cluster.riskScore)}>
-                        {cluster.riskScore}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">
-                        {cluster.membersCount || cluster.count || 0} addresses
-                      </p>
-                      <p className="text-sm font-semibold">
-                        ${((cluster.sumBalanceUsd || cluster.totalValue || 0) / 1000000000).toFixed(1)}B
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            {/* Whale Details Table */}
-            {selectedCluster && (
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium">
-                    {clusters.find(c => c.id === selectedCluster)?.name} Details
-                  </h3>
-                  <Button variant="outline" size="sm" onClick={() => setSelectedCluster(null)}>
-                    Close
-                  </Button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Address</th>
-                        <th className="text-left p-2">Balance</th>
-                        <th className="text-left p-2">Risk Score</th>
-                        <th className="text-left p-2">Risk Factors</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Mock whale data */}
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <tr key={i} className="border-b">
-                          <td className="p-2 font-mono text-xs">
-                            0x{Math.random().toString(16).substr(2, 8)}...
-                          </td>
-                          <td className="p-2">
-                            ${(Math.random() * 100 + 10).toFixed(1)}M
-                          </td>
-                          <td className="p-2">
-                            <Badge className={getRiskColor(Math.floor(Math.random() * 100))}>
-                              {Math.floor(Math.random() * 100)}
-                            </Badge>
-                          </td>
-                          <td className="p-2 text-xs text-muted-foreground">
-                            Exchange activity, Large transfers
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            )}
+            <WhaleClusters 
+              clusters={clusters}
+              onClusterSelect={(cluster) => {
+                setSelectedCluster(cluster.id);
+                track('whale_cluster_selected', { clusterId: cluster.id, type: cluster.type });
+              }}
+              onWhaleSelect={(whale) => {
+                track('whale_selected', { address: whale.address });
+              }}
+            />
           </section>
         </div>
 
@@ -454,7 +394,7 @@ export function MarketIntelligenceHub() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              {filteredAlerts.length} alerts • {clusters.length} clusters
+              {filteredAlerts.length} alerts • {clusters.length} clusters • Debug: {JSON.stringify({clustersLoading, hasData: !!whaleClusters, dataLength: whaleClusters?.length})}
                 {(summaryLoading || clustersLoading || alertsLoading) && ' • Loading...'}
             </span>
           </div>
