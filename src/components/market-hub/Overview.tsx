@@ -87,6 +87,7 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startY, setStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
+  const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartY(e.touches[0].clientY);
@@ -136,7 +137,7 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
   // ...existing code...
   return (
     <div 
-      className="p-4 space-y-6 touch-pan-y pb-32"
+      className="p-4 space-y-6 touch-pan-y pb-40"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{ transform: `translateY(${pullDistance * 0.5}px)` }}
@@ -168,7 +169,19 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
 
       {/* Clusters - Swipeable Cards */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Whale Clusters</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Whale Clusters</h2>
+          {selectedCluster && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setSelectedCluster(null)}
+              className="sticky top-4 z-10"
+            >
+              ← Back to Overview
+            </Button>
+          )}
+        </div>
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-4 pb-4 snap-x snap-mandatory" style={{ width: 'max-content' }}>
             <BehavioralClusters clusters={whaleClusters} mobile timeWindow={timeWindow} />
@@ -669,23 +682,6 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
               <div className="text-center space-y-4">
                 <div className="flex items-center justify-center gap-2">
                   <h4 className={`font-semibold ${mobile ? 'text-base' : 'text-lg'}`}>{chain}</h4>
-                  {user && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleChainWatchlist(chain);
-                      }}
-                      className="p-1 hover:bg-muted rounded"
-                    >
-                      <Star 
-                        className={`w-3 h-3 ${
-                          chainWatchlist.has(chain) 
-                            ? 'fill-yellow-400 text-yellow-400' 
-                            : 'text-muted-foreground'
-                        }`} 
-                      />
-                    </button>
-                  )}
                 </div>
                 <div className={`mx-auto rounded-full flex items-center justify-center text-white font-bold ${
                   mobile ? 'w-12 h-12 text-sm' : 'w-20 h-20 text-lg'
@@ -704,12 +700,76 @@ function ChainRiskHeatmap({ data, mobile, timeWindow: propTimeWindow }: { data: 
                     }
                   </p>
                   {risk === null && (
-                    <p className="text-xs text-muted-foreground">Low whale coverage (under 3 whales tracked)</p>
+                    <div className="bg-gray-100 dark:bg-gray-800 bg-opacity-50 rounded p-2 mt-2">
+                      <div className="flex items-center gap-1 justify-center">
+                        <svg className="w-3 h-3 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-muted-foreground" title="Insufficient whale data for this chain">Low whale coverage (under 3 whales tracked)</p>
+                      </div>
+                    </div>
                   )}
                   {chainInfo?.reason && (
                     <p className="text-xs text-muted-foreground mt-1">{chainInfo.reason}</p>
                   )}
                 </div>
+                
+                {/* Quick Actions */}
+                {!mobile && user && (
+                  <div className="flex justify-center gap-1 mt-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="h-7 w-7 p-0 focus:ring-2 focus:ring-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        alert(`Alert set for ${chain} risk > 50`);
+                      }}
+                      title="Set Risk Alert"
+                      aria-label="Set risk alert"
+                    >
+                      🔔
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="h-7 w-7 p-0 focus:ring-2 focus:ring-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleChainWatchlist(chain);
+                      }}
+                      title="Add to Watchlist"
+                      aria-label="Add to watchlist"
+                    >
+                      <Star 
+                        className={`w-3 h-3 ${
+                          chainWatchlist.has(chain) 
+                            ? 'fill-yellow-400 text-yellow-400' 
+                            : 'text-muted-foreground'
+                        }`} 
+                      />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="h-7 w-7 p-0 focus:ring-2 focus:ring-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const csvData = `Chain,Risk,Components\n${chain},${risk || 'N/A'},${JSON.stringify(components || {})}`;
+                        const blob = new Blob([csvData], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${chain}_risk_data.csv`;
+                        a.click();
+                      }}
+                      title="Export CSV"
+                      aria-label="Export CSV"
+                    >
+                      ⬇️
+                    </Button>
+                  </div>
+                )}
                 
                 {/* Enhanced Component Breakdown Tooltip */}
                 {!mobile && (

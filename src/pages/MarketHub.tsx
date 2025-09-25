@@ -78,19 +78,9 @@ export default function MarketHub() {
   const windowMs = timeWindow === '24h' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
   const windowStart = new Date(Date.now() - windowMs).toISOString();
 
-  // Use working APIs with fallback data
-  const { data: multiCoinSentiment, isLoading: sentimentLoading } = useQuery({
-    queryKey: ['multi-coin-sentiment', timeWindow],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('multi-coin-sentiment', {
-        body: { window: timeWindow }
-      });
-      if (error) throw error;
-      return data;
-    },
-    refetchInterval: timeWindow === '24h' ? 30000 : 300000, // 30s for 24h, 5m for 7d
-    retry: 3
-  });
+  // Disable failing multi-coin-sentiment API
+  const multiCoinSentiment = null;
+  const sentimentLoading = false;
 
 
   // Fetch whale clusters for analytics
