@@ -158,7 +158,7 @@ const Login: React.FC = () => {
         {/* Logo and Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Logo size="lg" showText={false} src="/whaleplus-logo-512x512.png" />
+            <Logo size="lg" showText={false} src="/hero_logo_512.png" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
           <p className="text-muted-foreground">Sign in to your account to continue</p>

@@ -106,7 +106,7 @@ export const useSubscription = () => {
       case 'api': return limits.apiAccess ? 'full' : 'none';
       case 'advancedFilters': return limits.advancedFilters ? 'full' : 'none';
       case 'whalePredictions': return userPlan.plan === 'free' ? 'none' : 'full';
-      case 'scannerCompliance': return userPlan.plan === 'enterprise' ? 'full' : 'none';
+      case 'scannerCompliance': return userPlan.plan === 'premium' || userPlan.plan === 'enterprise' ? 'full' : 'none';
       default: return 'limited';
     }
   };
@@ -122,7 +122,7 @@ export const useSubscription = () => {
       case 'whalePredictions':
         return 'Upgrade to Pro to access AI-powered whale predictions and scenarios.';
       case 'scannerCompliance':
-        return 'Upgrade to Enterprise to access advanced scanning and compliance tools.';
+        return 'Upgrade to Premium to access advanced scanning and compliance tools.';
       default:
         return 'Upgrade your plan to access this feature.';
     }

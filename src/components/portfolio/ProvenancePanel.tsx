@@ -84,7 +84,7 @@ export function ProvenancePanel({
           </div>
           <div className="text-right">
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-help">
                   <span>Updated {formatTimeAgo(etherscanStatus.lastUpdate)}</span>
                   <ExternalLink className="h-3 w-3" />
@@ -120,7 +120,7 @@ export function ProvenancePanel({
           </div>
           <div className="text-right">
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-help">
                   <span>Cache: {coingeckoStatus.cacheAge}s</span>
                   <Activity className="h-3 w-3" />
@@ -153,7 +153,7 @@ export function ProvenancePanel({
           </div>
           <div className="text-right">
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-help">
                   <span>{totalHoldings - realHoldings} tokens</span>
                   <Zap className="h-3 w-3" />
@@ -183,7 +183,7 @@ export function ProvenancePanel({
             <span className="font-medium text-orange-600"> {totalHoldings - realHoldings}</span> simulated
           </div>
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <button className="text-xs text-primary hover:underline font-medium">
                 Connect wallet for real tokens →
               </button>

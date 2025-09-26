@@ -22,13 +22,13 @@ import { SentimentCorrelationHeatmap } from '@/components/market/SentimentCorrel
 import { MobileSentimentCorrelation } from '@/components/market/MobileSentimentCorrelation';
 import { MobileActivityDrawer } from '@/components/market/MobileActivityDrawer';
 import { MarketIntelligenceHub } from '@/components/market/MarketIntelligenceHub';
-import { MobileMarketIntelligence } from '@/components/market/MobileMarketIntelligence';
+import { MobileOverview } from '@/components/market-hub/Overview';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToCSV, exportToPDF, prepareWhaleAnalyticsExport, preparePortfolioExport } from '@/utils/exportUtils';
 import { formatTimestamp } from '@/utils/timeFormat';
 import WhaleAnalytics from './WhaleAnalytics';
 import MultiCoinSentiment from './MultiCoinSentiment';
-import Portfolio from './Portfolio';
+
 import { StickyToolbar } from '@/components/market/StickyToolbar';
 import { KpiSummary } from '@/components/market/KpiSummary';
 import { KpiCustomizer } from '@/components/market/KpiCustomizer';
@@ -161,12 +161,17 @@ export default function MarketDashboard() {
     const marketTab = searchParams.get('marketTab');
     
     // If we're on a legacy individual page route, redirect to market dashboard
-    if (currentTab === 'whales' || currentTab === 'sentiment' || currentTab === 'portfolio') {
+    if (currentTab === 'whales' || currentTab === 'sentiment') {
       const params = new URLSearchParams(searchParams);
       params.set('tab', 'market');
       params.set('marketTab', currentTab);
       setSearchParams(params, { replace: true });
       setActiveTab(currentTab);
+    }
+    
+    // Redirect portfolio to separate route
+    if (currentTab === 'portfolio') {
+      window.location.href = '/portfolio';
     }
   }, [searchParams, setSearchParams]);
   
@@ -557,26 +562,24 @@ export default function MarketDashboard() {
                             <span className="sm:hidden">Corr</span>
                           </TabsTrigger>
                         )}
-                        <TabsTrigger
-                          value="portfolio"
-                          className="flex flex-1 items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
-                          style={{ minHeight: '48px' }}
-                        >
-                          <Briefcase className="h-4 w-4" />
-                          <span className="hidden sm:inline">Portfolio</span>
-                          <span className="sm:hidden">Port</span>
-                        </TabsTrigger>
+
                       </TabsList>
                     </div>
 
                     <TabsContent value="intelligence" className="mt-6">
                       <div className="space-y-4">
                         {isMobile ? (
-                          <MobileMarketIntelligence />
-                        ) : (
-                          <div className="rounded-2xl border border-border/40 bg-card/80 shadow-sm backdrop-blur-sm overflow-hidden">
-                            <MarketIntelligenceHub />
+                          <div className="-mx-3 -mt-6">
+                            <MobileOverview 
+                              marketSummary={enhancedMarketData}
+                              whaleClusters={[]}
+                              chainRisk={{}}
+                              loading={marketLoading}
+                              timeWindow={timeframe}
+                            />
                           </div>
+                        ) : (
+                          <MarketIntelligenceHub />
                         )}
                       </div>
                     </TabsContent>
@@ -642,37 +645,7 @@ export default function MarketDashboard() {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="portfolio" className="mt-5">
-                      <div className="space-y-4">
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleExportPortfolio('csv')}
-                            className="flex items-center gap-1"
-                          >
-                            <FileText className="h-4 w-4" />
-                            <span className="text-xs sm:text-sm">CSV</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleExportPortfolio('pdf')}
-                            className="flex items-center gap-1"
-                          >
-                            <Download className="h-4 w-4" />
-                            <span className="text-xs sm:text-sm">PDF</span>
-                          </Button>
-                        </div>
-                        <div className="rounded-2xl border border-border/40 bg-card/80 p-3 shadow-sm backdrop-blur-sm sm:p-4">
-                          <div className="w-full max-w-full overflow-x-auto">
-                            <div className="min-w-0" style={{ maxWidth: '100vw' }}>
-                              <Portfolio />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
+
                   </Tabs>
                 </ErrorBoundary>
               </section>
@@ -690,12 +663,7 @@ export default function MarketDashboard() {
           <MobileActivityDrawer onItemClick={handleActivityItemClick} />
         </ErrorBoundary>
 
-        <ErrorBoundary>
-          <FloatingActionButton
-            visible={activeTab === 'portfolio'}
-            onWalletAdded={handleWalletAdded}
-          />
-        </ErrorBoundary>
+
 
         {selectedWhaleForGraph && (
           <CounterpartyGraph

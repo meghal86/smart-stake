@@ -19,8 +19,8 @@ export default function ScannerCompliance() {
           </div>
         </div>
 
-        {/* Enterprise Gate */}
-        <PlanGate min="enterprise" feature="Scanner & Compliance Suite">
+        {/* Premium Gate */}
+        <PlanGate min="premium" feature="Scanner & Compliance Suite">
           <Tabs defaultValue="scanner" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="scanner" className="flex items-center gap-2">

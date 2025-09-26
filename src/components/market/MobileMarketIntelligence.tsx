@@ -208,13 +208,16 @@ export function MobileMarketIntelligence({ className }: MobileMarketIntelligence
         <h3 className="font-medium text-sm mb-2">AI Market Digest</h3>
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">
-            • {mockAlerts.filter(a => a.severity === 'High').length} high-priority movements detected
+            💡 Our analysis shows significant whale movement patterns suggesting potential market volatility ahead.
           </p>
           <p className="text-xs text-muted-foreground">
-            • $45M in large transactions last hour
+            • {mockAlerts.filter(a => a.severity === 'High').length} high-priority whale clusters active
           </p>
           <p className="text-xs text-muted-foreground">
-            • Elevated sell pressure on major assets
+            • $45M moved to exchanges (potential sell pressure)
+          </p>
+          <p className="text-xs text-muted-foreground">
+            • Dormant wallets awakening after 6+ months
           </p>
         </div>
       </Card>

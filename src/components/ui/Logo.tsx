@@ -15,11 +15,11 @@ interface LogoProps {
 }
 
 const sizeClasses = {
-  xs: 'h-6 w-6',
-  sm: 'h-8 w-8',
-  md: 'h-12 w-12',
-  lg: 'h-16 w-16',
-  xl: 'h-48 w-48'
+  xs: 'h-6 w-auto',
+  sm: 'h-8 w-auto',
+  md: 'h-12 w-auto',
+  lg: 'h-16 w-auto',
+  xl: 'h-48 w-auto'
 };
 
 const textSizeClasses = {
@@ -50,16 +50,16 @@ export const Logo: React.FC<LogoProps> = ({
   const sources = React.useMemo(() => {
     if (variant === 'splash') {
       return [
-        src || '/splash screen.png',
-        '/whaleplus-logo-512x512.png',
-        '/whaleplus-logo.svg',
+        src || '/hero_logo_1024.png',
+        '/favicon-512.png',
+        '/favicon-192.png',
       ];
     }
-    // header variant fallbacks
+    // header variant fallbacks - use full wordmark
     return [
-      src || '/header logo.png',
-      '/whaleplus-logo.svg',
-      '/whaleplus-logo-512x512.png',
+      src || '/hero_logo_1920.png',
+      '/hero_logo_1024.png',
+      '/hero_logo_512.png',
     ];
   }, [variant, src]);
 
@@ -77,7 +77,7 @@ export const Logo: React.FC<LogoProps> = ({
       {!imgError ? (
         <img
           src={currentSrc}
-          alt="WhalePlus Logo"
+          alt="AlphaWhale Logo"
           className={cn("object-contain", sizeClasses[size])}
           loading="lazy"
           onError={() => {
@@ -102,7 +102,7 @@ export const Logo: React.FC<LogoProps> = ({
           textSizeClasses[size],
           textClassName
         )}>
-          {abbreviated ? 'WP' : 'WhalePlus'}
+          {abbreviated ? 'AW' : 'AlphaWhale'}
         </span>
       )}
     </Component>

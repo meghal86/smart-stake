@@ -108,33 +108,9 @@ function MarketHubContent() {
     return (
       <AppLayout>
         <div className="h-full flex flex-col w-full bg-background">
-          <div className="flex items-center p-4 border-b bg-card/80">
-            <button
-              aria-label="Open menu"
-              className="mr-2 p-2 rounded-md bg-muted hover:bg-muted/70"
-              onClick={() => setDrawerOpen(true)}
-            >
-              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
-              </svg>
-            </button>
-            <span className="font-bold text-lg">Market Intelligence Hub</span>
-          </div>
-          <MobileDrawer
-            isOpen={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            timeframe={timeWindow}
-            chain="all"
-            searchQuery=""
-            onTimeframeChange={setTimeWindow}
-            onChainChange={() => {}}
-            onSearchChange={() => {}}
-            activeView={activeView}
-            onViewChange={handleViewChange}
-          />
-          <div className="flex-1 overflow-y-auto pb-28">
+
+
+          <div className="flex-1 overflow-y-auto pb-20">
             {activeView === 'overview' && (
               <MobileOverview 
                 marketSummary={marketSummary}
@@ -157,6 +133,66 @@ function MarketHubContent() {
             {activeView === 'analysis' && (
               <div className="p-4 text-center text-muted-foreground">Analysis coming soon.</div>
             )}
+          </div>
+          
+          {/* Bottom Navigation - Only for Market Hub */}
+          <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg" style={{ zIndex: 100 }}>
+            <div className="flex safe-area-inset-bottom">
+              <button
+                onClick={() => window.history.back()}
+                className="flex flex-col items-center py-3 px-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors border-r"
+                title="Back to main app"
+              >
+                <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+              <button
+                onClick={() => handleViewChange('overview')}
+                className={`flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium transition-colors ${
+                  activeView === 'overview' 
+                    ? 'text-primary bg-primary/10' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <BarChart3 className="w-6 h-6 mb-1" />
+                Overview
+              </button>
+              <button
+                onClick={() => handleViewChange('whales')}
+                className={`flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium transition-colors ${
+                  activeView === 'whales' 
+                    ? 'text-primary bg-primary/10' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Fish className="w-6 h-6 mb-1" />
+                Whales
+              </button>
+              <button
+                onClick={() => handleViewChange('sentiment')}
+                className={`flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium transition-colors ${
+                  activeView === 'sentiment' 
+                    ? 'text-primary bg-primary/10' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <TrendingUp className="w-6 h-6 mb-1" />
+                Sentiment
+              </button>
+              <button
+                onClick={() => handleViewChange('analysis')}
+                className={`flex-1 flex flex-col items-center py-3 px-2 text-xs font-medium transition-colors ${
+                  activeView === 'analysis' 
+                    ? 'text-primary bg-primary/10' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Activity className="w-6 h-6 mb-1" />
+                Analysis
+              </button>
+            </div>
           </div>
         </div>
       </AppLayout>

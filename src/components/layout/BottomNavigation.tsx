@@ -54,7 +54,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
               showText={true} 
               clickable={true}
               onClick={() => navigate('/?tab=home')}
-              src="/whaleplus-logo-512x512.png"
+              src="/hero_logo_512.png"
               textClassName="text-xs font-medium" 
             />
             <div className="flex items-center gap-3 text-muted-foreground">
@@ -82,7 +82,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
         <div className="md:hidden px-3 py-1.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <Logo size="xs" showText={false} clickable onClick={() => navigate('/?tab=home')} src="/whaleplus-logo-512x512.png" />
+              <Logo size="xs" showText={false} clickable onClick={() => navigate('/?tab=home')} src="/hero_logo_512.png" />
               <span className="text-muted-foreground text-[10px]">© {currentYear}</span>
             </div>
             <div className="flex items-center gap-1.5">

@@ -118,15 +118,17 @@ export const UserHeader = () => {
   if (authLoading) {
     return (
       <div className="bg-gradient-to-r from-background to-muted/20 border-b shadow-sm">
-        <div className="flex items-center justify-between w-full px-2 sm:px-4 py-2 sm:py-4">
-          <Logo 
-            size="sm" 
-            showText={true}
-            clickable={true}
-            onClick={() => navigate('/?tab=home')}
-            src="/whaleplus-logo-512x512.png"
-            textClassName="text-sm sm:text-base font-semibold"
-          />
+        <div className="flex items-center justify-between w-full px-2 sm:px-4 py-1 sm:py-2">
+          <div className="pl-3 sm:pl-4">
+            <Logo 
+              size="sm" 
+              showText={false}
+              clickable={true}
+              onClick={() => navigate('/?tab=home')}
+              src="/hero_logo_1920.png"
+              className="h-16 sm:h-20"
+            />
+          </div>
           <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-primary"></div>
         </div>
       </div>
@@ -136,15 +138,17 @@ export const UserHeader = () => {
   if (!user) {
     return (
       <div className="bg-gradient-to-r from-background to-muted/20 border-b shadow-sm">
-        <div className="flex items-center justify-between w-full px-2 sm:px-4 py-2 sm:py-4">
-          <Logo 
-            size="sm" 
-            showText={true}
-            clickable={true}
-            onClick={() => navigate('/?tab=home')}
-            src="/whaleplus-logo-512x512.png"
-            textClassName="text-sm sm:text-base font-semibold"
-          />
+        <div className="flex items-center justify-between w-full px-2 sm:px-4 py-1 sm:py-2">
+          <div className="pl-3 sm:pl-4">
+            <Logo 
+              size="sm" 
+              showText={false}
+              clickable={true}
+              onClick={() => navigate('/?tab=home')}
+              src="/hero_logo_1920.png"
+              className="h-16 sm:h-20"
+            />
+          </div>
           
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
@@ -194,15 +198,17 @@ export const UserHeader = () => {
   return (
     <>
       <div className="bg-gradient-to-r from-background to-muted/20 border-b shadow-sm">
-        <div className="flex items-center justify-between w-full px-2 sm:px-4 py-2 sm:py-4">
-          <Logo 
-            size="sm" 
-            showText={true}
-            clickable={true}
-            onClick={() => navigate('/?tab=home')}
-            src="/whaleplus-logo-512x512.png"
-            textClassName="text-sm sm:text-base font-semibold"
-          />
+        <div className="flex items-center justify-between w-full px-2 sm:px-4 py-1 sm:py-2">
+          <div className="pl-3 sm:pl-4">
+            <Logo 
+              size="sm" 
+              showText={false}
+              clickable={true}
+              onClick={() => navigate('/?tab=home')}
+              src="/hero_logo_1920.png"
+              className="h-16 sm:h-20"
+            />
+          </div>
           
           {/* Desktop Header */}
           <div className="hidden md:flex items-center gap-4">

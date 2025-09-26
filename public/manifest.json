@@ -1,6 +1,6 @@
 {
-  "name": "WhalePlus - Master the DeFi Waves",
-  "short_name": "WhalePlus",
+  "name": "AlphaWhale - Master the DeFi Waves",
+  "short_name": "AlphaWhale",
   "description": "Track whale transactions, discover high-yield DeFi opportunities, and analyze wallet risks with AI-powered insights",
   "start_url": "/",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/whaleplus-icon-128x128.png",
-      "sizes": "128x128",
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/whaleplus-logo-512x512.png",
+      "src": "/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

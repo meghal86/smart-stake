@@ -139,7 +139,7 @@ const SignupForm: React.FC = () => {
         {/* Logo and Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Logo size="lg" showText={false} src="/whaleplus-logo-512x512.png" />
+            <Logo size="lg" showText={false} src="/hero_logo_512.png" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
           <p className="text-muted-foreground">Trusted by 12,000+ traders worldwide</p>

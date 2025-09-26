@@ -12,7 +12,8 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useEnhancedMarketData } from '@/hooks/useEnhancedMarketData';
 import { useMarketSummary, useWhaleClusters, useAlertsStream } from '@/hooks/useMarketIntelligence';
 import { WhaleClusters } from '@/components/market-hub/WhaleClusters';
-import { WhaleClusteringDebug } from '@/components/debug/WhaleClusteringDebug';
+
+import { ClusterProvider } from '@/stores/clusterStore';
 import { cn } from '@/lib/utils';
 
 // Types
@@ -263,29 +264,22 @@ export function MarketIntelligenceHub() {
             </div>
           </section>
 
-          {/* Debug Component - Remove in production */}
-          <section className="px-4 lg:px-6 mb-4">
-            <WhaleClusteringDebug />
-          </section>
+
 
           {/* Whale Behavior Layer */}
           <section className="px-4 lg:px-6 mb-6">
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
-              <h4 className="font-medium mb-2">Debug Info:</h4>
-              <p className="text-sm">Clusters loading: {clustersLoading ? 'Yes' : 'No'}</p>
-              <p className="text-sm">Clusters data: {clusters ? `${clusters.length} items` : 'null'}</p>
-              <p className="text-sm">Raw data: {JSON.stringify(clusters?.[0], null, 2)}</p>
-            </div>
-            <WhaleClusters 
-              clusters={clusters}
-              onClusterSelect={(cluster) => {
-                setSelectedCluster(cluster.id);
-                track('whale_cluster_selected', { clusterId: cluster.id, type: cluster.type });
-              }}
-              onWhaleSelect={(whale) => {
-                track('whale_selected', { address: whale.address });
-              }}
-            />
+            <ClusterProvider>
+              <WhaleClusters 
+                clusters={clusters}
+                onClusterSelect={(cluster) => {
+                  setSelectedCluster(cluster.id);
+                  track('whale_cluster_selected', { clusterId: cluster.id, type: cluster.type });
+                }}
+                onWhaleSelect={(whale) => {
+                  track('whale_selected', { address: whale.address });
+                }}
+              />
+            </ClusterProvider>
           </section>
         </div>
 
@@ -394,8 +388,8 @@ export function MarketIntelligenceHub() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              {filteredAlerts.length} alerts • {clusters.length} clusters • Debug: {JSON.stringify({clustersLoading, hasData: !!whaleClusters, dataLength: whaleClusters?.length})}
-                {(summaryLoading || clustersLoading || alertsLoading) && ' • Loading...'}
+              {filteredAlerts.length} alerts • {clusters.length} clusters
+              {(summaryLoading || clustersLoading || alertsLoading) && ' • Loading...'}
             </span>
           </div>
           <div className="flex items-center gap-2">

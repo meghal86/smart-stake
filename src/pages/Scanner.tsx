@@ -941,61 +941,64 @@ export default function Scanner() {
                 
                 {/* Advanced Analysis Sections */}
                 <Tabs defaultValue="risk" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 overflow-x-auto">
-                    <TabsTrigger value="risk" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Risk Analysis</span>
-                      <span className="sm:hidden">Risk</span>
+                  <div className="overflow-x-auto scrollbar-hide">
+                    <div className="flex w-max">
+                      <TabsList className="flex w-max p-1 gap-1">
+                    <TabsTrigger value="risk" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Shield className="h-4 w-4" />
+                      Risk Analysis
                     </TabsTrigger>
-                    <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="portfolio" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <BarChart3 className="h-4 w-4" />
                       Portfolio
                     </TabsTrigger>
-                    <TabsTrigger value="network" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Network className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="network" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Network className="h-4 w-4" />
                       Network
                     </TabsTrigger>
-                    <TabsTrigger value="defi" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Droplets className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="defi" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Droplets className="h-4 w-4" />
                       DeFi
                     </TabsTrigger>
-                    <TabsTrigger value="nft" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Image className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="nft" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Image className="h-4 w-4" />
                       NFT
                     </TabsTrigger>
-                    <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="reports" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <FileText className="h-4 w-4" />
                       Reports
                     </TabsTrigger>
-                    <TabsTrigger value="notes" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="notes" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <MessageSquare className="h-4 w-4" />
                       Notes
                     </TabsTrigger>
-                    <TabsTrigger value="alerts" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="alerts" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Bell className="h-4 w-4" />
                       Alerts
                     </TabsTrigger>
-                    <TabsTrigger value="watchlist" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="watchlist" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Star className="h-4 w-4" />
                       Watchlist
                     </TabsTrigger>
-                    <TabsTrigger value="analytics" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="analytics" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <BarChart3 className="h-4 w-4" />
                       Analytics
                     </TabsTrigger>
-                    <TabsTrigger value="audit" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="audit" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Clock className="h-4 w-4" />
                       Audit
                     </TabsTrigger>
-                    <TabsTrigger value="compliance" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="compliance" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Shield className="h-4 w-4" />
                       Compliance
                     </TabsTrigger>
-                    <TabsTrigger value="branding" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <TabsTrigger value="branding" className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0 min-w-fit px-3 py-2">
+                      <Palette className="h-4 w-4" />
                       Branding
                     </TabsTrigger>
-                  </TabsList>
+                      </TabsList>
+                    </div>
+                  </div>
 
                   {/* Risk Analysis Tab - Comprehensive Risk Assessment */}
                   <TabsContent value="risk" className="space-y-6">
