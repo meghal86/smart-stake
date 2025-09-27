@@ -1,4 +1,4 @@
-import { Home, Activity, Fish, TrendingUp, Shield, Users, Brain, Twitter, Briefcase, ChevronUp, FileText, Zap, Bell } from "lucide-react";
+import { Home, Activity, Fish, TrendingUp, Shield, Users, Brain, Twitter, Briefcase, ChevronUp, FileText, Zap, Bell, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const navigationItems: NavigationItem[] = [
   { id: "alerts", label: "Alerts", icon: Bell },
   { id: "market", label: "Market", icon: TrendingUp },
   { id: "hub", label: "Hub", icon: Zap, isPremium: true },
+  { id: "hub2", label: "Hub 2", icon: Target, isPremium: true },
   { id: "portfolio", label: "Portfolio", icon: Briefcase, isPremium: true },
   { id: "predictions", label: "Predictions", icon: Activity, isPremium: true },
   { id: "scanner", label: "Scanner", icon: Shield, isPremium: true },
@@ -142,7 +143,9 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
               >
                 <div className="relative">
                   <Icon size={16} className="sm:w-5 sm:h-5 transition-transform group-hover:scale-110" />
-                  {item.isPremium && (
+                  {item.id === 'hub2' ? (
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse" />
+                  ) : item.isPremium && (
                     <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse" />
                   )}
                 </div>

@@ -90,6 +90,8 @@ const Index = () => {
     setActiveTab(tab);
     if (tab === 'hub') {
       navigate('/market/hub');
+    } else if (tab === 'hub2') {
+      navigate('/hub2/pulse');
     } else if (tab === 'alerts') {
       navigate('/alerts');
     } else {
@@ -113,6 +115,9 @@ const Index = () => {
         return <Profile />;
       case "portfolio":
         return <PortfolioEnhanced />;
+      case "hub2":
+        // Hub 2 is handled by direct navigation
+        return null;
       // Legacy routes now handled by MarketDashboard
       case "sentiment":
       case "whales":

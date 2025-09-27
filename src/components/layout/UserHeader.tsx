@@ -244,6 +244,16 @@ export const UserHeader = () => {
               )}
             </Button>
 
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/hub2/pulse')}
+              className="hover:bg-[#14B8A6]/10 border-[#14B8A6]/30"
+              title="Hub 2 - Advanced Market Intelligence"
+            >
+              <span className="text-xs font-medium">Hub 2</span>
+            </Button>
+
             <ThemeToggle />
             
             <DropdownMenu>

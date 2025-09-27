@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { WhaleAnalyticsCharts } from './WhaleAnalyticsCharts';
+import { WhaleComparison } from './WhaleComparison';
+import { WhaleNotifications } from './WhaleNotifications';
 import { 
   Fish, 
   ExternalLink, 
@@ -27,7 +30,11 @@ import {
   Zap,
   Globe,
   Clock,
-  DollarSign
+  DollarSign,
+  BarChart,
+  PieChart,
+  LineChart,
+  Bell
 } from 'lucide-react';
 
 export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect }: any) {
@@ -35,6 +42,35 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
   const [sortBy, setSortBy] = useState('balance');
   const [filterBy, setFilterBy] = useState('all');
   const [selectedWhaleDetail, setSelectedWhaleDetail] = useState<string | null>(null);
+  const [showCharts, setShowCharts] = useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
+  const [comparisonWhales, setComparisonWhales] = useState<any[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');
+
+  // Handle whale selection
+  const handleWhaleSelect = (whale: any) => {
+    onWhaleSelect?.(whale);
+  };
+
+  // Handle adding whale to comparison
+  const handleAddToComparison = (whale: any) => {
+    if (comparisonWhales.find(w => w.id === whale.id)) {
+      // Remove if already in comparison
+      setComparisonWhales(prev => prev.filter(w => w.id !== whale.id));
+    } else if (comparisonWhales.length < 3) {
+      // Add if not at limit
+      setComparisonWhales(prev => [...prev, whale]);
+    }
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setFilterBy('all');
+    setSortBy('balance');
+  };
 
   // Fetch live whale data from whale-alert.io
   const { data: whaleData, isLoading: whalesLoading } = useQuery({
@@ -136,6 +172,88 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
+  // Filter and sort the whales based on current filters
+  const filteredWhales = useMemo(() => {
+    if (!whaleData?.whales) return [];
+
+    let filtered = [...whaleData.whales];
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(whale => 
+        (typeof whale.address === 'string' ? whale.address.toLowerCase().includes(searchLower) : false) ||
+        whale.labels?.some((label: string) => label.toLowerCase().includes(searchLower)) ||
+        whale.influence?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply category filter
+    if (filterBy !== 'all') {
+      switch (filterBy) {
+        case 'high-risk':
+          filtered = filtered.filter(whale => (whale.riskScore || 0) >= 70);
+          break;
+        case 'active':
+          filtered = filtered.filter(whale => (whale.transactions24h || 0) > 5);
+          break;
+        case 'defi':
+          filtered = filtered.filter(whale => 
+            whale.labels?.some((label: string) => 
+              label.toLowerCase().includes('defi') || 
+              label.toLowerCase().includes('protocol')
+            )
+          );
+          break;
+        case 'exchange':
+          filtered = filtered.filter(whale => 
+            whale.labels?.some((label: string) => 
+              label.toLowerCase().includes('exchange') || 
+              label.toLowerCase().includes('cex')
+            )
+          );
+          break;
+        case 'hodler':
+          filtered = filtered.filter(whale => (whale.transactions24h || 0) < 3);
+          break;
+      }
+    }
+
+    // Apply whale size filter
+    if (whaleFilter !== 'all') {
+      switch (whaleFilter) {
+        case 'large':
+          filtered = filtered.filter(whale => (whale.balance || 0) >= 5000000);
+          break;
+        case 'mega':
+          filtered = filtered.filter(whale => (whale.balance || 0) >= 10000000);
+          break;
+      }
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'balance':
+        filtered.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+        break;
+      case 'risk':
+        filtered.sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
+        break;
+      case 'activity':
+        filtered.sort((a, b) => (b.transactions24h || 0) - (a.transactions24h || 0));
+        break;
+      case 'influence':
+        const influenceOrder = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+        filtered.sort((a, b) => (influenceOrder[b.influence as keyof typeof influenceOrder] || 0) - (influenceOrder[a.influence as keyof typeof influenceOrder] || 0));
+        break;
+      case 'recent':
+        filtered.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+        break;
+    }
+
+    return filtered;
+  }, [whaleData?.whales, searchTerm, filterBy, sortBy, whaleFilter]);
+
   if (loading || whalesLoading) {
     return (
       <div className="space-y-6">
@@ -155,141 +273,209 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
     );
   }
 
-  const filteredWhales = whaleData?.whales?.filter((whale: any) => 
-    whale.address?.toLowerCase?.()?.includes(searchTerm.toLowerCase()) ||
-    whale.labels?.some((label: string) => label?.toLowerCase?.()?.includes(searchTerm.toLowerCase()))
-  ) || [];
 
   return (
-    <div className="space-y-6">
-      {/* Whale Analytics Header */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">Whale Behavior Analytics</h2>
-            <p className="text-muted-foreground">Advanced whale tracking and behavioral analysis</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="px-3 py-1">
-              <Activity className="w-4 h-4 mr-2" />
-              Live Tracking
-            </Badge>
+    <div className="flex-1 bg-gradient-to-br from-background to-background/80">
+      <div className="p-3 sm:p-4 space-y-4">
+        {/* Sticky Header - Enhanced */}
+        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-40 -mx-4 px-4 py-3 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg">
+                  <Zap className="h-5 w-5 text-primary" />
+                </div>
+                <h1 className="text-lg font-bold">Whale Analytics</h1>
+              </div>
+              
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="bg-green-50 dark:bg-green-950/20 px-2 py-1 rounded-full border border-green-200 dark:border-green-800">
+                  <span className="text-xs font-medium text-green-700 dark:text-green-300">{whaleData?.stats?.totalWhales || 0} Whales</span>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950/20 px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{whaleData?.stats?.activeWhales || 0} Active</span>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-950/20 px-2 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">${(whaleData?.stats?.totalValue / 1e9).toFixed(1)}B Value</span>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-950/20 px-2 py-1 rounded-full border border-purple-200 dark:border-purple-800">
+                  <span className="text-xs font-medium text-purple-700 dark:text-purple-300">{whaleData?.stats?.avgRiskScore || 0} Risk</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => setShowNotifications(true)}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Bell className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Create Alert</span>
+              </Button>
+              <div className="hidden sm:flex border rounded-lg p-1">
+                <Button
+                  size="sm"
+                  variant={showCharts ? 'default' : 'ghost'}
+                  onClick={() => setShowCharts(!showCharts)}
+                  className="text-xs px-2"
+                >
+                  Analytics
+                </Button>
+                <Button
+                  size="sm"
+                  variant={showComparison ? 'default' : 'ghost'}
+                  onClick={() => setShowComparison(!showComparison)}
+                  className="text-xs px-2"
+                >
+                  Compare
+                </Button>
+              </div>
+              <div className="flex border rounded-lg p-1">
+                <Button
+                  size="sm"
+                  variant={whaleFilter === 'all' ? 'default' : 'ghost'}
+                  onClick={() => setWhaleFilter('all')}
+                  className="text-xs px-2"
+                >
+                  All
+                </Button>
+                <Button
+                  size="sm"
+                  variant={whaleFilter === 'large' ? 'default' : 'ghost'}
+                  onClick={() => setWhaleFilter('large')}
+                  className="text-xs px-2"
+                >
+                  $5M+
+                </Button>
+                <Button
+                  size="sm"
+                  variant={whaleFilter === 'mega' ? 'default' : 'ghost'}
+                  onClick={() => setWhaleFilter('mega')}
+                  className="text-xs px-2"
+                >
+                  $10M+
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Whales</p>
-                  <p className="text-2xl font-bold">{whaleData?.stats?.totalWhales?.toLocaleString()}</p>
-                </div>
-                <Fish className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active (24h)</p>
-                  <p className="text-2xl font-bold">{whaleData?.stats?.activeWhales?.toLocaleString()}</p>
-                </div>
-                <Zap className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Value</p>
-                  <p className="text-2xl font-bold">${(whaleData?.stats?.totalValue / 1e9).toFixed(1)}B</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-emerald-500" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Risk Score</p>
-                  <p className="text-2xl font-bold">{whaleData?.stats?.avgRiskScore}</p>
-                </div>
-                <Shield className="w-8 h-8 text-amber-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search whales by address or label..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+        {/* Interactive Analytics Charts */}
+        {showCharts && (
+          <div className="mb-8">
+            <WhaleAnalyticsCharts 
+              whaleData={whaleData}
+              selectedTimeframe={selectedTimeframe}
+              onTimeframeChange={setSelectedTimeframe}
             />
           </div>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48">
-              <ArrowUpDown className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="balance">Sort by Balance</SelectItem>
-              <SelectItem value="risk">Sort by Risk Score</SelectItem>
-              <SelectItem value="activity">Sort by Activity</SelectItem>
-              <SelectItem value="influence">Sort by Influence</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterBy} onValueChange={setFilterBy}>
-            <SelectTrigger className="w-48">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Whales</SelectItem>
-              <SelectItem value="high-risk">High Risk</SelectItem>
-              <SelectItem value="active">Active (24h)</SelectItem>
-              <SelectItem value="defi">DeFi Whales</SelectItem>
-              <SelectItem value="exchange">Exchange Whales</SelectItem>
-            </SelectContent>
-          </Select>
+        )}
+
+        {/* Whale Comparison */}
+        {showComparison && (
+          <div className="mb-8">
+            <WhaleComparison
+              selectedWhales={comparisonWhales}
+              onRemoveWhale={(whaleId) => {
+                setComparisonWhales(prev => prev.filter(w => w.id !== whaleId));
+              }}
+              onClearAll={() => setComparisonWhales([])}
+              onAddToWatchlist={(whaleId) => {
+                console.log('Adding whale to watchlist:', whaleId);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Sticky Filter Bar */}
+        <div className="sticky top-16 bg-background/95 backdrop-blur-sm border rounded-lg p-4 z-30 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search by address, labels..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="balance">Balance</SelectItem>
+                  <SelectItem value="risk">Risk Score</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                  <SelectItem value="influence">Influence</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterBy} onValueChange={setFilterBy}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Whales</SelectItem>
+                  <SelectItem value="high-risk">High Risk</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="defi">DeFi</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClearFilters}
+                className="text-xs"
+              >
+                Reset All
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Whale Cards Grid */}
       {filteredWhales.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredWhales.map((whale: any) => (
+          {filteredWhales.map((whale: any, index: number) => (
             <WhaleCard
-              key={whale.id}
+              key={`whale-${index}-${typeof whale.id === 'string' ? whale.id : typeof whale.address === 'string' ? whale.address : `unknown-${index}`}`}
               whale={whale}
               isSelected={selectedWhale === whale.id}
-              onClick={() => {
-                onWhaleSelect(whale.id);
-                setSelectedWhaleDetail(whale.id);
-              }}
+              isInComparison={comparisonWhales.some(w => w.id === whale.id)}
+              onClick={() => handleWhaleSelect(whale)}
+              onAddToComparison={handleAddToComparison}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
           <Fish className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-          <h3 className="text-xl font-semibold mb-2">No Live Whale Data Available</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            {searchTerm || filterBy !== 'all' ? 'No whales found' : 'No Live Whale Data Available'}
+          </h3>
           <p className="text-muted-foreground mb-4">
-            Waiting for live whale transactions from whale-alert.io API
+            {searchTerm || filterBy !== 'all' 
+              ? 'Try adjusting your search or filter criteria' 
+              : 'Waiting for live whale transactions from whale-alert.io API'
+            }
           </p>
-          <Badge variant="outline" className="px-3 py-1">
-            <Activity className="w-4 h-4 mr-2" />
-            Live Data Only - No Mock Data
-          </Badge>
+          {(searchTerm || filterBy !== 'all') && (
+            <Button variant="outline" onClick={handleClearFilters}>
+              Clear Filters
+            </Button>
+          )}
+          {!searchTerm && filterBy === 'all' && (
+            <Badge variant="outline" className="px-3 py-1">
+              <Activity className="w-4 h-4 mr-2" />
+              Live Data Only - No Mock Data
+            </Badge>
+          )}
         </div>
       )}
 
@@ -302,6 +488,16 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
           />
         </div>
       )}
+
+      {/* Whale Notifications */}
+      <WhaleNotifications
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        onNotificationClick={(notification) => {
+          console.log('Notification clicked:', notification);
+          // Handle notification click - could navigate to whale or show details
+        }}
+      />
     </div>
   );
 }
@@ -309,6 +505,20 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
 export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }: any) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('balance');
+
+  // Handle whale selection
+  const handleWhaleSelect = (whale: any) => {
+    onWhaleSelect?.(whale);
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setFilterBy('all');
+    setSortBy('balance');
+  };
 
   // Fetch live whale data for mobile
   const { data: whaleData, isLoading: whalesLoading } = useQuery({
@@ -393,6 +603,88 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
     refetchInterval: 30000
   });
 
+  // Filter and sort the whales based on current filters
+  const filteredWhales = useMemo(() => {
+    if (!whaleData?.whales) return [];
+
+    let filtered = [...whaleData.whales];
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(whale => 
+        (typeof whale.address === 'string' ? whale.address.toLowerCase().includes(searchLower) : false) ||
+        whale.labels?.some((label: string) => label.toLowerCase().includes(searchLower)) ||
+        whale.influence?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply category filter
+    if (filterBy !== 'all') {
+      switch (filterBy) {
+        case 'high-risk':
+          filtered = filtered.filter(whale => (whale.riskScore || 0) >= 70);
+          break;
+        case 'active':
+          filtered = filtered.filter(whale => (whale.transactions24h || 0) > 5);
+          break;
+        case 'defi':
+          filtered = filtered.filter(whale => 
+            whale.labels?.some((label: string) => 
+              label.toLowerCase().includes('defi') || 
+              label.toLowerCase().includes('protocol')
+            )
+          );
+          break;
+        case 'exchange':
+          filtered = filtered.filter(whale => 
+            whale.labels?.some((label: string) => 
+              label.toLowerCase().includes('exchange') || 
+              label.toLowerCase().includes('cex')
+            )
+          );
+          break;
+        case 'hodler':
+          filtered = filtered.filter(whale => (whale.transactions24h || 0) < 3);
+          break;
+      }
+    }
+
+    // Apply whale size filter
+    if (whaleFilter !== 'all') {
+      switch (whaleFilter) {
+        case 'large':
+          filtered = filtered.filter(whale => (whale.balance || 0) >= 5000000);
+          break;
+        case 'mega':
+          filtered = filtered.filter(whale => (whale.balance || 0) >= 10000000);
+          break;
+      }
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'balance':
+        filtered.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+        break;
+      case 'risk':
+        filtered.sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
+        break;
+      case 'activity':
+        filtered.sort((a, b) => (b.transactions24h || 0) - (a.transactions24h || 0));
+        break;
+      case 'influence':
+        const influenceOrder = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+        filtered.sort((a, b) => (influenceOrder[b.influence as keyof typeof influenceOrder] || 0) - (influenceOrder[a.influence as keyof typeof influenceOrder] || 0));
+        break;
+      case 'recent':
+        filtered.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+        break;
+    }
+
+    return filtered;
+  }, [whaleData?.whales, searchTerm, filterBy, sortBy, whaleFilter]);
+
   if (loading || whalesLoading) {
     return (
       <div className="p-4 space-y-4">
@@ -410,41 +702,40 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
     );
   }
 
-  const filteredWhales = whaleData?.whales?.filter((whale: any) => 
-    whale.address?.toLowerCase?.()?.includes(searchTerm.toLowerCase()) ||
-    whale.labels?.some((label: string) => label?.toLowerCase?.()?.includes(searchTerm.toLowerCase()))
-  ) || [];
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Mobile Header */}
+    <div className="p-4 space-y-6">
+      {/* Enhanced Mobile Header */}
       <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-bold">Whale Analytics</h2>
-          <p className="text-sm text-muted-foreground">Track whale behavior and movements</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold">🐋 Whale Analytics</h2>
+            <p className="text-sm text-muted-foreground">Track whale behavior and movements</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            Filters
+          </Button>
         </div>
 
-        {/* Mobile Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="p-3">
-              <div className="text-center">
-                <p className="text-lg font-bold">{whaleData?.stats?.totalWhales?.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Whales</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="text-center">
-                <p className="text-lg font-bold">{whaleData?.stats?.activeWhales?.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Active (24h)</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Simplified Mobile Stats */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <div className="text-xl font-bold text-blue-600">{whaleData?.stats?.totalWhales?.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">Total Whales</div>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-lg">
+            <div className="text-xl font-bold text-green-600">{whaleData?.stats?.activeWhales?.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">Active (24h)</div>
+          </div>
         </div>
 
-        {/* Mobile Search and Filter */}
+        {/* Simplified Mobile Search */}
         <div className="space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -455,30 +746,43 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
               className="pl-10"
             />
           </div>
-          <Select value={filterBy} onValueChange={setFilterBy}>
-            <SelectTrigger>
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Whales</SelectItem>
-              <SelectItem value="high-risk">High Risk</SelectItem>
-              <SelectItem value="active">Active (24h)</SelectItem>
-              <SelectItem value="defi">DeFi Whales</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="balance">Balance</SelectItem>
+                <SelectItem value="risk">Risk</SelectItem>
+                <SelectItem value="activity">Activity</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterBy} onValueChange={setFilterBy}>
+              <SelectTrigger>
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Whales</SelectItem>
+                <SelectItem value="high-risk">High Risk</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="defi">DeFi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Mobile Whale Cards */}
       {filteredWhales.length > 0 ? (
         <div className="space-y-3">
-          {filteredWhales.map((whale: any) => (
+          {filteredWhales.map((whale: any, index: number) => (
             <WhaleCard
-              key={whale.id}
+              key={`mobile-whale-${index}-${typeof whale.id === 'string' ? whale.id : typeof whale.address === 'string' ? whale.address : `unknown-${index}`}`}
               whale={whale}
               isSelected={selectedWhale === whale.id}
-              onClick={() => onWhaleSelect(whale.id)}
+              onClick={() => handleWhaleSelect(whale)}
               mobile
             />
           ))}
@@ -486,13 +790,25 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
       ) : (
         <div className="text-center py-8">
           <Fish className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-          <h3 className="text-lg font-semibold mb-2">No Live Whale Data</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            {searchTerm || filterBy !== 'all' ? 'No whales found' : 'No Live Whale Data'}
+          </h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Waiting for live transactions
+            {searchTerm || filterBy !== 'all' 
+              ? 'Try adjusting your search or filter criteria' 
+              : 'Waiting for live transactions'
+            }
           </p>
-          <Badge variant="outline" className="text-xs">
-            Live Data Only
-          </Badge>
+          {(searchTerm || filterBy !== 'all') && (
+            <Button variant="outline" size="sm" onClick={handleClearFilters}>
+              Clear Filters
+            </Button>
+          )}
+          {!searchTerm && filterBy === 'all' && (
+            <Badge variant="outline" className="text-xs">
+              Live Data Only
+            </Badge>
+          )}
         </div>
       )}
     </div>
@@ -553,9 +869,9 @@ function WhaleCardsGrid({ clusterId, selectedWhale, onWhaleSelect, mobile }: any
 
   return (
     <div className={mobile ? "space-y-3" : "grid grid-cols-3 gap-6"}>
-      {whales.map((whale: any) => (
+      {whales.map((whale: any, index: number) => (
         <WhaleCard
-          key={whale.id}
+          key={`comparison-whale-${index}-${typeof whale.id === 'string' ? whale.id : typeof whale.address === 'string' ? whale.address : `unknown-${index}`}`}
           whale={whale}
           isSelected={selectedWhale === whale.id}
           onClick={() => onWhaleSelect(whale.id)}
@@ -566,143 +882,111 @@ function WhaleCardsGrid({ clusterId, selectedWhale, onWhaleSelect, mobile }: any
   );
 }
 
-function WhaleCard({ whale, isSelected, onClick, mobile }: any) {
-  const getRiskCategory = (score: number) => {
-    if (score >= 70) return { label: 'High', variant: 'destructive' as const, color: 'text-red-600' };
-    if (score >= 40) return { label: 'Medium', variant: 'secondary' as const, color: 'text-amber-600' };
-    return { label: 'Low', variant: 'default' as const, color: 'text-green-600' };
+function WhaleCard({ whale, isSelected, onClick, mobile, isInComparison, onAddToComparison }: any) {
+  const getRiskColor = (score: number) => {
+    if (score >= 70) return 'text-red-600';
+    if (score >= 40) return 'text-amber-600';
+    return 'text-green-600';
   };
 
-  const getInfluenceColor = (influence: string) => {
-    switch (influence) {
-      case 'Very High': return 'text-purple-600';
-      case 'High': return 'text-blue-600';
-      case 'Medium': return 'text-amber-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const riskCategory = getRiskCategory(whale.riskScore || 0);
+  const riskColor = getRiskColor(whale.riskScore || 0);
+  const isMegaWhale = (whale.balance || 0) > 10000000;
+  const isLargeWhale = (whale.balance || 0) > 5000000;
+  const isActive = (whale.transactions24h || 0) > 5;
 
   return (
     <Card 
-      className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 ${
-        isSelected ? 'ring-2 ring-primary border-l-primary' : 'border-l-muted'
+      className={`cursor-pointer hover:shadow-md transition-all duration-200 border ${
+        isSelected ? 'ring-2 ring-primary border-primary' : 'border-muted hover:border-primary/30'
+      } ${
+        isMegaWhale ? 'shadow-xl ring-2 ring-yellow-400/60 border-yellow-400/40 bg-gradient-to-r from-yellow-50/20 to-orange-50/20' : 
+        isLargeWhale ? 'shadow-lg ring-1 ring-blue-400/40 border-blue-400/30 bg-blue-50/10' : ''
       }`}
       onClick={onClick}
     >
-      <CardContent className={mobile ? "p-4" : "p-6"}>
-        <div className="space-y-4">
-          {/* Header */}
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          {/* Compact Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                 <Fish className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <span className="font-mono text-sm font-medium">
-                  {whale.address?.slice(0, 6)}...{whale.address?.slice(-4)}
-                </span>
-                <div className="flex gap-1 mt-1">
-                  {whale.labels?.slice(0, 2).map((label: string) => (
-                    <Badge key={label} variant="outline" className="text-xs px-1 py-0">
-                      {label}
-                    </Badge>
-                  ))}
+                <div className="font-mono text-sm font-medium">
+                  {typeof whale.address === 'string' 
+                    ? `${whale.address.slice(0, 6)}...${whale.address.slice(-4)}`
+                    : typeof whale.id === 'string' 
+                      ? whale.id 
+                      : `Whale-${Math.random().toString(36).substr(2, 6)}`
+                  }
+                </div>
+                <div className="flex items-center gap-1">
+                  {isMegaWhale && <span className="text-xs text-yellow-600">💥</span>}
+                  {isLargeWhale && !isMegaWhale && <span className="text-xs text-blue-500">🐋</span>}
+                  {isActive && <span className="text-xs text-green-600">⚡</span>}
+                  {Array.isArray(whale.labels) && whale.labels[0] && (
+                    <span className="text-xs text-muted-foreground">{whale.labels[0]}</span>
+                  )}
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); }}>
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Balance</p>
-              <p className="text-lg font-bold">${((whale.balance || 0) / 1e6).toFixed(1)}M</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Influence</p>
-              <p className={`text-lg font-bold ${getInfluenceColor(whale.influence)}`}>
-                {whale.influence}
-              </p>
-            </div>
-          </div>
-
-          {/* Risk and Behavior Scores */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Risk Score</span>
-              <div className="flex items-center gap-2">
-                <Badge variant={riskCategory.variant} className="text-xs">
-                  {riskCategory.label}
-                </Badge>
-                <span className={`font-bold ${riskCategory.color}`}>
-                  {whale.riskScore}/100
-                </span>
-              </div>
-            </div>
-            <Progress value={whale.riskScore} className="h-2" />
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Behavior Score</span>
-              <span className="font-bold text-blue-600">
-                {whale.behaviorScore}/100
-              </span>
-            </div>
-            <Progress value={whale.behaviorScore} className="h-2" />
-          </div>
-
-          {/* Activity Metrics */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="text-center p-2 bg-muted/50 rounded">
-              <div className="font-bold text-lg">{whale.transactions24h || 0}</div>
-              <div className="text-muted-foreground text-xs">24h Txns</div>
-            </div>
-            <div className="text-center p-2 bg-muted/50 rounded">
-              <div className={`font-bold text-lg ${
-                (whale.netFlow24h || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {(whale.netFlow24h || 0) >= 0 ? '+' : ''}${Math.abs((whale.netFlow24h || 0) / 1e6).toFixed(1)}M
-              </div>
-              <div className="text-muted-foreground text-xs">24h Flow</div>
-            </div>
-          </div>
-
-          {/* Chains */}
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-muted-foreground" />
-            <div className="flex gap-1">
-              {whale.chains?.map((chain: string) => (
-                <Badge key={chain} variant="outline" className="text-xs capitalize">
-                  {chain}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Last Activity */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Last activity: {new Date(whale.lastActivity).toLocaleDateString()}
+              <span className={`text-sm font-bold ${riskColor}`}>
+                {typeof whale.riskScore === 'number' ? whale.riskScore : 0}
+              </span>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-6 w-6 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToComparison?.(whale);
+                }}
+              >
+                <Users className={`w-3 h-3 ${isInComparison ? 'text-primary' : 'text-muted-foreground'}`} />
+              </Button>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-2 border-t">
-            <Button size="sm" variant="outline" className="flex-1">
-              <Eye className="w-3 h-3 mr-1" />
-              Analyze
-            </Button>
-            <Button size="sm" variant="outline">
-              <Plus className="w-3 h-3" />
-            </Button>
-            <Button size="sm" variant="outline">
-              <Target className="w-3 h-3" />
-            </Button>
+          {/* Key Metrics - Compact */}
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div className="text-lg font-bold text-green-600">
+                ${((typeof whale.balance === 'number' ? whale.balance : 0) / 1e6).toFixed(1)}M
+              </div>
+              <div className="text-xs text-muted-foreground">Balance</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-blue-600">
+                {typeof whale.transactions24h === 'number' ? whale.transactions24h : 0}
+              </div>
+              <div className="text-xs text-muted-foreground">24h Tx</div>
+            </div>
+            <div>
+              <div className={`text-lg font-bold ${
+                (typeof whale.netFlow24h === 'number' ? whale.netFlow24h : 0) >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {(typeof whale.netFlow24h === 'number' ? whale.netFlow24h : 0) >= 0 ? '+' : ''}${Math.abs((typeof whale.netFlow24h === 'number' ? whale.netFlow24h : 0) / 1e6).toFixed(1)}M
+              </div>
+              <div className="text-xs text-muted-foreground">Net Flow</div>
+            </div>
+          </div>
+
+          {/* Risk Bar - Minimal */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span>Risk Score</span>
+              <span className={riskColor}>{typeof whale.riskScore === 'number' ? whale.riskScore : 0}/100</span>
+            </div>
+            <Progress value={typeof whale.riskScore === 'number' ? whale.riskScore : 0} className="h-1" />
+          </div>
+
+          {/* Quick Info */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{typeof whale.influence === 'string' ? whale.influence : 'Unknown'} Influence</span>
+            <span>{Array.isArray(whale.chains) ? whale.chains.length : 0} chains</span>
+            <span>{whale.lastActivity ? new Date(whale.lastActivity).toLocaleDateString() : 'Unknown'}</span>
           </div>
         </div>
       </CardContent>
@@ -786,8 +1070,8 @@ function WhaleDetailPanel({ whaleId, onClose }: any) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Labels:</span>
                   <div className="flex gap-1">
-                    {whaleDetail?.labels?.map((label: string) => (
-                      <Badge key={label} variant="outline" className="text-xs">
+                    {whaleDetail?.labels?.map((label: string, index: number) => (
+                      <Badge key={`label-${index}-${label}`} variant="outline" className="text-xs">
                         {label}
                       </Badge>
                     ))}

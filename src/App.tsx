@@ -38,6 +38,13 @@ import PredictionsScenarios from "./pages/PredictionsScenarios";
 import AdminBI from "./pages/AdminBI";
 import AdminOps from "./pages/AdminOps";
 import HealthEndpoint from "./pages/HealthEndpoint";
+// Hub 2 imports
+import PulsePage from "./pages/hub2/Pulse";
+import ExplorePage from "./pages/hub2/Explore";
+import EntityDetailWrapper from "./pages/hub2/EntityDetailWrapper";
+import AlertsPage from "./pages/hub2/Alerts";
+import WatchlistPage from "./pages/hub2/Watchlist";
+import CopilotPage from "./pages/hub2/Copilot";
 import PortfolioEnhanced from "./pages/PortfolioEnhanced";
 import Portfolio from "./pages/Portfolio";
 import Plans from "./pages/Plans";
@@ -142,6 +149,13 @@ const App = () => {
                   <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="/overview" element={<Overview />} />
                   <Route path="/alerts" element={<Alerts />} />
+                  {/* Hub 2 routes */}
+                  <Route path="/hub2/pulse" element={<PulsePage />} />
+                  <Route path="/hub2/explore" element={<ExplorePage />} />
+                  <Route path="/hub2/entity/:id" element={<EntityDetailWrapper />} />
+                  <Route path="/hub2/alerts" element={<AlertsPage />} />
+                  <Route path="/hub2/watchlist" element={<WatchlistPage />} />
+                  <Route path="/hub2/copilot" element={<CopilotPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
