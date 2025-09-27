@@ -259,10 +259,10 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Whale Clusters - Takes 2 columns */}
-        <div className="col-span-2">
+      {/* Main Content - Stacked Layout */}
+      <div className="space-y-6">
+        {/* Whale Behavior Intelligence */}
+        <div>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold">Whale Behavior Intelligence</h2>
@@ -317,31 +317,34 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
           )}
         </div>
 
-        {/* Right Sidebar - Takes 1 column */}
-        <div className="space-y-6">
-          {/* Chain Risk Matrix */}
+        {/* Chain Risk Matrix */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Chain Risk Matrix</h2>
+              <p className="text-sm text-muted-foreground">Real-time security assessment</p>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {timeWindow}
+            </Badge>
+          </div>
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold">Chain Risk Matrix</h3>
-                  <p className="text-xs text-muted-foreground">Real-time security assessment</p>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {timeWindow}
-                </Badge>
-              </div>
               <ChainRiskHeatmap data={chainRisk} timeWindow={timeWindow} />
             </CardContent>
           </Card>
-          
-          {/* Intelligence Digest */}
+        </div>
+        
+        {/* Intelligence Digest */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Intelligence Digest</h2>
+              <p className="text-sm text-muted-foreground">AI-powered market insights</p>
+            </div>
+          </div>
           <Card>
             <CardContent className="p-4">
-              <div className="mb-3">
-                <h3 className="font-semibold">Intelligence Digest</h3>
-                <p className="text-xs text-muted-foreground">AI-powered market insights</p>
-              </div>
               <AlertsDigest 
                 items={digestItems}
                 onViewCluster={(id) => {

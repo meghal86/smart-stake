@@ -1,5 +1,4 @@
 import { DesktopOverview, MobileOverview } from '@/components/market-hub/Overview';
-import { DesktopOverview2, MobileOverview2 } from '@/components/market-hub/Overview2';
 import { MobileDrawer } from '@/components/layout/MobileDrawer';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AlertsSidebar } from '@/components/market-hub/AlertsSidebar';
@@ -275,18 +274,7 @@ function MarketHubContent() {
                     <div className="text-xs text-muted-foreground whitespace-nowrap">Standard layout</div>
                   </div>
                 </Button>
-                <Button
-                  variant={activeView === 'overview2' ? 'default' : 'ghost'}
-                  className="w-full justify-start h-11 text-left group-hover:h-11"
-                  onClick={() => handleViewChange('overview2')}
-                  title="Overview 2"
-                >
-                  <BarChart3 className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
-                    <div className="font-medium whitespace-nowrap">Overview 2</div>
-                    <div className="text-xs text-muted-foreground whitespace-nowrap">Terminal layout</div>
-                  </div>
-                </Button>
+
                 <Button
                   variant={activeView === 'whales' ? 'default' : 'ghost'}
                   className="w-full justify-start h-11 text-left group-hover:h-11"
@@ -338,16 +326,7 @@ function MarketHubContent() {
                   timeWindow={timeWindow}
                 />
               )}
-              {activeView === 'overview2' && (
-                <DesktopOverview2 
-                  marketSummary={marketSummary}
-                  whaleClusters={whaleClusters}
-                  chainRisk={chainRisk}
-                  loading={marketSummaryLoading || clustersLoading || chainRiskLoading}
-                  onTopAlertClick={handleTopAlertClick}
-                  timeWindow={timeWindow}
-                />
-              )}
+
               {activeView === 'whales' && (
                 <DesktopWhales 
                   clusters={whaleClusters}
