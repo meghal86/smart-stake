@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { ClusterCard } from '@/components/clusters/ClusterCard';
 import { ClusterDetail } from '@/components/clusters/ClusterDetail';
@@ -7,16 +8,21 @@ import { ChainRiskHeatmap } from '@/components/heatmap/ChainRiskHeatmap';
 import { AlertsDigest } from '@/components/digest/AlertsDigest';
 import { 
   TrendingUp, 
+  TrendingDown,
   DollarSign,
   Users,
   Shield,
   Fish,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  Eye
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Mobile-First Overview - Clean Design
 export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loading, timeWindow }: any) {
+  const navigate = useNavigate();
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [digestItems, setDigestItems] = useState([]);
 
@@ -157,7 +163,12 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
       {/* AI Digest */}
       <AlertsDigest 
         items={digestItems}
-        onViewCluster={(id) => setSelectedCluster(id)}
+        onViewCluster={(id) => {
+          const cluster = whaleClusters?.find((c: any) => c.id === id);
+          if (cluster) {
+            navigate(`/alerts?cluster=${id}&name=${encodeURIComponent(cluster.name)}&source=cluster`);
+          }
+        }}
         onCreateRule={(item) => alert(`Rule: ${item.title}`)}
         mobile
       />
@@ -165,8 +176,9 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
   );
 }
 
-// Desktop Overview
+// Desktop Overview - Clean Professional Layout
 export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loading, timeWindow }: any) {
+  const navigate = useNavigate();
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [digestItems, setDigestItems] = useState([]);
 
@@ -186,10 +198,15 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-4 gap-6">
+      <div className="space-y-6">
+        <div className="grid grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-muted/20 rounded-xl animate-pulse" />
+            <div key={i} className="h-20 bg-muted/20 rounded animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-32 bg-muted/20 rounded animate-pulse" />
           ))}
         </div>
       </div>
@@ -197,136 +214,206 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Status Bar */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        <MetricCard 
-          icon={<TrendingUp className="w-5 h-5" />}
-          label="Market Mood"
-          value={marketSummary?.marketMood || 74}
-          change={0.2}
-          color="primary"
-        />
-        <MetricCard 
-          icon={<DollarSign className="w-5 h-5" />}
-          label="24h Volume"
-          value="$45.0B"
-          change={2.7}
-          color="emerald"
-        />
-        <MetricCard 
-          icon={<Users className="w-5 h-5" />}
-          label="Active Whales"
-          value={892}
-          change={0.2}
-          color="sky"
-        />
-        <MetricCard 
-          icon={<Shield className="w-5 h-5" />}
-          label="Risk Index"
-          value="Low"
-          change={null}
-          color="amber"
-        />
+    <div className="space-y-6">
+      {/* Market Overview KPIs */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-semibold">Market Overview</h2>
+            <p className="text-sm text-muted-foreground">Real-time blockchain intelligence metrics</p>
+          </div>
+          <Badge variant="outline" className="text-xs">
+            Live Data • {timeWindow}
+          </Badge>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-4">
+          <MetricCard 
+            icon={<TrendingUp className="w-4 h-4" />}
+            label="Market Sentiment"
+            value="65.49"
+            change={0.2}
+            color="emerald"
+          />
+          <MetricCard 
+            icon={<DollarSign className="w-4 h-4" />}
+            label="24h Volume"
+            value="$45.2B"
+            change={2.7}
+            color="blue"
+          />
+          <MetricCard 
+            icon={<Users className="w-4 h-4" />}
+            label="Active Whales"
+            value="5"
+            change={0.2}
+            color="purple"
+          />
+          <MetricCard 
+            icon={<Shield className="w-4 h-4" />}
+            label="Risk Index"
+            value="2.4/10"
+            change={-0.3}
+            color="amber"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Main Content */}
-        <div className="col-span-8 space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold mb-6">Whale Behavior Clusters</h2>
-            {!whaleClusters?.length ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Fish className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="font-medium mb-2">No Active Clusters</h3>
-                  <p className="text-muted-foreground">Whale activity will appear here when detected</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {whaleClusters.map((cluster: any) => (
-                  <ClusterCard
-                    key={cluster.id}
-                    cluster={cluster}
-                    isSelected={selectedCluster === cluster.id}
-                    onSelect={() => setSelectedCluster(selectedCluster === cluster.id ? null : cluster.id)}
-                  />
-                ))}
-              </div>
-            )}
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Whale Clusters - Takes 2 columns */}
+        <div className="col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Whale Behavior Intelligence</h2>
+              <p className="text-sm text-muted-foreground">AI-powered pattern recognition and behavioral clustering</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-xs">
+                {whaleClusters?.length || 5} Active Clusters
+              </Badge>
+              <Button 
+                size="sm"
+                onClick={() => navigate('/alerts')}
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                View All Alerts
+              </Button>
+            </div>
           </div>
+          
+          {!whaleClusters?.length ? (
+            <Card className="border-dashed">
+              <CardContent className="p-12 text-center">
+                <Fish className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+                <h3 className="font-medium mb-2">No Active Clusters</h3>
+                <p className="text-muted-foreground text-sm">
+                  Whale activity will appear here when detected
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {whaleClusters.map((cluster: any) => (
+                <ClusterCard
+                  key={cluster.id}
+                  cluster={cluster}
+                  isSelected={selectedCluster === cluster.id}
+                  onSelect={() => setSelectedCluster(selectedCluster === cluster.id ? null : cluster.id)}
+                  className="hover:shadow-md transition-all duration-200"
+                />
+              ))}
+            </div>
+          )}
 
+          {/* Expanded Cluster Details */}
           {selectedCluster && (
-            <ClusterDetail
-              cluster={whaleClusters?.find((c: any) => c.id === selectedCluster)}
-              onClose={() => setSelectedCluster(null)}
-            />
+            <div className="mt-6 border-t pt-6">
+              <ClusterDetail
+                cluster={whaleClusters?.find((c: any) => c.id === selectedCluster)}
+                onClose={() => setSelectedCluster(null)}
+              />
+            </div>
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="col-span-4 space-y-6">
-          <div>
-            <h3 className="font-semibold mb-4">Chain Risk Assessment</h3>
-            <ChainRiskHeatmap data={chainRisk} timeWindow={timeWindow} />
-          </div>
+        {/* Right Sidebar - Takes 1 column */}
+        <div className="space-y-6">
+          {/* Chain Risk Matrix */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold">Chain Risk Matrix</h3>
+                  <p className="text-xs text-muted-foreground">Real-time security assessment</p>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {timeWindow}
+                </Badge>
+              </div>
+              <ChainRiskHeatmap data={chainRisk} timeWindow={timeWindow} />
+            </CardContent>
+          </Card>
           
-          <AlertsDigest 
-            items={digestItems}
-            onViewCluster={(id) => setSelectedCluster(id)}
-            onCreateRule={(item) => alert(`Creating rule: ${item.title}`)}
-          />
+          {/* Intelligence Digest */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="mb-3">
+                <h3 className="font-semibold">Intelligence Digest</h3>
+                <p className="text-xs text-muted-foreground">AI-powered market insights</p>
+              </div>
+              <AlertsDigest 
+                items={digestItems}
+                onViewCluster={(id) => {
+                  const cluster = whaleClusters?.find((c: any) => c.id === id);
+                  if (cluster) {
+                    navigate(`/alerts?cluster=${id}&name=${encodeURIComponent(cluster.name)}&source=cluster`);
+                  }
+                }}
+                onCreateRule={(item) => {
+                  navigate('/alerts', { state: { createRule: item } });
+                }}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
 
-// Compact Metric Card
+// Clean Metric Card
 function MetricCard({ icon, label, value, change, color }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
   change: number | null;
-  color: 'primary' | 'emerald' | 'sky' | 'amber';
+  color: 'primary' | 'emerald' | 'sky' | 'amber' | 'blue' | 'purple';
 }) {
   const colorClasses = {
-    primary: 'bg-primary/10 text-primary',
-    emerald: 'bg-emerald-500/10 text-emerald-600',
-    sky: 'bg-sky-500/10 text-sky-600',
-    amber: 'bg-amber-500/10 text-amber-600'
+    primary: { bg: 'bg-primary/10', text: 'text-primary', accent: 'bg-primary' },
+    emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', accent: 'bg-emerald-500' },
+    sky: { bg: 'bg-sky-500/10', text: 'text-sky-600', accent: 'bg-sky-500' },
+    amber: { bg: 'bg-amber-500/10', text: 'text-amber-600', accent: 'bg-amber-500' },
+    blue: { bg: 'bg-blue-500/10', text: 'text-blue-600', accent: 'bg-blue-500' },
+    purple: { bg: 'bg-purple-500/10', text: 'text-purple-600', accent: 'bg-purple-500' }
   };
 
+  const config = colorClasses[color];
+
   return (
-    <Card className="min-w-[140px] snap-center">
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${colorClasses[color]}`}>
+    <div className="relative min-w-[140px] snap-center">
+      <div className={`absolute top-0 left-0 w-full h-0.5 ${config.accent} rounded-t`}></div>
+      <Card className="border-0 bg-card/50 hover:bg-card transition-colors">
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className={`p-1.5 rounded ${config.bg} ${config.text}`}>
               {icon}
             </div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            {change !== null && (
+              <div className={`flex items-center gap-1 text-xs font-medium ${
+                change >= 0 ? 'text-emerald-600' : 'text-red-600'
+              }`}>
+                {change >= 0 ? (
+                  <TrendingUp className="w-3 h-3" />
+                ) : (
+                  <TrendingDown className="w-3 h-3" />
+                )}
+                {change >= 0 ? '+' : ''}{change.toFixed(1)}%
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
               {label}
             </p>
-          </div>
-          <div>
-            <p className="text-xl font-bold">
+            <p className="text-lg font-bold">
               {typeof value === 'number' ? value.toLocaleString() : value}
             </p>
-            {change !== null && (
-              <p className={`text-xs font-medium ${
-                change >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {change >= 0 ? '+' : ''}{change.toFixed(1)}%
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              Updated {Math.floor(Math.random() * 3) + 1}m ago
-            </p>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

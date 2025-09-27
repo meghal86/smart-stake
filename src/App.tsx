@@ -43,6 +43,7 @@ import Portfolio from "./pages/Portfolio";
 import Plans from "./pages/Plans";
 import MarketHub from "./pages/MarketHub";
 import Overview from "./pages/Overview";
+import Alerts from "./pages/Alerts";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -140,6 +141,7 @@ const App = () => {
                   <Route path="/plans" element={<Plans />} />
                   <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="/overview" element={<Overview />} />
+                  <Route path="/alerts" element={<Alerts />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

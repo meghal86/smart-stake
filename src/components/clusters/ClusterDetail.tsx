@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, Eye, Download, Info, AlertTriangle, Clock } from 'lucide-react';
+import { X, Eye, Download, Info, AlertTriangle, Clock, Bell } from 'lucide-react';
 import { ClusterPanel } from '@/components/market/ClusterPanel';
 import { AIInsights } from './AIInsights';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface ClusterDetailProps {
   cluster: {
@@ -23,6 +24,7 @@ interface ClusterDetailProps {
 }
 
 export function ClusterDetail({ cluster, onClose }: ClusterDetailProps) {
+  const navigate = useNavigate();
   const [showTransactions, setShowTransactions] = useState(false);
   const [showClassificationRules, setShowClassificationRules] = useState(false);
 
@@ -196,6 +198,17 @@ export function ClusterDetail({ cluster, onClose }: ClusterDetailProps) {
               <Button 
                 size="sm" 
                 className="w-full"
+                onClick={() => {
+                  navigate(`/alerts?cluster=${cluster.id}&name=${encodeURIComponent(cluster.name)}&source=cluster`);
+                }}
+              >
+                <Bell className="h-3 w-3 mr-2" />
+                View Cluster Alerts
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="w-full"
                 onClick={() => setShowTransactions(!showTransactions)}
               >
                 <Eye className="h-3 w-3 mr-2" />
@@ -254,6 +267,7 @@ export function ClusterDetail({ cluster, onClose }: ClusterDetailProps) {
           <div className="mt-6 pt-4 border-t">
             <ClusterPanel 
               clusterId={cluster.id}
+              clusterData={cluster}
               onClose={() => setShowTransactions(false)}
             />
           </div>

@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { EnhancedWhaleClustersV2 } from './EnhancedWhaleClustersV2';
+import { MobileWhaleClusters } from './MobileWhaleClusters';
+import { AlertsIntegration } from './AlertsIntegration';
+import { RiskVisualization, CompactRiskScore } from './RiskVisualization';
+import { useWindowSize } from '@/hooks/use-mobile';
 import { 
   Fish, 
   ExternalLink, 
@@ -19,6 +24,18 @@ import {
 
 export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect }: any) {
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState([]);
+
+  // Fetch alerts for cluster integration
+  const { data: whaleAlerts } = useQuery({
+    queryKey: ['whale-alerts-integration'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('whale-alerts');
+      if (error) throw error;
+      return data?.transactions || [];
+    },
+    retry: 1
+  });
 
   if (loading) {
     return (
@@ -40,46 +57,61 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
   }
 
   return (
-    <div className="space-y-8">
-      {/* Cluster Selection */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Whale Analytics by Cluster</h2>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            variant={selectedCluster === null ? 'default' : 'outline'}
-            onClick={() => setSelectedCluster(null)}
-          >
-            All Whales
-          </Button>
-          {clusters?.map((cluster: any) => (
-            <Button
-              key={cluster.id}
-              variant={selectedCluster === cluster.id ? 'default' : 'outline'}
-              onClick={() => setSelectedCluster(cluster.id)}
-            >
-              {cluster.name} ({cluster.addressesCount})
-            </Button>
-          ))}
-        </div>
+    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      {/* Main Whale Clusters - Enhanced */}
+      <div className="xl:col-span-3">
+        <EnhancedWhaleClustersV2
+          clusters={clusters}
+          loading={loading}
+          onClusterSelect={setSelectedCluster}
+          selectedCluster={selectedCluster}
+          alerts={whaleAlerts || []}
+        />
+        
+        {/* Whale Cards Grid */}
+        {selectedCluster && (
+          <div className="mt-8">
+            <WhaleCardsGrid 
+              clusterId={selectedCluster}
+              selectedWhale={selectedWhale}
+              onWhaleSelect={onWhaleSelect}
+            />
+          </div>
+        )}
+
+        {/* Whale Detail Panel */}
+        {selectedWhale && (
+          <div className="mt-8">
+            <WhaleDetailPanel whaleId={selectedWhale} />
+          </div>
+        )}
       </div>
 
-      {/* Whale Cards Grid */}
-      <WhaleCardsGrid 
-        clusterId={selectedCluster}
-        selectedWhale={selectedWhale}
-        onWhaleSelect={onWhaleSelect}
-      />
-
-      {/* Whale Detail Panel */}
-      {selectedWhale && (
-        <WhaleDetailPanel whaleId={selectedWhale} />
-      )}
+      {/* Alerts Sidebar */}
+      <div className="xl:col-span-1">
+        <AlertsIntegration
+          alerts={whaleAlerts || []}
+          clusters={clusters || []}
+          onClusterClick={setSelectedCluster}
+        />
+      </div>
     </div>
   );
 }
 
 export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }: any) {
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
+
+  // Fetch alerts for mobile integration
+  const { data: whaleAlerts } = useQuery({
+    queryKey: ['whale-alerts-mobile'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('whale-alerts');
+      if (error) throw error;
+      return data?.transactions || [];
+    },
+    retry: 1
+  });
 
   if (loading) {
     return (
@@ -99,38 +131,13 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
   }
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Cluster Tabs */}
-      <div className="overflow-x-auto">
-        <div className="flex gap-2 pb-2" style={{ width: 'max-content' }}>
-          <Button
-            variant={selectedCluster === null ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCluster(null)}
-          >
-            All
-          </Button>
-          {clusters?.map((cluster: any) => (
-            <Button
-              key={cluster.id}
-              variant={selectedCluster === cluster.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCluster(cluster.id)}
-            >
-              {cluster.name.split(' ')[0]} ({cluster.addressesCount})
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Compact Whale Cards */}
-      <WhaleCardsGrid 
-        clusterId={selectedCluster}
-        selectedWhale={selectedWhale}
-        onWhaleSelect={onWhaleSelect}
-        mobile
-      />
-    </div>
+    <MobileWhaleClusters
+      clusters={clusters}
+      loading={loading}
+      onClusterSelect={setSelectedCluster}
+      selectedCluster={selectedCluster}
+      alerts={whaleAlerts || []}
+    />
   );
 }
 
@@ -266,9 +273,7 @@ function WhaleCard({ whale, isSelected, onClick, mobile }: any) {
                 <ExternalLink className="w-3 h-3" />
               </Button>
             </div>
-            <Badge variant={riskCategory.variant}>
-              {riskCategory.label}
-            </Badge>
+            <CompactRiskScore riskScore={whale.riskScore || 0} showLabel={false} />
           </div>
 
           {/* Balance & Risk Score */}
@@ -279,18 +284,17 @@ function WhaleCard({ whale, isSelected, onClick, mobile }: any) {
                 ${((whale.balanceUsd || 0) / 1e6).toFixed(1)}M
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Risk Score</span>
-              <span className="font-semibold">{whale.riskScore || 0}/100</span>
-            </div>
           </div>
 
-          {/* Factor Bars */}
+          {/* Enhanced Risk Visualization */}
           {!mobile && (
-            <div className="space-y-2">
-              <div className="text-xs font-medium text-muted-foreground">Risk Factors</div>
-              <FactorBars factors={whale.factorBars} />
-            </div>
+            <RiskVisualization
+              riskScore={whale.riskScore || 0}
+              factors={whale.factorBars}
+              confidence={whale.confidence || 75}
+              size="sm"
+              showFactors={false}
+            />
           )}
 
           {/* 24h Activity */}
@@ -391,7 +395,7 @@ function WhaleDetailPanel({ whaleId }: any) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
             <div>
               <h4 className="font-medium mb-2">Address Information</h4>
@@ -434,19 +438,32 @@ function WhaleDetailPanel({ whaleId }: any) {
 
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2">Risk Analysis</h4>
-              <FactorBars factors={whaleDetail?.factorBars} />
+              <h4 className="font-medium mb-2">Enhanced Risk Analysis</h4>
+              <RiskVisualization
+                riskScore={whaleDetail?.riskScore || 0}
+                factors={whaleDetail?.factorBars}
+                confidence={whaleDetail?.confidence || 75}
+                size="md"
+                showFactors={true}
+                interactive={true}
+              />
             </div>
+          </div>
 
+          <div className="space-y-4">
             <div>
               <h4 className="font-medium mb-2">Actions</h4>
-              <div className="flex gap-2">
-                <Button className="flex-1">
+              <div className="space-y-2">
+                <Button className="w-full">
                   Detailed Analysis
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
                   Add to Watchlist
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View on Explorer
                 </Button>
               </div>
             </div>

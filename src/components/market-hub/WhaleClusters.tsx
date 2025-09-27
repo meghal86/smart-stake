@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { ClusterStrip } from '@/components/market/ClusterStrip';
 import { ClusterPanel } from '@/components/market/ClusterPanel';
 import { ClusterMetrics } from '@/types/cluster';
-import { getClusterBundle } from '@/lib/market/data';
 import { calculateShareOfTotal } from '@/lib/market/compute';
 import { useClusterStore } from '@/stores/clusterStore';
 
@@ -130,6 +128,7 @@ export function WhaleClusters({ clusters = [], onClusterSelect, onWhaleSelect }:
           <p className="text-sm text-blue-600 mb-2">🔍 Debug: Rendering ClusterPanel for {selectedCluster}</p>
           <ClusterPanel 
             clusterId={selectedCluster}
+            clusterData={clusters?.find(cluster => (cluster.id || cluster.clusterId) === selectedCluster)}
             onClose={() => setSelectedCluster(null)}
           />
         </div>

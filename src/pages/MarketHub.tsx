@@ -1,9 +1,11 @@
 import { DesktopOverview, MobileOverview } from '@/components/market-hub/Overview';
+import { DesktopOverview2, MobileOverview2 } from '@/components/market-hub/Overview2';
 import { MobileDrawer } from '@/components/layout/MobileDrawer';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AlertsSidebar } from '@/components/market-hub/AlertsSidebar';
 import { DesktopWhales, MobileWhales } from '@/components/market-hub/WhaleAnalytics';
 import { DesktopSentiment, MobileSentiment } from '@/components/market-hub/SentimentAnalysis';
+import { EnhancementSummary } from '@/components/market-hub/EnhancementSummary';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -108,7 +110,24 @@ function MarketHubContent() {
     return (
       <AppLayout>
         <div className="h-full flex flex-col w-full bg-background">
-
+          {/* Mobile Header */}
+          <div className="border-b bg-card/50 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-bold">Market Hub</h1>
+                <p className="text-xs text-muted-foreground">Real-time intelligence</p>
+              </div>
+              <Select value={timeWindow} onValueChange={setTimeWindow}>
+                <SelectTrigger className="w-24 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="24h">24h</SelectItem>
+                  <SelectItem value="7d">7d</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <div className="flex-1 overflow-y-auto pb-20">
             {activeView === 'overview' && (
@@ -131,7 +150,9 @@ function MarketHubContent() {
             )}
             {activeView === 'sentiment' && <MobileSentiment />}
             {activeView === 'analysis' && (
-              <div className="p-4 text-center text-muted-foreground">Analysis coming soon.</div>
+              <div className="p-4">
+                <EnhancementSummary />
+              </div>
             )}
           </div>
           
@@ -202,15 +223,19 @@ function MarketHubContent() {
   return (
     <AppLayout>
       <div className="h-full flex flex-col bg-background">
-        <div className="border-b px-6 py-4">
+        <div className="border-b bg-card/50 px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">WhalePlus Market Intelligence Hub</h1>
-              <p className="text-muted-foreground">Real-time blockchain intelligence and whale monitoring</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Market Intelligence Hub
+              </h1>
+              <p className="text-muted-foreground mt-1 text-lg">
+                Real-time blockchain intelligence and whale behavior analysis
+              </p>
             </div>
             <div className="flex items-center gap-4">
               <Select value={timeWindow} onValueChange={setTimeWindow}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,60 +243,103 @@ function MarketHubContent() {
                   <SelectItem value="7d">Last 7 days</SelectItem>
                 </SelectContent>
               </Select>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Refreshed {refreshedMinutesAgo}m ago
+              <Badge variant="outline" className="flex items-center gap-2 px-3 py-1">
+                <Clock className="w-4 h-4" />
+                Updated {refreshedMinutesAgo}m ago
               </Badge>
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <Button variant="outline" onClick={handleRefresh}>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
+                Refresh Data
               </Button>
             </div>
           </div>
         </div>
         <div className="flex flex-1">
-          <div className="w-64 border-r bg-card/50">
-            <div className="p-6">
-              <nav className="space-y-2">
+          <div className="w-16 border-r bg-card/30 hover:w-72 transition-all duration-300 group overflow-hidden">
+            <div className="p-3 group-hover:p-6">
+              <div className="mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-3">
+                  Intelligence Views
+                </h3>
+              </div>
+              <nav className="space-y-1">
                 <Button
                   variant={activeView === 'overview' ? 'default' : 'ghost'}
-                  className="w-full justify-start"
+                  className="w-full justify-start h-11 text-left group-hover:h-11"
                   onClick={() => handleViewChange('overview')}
+                  title="Overview 1"
                 >
-                  <BarChart3 className="w-5 h-5 mr-3" />
-                  Overview
+                  <BarChart3 className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                    <div className="font-medium whitespace-nowrap">Overview 1</div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">Standard layout</div>
+                  </div>
+                </Button>
+                <Button
+                  variant={activeView === 'overview2' ? 'default' : 'ghost'}
+                  className="w-full justify-start h-11 text-left group-hover:h-11"
+                  onClick={() => handleViewChange('overview2')}
+                  title="Overview 2"
+                >
+                  <BarChart3 className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                    <div className="font-medium whitespace-nowrap">Overview 2</div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">Terminal layout</div>
+                  </div>
                 </Button>
                 <Button
                   variant={activeView === 'whales' ? 'default' : 'ghost'}
-                  className="w-full justify-start"
+                  className="w-full justify-start h-11 text-left group-hover:h-11"
                   onClick={() => handleViewChange('whales')}
+                  title="Whales"
                 >
-                  <Fish className="w-5 h-5 mr-3" />
-                  Whales
+                  <Fish className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                    <div className="font-medium whitespace-nowrap">Whales</div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">Behavior analysis</div>
+                  </div>
                 </Button>
                 <Button
                   variant={activeView === 'sentiment' ? 'default' : 'ghost'}
-                  className="w-full justify-start"
+                  className="w-full justify-start h-11 text-left group-hover:h-11"
                   onClick={() => handleViewChange('sentiment')}
+                  title="Sentiment"
                 >
-                  <TrendingUp className="w-5 h-5 mr-3" />
-                  Sentiment
+                  <TrendingUp className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                    <div className="font-medium whitespace-nowrap">Sentiment</div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">Market mood</div>
+                  </div>
                 </Button>
                 <Button
                   variant={activeView === 'analysis' ? 'default' : 'ghost'}
-                  className="w-full justify-start"
+                  className="w-full justify-start h-11 text-left group-hover:h-11"
                   onClick={() => handleViewChange('analysis')}
+                  title="Analysis"
                 >
-                  <Activity className="w-5 h-5 mr-3" />
-                  Analysis
+                  <Activity className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+                    <div className="font-medium whitespace-nowrap">Analysis</div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">Deep insights</div>
+                  </div>
                 </Button>
               </nav>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto pb-28">
-            <div className="p-6">
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-8 pb-32">
               {activeView === 'overview' && (
                 <DesktopOverview 
+                  marketSummary={marketSummary}
+                  whaleClusters={whaleClusters}
+                  chainRisk={chainRisk}
+                  loading={marketSummaryLoading || clustersLoading || chainRiskLoading}
+                  onTopAlertClick={handleTopAlertClick}
+                  timeWindow={timeWindow}
+                />
+              )}
+              {activeView === 'overview2' && (
+                <DesktopOverview2 
                   marketSummary={marketSummary}
                   whaleClusters={whaleClusters}
                   chainRisk={chainRisk}
@@ -290,9 +358,7 @@ function MarketHubContent() {
               )}
               {activeView === 'sentiment' && <DesktopSentiment />}
               {activeView === 'analysis' && (
-                <div className="text-center text-muted-foreground py-8">
-                  <p>Analysis dashboard coming soon</p>
-                </div>
+                <EnhancementSummary />
               )}
             </div>
           </div>

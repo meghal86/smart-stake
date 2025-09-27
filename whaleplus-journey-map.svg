@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="800" viewBox="0 0 1400 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A2B6B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F1B3C;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#F8FAFC;stop-opacity:0.95" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1400" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Title -->
+  <text x="700" y="40" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="28" font-weight="bold">
+    WhalePlus User Journey Map
+  </text>
+  <text x="700" y="65" text-anchor="middle" fill="#00FF99" font-family="Arial, sans-serif" font-size="16">
+    End-to-End Flow with Persona Mapping
+  </text>
+  
+  <!-- Journey Timeline -->
+  <line x1="100" y1="120" x2="1300" y2="120" stroke="#00FF99" stroke-width="3"/>
+  
+  <!-- Journey Stages -->
+  <!-- Stage 1: Onboarding -->
+  <g transform="translate(120, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">1</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Onboarding</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Signup & Setup</text>
+  </g>
+  
+  <!-- Stage 2: Market Hub -->
+  <g transform="translate(270, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">2</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Market Hub</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Intelligence</text>
+  </g>
+  
+  <!-- Stage 3: Portfolio -->
+  <g transform="translate(420, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">3</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Portfolio</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Intelligence</text>
+  </g>
+  
+  <!-- Stage 4: Alerts -->
+  <g transform="translate(570, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">4</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Whale Alerts</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Real-time</text>
+  </g>
+  
+  <!-- Stage 5: Scanner -->
+  <g transform="translate(720, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">5</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Wallet Scanner</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Due Diligence</text>
+  </g>
+  
+  <!-- Stage 6: Predictions -->
+  <g transform="translate(870, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">6</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Predictions</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">AI Models</text>
+  </g>
+  
+  <!-- Stage 7: Reports -->
+  <g transform="translate(1020, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">7</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Reports</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Export & Share</text>
+  </g>
+  
+  <!-- Stage 8: Retention -->
+  <g transform="translate(1170, 90)">
+    <rect width="120" height="80" rx="8" fill="url(#cardGradient)" stroke="#00FF99" stroke-width="2"/>
+    <circle cx="60" cy="25" r="12" fill="#1A2B6B"/>
+    <text x="60" y="30" text-anchor="middle" fill="#FFFFFF" font-size="12" font-weight="bold">8</text>
+    <text x="60" y="50" text-anchor="middle" fill="#1A2B6B" font-size="11" font-weight="bold">Retention</text>
+    <text x="60" y="65" text-anchor="middle" fill="#64748B" font-size="9">Daily Habit</text>
+  </g>
+  
+  <!-- Persona Lanes -->
+  <!-- Retail Trader Lane -->
+  <g transform="translate(80, 220)">
+    <rect width="1240" height="120" rx="8" fill="rgba(255,255,255,0.05)" stroke="rgba(0,255,153,0.3)" stroke-width="1"/>
+    <rect width="100" height="120" rx="8" fill="#00FF99" fill-opacity="0.1"/>
+    <text x="50" y="25" text-anchor="middle" fill="#00FF99" font-size="14" font-weight="bold">Retail Trader</text>
+    <text x="50" y="45" text-anchor="middle" fill="#FFFFFF" font-size="10">Curiosity Driven</text>
+    <text x="50" y="60" text-anchor="middle" fill="#FFFFFF" font-size="10">Simple Alerts</text>
+    <text x="50" y="75" text-anchor="middle" fill="#FFFFFF" font-size="10">Mobile First</text>
+    
+    <!-- Retail touchpoints -->
+    <circle cx="160" cy="60" r="8" fill="#00FF99" fill-opacity="0.8"/>
+    <text x="160" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Easy Setup</text>
+    
+    <circle cx="610" cy="60" r="8" fill="#00FF99" fill-opacity="0.8"/>
+    <text x="610" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Push Alerts</text>
+    
+    <circle cx="1210" cy="60" r="8" fill="#00FF99" fill-opacity="0.8"/>
+    <text x="1210" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Daily Digest</text>
+  </g>
+  
+  <!-- Day Trader Lane -->
+  <g transform="translate(80, 360)">
+    <rect width="1240" height="120" rx="8" fill="rgba(255,255,255,0.05)" stroke="rgba(0,255,153,0.3)" stroke-width="1"/>
+    <rect width="100" height="120" rx="8" fill="#FFB800" fill-opacity="0.1"/>
+    <text x="50" y="25" text-anchor="middle" fill="#FFB800" font-size="14" font-weight="bold">Day Trader</text>
+    <text x="50" y="45" text-anchor="middle" fill="#FFFFFF" font-size="10">Speed Focused</text>
+    <text x="50" y="60" text-anchor="middle" fill="#FFFFFF" font-size="10">Real-time Data</text>
+    <text x="50" y="75" text-anchor="middle" fill="#FFFFFF" font-size="10">Quick Actions</text>
+    
+    <!-- Day trader touchpoints -->
+    <circle cx="310" cy="60" r="8" fill="#FFB800" fill-opacity="0.8"/>
+    <text x="310" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Live Clusters</text>
+    
+    <circle cx="610" cy="60" r="8" fill="#FFB800" fill-opacity="0.8"/>
+    <text x="610" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Instant Alerts</text>
+    
+    <circle cx="760" cy="60" r="8" fill="#FFB800" fill-opacity="0.8"/>
+    <text x="760" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Quick Lookup</text>
+  </g>
+  
+  <!-- Analyst Lane -->
+  <g transform="translate(80, 500)">
+    <rect width="1240" height="120" rx="8" fill="rgba(255,255,255,0.05)" stroke="rgba(0,255,153,0.3)" stroke-width="1"/>
+    <rect width="100" height="120" rx="8" fill="#8B5CF6" fill-opacity="0.1"/>
+    <text x="50" y="25" text-anchor="middle" fill="#8B5CF6" font-size="14" font-weight="bold">Analyst</text>
+    <text x="50" y="45" text-anchor="middle" fill="#FFFFFF" font-size="10">Research Driven</text>
+    <text x="50" y="60" text-anchor="middle" fill="#FFFFFF" font-size="10">Deep Analysis</text>
+    <text x="50" y="75" text-anchor="middle" fill="#FFFFFF" font-size="10">Historical Data</text>
+    
+    <!-- Analyst touchpoints -->
+    <circle cx="310" cy="60" r="8" fill="#8B5CF6" fill-opacity="0.8"/>
+    <text x="310" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Risk Heatmap</text>
+    
+    <circle cx="460" cy="60" r="8" fill="#8B5CF6" fill-opacity="0.8"/>
+    <text x="460" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Stress Tests</text>
+    
+    <circle cx="910" cy="60" r="8" fill="#8B5CF6" fill-opacity="0.8"/>
+    <text x="910" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Backtesting</text>
+    
+    <circle cx="1060" cy="60" r="8" fill="#8B5CF6" fill-opacity="0.8"/>
+    <text x="1060" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">CSV Export</text>
+  </g>
+  
+  <!-- Fund PM Lane -->
+  <g transform="translate(80, 640)">
+    <rect width="1240" height="120" rx="8" fill="rgba(255,255,255,0.05)" stroke="rgba(0,255,153,0.3)" stroke-width="1"/>
+    <rect width="100" height="120" rx="8" fill="#EF4444" fill-opacity="0.1"/>
+    <text x="50" y="25" text-anchor="middle" fill="#EF4444" font-size="14" font-weight="bold">Fund PM</text>
+    <text x="50" y="45" text-anchor="middle" fill="#FFFFFF" font-size="10">Institutional</text>
+    <text x="50" y="60" text-anchor="middle" fill="#FFFFFF" font-size="10">White-label</text>
+    <text x="50" y="75" text-anchor="middle" fill="#FFFFFF" font-size="10">API Access</text>
+    
+    <!-- Fund PM touchpoints -->
+    <circle cx="160" cy="60" r="8" fill="#EF4444" fill-opacity="0.8"/>
+    <text x="160" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Enterprise</text>
+    
+    <circle cx="460" cy="60" r="8" fill="#EF4444" fill-opacity="0.8"/>
+    <text x="460" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Correlation</text>
+    
+    <circle cx="910" cy="60" r="8" fill="#EF4444" fill-opacity="0.8"/>
+    <text x="910" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Risk Models</text>
+    
+    <circle cx="1060" cy="60" r="8" fill="#EF4444" fill-opacity="0.8"/>
+    <text x="1060" y="85" text-anchor="middle" fill="#FFFFFF" font-size="8">Client Reports</text>
+  </g>
+  
+  <!-- Connection Lines -->
+  <!-- Retail connections -->
+  <line x1="180" y1="170" x2="180" y2="220" stroke="#00FF99" stroke-width="2" opacity="0.6"/>
+  <line x1="630" y1="170" x2="630" y2="220" stroke="#00FF99" stroke-width="2" opacity="0.6"/>
+  <line x1="1230" y1="170" x2="1230" y2="220" stroke="#00FF99" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Day trader connections -->
+  <line x1="330" y1="170" x2="330" y2="360" stroke="#FFB800" stroke-width="2" opacity="0.6"/>
+  <line x1="630" y1="170" x2="630" y2="360" stroke="#FFB800" stroke-width="2" opacity="0.6"/>
+  <line x1="780" y1="170" x2="780" y2="360" stroke="#FFB800" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Analyst connections -->
+  <line x1="330" y1="170" x2="330" y2="500" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+  <line x1="480" y1="170" x2="480" y2="500" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+  <line x1="930" y1="170" x2="930" y2="500" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+  <line x1="1080" y1="170" x2="1080" y2="500" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Fund PM connections -->
+  <line x1="180" y1="170" x2="180" y2="640" stroke="#EF4444" stroke-width="2" opacity="0.6"/>
+  <line x1="480" y1="170" x2="480" y2="640" stroke="#EF4444" stroke-width="2" opacity="0.6"/>
+  <line x1="930" y1="170" x2="930" y2="640" stroke="#EF4444" stroke-width="2" opacity="0.6"/>
+  <line x1="1080" y1="170" x2="1080" y2="640" stroke="#EF4444" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Value Proposition Box -->
+  <g transform="translate(1320, 200)">
+    <rect width="70" height="400" rx="8" fill="rgba(0,255,153,0.1)" stroke="#00FF99" stroke-width="1"/>
+    <text x="35" y="25" text-anchor="middle" fill="#00FF99" font-size="12" font-weight="bold">Value</text>
+    <text x="35" y="45" text-anchor="middle" fill="#00FF99" font-size="12" font-weight="bold">Flow</text>
+    
+    <text x="35" y="80" text-anchor="middle" fill="#FFFFFF" font-size="9">Curiosity</text>
+    <text x="35" y="95" text-anchor="middle" fill="#FFFFFF" font-size="9">↓</text>
+    <text x="35" y="110" text-anchor="middle" fill="#FFFFFF" font-size="9">Insight</text>
+    <text x="35" y="125" text-anchor="middle" fill="#FFFFFF" font-size="9">↓</text>
+    <text x="35" y="140" text-anchor="middle" fill="#FFFFFF" font-size="9">Action</text>
+    <text x="35" y="155" text-anchor="middle" fill="#FFFFFF" font-size="9">↓</text>
+    <text x="35" y="170" text-anchor="middle" fill="#FFFFFF" font-size="9">Profit</text>
+    <text x="35" y="185" text-anchor="middle" fill="#FFFFFF" font-size="9">↓</text>
+    <text x="35" y="200" text-anchor="middle" fill="#FFFFFF" font-size="9">Habit</text>
+  </g>
+</svg>

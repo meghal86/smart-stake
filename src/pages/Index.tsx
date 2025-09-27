@@ -90,6 +90,8 @@ const Index = () => {
     setActiveTab(tab);
     if (tab === 'hub') {
       navigate('/market/hub');
+    } else if (tab === 'alerts') {
+      navigate('/alerts');
     } else {
       navigate(`/?tab=${tab}`);
     }

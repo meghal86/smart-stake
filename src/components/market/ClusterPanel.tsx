@@ -1,30 +1,73 @@
 // Enhanced Cluster Panel with Data Coherence
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ExternalLink, Plus, TrendingUp, TrendingDown, AlertTriangle, Info } from 'lucide-react';
-import { ClusterBundle, TxSample, TopMover } from '@/types/cluster';
-import { getClusterBundle } from '@/lib/market/data';
+import { TrendingUp, TrendingDown, AlertTriangle, Info } from 'lucide-react';
+import { ClusterBundle, TxSample, TopMover, Window } from '@/types/cluster';
 import { formatUSD, getRiskThreshold, getConfidenceLabel, CLUSTER_THRESHOLDS } from '@/lib/market/compute';
 import { useClusterStore } from '@/stores/clusterStore';
+import { supabase } from '@/integrations/supabase/client';
+import { buildClusterBundle } from '@/lib/market/cluster-utils';
 
 interface ClusterPanelProps {
   clusterId: string;
   onClose: () => void;
+  clusterData?: any;
 }
 
-export function ClusterPanel({ clusterId, onClose }: ClusterPanelProps) {
+const WHALE_ALERT_QUERY_STALE_TIME = 2 * 60 * 1000;
+
+export function ClusterPanel({ clusterId, onClose, clusterData }: ClusterPanelProps) {
   const { timeWindow } = useClusterStore();
-  
-  const { data: bundle, isLoading, error } = useQuery({
-    queryKey: ['cluster-bundle', clusterId, timeWindow],
-    queryFn: () => getClusterBundle(clusterId, timeWindow),
-    retry: 1
+
+  const { data: whaleAlerts, isLoading, error } = useQuery({
+    queryKey: ['whale-alerts', timeWindow],
+    queryFn: async () => {
+      const { data, error: fnError } = await supabase.functions.invoke('whale-alerts');
+      if (fnError) {
+        throw new Error(fnError.message || 'Unable to load whale-alerts function');
+      }
+      if (data?.error) {
+        throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+      }
+      return Array.isArray(data?.transactions) ? data.transactions : [];
+    },
+    staleTime: WHALE_ALERT_QUERY_STALE_TIME,
+    retry: 1,
   });
+
+  const bundle: ClusterBundle | undefined = useMemo(() => {
+    if (!clusterId) {
+      return undefined;
+    }
+
+    const options = {
+      clusterId,
+      clusterType: clusterData?.type,
+      clusterName: clusterData?.name,
+      clusterKind: clusterData?.kind,
+      clusterRiskScore: clusterData?.riskScore,
+      clusterConfidence: clusterData?.confidence,
+      addressesCount: clusterData?.addressesCount ?? clusterData?.membersCount,
+      netFlow24h: clusterData?.netFlow24h,
+      sumBalanceUsd: clusterData?.sumBalanceUsd,
+      shareOfTotalPct: clusterData?.shareOfTotalPct,
+      alerts: clusterData?.alerts,
+      fallbackTransactions: whaleAlerts,
+      timeWindow: timeWindow as Window,
+    };
+
+    try {
+      return buildClusterBundle(options);
+    } catch (err) {
+      console.error('Failed to build cluster bundle from alerts', err);
+      return undefined;
+    }
+  }, [clusterId, clusterData, whaleAlerts, timeWindow]);
 
   if (isLoading) {
     return (
@@ -54,7 +97,7 @@ export function ClusterPanel({ clusterId, onClose }: ClusterPanelProps) {
     );
   }
 
-  const { metrics, tx, topMovers, relatedAlerts } = bundle;
+  const { metrics, tx, topMovers = [], relatedAlerts } = bundle;
   const riskLevel = getRiskThreshold(metrics.riskScore);
   const confidenceLabel = getConfidenceLabel(metrics.confidencePct);
   const isUncertain = metrics.confidencePct < CLUSTER_THRESHOLDS.minConfidenceForClassification;
@@ -66,13 +109,6 @@ export function ClusterPanel({ clusterId, onClose }: ClusterPanelProps) {
           <div>
             <CardTitle className="flex items-center gap-3">
               {metrics.name}
-              {metrics.name === 'Emerging Cluster' && (
-                <div className="flex items-center gap-1" title="Early-stage cluster detected with low classification confidence. Treated as experimental.">
-                  <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              )}
               {relatedAlerts.length > 0 && (
                 <Badge variant="destructive" className="text-xs">
                   {relatedAlerts.length} Alert{relatedAlerts.length > 1 ? 's' : ''}
@@ -96,11 +132,6 @@ export function ClusterPanel({ clusterId, onClose }: ClusterPanelProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {metrics.name === 'Emerging Cluster' && (
-              <Button variant="outline" size="sm" onClick={() => alert('Classification report submitted for review')}>
-                Report Classification
-              </Button>
-            )}
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
@@ -154,9 +185,9 @@ export function ClusterPanel({ clusterId, onClose }: ClusterPanelProps) {
         {/* Transaction Samples or Top Movers */}
         <div>
           <h4 className="font-semibold mb-3">
-            {tx.length > 0 ? "Sample Transactions" : topMovers ? "Top Movements" : "Activity"}
+            {tx.length > 0 ? 'Sample Transactions' : topMovers && topMovers.length > 0 ? 'Top Movements' : 'Activity'}
           </h4>
-          
+
           {tx.length > 0 ? (
             <TransactionTable transactions={tx} />
           ) : topMovers && topMovers.length > 0 ? (

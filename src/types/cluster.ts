@@ -14,6 +14,11 @@ export interface ClusterMetrics {
   riskScore: number;      // 0..100
   confidencePct: number;  // 0..100
   note?: "balance_delta_source" | "insufficient_data";
+  // Enhanced properties for UX improvements
+  trend?: string;         // e.g., "+23%", "-8%"
+  lastActive?: string;    // e.g., "2h ago", "15m ago"
+  alertCount?: number;    // number of related alerts
+  impact?: string;        // human-readable impact description
 }
 
 export interface TxSample {

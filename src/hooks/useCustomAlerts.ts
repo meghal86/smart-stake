@@ -62,10 +62,15 @@ export function useCustomAlerts() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Alert rules query failed:', error);
+        setRules([]);
+        return;
+      }
       setRules(data || []);
     } catch (err: any) {
-      setError(err.message);
+      console.warn('Alert rules table not found, using empty array');
+      setRules([]);
     } finally {
       setLoading(false);
     }
@@ -80,10 +85,15 @@ export function useCustomAlerts() {
         .select('*')
         .order('popularity_score', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Alert templates query failed:', error);
+        setTemplates([]);
+        return;
+      }
       setTemplates(data || []);
     } catch (err: any) {
-      setError(err.message);
+      console.warn('Alert templates table not found, using empty array');
+      setTemplates([]);
     } finally {
       setLoading(false);
     }
