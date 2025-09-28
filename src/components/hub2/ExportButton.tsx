@@ -23,30 +23,68 @@ export default function ExportButton({ data, type, className }: ExportButtonProp
     setIsExporting(true);
     
     try {
-      // Simulate export process
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real implementation, this would generate the actual file
       const filename = `${type}-export-${new Date().toISOString().split('T')[0]}.${format}`;
       
-      // Create a mock download
-      const blob = new Blob([`Mock ${format.toUpperCase()} export for ${type}`], { 
-        type: format === 'pdf' ? 'application/pdf' : format === 'png' ? 'image/png' : 'text/csv' 
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (format === 'csv') {
+        // Generate real CSV data
+        const csvData = generateCSVData(data, type);
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else if (format === 'pdf') {
+        // Generate real PDF using jsPDF
+        const { jsPDF } = await import('jspdf');
+        const doc = new jsPDF();
+        doc.text(`${type.toUpperCase()} Export`, 20, 20);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+        doc.text(`Data: ${JSON.stringify(data, null, 2)}`, 20, 40);
+        doc.save(filename);
+      } else if (format === 'png') {
+        // Generate real PNG using html2canvas
+        const { default: html2canvas } = await import('html2canvas');
+        const element = document.querySelector('[data-export-target]') || document.body;
+        const canvas = await html2canvas(element as HTMLElement);
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
       
     } catch (error) {
       console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const generateCSVData = (data: any, type: string): string => {
+    if (type === 'watchlist' && Array.isArray(data)) {
+      const headers = ['entityType', 'entityId', 'label', 'sentiment', 'whalePressure', 'risk', 'updatedAt'];
+      const csvRows = [
+        headers.join(','),
+        ...data.map((item: any) => {
+          const sentiment = item.snapshots?.sentiment ?? '';
+          const whalePressure = item.snapshots?.whalePressure ?? '';
+          const risk = item.snapshots?.risk ?? '';
+          const updatedAt = item.snapshots?.updatedAt ?? '';
+          return `${item.entityType},${item.entityId},"${item.label || ''}",${sentiment},${whalePressure},${risk},${updatedAt}`;
+        })
+      ];
+      return csvRows.join('\n');
+    }
+    
+    // Generic CSV for other data types
+    return JSON.stringify(data, null, 2);
   };
 
   const getExportOptions = () => {

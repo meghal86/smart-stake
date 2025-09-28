@@ -1,532 +1,275 @@
 import { useState } from "react";
-import { useHub2 } from "@/store/hub2";
-import EntitySummaryCard from "@/components/hub2/EntitySummaryCard";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { listWatchlist, removeFromWatchlist } from "@/integrations/api/hub2";
+import { WatchItem } from "@/types/hub2";
 import Hub2Layout from "@/components/hub2/Hub2Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Star, 
-  Search, 
-  Filter, 
+  StarOff, 
   Download, 
-  FileText, 
-  Plus,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  MoreHorizontal
+  AlertTriangle, 
+  Activity, 
+  TrendingUp, 
+  TrendingDown,
+  Trash2,
+  Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface WatchlistItem {
-  id: string;
-  name: string;
-  symbol?: string;
-  status: 'monitoring' | 'action_required' | 'completed';
-  notes?: string;
-  addedAt: string;
-  lastActivity?: string;
-  lastUpdated: string;
-}
-
-// Mock data - replace with real data from your API
-const MOCK_WATCHLIST: WatchlistItem[] = [
-  {
-    id: '1',
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    status: 'monitoring',
-    notes: 'Monitoring for breakout above $50k',
-    addedAt: '2024-01-15T10:00:00Z',
-    lastActivity: '2024-01-20T14:30:00Z',
-    lastUpdated: '2024-01-20T14:30:00Z'
-  },
-  {
-    id: '2',
-    name: 'Ethereum',
-    symbol: 'ETH',
-    status: 'action_required',
-    notes: 'Risk level increased, need to review position',
-    addedAt: '2024-01-10T09:00:00Z',
-    lastActivity: '2024-01-20T16:45:00Z',
-    lastUpdated: '2024-01-20T16:45:00Z'
-  },
-  {
-    id: '3',
-    name: 'Solana',
-    symbol: 'SOL',
-    status: 'completed',
-    notes: 'Target reached, position closed',
-    addedAt: '2024-01-05T11:00:00Z',
-    lastActivity: '2024-01-18T12:00:00Z',
-    lastUpdated: '2024-01-18T12:00:00Z'
-  }
-];
-
 export default function WatchlistPage() {
-  const { watchlist, removeWatch } = useHub2();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'monitoring' | 'action_required' | 'completed'>('all');
+  const queryClient = useQueryClient();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [showNotes, setShowNotes] = useState<Record<string, boolean>>({});
-  const [notes, setNotes] = useState<Record<string, string>>({});
-
-  const filteredItems = MOCK_WATCHLIST.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.symbol?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  
+  const { data: watchlist, isLoading, error } = useQuery({
+    queryKey: ['hub2', 'watchlist'],
+    queryFn: listWatchlist,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'monitoring': return <Eye className="w-4 h-4" />;
-      case 'action_required': return <AlertTriangle className="w-4 h-4" />;
-      case 'completed': return <CheckCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+  const removeMutation = useMutation({
+    mutationFn: removeFromWatchlist,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hub2', 'watchlist']);
+    },
+  });
+
+  const handleRemoveItem = async (id: string) => {
+    try {
+      await removeMutation.mutateAsync(id);
+      setSelectedItems(prev => prev.filter(item => item !== id));
+    } catch (error) {
+      console.error('Failed to remove item:', error);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'monitoring': return 'text-blue-600 bg-blue-50';
-      case 'action_required': return 'text-orange-600 bg-orange-50';
-      case 'completed': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
+  const handleRemoveSelected = async () => {
+    try {
+      await Promise.all(selectedItems.map(id => removeMutation.mutateAsync(id)));
+      setSelectedItems([]);
+    } catch (error) {
+      console.error('Failed to remove selected items:', error);
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'monitoring': return 'Monitoring';
-      case 'action_required': return 'Action Required';
-      case 'completed': return 'Completed';
-      default: return 'Unknown';
-    }
+  const handleExportCSV = () => {
+    if (!watchlist || watchlist.length === 0) return;
+    
+    const headers = ['entityType', 'entityId', 'label', 'sentiment', 'whalePressure', 'risk', 'updatedAt'];
+    const csvRows = [
+      headers.join(','),
+      ...watchlist.map(item => {
+        const sentiment = item.snapshots?.sentiment ?? '';
+        const whalePressure = item.snapshots?.whalePressure ?? '';
+        const risk = item.snapshots?.risk ?? '';
+        const updatedAt = item.snapshots?.updatedAt ?? '';
+        return `${item.entityType},${item.entityId},"${item.label || ''}",${sentiment},${whalePressure},${risk},${updatedAt}`;
+      })
+    ];
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'hub2_watchlist.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const formatLastUpdated = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
+  if (isLoading) {
+    return (
+      <Hub2Layout>
+        <div className="container mx-auto px-4 py-6">
+          <Skeleton className="h-8 w-48 mb-6" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i} className="mb-3">
+              <CardContent className="p-4 flex items-center gap-4">
+                <Skeleton className="h-5 w-5 rounded" />
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-6 w-24 ml-auto" />
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-6 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </Hub2Layout>
+    );
+  }
 
-    if (diffDays > 0) {
-      return `Updated ${diffDays}d ago`;
-    } else if (diffHours > 0) {
-      return `Updated ${diffHours}h ago`;
-    } else {
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
-      return `Updated ${diffMinutes}m ago`;
-    }
-  };
-
-  const handleExport = (format: 'csv' | 'pdf') => {
-    console.log(`Exporting watchlist as ${format}`);
-    // Implement export functionality
-  };
-
-  const handleBulkAction = (action: string) => {
-    console.log(`Bulk action: ${action} on items:`, selectedItems);
-    // Implement bulk actions
-  };
-
-  const toggleNotes = (itemId: string) => {
-    setShowNotes(prev => ({ ...prev, [itemId]: !prev[itemId] }));
-  };
-
-  const updateNotes = (itemId: string, newNotes: string) => {
-    setNotes(prev => ({ ...prev, [itemId]: newNotes }));
-  };
+  if (error) {
+    return (
+      <Hub2Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Failed to load watchlist</h2>
+            <p className="text-muted-foreground mb-4">
+              {error instanceof Error ? error.message : 'An unexpected error occurred'}
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </Hub2Layout>
+    );
+  }
 
   return (
     <Hub2Layout>
       <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Watchlist</h1>
             <p className="text-muted-foreground">
-              Track and manage your watched assets
+              Monitor your priority assets, addresses, and clusters
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>
-              <Download className="w-4 h-4 mr-2" />
-              CSV
+            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!watchlist || watchlist.length === 0}>
+              <Download className="w-4 h-4 mr-2" /> Export CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={() => handleExport('pdf')}>
-              <FileText className="w-4 h-4 mr-2" />
-              PDF
-            </Button>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
+            <Button variant="destructive" size="sm" onClick={handleRemoveSelected} disabled={selectedItems.length === 0}>
+              <Trash2 className="w-4 h-4 mr-2" /> Remove Selected
             </Button>
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search watchlist..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        {!watchlist || watchlist.length === 0 ? (
+          <div className="text-center py-12">
+            <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Your watchlist is empty</h3>
+            <p className="text-muted-foreground mb-4">
+              Star assets from the Explore page or Asset Detail to add them here.
+            </p>
+            <Button onClick={() => window.location.href = '/hub2/explore'}>
+              Explore Assets
+            </Button>
           </div>
-          <div className="flex border rounded-lg p-1">
-            {(['all', 'monitoring', 'action_required', 'completed'] as const).map((status) => (
-              <Button
-                key={status}
-                size="sm"
-                variant={statusFilter === status ? 'default' : 'ghost'}
-                onClick={() => setStatusFilter(status)}
-                className="text-xs px-3"
-              >
-                {status === 'all' ? 'All' : getStatusLabel(status)}
-              </Button>
+        ) : (
+          <div className="space-y-3">
+            <Card className="bg-muted/50">
+              <CardContent className="p-4 flex items-center gap-4 text-sm font-medium text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.length === watchlist.length && watchlist.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedItems(watchlist.map(item => item.id));
+                    } else {
+                      setSelectedItems([]);
+                    }
+                  }}
+                  className="w-4 h-4"
+                />
+                <span className="w-32">Entity</span>
+                <span className="flex-1">Label</span>
+                <span className="w-24 text-center">Sentiment</span>
+                <span className="w-24 text-center">Pressure</span>
+                <span className="w-24 text-center">Risk</span>
+                <span className="w-32 text-right">Last Updated</span>
+                <span className="w-8"></span>
+              </CardContent>
+            </Card>
+
+            {watchlist.map((item) => (
+              <Card key={item.id} className="hover:shadow-md transition-all duration-200">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(item.id)}
+                    onChange={() => {
+                      setSelectedItems(prev =>
+                        prev.includes(item.id) 
+                          ? prev.filter(id => id !== item.id)
+                          : [...prev, item.id]
+                      );
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <div className="w-32 font-medium">
+                    {item.entityType === 'asset' && (
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="p-0 h-auto" 
+                        onClick={() => window.location.href = `/hub2/entity/${item.entityId}`}
+                      >
+                        {item.entityId.toUpperCase()}
+                      </Button>
+                    )}
+                    {item.entityType === 'address' && item.entityId.slice(0, 8) + '...'}
+                    {item.entityType === 'cluster' && item.entityId.replace('cluster_', '').replace('_', ' ')}
+                  </div>
+                  <div className="flex-1 text-muted-foreground">{item.label || '-'}</div>
+                  <div className="w-24 text-center">
+                    {item.snapshots?.sentiment !== undefined ? (
+                      <Badge 
+                        variant={item.snapshots.sentiment > 60 ? 'default' : item.snapshots.sentiment < 40 ? 'destructive' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {item.snapshots.sentiment > 60 ? 'Positive' : item.snapshots.sentiment < 40 ? 'Negative' : 'Neutral'}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">N/A</span>
+                    )}
+                  </div>
+                  <div className="w-24 text-center">
+                    {item.snapshots?.whalePressure !== undefined ? (
+                      <div className="flex items-center justify-center">
+                        {item.snapshots.whalePressure > 0 ? (
+                          <TrendingUp className="w-4 h-4 text-green-500" />
+                        ) : item.snapshots.whalePressure < 0 ? (
+                          <TrendingDown className="w-4 h-4 text-red-500" />
+                        ) : (
+                          <Activity className="w-4 h-4 text-gray-500" />
+                        )}
+                        <span className="ml-1 text-xs">
+                          {Math.abs(item.snapshots.whalePressure)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">N/A</span>
+                    )}
+                  </div>
+                  <div className="w-24 text-center">
+                    {item.snapshots?.risk !== undefined ? (
+                      <Badge 
+                        variant={item.snapshots.risk >= 70 ? 'destructive' : item.snapshots.risk >= 40 ? 'secondary' : 'default'}
+                        className="text-xs"
+                      >
+                        {item.snapshots.risk.toFixed(0)}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">N/A</span>
+                    )}
+                  </div>
+                  <div className="w-32 text-right text-xs text-muted-foreground">
+                    {item.snapshots?.updatedAt ? new Date(item.snapshots.updatedAt).toLocaleDateString() : 'N/A'}
+                  </div>
+                  <div className="w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleRemoveItem(item.id)}
+                      disabled={removeMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </div>
-
-        {/* Bulk Actions */}
-        {selectedItems.length > 0 && (
-          <div className="mb-4 p-3 bg-muted rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {selectedItems.length} item(s) selected
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkAction('mark_watching')}
-                >
-                  Mark Watching
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkAction('mark_resolved')}
-                >
-                  Mark Resolved
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkAction('remove')}
-                >
-                  Remove
-                </Button>
-              </div>
-            </div>
-          </div>
         )}
-      </div>
-
-      {/* Kanban Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Needs Action */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
-            <h2 className="text-lg font-semibold">Needs Action</h2>
-            <Badge variant="secondary">
-              {filteredItems.filter(item => item.status === 'needs_action').length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {filteredItems
-              .filter(item => item.status === 'needs_action')
-              .map((item) => (
-                <Card key={item.id} className="border-orange-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-medium">{item.name}</h3>
-                        {item.symbol && (
-                          <p className="text-sm text-muted-foreground">{item.symbol}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleNotes(item.id)}
-                        >
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {item.notes && (
-                      <p className="text-sm text-muted-foreground mb-3">{item.notes}</p>
-                    )}
-                    
-                    {showNotes[item.id] && (
-                      <div className="mb-3">
-                        <Textarea
-                          placeholder="Add notes..."
-                          value={notes[item.id] || ''}
-                          onChange={(e) => updateNotes(item.id, e.target.value)}
-                          className="text-sm"
-                          rows={2}
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // Mark as watching
-                            console.log('Mark as watching:', item.id);
-                          }}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Watch
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // Mark as resolved
-                            console.log('Mark as resolved:', item.id);
-                          }}
-                        >
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Resolve
-                        </Button>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">
-                          {formatLastUpdated(item.lastUpdated)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Added {new Date(item.addedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </div>
-
-        {/* Watching */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Eye className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold">Watching</h2>
-            <Badge variant="secondary">
-              {filteredItems.filter(item => item.status === 'watching').length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {filteredItems
-              .filter(item => item.status === 'watching')
-              .map((item) => (
-                <Card key={item.id} className="border-blue-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-medium">{item.name}</h3>
-                        {item.symbol && (
-                          <p className="text-sm text-muted-foreground">{item.symbol}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleNotes(item.id)}
-                        >
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {item.notes && (
-                      <p className="text-sm text-muted-foreground mb-3">{item.notes}</p>
-                    )}
-                    
-                    {showNotes[item.id] && (
-                      <div className="mb-3">
-                        <Textarea
-                          placeholder="Add notes..."
-                          value={notes[item.id] || ''}
-                          onChange={(e) => updateNotes(item.id, e.target.value)}
-                          className="text-sm"
-                          rows={2}
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // Mark as needs action
-                            console.log('Mark as needs action:', item.id);
-                          }}
-                        >
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Flag
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // Mark as resolved
-                            console.log('Mark as resolved:', item.id);
-                          }}
-                        >
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Resolve
-                        </Button>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">
-                          {formatLastUpdated(item.lastUpdated)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Added {new Date(item.addedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </div>
-
-        {/* Resolved */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-semibold">Resolved</h2>
-            <Badge variant="secondary">
-              {filteredItems.filter(item => item.status === 'resolved').length}
-            </Badge>
-          </div>
-          <div className="space-y-3">
-            {filteredItems
-              .filter(item => item.status === 'resolved')
-              .map((item) => (
-                <Card key={item.id} className="border-green-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-medium">{item.name}</h3>
-                        {item.symbol && (
-                          <p className="text-sm text-muted-foreground">{item.symbol}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleNotes(item.id)}
-                        >
-                          <FileText className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {item.notes && (
-                      <p className="text-sm text-muted-foreground mb-3">{item.notes}</p>
-                    )}
-                    
-                    {showNotes[item.id] && (
-                      <div className="mb-3">
-                        <Textarea
-                          placeholder="Add notes..."
-                          value={notes[item.id] || ''}
-                          onChange={(e) => updateNotes(item.id, e.target.value)}
-                          className="text-sm"
-                          rows={2}
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // Reopen
-                            console.log('Reopen:', item.id);
-                          }}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Reopen
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            // Remove from watchlist
-                            removeWatch(item.id);
-                          }}
-                        >
-                          <Star className="w-3 h-3 mr-1" />
-                          Remove
-                        </Button>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">
-                          {formatLastUpdated(item.lastUpdated)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Added {new Date(item.addedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Empty State */}
-      {filteredItems.length === 0 && (
-        <div className="text-center py-12">
-          <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No items in watchlist</h3>
-          <p className="text-muted-foreground mb-4">
-            {searchQuery ? 'Try adjusting your search terms' : 'Start by adding assets to watch'}
-          </p>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Items
-          </Button>
-        </div>
-      )}
       </div>
     </Hub2Layout>
   );

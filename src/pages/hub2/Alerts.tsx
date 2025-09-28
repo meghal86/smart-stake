@@ -147,7 +147,7 @@ export default function AlertsPage() {
                   <div className="text-2xl font-bold">
                     {alerts?.length || 0}
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Alerts</div>
+                  <div className="text-sm text-muted-foreground">Total Whale Alerts</div>
                 </div>
               </div>
             </CardContent>
@@ -384,8 +384,8 @@ export default function AlertsPage() {
           ))
         ) : alerts && alerts.length > 0 ? (
           alerts.map((alert) => {
-            const Icon = getAlertIcon(alert.name.toLowerCase().replace(' ', '_'));
-            const colorClass = getAlertColor(alert.name.toLowerCase().replace(' ', '_'));
+            const Icon = getAlertIcon('whale_activity');
+            const colorClass = getAlertColor('whale_activity');
             
             return (
               <Card key={alert.id}>
@@ -398,7 +398,10 @@ export default function AlertsPage() {
                       <div>
                         <h3 className="font-medium">{alert.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {alert.scope.kind}: {alert.scope.ids.join(', ') || 'All'}
+                          {alert.symbol} • ${alert.amount ? (alert.amount / 1000000).toFixed(1) : 0}M
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Hash: {alert.hash?.slice(0, 8)}...{alert.hash?.slice(-8)}
                         </p>
                       </div>
                     </div>

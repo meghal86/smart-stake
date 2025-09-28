@@ -1,7 +1,9 @@
-import { EntitySummary } from "@/types/hub2";
+import { EntitySummary, AssetSentiment } from "@/types/hub2";
 import GaugeDial from "./GaugeDial";
 import PressureBar from "./PressureBar";
 import ProvenanceBadge from "./ProvenanceBadge";
+import SentimentBadge from "./SentimentBadge";
+import StarButton from "./StarButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 interface EntitySummaryCardProps {
   entity: EntitySummary;
+  sentiment?: AssetSentiment;
   onSelect?: (id: string) => void;
   onCompare?: (id: string) => void;
   onWatch?: (id: string) => void;
@@ -21,6 +24,7 @@ interface EntitySummaryCardProps {
 
 export default function EntitySummaryCard({
   entity,
+  sentiment,
   onSelect,
   onCompare,
   onWatch,
@@ -59,6 +63,9 @@ export default function EntitySummaryCard({
               <h3 className="font-semibold text-sm">{entity.name}</h3>
               {entity.symbol && (
                 <p className="text-xs text-muted-foreground">{entity.symbol}</p>
+              )}
+              {sentiment && import.meta.env.VITE_FF_HUB2_SENTIMENT === 'true' && (
+                <SentimentBadge sentiment={sentiment.sentiment} size="sm" />
               )}
             </div>
             <ProvenanceBadge 
@@ -145,6 +152,17 @@ export default function EntitySummaryCard({
           >
             {isInCompare ? 'Remove' : 'Compare'}
           </Button>
+          
+          {import.meta.env.VITE_FF_HUB2_GLOBAL_WATCHLIST === 'true' && (
+            <StarButton
+              entityType="asset"
+              entityId={entity.id}
+              label={entity.name}
+              size="sm"
+              variant="outline"
+            />
+          )}
+          
           <Button
             size="sm"
             variant="outline"

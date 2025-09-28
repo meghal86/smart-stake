@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useExplore } from "@/hooks/hub2";
 import { useHub2 } from "@/store/hub2";
 import EntitySummaryCard from "@/components/hub2/EntitySummaryCard";
@@ -11,6 +12,7 @@ import { Grid, List, Search, Filter, GitCompare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ExplorePage() {
+  const navigate = useNavigate();
   const { filters, compare, toggleCompare, watchlist, addWatch, removeWatch } = useHub2();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -207,7 +209,7 @@ export default function ExplorePage() {
                   isInCompare={compare.includes(entity.id)}
                   isWatched={watchlist.includes(entity.id)}
                   onSelect={(id) => {
-                    window.location.href = `/hub2/entity/${id}`;
+                    navigate(`/hub2/entity/${id}`);
                   }}
                   onCompare={(id) => {
                     toggleCompare(id);

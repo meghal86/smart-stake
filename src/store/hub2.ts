@@ -5,6 +5,7 @@ type Filters = {
   assets: string[];
   sentimentMin?: number;
   riskMax?: number;
+  minUsd?: number;
   window: '24h'|'7d'|'30d';
   realOnly: boolean | null; // null = both
   sort?: 'sentiment'|'risk'|'pressure'|'price';

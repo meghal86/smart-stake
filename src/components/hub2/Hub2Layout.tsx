@@ -34,7 +34,7 @@ export default function Hub2Layout({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/?tab=home')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -54,7 +54,7 @@ export default function Hub2Layout({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/?tab=home')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2"
           >
             <Home className="w-4 h-4" />

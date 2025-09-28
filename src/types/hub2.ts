@@ -79,3 +79,45 @@ export interface EntityDetail {
     next: string[];
   };
 }
+
+// New types for Summary KPIs, Sentiment, and Global Watchlist
+export type TimeWindow = '24h' | '7d' | '30d';
+
+export interface SummaryKpis {
+  window: TimeWindow;
+  refreshedAt: string; // ISO
+  marketSentiment: number; // 0..100
+  whalePressure: {
+    score: number;      // e.g., +1264
+    direction: 'inflow' | 'outflow' | 'balanced';
+    deltaVsPrev: number; // signed
+  };
+  marketRisk: {
+    score: number;      // 0..100
+    deltaVsPrev: number; // signed
+  };
+}
+
+export interface AssetSentiment {
+  symbol: string;
+  window: TimeWindow;
+  sentiment: number; // 0..100
+  label: 'Positive' | 'Neutral' | 'Negative';
+  updatedAt: string;
+}
+
+export type WatchEntityType = 'asset' | 'address' | 'cluster';
+
+export interface WatchItem {
+  id: string;               // UUID
+  entityType: WatchEntityType;
+  entityId: string;         // symbol, address, cluster_id
+  label?: string | null;
+  createdAt: string;
+  snapshots?: {
+    sentiment?: number;
+    whalePressure?: number;
+    risk?: number;
+    updatedAt: string;
+  };
+}

@@ -1,3 +1,6 @@
+import Pulse from "./pages/Pulse";
+import Explore from "./pages/Explore";
+import EntityDetail from "./pages/EntityDetail";
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -150,12 +153,17 @@ const App = () => {
                   <Route path="/overview" element={<Overview />} />
                   <Route path="/alerts" element={<Alerts />} />
                   {/* Hub 2 routes */}
+                  <Route path="/hub2" element={<PulsePage />} />
                   <Route path="/hub2/pulse" element={<PulsePage />} />
                   <Route path="/hub2/explore" element={<ExplorePage />} />
                   <Route path="/hub2/entity/:id" element={<EntityDetailWrapper />} />
                   <Route path="/hub2/alerts" element={<AlertsPage />} />
                   <Route path="/hub2/watchlist" element={<WatchlistPage />} />
                   <Route path="/hub2/copilot" element={<CopilotPage />} />
+                  {/* Direct routes for Pulse, Explore, Entity Detail */}
+                  <Route path="/pulse" element={<Pulse />} />
+                  <Route path="/explore" element={<Explore />} />
+                  <Route path="/entity/:id" element={<EntityDetail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

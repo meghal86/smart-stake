@@ -54,7 +54,7 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
       <div className="flex items-center justify-around px-2 py-2">
         {/* Back to Main App Button */}
         <motion.button
-          onClick={() => navigate('/?tab=home')}
+          onClick={() => navigate('/')}
           className={cn(
             "flex flex-col items-center justify-center",
             "px-2 py-2 rounded-lg transition-all duration-200",

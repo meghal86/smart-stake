@@ -128,6 +128,7 @@ export default function FilterChips() {
     filters.assets.length,
     filters.sentimentMin !== undefined ? 1 : 0,
     filters.riskMax !== undefined ? 1 : 0,
+    filters.minUsd !== undefined ? 1 : 0,
     filters.realOnly !== null ? 1 : 0,
     filters.sort ? 1 : 0
   ].reduce((a, b) => a + b, 0);
@@ -168,6 +169,44 @@ export default function FilterChips() {
 
         {/* Quick Filters */}
         <div className="flex flex-wrap gap-2 mb-3">
+          {/* Chains Filter */}
+          <Select onValueChange={(value) => {
+            if (!filters.chains.includes(value)) {
+              handleFilterChange('chains', [...filters.chains, value]);
+            }
+          }}>
+            <SelectTrigger className="w-32 h-8">
+              <Globe className="w-3 h-3 mr-1" />
+              <SelectValue placeholder="Chains" />
+            </SelectTrigger>
+            <SelectContent>
+              {CHAINS.map(chain => (
+                <SelectItem key={chain.id} value={chain.id}>
+                  {chain.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Assets Filter */}
+          <Select onValueChange={(value) => {
+            if (!filters.assets.includes(value)) {
+              handleFilterChange('assets', [...filters.assets, value]);
+            }
+          }}>
+            <SelectTrigger className="w-32 h-8">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              <SelectValue placeholder="Assets" />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSETS.map(asset => (
+                <SelectItem key={asset.id} value={asset.id}>
+                  {asset.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {/* Time Window */}
           <Select value={filters.window} onValueChange={(value) => handleFilterChange('window', value)}>
             <SelectTrigger className="w-24 h-8">
@@ -181,20 +220,34 @@ export default function FilterChips() {
             </SelectContent>
           </Select>
 
-          {/* Sort */}
-          <Select value={filters.sort || 'default'} onValueChange={(value) => handleFilterChange('sort', value === 'default' ? undefined : value)}>
-            <SelectTrigger className="w-32 h-8">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              <SelectValue placeholder="Sort by" />
+          {/* Signal Type Filter */}
+          <Select onValueChange={(value) => {
+            // This would filter by signal type
+            console.log('Signal type filter:', value);
+          }}>
+            <SelectTrigger className="w-36 h-8">
+              <Shield className="w-3 h-3 mr-1" />
+              <SelectValue placeholder="Signal type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="sentiment">Sentiment</SelectItem>
               <SelectItem value="risk">Risk</SelectItem>
-              <SelectItem value="pressure">Pressure</SelectItem>
-              <SelectItem value="price">Price</SelectItem>
+              <SelectItem value="whales">Whales</SelectItem>
+              <SelectItem value="sentiment">Sentiment</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Min USD Filter */}
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              placeholder="Min USD"
+              className="w-20 h-8 px-2 text-xs border rounded"
+              onChange={(e) => {
+                const value = e.target.value ? Number(e.target.value) : undefined;
+                handleFilterChange('minUsd', value);
+              }}
+            />
+          </div>
 
           {/* Real/Sim Toggle */}
           <div className="flex border rounded-md">
@@ -263,6 +316,16 @@ export default function FilterChips() {
                 <X 
                   className="w-3 h-3 cursor-pointer" 
                   onClick={() => handleFilterChange('riskMax', undefined)}
+                />
+              </Badge>
+            )}
+            
+            {filters.minUsd !== undefined && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Min ${filters.minUsd}M
+                <X 
+                  className="w-3 h-3 cursor-pointer" 
+                  onClick={() => handleFilterChange('minUsd', undefined)}
                 />
               </Badge>
             )}

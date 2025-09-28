@@ -134,7 +134,10 @@ export default function EntityDetailPage({ entityId }: EntityDetailProps) {
     );
   }
 
-  const { summary, timeline, ai } = data;
+  const { summary, timeline = [], ai = { soWhat: '', next: [] } } = data;
+  
+  // Ensure ai.next is always an array
+  const aiNext = ai?.next || [];
 
   return (
     <Hub2Layout>
@@ -297,11 +300,11 @@ export default function EntityDetailPage({ entityId }: EntityDetailProps) {
                   </p>
                 </div>
                 
-                {ai.next.length > 0 && (
+                {aiNext.length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2">Next Steps</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      {ai.next.map((step, index) => (
+                      {aiNext.map((step, index) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-primary">•</span>
                           {step}

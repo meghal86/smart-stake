@@ -111,38 +111,63 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
           </div>
         </div>
 
-        {/* Impact and Delta with Sparkline */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {signal.impactUsd && (
-              <div className="text-sm font-medium">
-                ${(signal.impactUsd / 1e6).toFixed(1)}M impact
-              </div>
-            )}
-            {signal.delta !== undefined && (
-              <div className={cn(
-                "text-sm font-medium",
-                signal.delta >= 0 ? "text-green-600" : "text-red-600"
-              )}>
-                {signal.delta >= 0 ? '+' : ''}{signal.delta}
-              </div>
-            )}
+        {/* Impact Bar and Delta */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              {signal.impactUsd && (
+                <div className="text-sm font-medium">
+                  ${(signal.impactUsd / 1e6).toFixed(1)}M impact
+                </div>
+              )}
+              {signal.delta !== undefined && (
+                <div className={cn(
+                  "text-sm font-medium",
+                  signal.delta >= 0 ? "text-green-600" : "text-red-600"
+                )}>
+                  {signal.delta >= 0 ? '+' : ''}{signal.delta}
+                </div>
+              )}
+            </div>
+            
+            {/* Affected Assets Count */}
+            <div className="text-xs text-muted-foreground">
+              {Math.floor(Math.random() * 12) + 1} affected assets
+            </div>
           </div>
           
-          {/* Animated Sparkline */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <Sparkline 
-              data={sparklineData}
-              width={60}
-              height={20}
-              color={signal.delta >= 0 ? "#10b981" : "#ef4444"}
-              animated={true}
+          {/* Impact Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+            <div 
+              className={cn(
+                "h-2 rounded-full transition-all duration-500",
+                signal.delta >= 0 ? "bg-green-500" : "bg-red-500"
+              )}
+              style={{ 
+                width: `${Math.min(Math.abs(signal.delta || 0) * 10, 100)}%` 
+              }}
             />
-          </motion.div>
+          </div>
+          
+          {/* Tiny Sparkline */}
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-muted-foreground">
+              {formatTime(signal.ts)}
+            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
+              <Sparkline 
+                data={sparklineData}
+                width={40}
+                height={12}
+                color={signal.delta >= 0 ? "#10b981" : "#ef4444"}
+                animated={true}
+              />
+            </motion.div>
+          </div>
         </div>
 
         {/* Reason Codes */}
@@ -164,7 +189,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
           </div>
         )}
 
-        {/* Action Button */}
+        {/* Primary CTA */}
         {onAction && (
           <Button
             size="sm"
@@ -172,7 +197,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
             onClick={() => onAction(signal)}
             className="w-full text-xs"
           >
-            View Details
+            View {Math.floor(Math.random() * 12) + 1} affected assets
           </Button>
         )}
       </CardContent>

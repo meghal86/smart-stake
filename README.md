@@ -1,300 +1,183 @@
-# 🐋 Whale Tracker - Professional Crypto Whale Monitoring App
+# 🐋 AlphaWhale Lite
 
-A modern, full-stack application for tracking large cryptocurrency transactions (whale movements) with real-time alerts, premium subscriptions, and advanced analytics.
+A comprehensive whale intelligence platform built with Next.js 14, Supabase, and modern web technologies.
 
-## ✨ Features
+## Features
 
-### 🔐 **Authentication**
-- **Email/Password** authentication with secure validation
-- **Google OAuth** integration
-- **Apple OAuth** integration
-- **Professional UI** with modern design patterns
-- **Password strength validation** and security requirements
+- **Whale Intelligence**: Real-time tracking of large whale movements
+- **Token Unlock Calendar**: Upcoming token unlocks and vesting schedules
+- **Market Intelligence**: Comprehensive market analysis powered by whale behavior
+- **Responsive Design**: Mobile-first design with desktop sidebar navigation
+- **Authentication**: Supabase Auth with email and Google OAuth
+- **Plan-based Features**: Lite, Pro, and Enterprise tiers with feature gating
 
-### 💳 **Subscription Management**
-- **Stripe Integration** with secure payment processing
-- **Multiple Plans**: Free, Premium Monthly, Premium Annual
-- **Webhook Processing** for real-time subscription updates
-- **Professional checkout flow** with success/failure handling
+## Tech Stack
 
-### 🐋 **Whale Tracking**
-- **Real-time whale alerts** for large transactions
-- **Multi-chain support** (Ethereum, Polygon, BSC, etc.)
-- **Advanced filtering** by amount, token, chain
-- **Transaction details** with blockchain explorer links
-- **Demo data** for unauthenticated users
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes, Supabase (Postgres + Auth + Edge Functions)
+- **UI Components**: Radix UI, Shadcn UI
+- **State Management**: TanStack Query, Zustand
+- **Testing**: Vitest (unit), Playwright (E2E)
+- **Deployment**: Vercel (frontend), Supabase (database)
 
-### 👤 **User Management**
-- **Personalized profiles** with user metadata
-- **Preference management** (favorite chains, tokens, thresholds)
-- **Subscription status** and billing management
-- **Onboarding flow** for new users
-
-### 🏗️ **Technical Stack**
-- **Frontend**: React 18 + TypeScript + Vite
-- **UI**: shadcn/ui + Tailwind CSS + Radix UI
-- **Backend**: Supabase (PostgreSQL + Edge Functions)
-- **Authentication**: Supabase Auth + OAuth
-- **Payments**: Stripe + Webhooks
-- **Testing**: Jest + React Testing Library + BDD Features
-
-## 🚀 Quick Start
+## Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 - Supabase account
-- Stripe account
 
-### 1. Clone and Install
+### Installation
+
+1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd whale-tracker
+cd smart-stake
+```
+
+2. Install dependencies:
+```bash
 npm install
 ```
 
-### 2. Environment Setup
+3. Set up environment variables:
 ```bash
-cp .env.example .env
-# Update .env with your keys
+cp .env.example .env.local
 ```
 
-### 3. Automated Setup
-```bash
-./setup.sh
+Fill in your environment variables:
+```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
-### 4. Manual Setup (Alternative)
+4. Set up Supabase:
 ```bash
 # Install Supabase CLI
 npm install -g supabase
 
-# Login and link project
-supabase login
-supabase link --project-ref your-project-ref
+# Initialize Supabase
+supabase init
+
+# Start local Supabase
+supabase start
 
 # Run migrations
-supabase db push
+supabase db reset
 
-# Deploy Edge Functions
-supabase functions deploy
-
-# Set secrets
-supabase secrets set STRIPE_SECRET_KEY="your-stripe-secret-key"
-supabase secrets set STRIPE_WEBHOOK_SECRET="your-webhook-secret"
-
-# Generate types
-supabase gen types typescript --linked > src/integrations/supabase/types.ts
+# Seed the database
+npm run db:seed
 ```
 
-### 5. Development
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-## 📋 Configuration
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### Environment Variables
-```env
-# Supabase
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+## Project Structure
 
-# Stripe
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your-publishable-key
-STRIPE_SECRET_KEY=sk_test_your-secret-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (app)/             # Protected app routes
+│   │   ├── hub/           # Main dashboard
+│   │   ├── portfolio/     # Portfolio tracking
+│   │   ├── reports/       # Report generation
+│   │   └── settings/      # User settings
+│   ├── (auth)/            # Authentication routes
+│   ├── api/               # API routes
+│   └── globals.css        # Global styles
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   ├── hub/              # Hub-specific components
+│   └── navigation/        # Navigation components
+├── lib/                   # Utilities and configurations
+├── hooks/                 # Custom React hooks
+└── __tests__/            # Test files
 ```
 
-### Stripe Configuration
-1. Create products in Stripe Dashboard:
-   - **Premium Monthly**: $9.99/month
-   - **Premium Annual**: $99.99/year
-2. Update price IDs in `src/pages/Subscription.tsx`
-3. Configure webhook endpoint: `https://your-project.supabase.co/functions/v1/stripe-webhook`
+## Database Schema
 
-### OAuth Setup
-1. **Google**: Configure in Google Cloud Console
-2. **Apple**: Configure in Apple Developer Portal
-3. Add redirect URIs to Supabase Auth settings
+The application uses Supabase with the following main tables:
 
-## 🧪 Testing
+- `user_profiles`: User account information and plan tiers
+- `whale_digest`: Whale movement events and alerts
+- `whale_index`: Daily whale activity scores
+- `token_unlocks`: Upcoming token unlock events
+
+## API Routes
+
+- `GET /api/digest` - Fetch whale digest events
+- `GET /api/whale-index` - Get current whale index score
+- `GET /api/unlocks` - Fetch upcoming token unlocks
+- `GET /api/streak` - Get user streak information
+- `POST /api/streak` - Update user streak
+
+## Testing
 
 ### Unit Tests
 ```bash
-npm test                 # Run tests
-npm run test:watch      # Watch mode
-npm run test:coverage   # Coverage report
+npm run test
 ```
 
-### Edge Function Tests
+### E2E Tests
 ```bash
-cd supabase/functions
-deno test --allow-all
+npm run test:e2e
 ```
 
-### BDD Features
-Feature files are located in `/features` directory with comprehensive scenarios for:
-- Authentication flows
-- Subscription management
-- Whale tracking functionality
-
-## 🏗️ Architecture
-
-### Database Schema
-- **users**: User accounts and plans
-- **users_metadata**: Extended user information
-- **subscriptions**: Stripe subscription data
-- **alerts**: Whale transaction alerts
-- **user_preferences**: User customization
-- **devices**: Push notification tokens
-- **yields**: DeFi yield opportunities
-
-### API Architecture
-- **Supabase Edge Functions** for serverless API
-- **Row Level Security** for data protection
-- **Real-time subscriptions** for live updates
-- **Webhook processing** for external integrations
-
-### Security Features
-- **JWT Authentication** with secure sessions
-- **OAuth 2.0** for third-party login
-- **Row Level Security** for database access
-- **Input validation** and sanitization
-- **HTTPS/TLS** encryption
-- **PCI compliance** via Stripe
-
-## 📱 User Experience
-
-### Authentication Flow
-1. **Landing Page**: Demo data with signup prompts
-2. **Registration**: Email/OAuth with plan selection
-3. **Onboarding**: Feature walkthrough
-4. **Dashboard**: Personalized whale alerts
-
-### Subscription Flow
-1. **Plan Selection**: Free vs Premium comparison
-2. **Stripe Checkout**: Secure payment processing
-3. **Confirmation**: Success page with feature access
-4. **Management**: Profile-based subscription control
-
-### Whale Tracking
-1. **Real-time Alerts**: Live transaction monitoring
-2. **Filtering**: Chain, token, amount customization
-3. **Details**: Transaction analysis and explorer links
-4. **Personalization**: Favorite tokens and thresholds
-
-## 🚀 Deployment
-
-### Frontend (Vercel)
+### All Tests
 ```bash
-npm run build
-vercel --prod
+npm run test:all
 ```
 
-### Backend (Supabase)
+## Deployment
+
+### Vercel Deployment
+
+1. Connect your repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
+
+### Supabase Deployment
+
+1. Deploy edge functions:
 ```bash
-supabase functions deploy
-supabase db push
+supabase functions deploy ingest_whale_index
+supabase functions deploy ingest_unlocks
+supabase functions deploy notify_streak
 ```
 
-### Environment Variables
-Set in deployment platform:
-- Vercel: Project settings
-- Netlify: Site settings
-- Supabase: Edge Function secrets
+2. Set up cron jobs for edge functions in Supabase dashboard
 
-## 📊 Monitoring
+## Environment Variables
 
-### Analytics
-- User registration and conversion rates
-- Subscription metrics and churn
-- Feature usage and engagement
-- Performance monitoring
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_SITE_URL` | Your site URL | Yes |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
+| `ETHERSCAN_API_KEY` | Etherscan API key (optional) | No |
+| `COINGECKO_API_KEY` | CoinGecko API key (optional) | No |
+| `TOKEN_UNLOCKS_API_KEY` | TokenUnlocks API key (optional) | No |
 
-### Error Tracking
-- Supabase logs for Edge Functions
-- Frontend error boundaries
-- Stripe webhook delivery monitoring
-- Database query performance
-
-## 🔧 Development
-
-### Code Structure
-```
-src/
-├── components/          # Reusable UI components
-├── contexts/           # React contexts (Auth, etc.)
-├── hooks/              # Custom React hooks
-├── integrations/       # External service integrations
-├── pages/              # Route components
-└── lib/                # Utility functions
-
-supabase/
-├── functions/          # Edge Functions
-├── migrations/         # Database migrations
-└── config.toml         # Supabase configuration
-```
-
-### Best Practices
-- **TypeScript** for type safety
-- **ESLint + Prettier** for code quality
-- **Component composition** over inheritance
-- **Custom hooks** for business logic
-- **Error boundaries** for fault tolerance
-
-## 📚 Documentation
-
-- **[Architecture Diagram](docs/architecture-diagram.md)**: System overview
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)**: Production setup
-- **[Stripe Setup](STRIPE_SETUP.md)**: Payment integration
-- **[API Documentation](docs/api.md)**: Edge Function reference
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-### Development Workflow
-1. **Issues**: Use GitHub issues for bugs/features
-2. **Testing**: Ensure tests pass before PR
-3. **Code Review**: All PRs require review
-4. **Documentation**: Update docs for new features
+## License
 
-## 📄 License
+This project is licensed under the MIT License.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Support
 
-## 🆘 Support
-
-- **Documentation**: Check guides in `/docs`
-- **Issues**: GitHub Issues for bugs
-- **Discussions**: GitHub Discussions for questions
-- **Email**: support@whaletracker.com
-
-## 🎯 Roadmap
-
-### Phase 1 (Current)
-- ✅ Authentication system
-- ✅ Stripe integration
-- ✅ Basic whale tracking
-- ✅ User profiles
-
-### Phase 2 (Next)
-- 🔄 Real-time notifications
-- 🔄 Mobile app (React Native)
-- 🔄 Advanced analytics
-- 🔄 API access for premium users
-
-### Phase 3 (Future)
-- 📋 Portfolio tracking
-- 📋 Social features
-- 📋 AI-powered insights
-- 📋 Multi-language support
-
----
-
-**Built with ❤️ by the Whale Tracker team**
+For support, email support@alphawhale.com or join our Discord community.

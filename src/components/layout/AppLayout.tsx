@@ -25,6 +25,8 @@ export const AppLayout = ({
     if (path === "/scanner") return "scanner";
     if (path === "/premium" || path === "/subscription") return "premium";
     if (path === "/profile") return "profile";
+    if (path.startsWith("/hub2")) return "hub2";
+    if (path.startsWith("/hub")) return "hub";
     return "home";
   };
 
@@ -49,6 +51,12 @@ export const AppLayout = ({
         break;
       case "profile":
         navigate("/profile");
+        break;
+      case "hub2":
+        navigate("/hub2");
+        break;
+      case "hub":
+        navigate("/hub");
         break;
       default:
         navigate("/");
