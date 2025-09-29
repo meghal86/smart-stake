@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "vite preview",
     "lint": "next lint",
     "test": "vitest",
     "test:ui": "vitest --ui",
