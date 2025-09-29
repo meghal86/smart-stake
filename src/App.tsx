@@ -30,6 +30,7 @@ import SubscriptionCancel from "./pages/SubscriptionCancel";
 import Scanner from "./pages/Scanner";
 import Yields from "./pages/Yields";
 import Profile from "./pages/Profile";
+import Billing from "./pages/Billing";
 import Premium from "./pages/Premium";
 import Debug from "./pages/Debug";
 import NotificationSettings from "./pages/NotificationSettings";
@@ -152,6 +153,8 @@ const App = () => {
                   <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="/overview" element={<Overview />} />
                   <Route path="/alerts" element={<Alerts />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/profile" element={<Profile />} />
                   {/* Hub 2 routes */}
                   <Route path="/hub2" element={<PulsePage />} />
                   <Route path="/hub2/pulse" element={<PulsePage />} />

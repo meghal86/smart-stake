@@ -121,3 +121,77 @@ export interface WatchItem {
     updatedAt: string;
   };
 }
+
+// Enhanced types for world-class crypto intelligence hub
+export interface EnhancedMetrics {
+  sentiment: number | null;
+  risk: number | null;
+  pressure: {
+    inflow: number;
+    outflow: number;
+    net: number;
+    unit: 'usd' | 'tx';
+  };
+}
+
+export interface PercentileData {
+  inflow: number; // 0-100
+  risk: number;   // 0-100
+}
+
+export interface VenueData {
+  venue: string;
+  inflow: number;
+  outflow: number;
+}
+
+export interface EnhancedResponse {
+  asOf: string; // ISO8601
+  provenance: 'real' | 'sim';
+  metrics: EnhancedMetrics;
+  percentile: PercentileData;
+  topVenues: VenueData[];
+}
+
+export interface HealthStatus {
+  status: 'ok' | 'degraded' | 'down';
+  providers: {
+    whaleAlerts: { status: 'ok' | 'degraded' | 'down'; latency: number; errorRate: number };
+    marketSummary: { status: 'ok' | 'degraded' | 'down'; latency: number; errorRate: number };
+    assetSentiment: { status: 'ok' | 'degraded' | 'down'; latency: number; errorRate: number };
+  };
+  lastChecked: string;
+}
+
+export interface EvidenceTransaction {
+  hash: string;
+  symbol: string;
+  amount_usd: number;
+  timestamp: number;
+  from: { address: string; owner_type: string };
+  to: { address: string; owner_type: string };
+}
+
+export interface AIDigest {
+  narrative: string;
+  percentile: PercentileData;
+  venues: VenueData[];
+  evidenceTx: EvidenceTransaction[];
+  cta: {
+    watchAll: string;
+    createAlert: string;
+    showTransactions: string;
+  };
+}
+
+export interface UIMode {
+  mode: 'novice' | 'pro';
+  density: 'simplified' | 'full';
+}
+
+export interface AlertKPI {
+  total: number;
+  active: number;
+  disabled: number;
+  avgTriggerLatency: number; // 24h in ms
+}

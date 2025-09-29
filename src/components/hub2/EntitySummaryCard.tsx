@@ -2,12 +2,15 @@ import { EntitySummary, AssetSentiment } from "@/types/hub2";
 import GaugeDial from "./GaugeDial";
 import PressureBar from "./PressureBar";
 import ProvenanceBadge from "./ProvenanceBadge";
+import ProvenanceChip from "./ProvenanceChip";
+import PercentileBadge from "./PercentileBadge";
+import VenueList from "./VenueList";
 import SentimentBadge from "./SentimentBadge";
 import StarButton from "./StarButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Activity, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, AlertTriangle, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EntitySummaryCardProps {
@@ -20,6 +23,16 @@ interface EntitySummaryCardProps {
   isInCompare?: boolean;
   isWatched?: boolean;
   className?: string;
+  mode?: 'novice' | 'pro';
+  percentile?: {
+    inflow: number;
+    risk: number;
+  };
+  venues?: Array<{
+    venue: string;
+    inflow: number;
+    outflow: number;
+  }>;
 }
 
 export default function EntitySummaryCard({
@@ -31,7 +44,10 @@ export default function EntitySummaryCard({
   isSelected = false,
   isInCompare = false,
   isWatched = false,
-  className
+  className,
+  mode = 'novice',
+  percentile,
+  venues
 }: EntitySummaryCardProps) {
   const { gauges, priceUsd, change24h, lastEvents } = entity;
   
@@ -115,6 +131,24 @@ export default function EntitySummaryCard({
             size="sm"
           />
         </div>
+
+        {/* Pro Mode: Percentiles and Venues */}
+        {mode === 'pro' && (
+          <div className="mb-4 space-y-2">
+            {percentile && (
+              <div className="flex items-center gap-2">
+                <PercentileBadge percentile={percentile.inflow} type="inflow" size="sm" />
+                <PercentileBadge percentile={percentile.risk} type="risk" size="sm" />
+              </div>
+            )}
+            {venues && venues.length > 0 && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Top Venues</div>
+                <VenueList venues={venues} maxItems={2} size="sm" />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Recent Events */}
         {lastEvents.length > 0 && (

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { usePulse } from "@/hooks/hub2";
 import { useHub2 } from "@/store/hub2";
+import { useUIMode } from "@/store/uiMode";
 import SignalCard from "@/components/hub2/SignalCard";
 import EntitySummaryCard from "@/components/hub2/EntitySummaryCard";
 import GaugeDial from "@/components/hub2/GaugeDial";
@@ -10,19 +11,27 @@ import PressureBar from "@/components/hub2/PressureBar";
 import AIDigest from "@/components/hub2/AIDigest";
 import SummaryKpis from "@/components/hub2/SummaryKpis";
 import TimeWindowToggle from "@/components/hub2/TimeWindowToggle";
+import HealthBanner from "@/components/hub2/HealthBanner";
+import ModeToggle from "@/components/hub2/ModeToggle";
+import ProvenanceChip from "@/components/hub2/ProvenanceChip";
+import AsOfLabel from "@/components/hub2/AsOfLabel";
+import PercentileBadge from "@/components/hub2/PercentileBadge";
+import VenueList from "@/components/hub2/VenueList";
 import Hub2Layout from "@/components/hub2/Hub2Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, Activity, AlertTriangle, Zap, Brain } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, AlertTriangle, Zap, Brain, Eye, Bell, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function PulsePage() {
   const navigate = useNavigate();
   const { filters } = useHub2();
+  const { mode, setMode } = useUIMode();
   const [selectedWindow, setSelectedWindow] = useState<'24h'|'7d'|'30d'>('24h');
   const [showAllSignals, setShowAllSignals] = useState(false);
+  const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   
   // Use selectedWindow instead of filters.window to prevent unnecessary refetches
   const { data, isLoading, error, isFetching } = usePulse(selectedWindow);
@@ -50,20 +59,29 @@ export default function PulsePage() {
   return (
     <Hub2Layout>
       <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold">Market Pulse</h1>
-                <p className="text-muted-foreground">
-                  Real-time market signals and whale activity
-                </p>
-              </div>
+        {/* Health Banner */}
+        <HealthBanner className="mb-4" />
+        
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold">Market Pulse</h1>
+              <p className="text-muted-foreground">
+                {mode === 'novice' 
+                  ? 'Real-time market signals and whale activity' 
+                  : 'Advanced market intelligence with percentile benchmarking and venue analysis'
+                }
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <ModeToggle mode={mode} onModeChange={setMode} />
               <TimeWindowToggle 
                 value={selectedWindow} 
                 onChange={setSelectedWindow}
               />
             </div>
+          </div>
 
             {/* Summary KPIs */}
             {import.meta.env.VITE_FF_HUB2_SUMMARY === 'true' && (
@@ -82,28 +100,73 @@ export default function PulsePage() {
         {/* AI Digest */}
         {data && (
           <div className="mb-8">
-            <AIDigest
-              summary={`In 12s: ${data.kpis.marketSentiment >= 70 ? 'BTC risk ↑' : 'SOL whales accumulating'}, ${data.kpis.whalePressure >= 0 ? 'whale inflow detected' : 'whale outflow detected'}. Expect ${data.kpis.risk >= 7 ? 'high' : data.kpis.risk >= 4 ? 'moderate' : 'low'} volatility.`}
-              confidence={data.kpis.risk >= 7 ? 'high' : data.kpis.risk >= 4 ? 'medium' : 'low'}
-              keyInsights={[
-                `Sentiment ${data.kpis.marketSentiment >= 70 ? 'bullish' : data.kpis.marketSentiment >= 40 ? 'neutral' : 'bearish'}`,
-                `Whale pressure ${data.kpis.whalePressure >= 0 ? 'positive' : 'negative'}`,
-                `Risk level ${data.kpis.risk >= 7 ? 'elevated' : data.kpis.risk >= 4 ? 'moderate' : 'low'}`
-              ]}
-              generatedAt={data.ts}
-            />
-            <div className="text-center mt-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  // Navigate to Explore page to show actionable insights
-                  navigate('/hub2/explore');
-                }}
-              >
-                Show me actions
-              </Button>
-            </div>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-blue-600" />
+                    <CardTitle className="text-lg">AI Market Digest</CardTitle>
+                    <ProvenanceChip provenance="real" size="sm" />
+                  </div>
+                  <AsOfLabel asOf={data.ts} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Narrative */}
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-sm leading-relaxed">
+                      {mode === 'novice' 
+                        ? `Market activity is ${data.kpis.marketSentiment >= 70 ? 'high' : data.kpis.marketSentiment >= 40 ? 'moderate' : 'low'}. ${data.kpis.whalePressure >= 0 ? 'Whales are buying' : 'Whales are selling'}. This suggests ${data.kpis.risk >= 7 ? 'significant' : data.kpis.risk >= 4 ? 'some' : 'minimal'} market movement ahead.`
+                        : `Market sentiment at ${data.kpis.marketSentiment.toFixed(1)}% (${data.kpis.marketSentiment >= 70 ? 'bullish' : data.kpis.marketSentiment >= 40 ? 'neutral' : 'bearish'}). Whale pressure ${data.kpis.whalePressure >= 0 ? 'positive' : 'negative'} with ${Math.abs(data.kpis.whalePressure).toFixed(1)} score. Risk level ${data.kpis.risk.toFixed(1)}/10 (${data.kpis.risk >= 7 ? 'elevated' : data.kpis.risk >= 4 ? 'moderate' : 'low'}).`
+                      }
+                    </p>
+                  </div>
+
+                  {/* Pro Mode: Percentiles and Venues */}
+                  {mode === 'pro' && (
+                    <div className="flex items-center gap-4">
+                      <PercentileBadge percentile={Math.min(100, Math.max(0, (data.kpis.whalePressure + 100) / 2))} type="inflow" />
+                      <PercentileBadge percentile={Math.min(100, Math.max(0, data.kpis.risk * 10))} type="risk" />
+                      <div className="text-xs text-muted-foreground">
+                        vs last 30d
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action CTAs */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/hub2/watchlist')}
+                      className="flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      Watch all
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/hub2/alerts')}
+                      className="flex items-center gap-1"
+                    >
+                      <Bell className="w-3 h-3" />
+                      Create alert
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowEvidenceModal(true)}
+                      className="flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Show transactions
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
