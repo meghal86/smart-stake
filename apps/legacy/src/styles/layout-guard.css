@@ -1,0 +1,77 @@
+/* Layout Guard - Prevents Q Chaos */
+
+/* Page Container */
+.page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 16px;
+  overflow: clip;
+}
+
+/* Card System */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 12-Column Grid */
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .grid-12 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Z-Index Stack */
+.wh-z-tooltip { z-index: 60; }
+.wh-z-sheet { z-index: 55; }
+.wh-z-header { z-index: 50; }
+.wh-z-content { z-index: 1; }
+
+/* Touch Targets */
+*[role="button"] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Layout Stability */
+.wh-stable {
+  contain: layout style;
+}
+
+/* No Overlap Guarantee */
+.wh-safe {
+  position: relative;
+  overflow: visible;
+}
+
+.wh-safe * {
+  position: static !important;
+  margin: 0 !important;
+}
+
+/* Grid Columns */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-12 { grid-column: span 12; }
+
+/* Mobile Override */
+@media (max-width: 1024px) {
+  .col-1, .col-2, .col-3, .col-4, .col-6, .col-7, .col-8, .col-12 {
+    grid-column: span 1;
+  }
+}

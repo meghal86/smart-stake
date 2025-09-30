@@ -1,12 +1,17 @@
 {
-  "name": "alpha-whale-lite",
+  "name": "alphawhale-monorepo",
   "private": true,
   "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview",
-    "lint": "next lint",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "turbo format",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -86,6 +91,7 @@
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "tsx": "^4.20.6",
+    "turbo": "^2.0.0",
     "typescript": "^5.0.2",
     "vitest": "^1.0.0"
   }

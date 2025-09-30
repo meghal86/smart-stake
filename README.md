@@ -1,183 +1,290 @@
-# 🐋 AlphaWhale Lite
+# AlphaWhale Monorepo
 
-A comprehensive whale intelligence platform built with Next.js 14, Supabase, and modern web technologies.
+A unified Next.js 14 monorepo for the AlphaWhale whale intelligence platform, combining Lite, Pro, and Enterprise features with tier-based access control.
 
-## Features
+## 🏗️ Architecture
 
-- **Whale Intelligence**: Real-time tracking of large whale movements
-- **Token Unlock Calendar**: Upcoming token unlocks and vesting schedules
-- **Market Intelligence**: Comprehensive market analysis powered by whale behavior
-- **Responsive Design**: Mobile-first design with desktop sidebar navigation
-- **Authentication**: Supabase Auth with email and Google OAuth
-- **Plan-based Features**: Lite, Pro, and Enterprise tiers with feature gating
+```
+repo/
+├── apps/
+│   ├── web/                 # Next.js 14 – the only user-facing app
+│   └── legacy/              # Original Vite app (moved here, proxied)
+├── packages/
+│   ├── sdk/                 # Domain logic, typed client, zod contracts
+│   ├── ui/                  # Design system (Tailwind + Radix + shadcn)
+│   ├── types/               # Shared TS types
+│   └── config/              # eslint, tsconfig, tailwind config, tokens
+├── turbo.json
+├── package.json
+└── pnpm-workspace.yaml
+```
 
-## Tech Stack
-
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Supabase (Postgres + Auth + Edge Functions)
-- **UI Components**: Radix UI, Shadcn UI
-- **State Management**: TanStack Query, Zustand
-- **Testing**: Vitest (unit), Playwright (E2E)
-- **Deployment**: Vercel (frontend), Supabase (database)
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-
 - Node.js 18+
-- npm or yarn
-- Supabase account
+- pnpm (recommended) or npm
+- Turbo (for monorepo management)
 
 ### Installation
-
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd smart-stake
+# Install dependencies
+pnpm install
+
+# Start development servers
+pnpm dev
 ```
 
-2. Install dependencies:
+This will start:
+- **Next.js app** on http://localhost:3000
+- **Legacy Vite app** on http://localhost:8080 (proxied via /legacy/*)
+
+## 📦 Packages
+
+### Apps
+
+#### `apps/web` - Main Next.js Application
+- **Framework**: Next.js 14 with App Router
+- **Features**: Tier-gated Lite/Pro/Enterprise features
+- **Routing**: Middleware-based access control
+- **Performance**: Code splitting, progressive loading
+
+#### `apps/legacy` - Legacy Vite Application
+- **Framework**: React 18 + Vite
+- **Purpose**: Rollback capability during migration
+- **Access**: Proxied via `/legacy/*` routes
+
+### Shared Packages
+
+#### `packages/sdk` - Domain Logic
+- **Purpose**: Business logic, API contracts, data validation
+- **Tech**: TypeScript, Zod schemas
+- **Exports**: Data fetching functions, type definitions
+
+#### `packages/ui` - Design System
+- **Purpose**: Reusable UI components
+- **Tech**: React, Tailwind CSS, Radix UI
+- **Exports**: Components, design tokens
+
+#### `packages/types` - Shared Types
+- **Purpose**: TypeScript type definitions
+- **Tech**: TypeScript
+- **Exports**: Shared interfaces, enums, types
+
+#### `packages/config` - Shared Configuration
+- **Purpose**: ESLint, TypeScript, Tailwind configs
+- **Tech**: Configuration files
+- **Exports**: Shared configs for consistency
+
+## 🎯 Features
+
+### Lite Tier (Free)
+- 🐋 **Whale Spotlight**: Daily whale movements
+- 🧭 **Fear & Whale Index**: Market sentiment dial
+- 📩 **Daily Digest**: Whale activity summary
+- 📚 **Whale 101**: Educational content
+- 💼 **Portfolio Lite**: Basic portfolio tracking
+
+### Pro Tier (Paid)
+- 🏆 **Smart Money Leaderboard**: Top performers
+- 📅 **Unlock Calendar**: Advanced token unlock tracking
+- 🔔 **Custom Alerts**: User-defined notifications
+- 🔄 **Portfolio Sync**: External portfolio integration
+- 🤖 **Whale Coach**: AI-powered insights
+- 🔥 **Hotspots**: Market hotspot detection
+- 📊 **Backtesting Lite**: Basic strategy testing
+
+### Enterprise Tier (Custom)
+- 💰 **MM Flow Monitoring**: Market maker flow tracking
+- 🔗 **Signal Fusion**: Advanced signal processing
+- 📈 **Backtests API**: Comprehensive backtesting
+- ⚡ **Execution Layer (OMS)**: Order management system
+- 📊 **Monitoring**: Advanced system monitoring
+
+## 🛠️ Development
+
+### Commands
+
 ```bash
-npm install
+# Development
+pnpm dev                 # Start all apps in development
+pnpm dev --filter=web    # Start only Next.js app
+pnpm dev --filter=legacy # Start only legacy app
+
+# Building
+pnpm build               # Build all packages
+pnpm build --filter=web  # Build only Next.js app
+
+# Testing
+pnpm test                # Run all tests
+pnpm test:ui             # Run tests with UI
+pnpm test:e2e            # Run E2E tests
+
+# Linting & Formatting
+pnpm lint                # Lint all packages
+pnpm typecheck           # Type check all packages
+pnpm format              # Format all packages
 ```
 
-3. Set up environment variables:
-```bash
-cp .env.example .env.local
+### Adding New Features
+
+1. **Create feature branch**
+2. **Implement in appropriate package**
+3. **Add tests and documentation**
+4. **Update feature parity checklist**
+5. **Submit PR with migration gate validation**
+
+## 🔒 Tier Gating
+
+### Middleware Implementation
+The app uses Next.js middleware to control feature access:
+
+```typescript
+// middleware.ts
+export async function middleware(req: NextRequest) {
+  const tier = await getUserTier(req);
+  
+  // Gate Pro/Enterprise routes
+  if (url.pathname.startsWith('/pro') && tier === 'lite') {
+    return NextResponse.redirect(new URL('/upgrade', req.url));
+  }
+}
 ```
 
-Fill in your environment variables:
-```env
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+### Feature Gating Patterns
+```typescript
+// Component-level gating
+{tier === 'lite' && <UpgradePrompt />}
+
+// Route-level gating
+if (tier !== 'enterprise') {
+  return <AccessDenied />;
+}
+```
+
+## 📊 Performance
+
+### Bundle Size Targets
+- **Lite Route**: <200KB gzipped
+- **Pro Route**: <500KB gzipped
+- **Enterprise Route**: <1MB gzipped
+
+### Performance Targets
+- **LCP**: ≤2.0s (P75)
+- **CLS**: ≤0.1
+- **Lighthouse Score**: >90
+
+### Optimization Strategies
+- **Code Splitting**: Dynamic imports for tier-specific features
+- **Progressive Loading**: Load features based on user tier
+- **Server Components**: Reduce client-side JavaScript
+- **Edge Caching**: ISR for static content
+
+## 🧪 Testing
+
+### Test Strategy
+- **Unit Tests**: Component and function testing
+- **Integration Tests**: API and data flow testing
+- **E2E Tests**: Critical user journey testing
+- **Visual Regression**: Component snapshot testing
+
+### Test Commands
+```bash
+pnpm test                # Run unit tests
+pnpm test:coverage       # Run with coverage
+pnpm test:e2e           # Run E2E tests
+pnpm test:ui            # Run tests with UI
+```
+
+## 🚀 Deployment
+
+### Production Deployment
+1. **Build**: `pnpm build`
+2. **Test**: `pnpm test:all`
+3. **Deploy**: Deploy to Vercel/Netlify
+4. **Monitor**: Check performance and error rates
+
+### Migration Deployment
+1. **Shadow Mode**: Run new system alongside legacy
+2. **Traffic Splitting**: Gradually increase traffic to new system
+3. **Monitoring**: Watch for issues and performance degradation
+4. **Rollback**: Quick rollback if issues arise
+
+## 📈 Migration Strategy
+
+### Migration Gates
+See [Migration Gates Checklist](./AlphaWhale_Migration_Gates_Checklist.md) for detailed migration process.
+
+### Feature Parity
+See [Feature Parity Checklist](./AlphaWhale_Feature_Parity_Checklist.csv) for complete feature mapping.
+
+### Rollback Plan
+- **Immediate**: Route traffic back to legacy app
+- **Investigation**: Identify and fix issues
+- **Re-deploy**: Gradual re-rollout after fixes
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
+# Database
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+
+# Analytics
+NEXT_PUBLIC_POSTHOG_KEY=your_posthog_key
+SENTRY_DSN=your_sentry_dsn
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_PRO_FEATURES=false
+NEXT_PUBLIC_ENABLE_ENTERPRISE_FEATURES=false
 ```
 
-4. Set up Supabase:
-```bash
-# Install Supabase CLI
-npm install -g supabase
-
-# Initialize Supabase
-supabase init
-
-# Start local Supabase
-supabase start
-
-# Run migrations
-supabase db reset
-
-# Seed the database
-npm run db:seed
+### Turbo Configuration
+```json
+{
+  "pipeline": {
+    "dev": { "cache": false, "persistent": true },
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
+    "lint": { "outputs": [] },
+    "typecheck": { "outputs": [] }
+  }
+}
 ```
 
-5. Start the development server:
-```bash
-npm run dev
-```
+## 📚 Documentation
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+- [Architecture Decision Record](./ADR-0001-Converge-to-Next14-Monorepo.md)
+- [Migration Gates Checklist](./AlphaWhale_Migration_Gates_Checklist.md)
+- [Feature Parity Checklist](./AlphaWhale_Feature_Parity_Checklist.csv)
+- [API Documentation](./COMPLETE_FEATURE_API_DOCUMENTATION.md)
 
-## Project Structure
+## 🤝 Contributing
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── (app)/             # Protected app routes
-│   │   ├── hub/           # Main dashboard
-│   │   ├── portfolio/     # Portfolio tracking
-│   │   ├── reports/       # Report generation
-│   │   └── settings/      # User settings
-│   ├── (auth)/            # Authentication routes
-│   ├── api/               # API routes
-│   └── globals.css        # Global styles
-├── components/            # React components
-│   ├── ui/               # Reusable UI components
-│   ├── hub/              # Hub-specific components
-│   └── navigation/        # Navigation components
-├── lib/                   # Utilities and configurations
-├── hooks/                 # Custom React hooks
-└── __tests__/            # Test files
-```
+1. **Fork the repository**
+2. **Create feature branch**: `git checkout -b feature/amazing-feature`
+3. **Commit changes**: `git commit -m 'Add amazing feature'`
+4. **Push to branch**: `git push origin feature/amazing-feature`
+5. **Open Pull Request**
 
-## Database Schema
+### Development Guidelines
+- Follow TypeScript strict mode
+- Write tests for new features
+- Update documentation
+- Follow conventional commits
+- Ensure all checks pass
 
-The application uses Supabase with the following main tables:
+## 📞 Support
 
-- `user_profiles`: User account information and plan tiers
-- `whale_digest`: Whale movement events and alerts
-- `whale_index`: Daily whale activity scores
-- `token_unlocks`: Upcoming token unlock events
+- **Documentation**: Check this README and linked docs
+- **Issues**: Create GitHub issue for bugs
+- **Discussions**: Use GitHub Discussions for questions
+- **Security**: Report security issues privately
 
-## API Routes
+## 📄 License
 
-- `GET /api/digest` - Fetch whale digest events
-- `GET /api/whale-index` - Get current whale index score
-- `GET /api/unlocks` - Fetch upcoming token unlocks
-- `GET /api/streak` - Get user streak information
-- `POST /api/streak` - Update user streak
+This project is proprietary and confidential. All rights reserved.
 
-## Testing
+---
 
-### Unit Tests
-```bash
-npm run test
-```
-
-### E2E Tests
-```bash
-npm run test:e2e
-```
-
-### All Tests
-```bash
-npm run test:all
-```
-
-## Deployment
-
-### Vercel Deployment
-
-1. Connect your repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Supabase Deployment
-
-1. Deploy edge functions:
-```bash
-supabase functions deploy ingest_whale_index
-supabase functions deploy ingest_unlocks
-supabase functions deploy notify_streak
-```
-
-2. Set up cron jobs for edge functions in Supabase dashboard
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SITE_URL` | Your site URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
-| `ETHERSCAN_API_KEY` | Etherscan API key (optional) | No |
-| `COINGECKO_API_KEY` | CoinGecko API key (optional) | No |
-| `TOKEN_UNLOCKS_API_KEY` | TokenUnlocks API key (optional) | No |
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For support, email support@alphawhale.com or join our Discord community.
+**Built with ❤️ by the AlphaWhale Team**

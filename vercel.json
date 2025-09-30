@@ -1,18 +1,16 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
+  "buildCommand": "cd apps/web && npm run build",
+  "outputDirectory": "apps/web/.next",
   "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "env": {
-    "NEXT_PUBLIC_SITE_URL": "@next_public_site_url",
-    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next_public_supabase_anon_key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key"
-  },
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "runtime": "nodejs18.x"
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/legacy/:path*",
+      "destination": "https://your-legacy-app-url.vercel.app/legacy/:path*"
     }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "LEGACY_PROXY_BASE": "https://your-legacy-app-url.vercel.app"
   }
 }

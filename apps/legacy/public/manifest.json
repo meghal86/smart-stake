@@ -1,0 +1,10 @@
+{
+  "name": "AlphaWhale Legacy",
+  "short_name": "AlphaWhale",
+  "description": "Whale Intelligence Platform - Legacy Version",
+  "start_url": "/legacy/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": []
+}

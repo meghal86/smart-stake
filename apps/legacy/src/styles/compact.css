@@ -1,0 +1,79 @@
+/**
+ * Global compact mode styles for Bloomberg-style density
+ */
+
+.compact-mode {
+  /* Card components in compact mode */
+  .card {
+    @apply p-3;
+  }
+
+  /* Table components in compact mode */
+  table {
+    @apply text-xs;
+  }
+
+  th, td {
+    @apply px-2 py-1;
+  }
+
+  /* Button components in compact mode */
+  .btn-sm {
+    @apply h-7 px-2 text-xs;
+  }
+
+  /* Badge components in compact mode */
+  .badge {
+    @apply px-1.5 py-0.5 text-xs;
+  }
+
+  /* Input components in compact mode */
+  input, select {
+    @apply h-8 px-2 text-sm;
+  }
+
+  /* Grid spacing in compact mode */
+  .grid {
+    @apply gap-2;
+  }
+
+  /* KPI cards in compact mode */
+  .kpi-card {
+    @apply p-3;
+  }
+
+  .kpi-card h3 {
+    @apply text-sm mb-1;
+  }
+
+  .kpi-card .kpi-value {
+    @apply text-xl;
+  }
+
+  /* Activity items in compact mode */
+  .activity-item {
+    @apply p-2 mb-1;
+  }
+
+  .activity-item .title {
+    @apply text-sm;
+  }
+
+  .activity-item .description {
+    @apply text-xs;
+  }
+}
+
+/* Compact mode indicator */
+.compact-mode::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 100vh;
+  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.4;
+}

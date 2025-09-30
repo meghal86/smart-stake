@@ -1,0 +1,29 @@
+Feature,Category,Tier,Status,Priority,Owner,ETA,Notes
+Whale Spotlight,Lite,Lite,✅ Complete,P0,Frontend Team,Day 1,Core Lite feature with mock data
+Fear & Whale Index,Lite,Lite,✅ Complete,P0,Frontend Team,Day 1,Core Lite feature with mock data
+Daily Digest,Lite,Lite,✅ Complete,P0,Frontend Team,Day 1,Core Lite feature with mock data
+Whale 101,Education,Lite,⏳ Pending,P1,Content Team,Week 1,Educational content for onboarding
+Portfolio Lite,Portfolio,Lite,⏳ Pending,P1,Frontend Team,Week 1,Basic portfolio tracking
+Streaks,Gamification,Lite,⏳ Pending,P2,Frontend Team,Week 2,User engagement feature
+Sharing,Social,Lite,⏳ Pending,P2,Frontend Team,Week 2,Share whale insights
+Referrals,Growth,Lite,⏳ Pending,P2,Growth Team,Week 2,Referral system
+Smart Money Leaderboard,Pro,Pro,⏳ Pending,P1,Frontend Team,Week 1,Pro feature placeholder
+Unlock Calendar,Pro,Pro,⏳ Pending,P1,Frontend Team,Week 1,Advanced calendar features
+Custom Alerts,Pro,Pro,⏳ Pending,P1,Backend Team,Week 1,User-defined alerts
+Portfolio Sync,Pro,Pro,⏳ Pending,P1,Backend Team,Week 1,External portfolio integration
+Whale Coach,Pro,Pro,⏳ Pending,P2,ML Team,Week 3,AI-powered insights
+Hotspots,Pro,Pro,⏳ Pending,P2,Frontend Team,Week 3,Market hotspot detection
+Backtesting Lite,Pro,Pro,⏳ Pending,P2,Backend Team,Week 3,Basic backtesting
+MM Flow Monitoring,Enterprise,Enterprise,⏳ Pending,P1,Backend Team,Week 2,Market maker flow tracking
+Signal Fusion,Enterprise,Enterprise,⏳ Pending,P1,ML Team,Week 2,Advanced signal processing
+Backtests API,Enterprise,Enterprise,⏳ Pending,P1,Backend Team,Week 2,API for backtesting
+Execution Layer (OMS),Enterprise,Enterprise,⏳ Pending,P1,Backend Team,Week 2,Order management system
+Monitoring,Enterprise,Enterprise,⏳ Pending,P1,DevOps Team,Week 1,System monitoring
+Auth/Session,Core,All,⏳ Pending,P0,Backend Team,Day 1,Supabase integration
+Feature Gating,Core,All,✅ Complete,P0,Frontend Team,Day 1,Middleware implementation
+/healthz & Resilience,Core,All,⏳ Pending,P1,DevOps Team,Week 1,Health checks
+Caching/Edge strategy,Core,All,⏳ Pending,P1,DevOps Team,Week 2,Performance optimization
+Legal,Core,All,⏳ Pending,P1,Legal Team,Week 1,Terms and privacy
+Tracking,Core,All,✅ Complete,P0,Frontend Team,Day 1,Analytics stubs
+Observability,Core,All,⏳ Pending,P1,DevOps Team,Week 1,Monitoring and logging
+i18n,Core,All,⏳ Pending,P2,Frontend Team,Week 3,Internationalization
