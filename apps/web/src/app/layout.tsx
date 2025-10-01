@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import '../styles/design-tokens.css'
-import { TooltipProvider } from '@/components/ui/Tooltip'
+import { TooltipProvider } from '../components/ui/Tooltip'
 import BrownoutBanner from '../components/BrownoutBanner'
 
 export const viewport: Viewport = {
