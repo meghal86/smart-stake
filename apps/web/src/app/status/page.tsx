@@ -19,12 +19,14 @@ async function getHealthStatus() {
 export default async function StatusPage() {
   const health = await getHealthStatus();
   
-  const statusColor = {
+  const statusColors = {
     live: 'text-green-500',
     cached: 'text-yellow-500', 
     simulated: 'text-orange-500',
     unknown: 'text-red-500'
-  }[health.mode] || 'text-red-500';
+  } as const;
+  
+  const statusColor = statusColors[health.mode as keyof typeof statusColors] || 'text-red-500';
 
   const providerStatus = (status: string) => ({
     ok: '🟢',

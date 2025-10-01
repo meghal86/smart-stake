@@ -11,17 +11,17 @@ import { SkeletonCard, SkeletonRow } from '../../components/ui/SkeletonCard';
 import MobileDock from '../../components/MobileDock';
 
 function EnhancedLiteV2() {
-  const [showBottomSheet, setShowBottomSheet] = useState(null);
+  const [showBottomSheet, setShowBottomSheet] = useState<any>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const [demoPortfolio, setDemoPortfolio] = useState(null);
-  const [forYouItems, setForYouItems] = useState([]);
-  const [digestItems, setDigestItems] = useState([]);
+  const [demoPortfolio, setDemoPortfolio] = useState<any>(null);
+  const [forYouItems, setForYouItems] = useState<any[]>([]);
+  const [digestItems, setDigestItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const carouselRef = useRef(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const maxCarouselIndex = Math.max(0, forYouItems.length - 1);
   
-  const handleDigestRowClick = (item) => {
+  const handleDigestRowClick = (item: any) => {
     if (isMobile) {
       setShowBottomSheet(item);
     } else {
@@ -36,8 +36,8 @@ function EnhancedLiteV2() {
         { symbol: 'ETH', amount: 5, price: 2250, change24h: -1.2 }
       ]
     };
-    const totalValue = portfolio.positions.reduce((sum, pos) => sum + (pos.amount * pos.price), 0);
-    const totalChange = portfolio.positions.reduce((sum, pos) => sum + (pos.amount * pos.price * pos.change24h / 100), 0);
+    const totalValue = portfolio.positions.reduce((sum: number, pos: any) => sum + (pos.amount * pos.price), 0);
+    const totalChange = portfolio.positions.reduce((sum: number, pos: any) => sum + (pos.amount * pos.price * pos.change24h / 100), 0);
     
     setDemoPortfolio({ ...portfolio, totalValue, totalChange, changePercent: (totalChange / totalValue) * 100 });
     localStorage.setItem('alpha/demo-portfolio', JSON.stringify(portfolio));
@@ -48,7 +48,7 @@ function EnhancedLiteV2() {
     localStorage.removeItem('alpha/demo-portfolio');
   };
   
-  const scrollCarousel = (direction) => {
+  const scrollCarousel = (direction: string) => {
     if (carouselRef.current) {
       const scrollAmount = 320;
       const newIndex = direction === 'left' ? Math.max(0, carouselIndex - 1) : Math.min(2, carouselIndex + 1);
@@ -62,8 +62,8 @@ function EnhancedLiteV2() {
     const saved = localStorage.getItem('alpha/demo-portfolio');
     if (saved) {
       const portfolio = JSON.parse(saved);
-      const totalValue = portfolio.positions.reduce((sum, pos) => sum + (pos.amount * pos.price), 0);
-      const totalChange = portfolio.positions.reduce((sum, pos) => sum + (pos.amount * pos.price * pos.change24h / 100), 0);
+      const totalValue = portfolio.positions.reduce((sum: number, pos: any) => sum + (pos.amount * pos.price), 0);
+      const totalChange = portfolio.positions.reduce((sum: number, pos: any) => sum + (pos.amount * pos.price * pos.change24h / 100), 0);
       setDemoPortfolio({ ...portfolio, totalValue, totalChange, changePercent: (totalChange / totalValue) * 100 });
     }
     
@@ -86,7 +86,7 @@ function EnhancedLiteV2() {
   }, []);
   
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') scrollCarousel('left');
       if (e.key === 'ArrowRight') scrollCarousel('right');
       if (e.key === 'Home') { setCarouselIndex(0); carouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }
@@ -227,7 +227,7 @@ function EnhancedLiteV2() {
           </div>
           <div className="flex items-center gap-4 mb-3">
             <div className="flex-1 relative">
-              <div className="h-4 bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 rounded" role="meter" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" aria-label="Fear and Whale Index">
+              <div className="h-4 bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 rounded" role="meter" aria-valuenow={62} aria-valuemin={0} aria-valuemax={100} aria-label="Fear and Whale Index">
                 <div className="absolute top-0 w-3 h-4 bg-white border-2 border-slate-800 rounded flex items-center justify-center shadow-sm" style={{left: 'calc(62% - 6px)'}}>
                   <span className="text-xs font-bold text-slate-800">62</span>
                 </div>
@@ -326,7 +326,7 @@ function EnhancedLiteV2() {
               </div>
               
               <div className="space-y-3 mb-4">
-                {demoPortfolio.positions.map(position => (
+                {demoPortfolio.positions.map((position: any) => (
                   <div key={position.symbol} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-bold">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ForYouRow } from './ForYouRow';
 import { AlertsFeed } from './AlertsFeed';
-import { MobileDock } from './MobileDock';
+import MobileDock from './MobileDock';
 import { ProTeaser } from './ProTeaser';
 import { OnboardingWizard } from './OnboardingWizard';
 import { RefreshButton } from './RefreshButton';
@@ -258,7 +258,7 @@ export default function EnhancedLite() {
           </ul>
         )}
         <div className="mt-4 space-y-2">
-          {digest.items.map(item => (
+          {digest?.items.map(item => (
             <div key={item.id} className="group cursor-pointer hover:bg-slate-700/30 p-2 rounded transition-colors">
               <div className="flex items-center justify-between">
                 <span className="flex-1">{item.text}</span>

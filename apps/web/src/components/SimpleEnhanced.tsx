@@ -17,7 +17,11 @@ export default function SimpleEnhanced() {
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
-    return () => document.head.removeChild(styleSheet);
+    return () => {
+      if (document.head.contains(styleSheet)) {
+        document.head.removeChild(styleSheet);
+      }
+    };
   }, []);
 
   useEffect(() => {
