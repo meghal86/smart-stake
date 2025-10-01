@@ -1,0 +1,231 @@
+[
+  {
+    "feature": "alerts",
+    "status": "existing",
+    "components": [
+      "src/components/AlertTeaserCard.tsx",
+      "src/components/alerts/SimpleAlertCard.tsx",
+      "src/components/alerts/SimpleAlertCard.tsx",
+      "src/components/portfolio/AlertsCard.tsx",
+      "src/components/whale/WhalePreferencesModal.tsx",
+      "apps/legacy/src/components/AlertTeaserCard.tsx",
+      "apps/legacy/src/components/alerts/SimpleAlertCard.tsx",
+      "apps/legacy/src/components/alerts/SimpleAlertCard.tsx",
+      "apps/legacy/src/components/portfolio/AlertsCard.tsx",
+      "apps/legacy/src/components/whale/WhalePreferencesModal.tsx"
+    ],
+    "hooks": [
+      "src/hooks/useCustomAlerts.ts",
+      "src/hooks/useMarketIntelligence.ts",
+      "src/hooks/useNotifications.ts",
+      "src/hooks/useRealTimeAlerts.ts",
+      "src/hooks/useRealtimeWhales.ts",
+      "src/hooks/useUserMetadata.ts",
+      "src/hooks/useWhalePreferences.ts",
+      "apps/legacy/src/hooks/useCustomAlerts.ts",
+      "apps/legacy/src/hooks/useMarketIntelligence.ts",
+      "apps/legacy/src/hooks/useNotifications.ts",
+      "apps/legacy/src/hooks/useRealTimeAlerts.ts",
+      "apps/legacy/src/hooks/useRealtimeWhales.ts",
+      "apps/legacy/src/hooks/useUserMetadata.ts",
+      "apps/legacy/src/hooks/useWhalePreferences.ts"
+    ],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "whaleSpotlight",
+    "status": "existing",
+    "components": [
+      "src/components/AlertTeaserCard.tsx",
+      "src/components/WhaleCard.tsx",
+      "src/components/hub/IndexDialCard.tsx",
+      "src/components/hub/IndexDialCard.tsx",
+      "src/components/hub5/IndexDialCard.tsx",
+      "src/components/hub5/IndexDialCard.tsx",
+      "src/components/portfolio/AlertsCard.tsx",
+      "src/components/portfolio/LiveAddressCard.tsx",
+      "src/components/portfolio/PieDrilldownModal.tsx",
+      "src/components/portfolio/PortfolioOverviewCard.tsx",
+      "src/components/portfolio/RiskIntelligenceCard.tsx",
+      "src/components/predictions/PredictionTypeCard.tsx",
+      "src/components/predictions/ProductionPredictionCard.tsx",
+      "src/components/whale/WhaleTransactionCard.tsx",
+      "src/components/whale/WhaleTransactionCard.tsx",
+      "src/components/whale-profiles/WhaleProfileModal.tsx",
+      "apps/legacy/src/components/AlertTeaserCard.tsx",
+      "apps/legacy/src/components/WhaleCard.tsx",
+      "apps/legacy/src/components/hub/IndexDialCard.tsx",
+      "apps/legacy/src/components/hub/IndexDialCard.tsx",
+      "apps/legacy/src/components/hub5/IndexDialCard.tsx",
+      "apps/legacy/src/components/hub5/IndexDialCard.tsx",
+      "apps/legacy/src/components/portfolio/AlertsCard.tsx",
+      "apps/legacy/src/components/portfolio/LiveAddressCard.tsx",
+      "apps/legacy/src/components/portfolio/PieDrilldownModal.tsx",
+      "apps/legacy/src/components/portfolio/PortfolioOverviewCard.tsx",
+      "apps/legacy/src/components/portfolio/RiskIntelligenceCard.tsx",
+      "apps/legacy/src/components/predictions/PredictionTypeCard.tsx",
+      "apps/legacy/src/components/predictions/ProductionPredictionCard.tsx",
+      "apps/legacy/src/components/whale/WhaleTransactionCard.tsx",
+      "apps/legacy/src/components/whale/WhaleTransactionCard.tsx",
+      "apps/legacy/src/components/whale-profiles/WhaleProfileModal.tsx"
+    ],
+    "hooks": [
+      "src/hooks/useEnhancedPortfolio.ts",
+      "src/hooks/useLiveOverview.ts",
+      "src/hooks/useMarketIntelligence.ts",
+      "apps/legacy/src/hooks/useEnhancedPortfolio.ts",
+      "apps/legacy/src/hooks/useLiveOverview.ts",
+      "apps/legacy/src/hooks/useMarketIntelligence.ts"
+    ],
+    "apis": [
+      "apps/web/src/app/api/share/spotlight/[id]/route.tsx"
+    ],
+    "needsAdapter": true
+  },
+  {
+    "feature": "proGating",
+    "status": "existing",
+    "components": [
+      "src/components/portfolio/AlertsCard.tsx",
+      "src/components/predictions/ProductionPredictionCard.tsx",
+      "src/components/ui/UpgradeModal.tsx",
+      "apps/web/src/__tests__/components/DigestCard.test.tsx",
+      "apps/legacy/src/__tests__/components/DigestCard.test.tsx",
+      "apps/legacy/src/components/portfolio/AlertsCard.tsx",
+      "apps/legacy/src/components/predictions/ProductionPredictionCard.tsx",
+      "apps/legacy/src/components/ui/UpgradeModal.tsx"
+    ],
+    "hooks": [
+      "src/hooks/useSubscription.ts",
+      "apps/legacy/src/hooks/useSubscription.ts"
+    ],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "fearIndex",
+    "status": "existing",
+    "components": [
+      "src/components/TestPredictionCard.tsx",
+      "src/components/predictions/ProductionPredictionCard.tsx",
+      "apps/legacy/src/components/TestPredictionCard.tsx",
+      "apps/legacy/src/components/predictions/ProductionPredictionCard.tsx"
+    ],
+    "hooks": [
+      "src/hooks/useExplainability.ts",
+      "apps/legacy/src/hooks/useExplainability.ts"
+    ],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "exports",
+    "status": "existing",
+    "components": [
+      "src/components/predictions/ProductionPredictionCard.tsx",
+      "src/components/predictions/TieredPredictionCard.tsx",
+      "src/components/ui/UpgradeModal.tsx",
+      "apps/legacy/src/components/predictions/ProductionPredictionCard.tsx",
+      "apps/legacy/src/components/predictions/TieredPredictionCard.tsx",
+      "apps/legacy/src/components/ui/UpgradeModal.tsx"
+    ],
+    "hooks": [
+      "src/hooks/useCSVExport.ts",
+      "apps/legacy/src/hooks/useCSVExport.ts"
+    ],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "watchlist",
+    "status": "existing",
+    "components": [
+      "src/components/clusters/ClusterCard.tsx",
+      "src/components/clusters/ClusterCard.tsx",
+      "src/components/hub2/EntitySummaryCard.tsx",
+      "src/components/hub2/EntitySummaryCard.tsx",
+      "apps/legacy/src/components/clusters/ClusterCard.tsx",
+      "apps/legacy/src/components/clusters/ClusterCard.tsx",
+      "apps/legacy/src/components/hub2/EntitySummaryCard.tsx",
+      "apps/legacy/src/components/hub2/EntitySummaryCard.tsx"
+    ],
+    "hooks": [
+      "src/hooks/useMarketIntelligence.ts",
+      "src/hooks/useMarketIntelligence.ts",
+      "src/hooks/useSubscription.ts",
+      "src/hooks/useSubscription.ts",
+      "src/hooks/useWatchlist.ts",
+      "src/hooks/useWatchlist.ts",
+      "src/hooks/useWatchlistAlerts.ts",
+      "src/hooks/useWatchlistAlerts.ts",
+      "apps/legacy/src/hooks/useMarketIntelligence.ts",
+      "apps/legacy/src/hooks/useMarketIntelligence.ts",
+      "apps/legacy/src/hooks/useSubscription.ts",
+      "apps/legacy/src/hooks/useSubscription.ts",
+      "apps/legacy/src/hooks/useWatchlist.ts",
+      "apps/legacy/src/hooks/useWatchlist.ts",
+      "apps/legacy/src/hooks/useWatchlistAlerts.ts",
+      "apps/legacy/src/hooks/useWatchlistAlerts.ts"
+    ],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "digest",
+    "status": "existing",
+    "components": [
+      "src/components/hub/DigestCard.tsx",
+      "src/components/hub/DigestCard.tsx",
+      "src/components/hub/DigestCard.tsx",
+      "src/components/hub5/DigestCard.tsx",
+      "src/components/hub5/DigestCard.tsx",
+      "src/components/hub5/DigestCard.tsx",
+      "apps/web/src/__tests__/components/DigestCard.test.tsx",
+      "apps/web/src/__tests__/components/DigestCard.test.tsx",
+      "apps/web/src/__tests__/components/DigestCard.test.tsx",
+      "apps/legacy/src/__tests__/components/DigestCard.test.tsx",
+      "apps/legacy/src/__tests__/components/DigestCard.test.tsx",
+      "apps/legacy/src/__tests__/components/DigestCard.test.tsx",
+      "apps/legacy/src/components/hub/DigestCard.tsx",
+      "apps/legacy/src/components/hub/DigestCard.tsx",
+      "apps/legacy/src/components/hub/DigestCard.tsx",
+      "apps/legacy/src/components/hub5/DigestCard.tsx",
+      "apps/legacy/src/components/hub5/DigestCard.tsx",
+      "apps/legacy/src/components/hub5/DigestCard.tsx"
+    ],
+    "hooks": [],
+    "apis": [
+      "src/app/api/digest/route.ts",
+      "apps/legacy/src/app/api/digest/route.ts"
+    ],
+    "needsAdapter": true
+  },
+  {
+    "feature": "portfolioLite",
+    "status": "existing",
+    "components": [
+      "src/components/ui/WalletConnectModal.tsx",
+      "apps/legacy/src/components/ui/WalletConnectModal.tsx"
+    ],
+    "hooks": [],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "shareCards",
+    "status": "existing",
+    "components": [],
+    "hooks": [],
+    "apis": [],
+    "needsAdapter": true
+  },
+  {
+    "feature": "referrals",
+    "status": "existing",
+    "components": [],
+    "hooks": [],
+    "apis": [],
+    "needsAdapter": true
+  }
+]

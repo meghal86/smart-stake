@@ -1,0 +1,60 @@
+name: Feature Audit
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm install -g ts-node
+          npm install fast-glob @types/node
+          
+      - name: Run feature audit
+        run: |
+          cd apps/web
+          npm run audit:features
+          
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-audit-results
+          path: |
+            docs/feature-audit.md
+            docs/feature-audit.json
+            
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const auditMd = fs.readFileSync('docs/feature-audit.md', 'utf8');
+              const summary = auditMd.split('## Summary')[1].split('##')[0];
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🔍 Feature Audit Results\n\n${summary}\n\n[View full report](../actions/runs/${context.runId})`
+              });
+            } catch (error) {
+              console.log('Could not post audit results:', error);
+            }

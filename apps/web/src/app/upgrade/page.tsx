@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { track } from '../lib/track';
+// Simple inline track function
+const track = (event: string, props?: any) => console.debug('[track]', event, props);
 
 export default function UpgradePage() {
   return (
@@ -13,7 +14,6 @@ export default function UpgradePage() {
         <div className="space-y-4">
           <Link 
             href="/pro"
-            onClick={() => track('upgrade_click', { from: 'upgrade_page' })}
             className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors"
           >
             Upgrade to Pro

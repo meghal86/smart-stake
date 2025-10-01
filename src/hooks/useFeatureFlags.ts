@@ -13,7 +13,8 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   'custom_kpi_cards': false,
   'market_mood_weights': false,
   'mobile_widgets': true,
-  'audit_logging': false
+  'audit_logging': false,
+  'ui.v2': false
 };
 
 export function useFeatureFlags() {

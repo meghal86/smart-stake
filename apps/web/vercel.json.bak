@@ -1,0 +1,15 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "env": {
+    "NODE_ENV": "production",
+    "LEGACY_PROXY_BASE": "https://your-legacy-app-url.vercel.app",
+    "FEATURE_FLAGS_PATH": "./feature_flags.json"
+  },
+  "functions": {
+    "apps/web/src/app/api/share/spotlight/[id]/route.tsx": {
+      "maxDuration": 10
+    }
+  }
+}

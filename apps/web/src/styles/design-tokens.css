@@ -1,0 +1,51 @@
+/* Design tokens for consistent spacing and CTA hierarchy */
+:root {
+  /* Spacing tokens */
+  --s4: 0.25rem;   /* 4px */
+  --s8: 0.5rem;    /* 8px */
+  --s12: 0.75rem;  /* 12px */
+  --s16: 1rem;     /* 16px */
+  --s24: 1.5rem;   /* 24px */
+  --s32: 2rem;     /* 32px */
+}
+
+/* CTA Hierarchy */
+.cta-primary {
+  @apply bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm;
+}
+
+.cta-secondary {
+  @apply border border-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm;
+}
+
+.cta-tertiary {
+  @apply text-slate-400 hover:text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm;
+}
+
+/* Section spacing */
+.section-gap {
+  margin-bottom: var(--s16);
+}
+
+.card-padding {
+  padding: var(--s16);
+}
+
+/* Carousel styles */
+.carousel-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: var(--s16);
+  padding-bottom: var(--s8);
+}
+
+.carousel-item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+/* New indicator */
+.new-dot {
+  @apply absolute -top-1 -right-1 w-2 h-2 bg-teal-500 rounded-full animate-pulse;
+}

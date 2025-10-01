@@ -1,0 +1,112 @@
+name: Safe Rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      feature_flag:
+        description: 'Feature flag to rollout'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  canary-10:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install -g ts-node
+        
+      - name: Ramp to 10%
+        run: |
+          cd scripts
+          ts-node flags.ts ramp ${{ inputs.feature_flag }} 10
+          
+      - name: Deploy flags
+        run: |
+          echo "Deploying ${{ inputs.feature_flag }} at 10% to ${{ inputs.environment }}"
+          # Add deployment logic here
+          
+      - name: Wait for manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ github.actor }}
+          minimum-approvals: 1
+          issue-title: "Approve 10% → 50% rollout for ${{ inputs.feature_flag }}"
+
+  canary-50:
+    needs: canary-10
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install -g ts-node
+        
+      - name: Ramp to 50%
+        run: |
+          cd scripts
+          ts-node flags.ts ramp ${{ inputs.feature_flag }} 50
+          
+      - name: Deploy flags
+        run: |
+          echo "Deploying ${{ inputs.feature_flag }} at 50% to ${{ inputs.environment }}"
+          
+      - name: Wait for manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ github.actor }}
+          minimum-approvals: 1
+          issue-title: "Approve 50% → 100% rollout for ${{ inputs.feature_flag }}"
+
+  full-rollout:
+    needs: canary-50
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install -g ts-node
+        
+      - name: Full rollout (100%)
+        run: |
+          cd scripts
+          ts-node flags.ts set ${{ inputs.feature_flag }} true
+          
+      - name: Deploy flags
+        run: |
+          echo "Full rollout of ${{ inputs.feature_flag }} to ${{ inputs.environment }}"
+          
+      - name: Notify completion
+        run: |
+          echo "✅ Successfully rolled out ${{ inputs.feature_flag }} to 100% in ${{ inputs.environment }}"

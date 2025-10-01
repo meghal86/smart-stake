@@ -1,34 +1,85 @@
 import { NextResponse } from 'next/server';
 
+interface HealthStatus {
+  mode: 'live' | 'cached' | 'simulated';
+  providers: {
+    etherscan: 'ok' | 'degraded' | 'down';
+    coingecko: 'ok' | 'degraded' | 'down';
+  };
+  lastUpdateISO: string;
+  version: string;
+}
+
+async function checkProvider(url: string, timeout = 3000): Promise<'ok' | 'degraded' | 'down'> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: { 'User-Agent': 'AlphaWhale/1.0' }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) return 'ok';
+    if (response.status >= 500) return 'down';
+    return 'degraded';
+  } catch (error) {
+    return 'down';
+  }
+}
+
+async function getDataQualityMetrics() {
+  try {
+    // Mock data quality checks - replace with actual Supabase queries
+    return {
+      latestEventAgeSec: 45,
+      invariants: {
+        negUSD: 0,
+        missingTx: 0,
+        missingWallet: 0
+      },
+      realRatio1h: 0.85
+    };
+  } catch (error) {
+    return {
+      latestEventAgeSec: 999,
+      invariants: { negUSD: 0, missingTx: 0, missingWallet: 0 },
+      realRatio1h: 0
+    };
+  }
+}
+
 export async function GET() {
   try {
-    // Mock health data - in production this would check actual service health
-    const healthData = {
-      status: 'ok',
+    const [etherscanStatus, coingeckoStatus, dataQuality] = await Promise.all([
+      checkProvider('https://api.etherscan.io/api?module=stats&action=ethsupply&apikey=YourApiKeyToken'),
+      checkProvider('https://api.coingecko.com/api/v3/ping'),
+      getDataQualityMetrics()
+    ]);
+
+    const hasDataIssues = 
+      dataQuality.latestEventAgeSec > 600 ||
+      dataQuality.invariants.negUSD > 0 ||
+      dataQuality.invariants.missingTx > 0 ||
+      dataQuality.realRatio1h < 0.4;
+
+    const health: HealthStatus = {
+      mode: etherscanStatus === 'ok' && coingeckoStatus === 'ok' && !hasDataIssues ? 'live' : 
+            etherscanStatus === 'degraded' || coingeckoStatus === 'degraded' || hasDataIssues ? 'cached' : 'simulated',
       providers: {
-        whaleAlerts: {
-          status: 'ok',
-          latency: Math.floor(Math.random() * 100) + 50, // 50-150ms
-          errorRate: Math.random() * 2 // 0-2%
-        },
-        marketSummary: {
-          status: 'ok',
-          latency: Math.floor(Math.random() * 150) + 100, // 100-250ms
-          errorRate: Math.random() * 1 // 0-1%
-        },
-        assetSentiment: {
-          status: 'ok',
-          latency: Math.floor(Math.random() * 80) + 30, // 30-110ms
-          errorRate: Math.random() * 0.5 // 0-0.5%
-        }
+        etherscan: etherscanStatus,
+        coingecko: coingeckoStatus
       },
-      lastChecked: new Date().toISOString()
+      lastUpdateISO: new Date().toISOString(),
+      version: process.env.npm_package_version || '1.0.0',
+      ...dataQuality
     };
 
-    return NextResponse.json(healthData, {
-      status: 200,
+    return NextResponse.json(health, { 
+      status: health.mode === 'live' ? 200 : 206,
       headers: {
-        'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
@@ -36,22 +87,8 @@ export async function GET() {
     });
   } catch (error) {
     return NextResponse.json(
-      {
-        status: 'down',
-        providers: {
-          whaleAlerts: { status: 'down', latency: 0, errorRate: 100 },
-          marketSummary: { status: 'down', latency: 0, errorRate: 100 },
-          assetSentiment: { status: 'down', latency: 0, errorRate: 100 }
-        },
-        lastChecked: new Date().toISOString(),
-        error: 'Health check failed'
-      },
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+      { error: 'Health check failed', timestamp: new Date().toISOString() },
+      { status: 500 }
     );
   }
 }

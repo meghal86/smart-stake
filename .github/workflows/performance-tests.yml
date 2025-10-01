@@ -1,0 +1,94 @@
+name: Performance Tests
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Nightly at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type to run'
+        required: true
+        type: choice
+        options:
+          - soak
+          - burst
+          - both
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+    continue-on-error: true # Non-blocking
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+          
+      - name: Start test server
+        run: |
+          npm install
+          npm run build
+          npm start &
+          sleep 10 # Wait for server to start
+          
+      - name: Run soak test
+        if: ${{ inputs.test_type == 'soak' || inputs.test_type == 'both' || github.event_name == 'schedule' }}
+        run: |
+          k6 run tools/perf/soak.js --out json=soak-results.json
+          
+      - name: Run burst test  
+        if: ${{ inputs.test_type == 'burst' || inputs.test_type == 'both' || github.event_name == 'schedule' }}
+        run: |
+          k6 run tools/perf/burst.js --out json=burst-results.json
+          
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: |
+            soak-results.json
+            burst-results.json
+            soak-test-results.json
+            burst-test-results.json
+          retention-days: 30
+          
+      - name: Comment results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 📊 Performance Test Results\n\n';
+            
+            try {
+              if (fs.existsSync('soak-test-results.json')) {
+                const soakData = JSON.parse(fs.readFileSync('soak-test-results.json', 'utf8'));
+                const p95 = Math.round(soakData.metrics.http_req_duration.values['p(95)']);
+                const errorRate = (soakData.metrics.errors.values.rate * 100).toFixed(2);
+                comment += `### Soak Test (30min)\n- P95: ${p95}ms\n- Error Rate: ${errorRate}%\n\n`;
+              }
+              
+              if (fs.existsSync('burst-test-results.json')) {
+                const burstData = JSON.parse(fs.readFileSync('burst-test-results.json', 'utf8'));
+                const p95 = Math.round(burstData.metrics.http_req_duration.values['p(95)']);
+                const errorRate = (burstData.metrics.errors.values.rate * 100).toFixed(2);
+                const rps = Math.round(burstData.metrics.http_reqs.values.rate);
+                comment += `### Burst Test (60s)\n- Peak RPS: ${rps}\n- P95: ${p95}ms\n- Error Rate: ${errorRate}%\n\n`;
+              }
+            } catch (error) {
+              comment += 'Error reading test results\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

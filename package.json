@@ -2,6 +2,7 @@
   "name": "alphawhale-monorepo",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "npm@10.0.0",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -17,6 +18,10 @@
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
     "test:all": "npm run test && npm run test:e2e",
+    "audit:features": "node scripts/audit-features.js",
+    "perf:smoke": "k6 run tests/perf/home_smoke.js",
+    "data:mode:mock": "export NEXT_PUBLIC_DATA_MODE=mock",
+    "data:mode:live": "export NEXT_PUBLIC_DATA_MODE=live",
     "db:reset": "supabase db reset",
     "db:seed": "tsx scripts/seed.ts",
     "db:migrate": "supabase migration up"
@@ -58,6 +63,7 @@
     "cmdk": "^0.2.0",
     "date-fns": "^2.30.0",
     "embla-carousel-react": "^8.0.0",
+    "fast-glob": "^3.3.3",
     "framer-motion": "^12.23.22",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.2.4",
@@ -81,7 +87,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
-    "@types/node": "^20.8.10",
+    "@types/node": "^20.19.18",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.3",

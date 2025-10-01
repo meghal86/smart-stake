@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
+
 export const runtime = 'edge';
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
 
 export async function GET(_: Request, { params }: { params: { id: string }}) {
   // TODO: pull real spotlight by ID
@@ -13,6 +12,6 @@ export async function GET(_: Request, { params }: { params: { id: string }}) {
       <div style={{ fontSize: 28, marginTop: 8 }}>Detected: {data.date}</div>
       <div style={{ fontSize: 24, marginTop: 24, opacity: .7 }}>alphawhale.app</div>
     </div>,
-    { ...size }
+    { width: 1200, height: 630 }
   );
 }

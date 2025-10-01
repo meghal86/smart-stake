@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getUserTier } from './src/lib/auth';
 import { getFlag } from './src/lib/flags';
-import { getFlag } from './src/lib/flags';
 
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl;

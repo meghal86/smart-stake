@@ -1,0 +1,18 @@
+{
+  "free": [
+    "whaleSpotlight",
+    "fearIndex", 
+    "portfolioLite"
+  ],
+  "pro": [
+    "alerts",
+    "exports",
+    "digest",
+    "watchlist",
+    "referrals",
+    "shareCards"
+  ],
+  "enterprise": [
+    "proGating"
+  ]
+}

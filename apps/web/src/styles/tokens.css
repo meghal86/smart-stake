@@ -1,31 +1,42 @@
-/* WhalePlus Design Tokens - 2025 */
+/* Spacing tokens for consistent vertical rhythm */
 :root {
-  /* Background & Surface */
-  --bg: hsl(0 0% 100%);
-  --surface: hsl(0 0% 98%);
-  --border: hsl(214 32% 91%);
-  
-  /* Text */
-  --text: hsl(222 84% 5%);
-  --muted: hsl(215 16% 47%);
-  
-  /* Risk Colors */
-  --safe: hsl(142 76% 36%);
-  --watch: hsl(45 93% 47%);
-  --high: hsl(0 84% 60%);
-  
-  /* Interactive */
-  --ring: hsl(221 83% 53%);
-  --primary: hsl(221 83% 53%);
+  --s4: 0.25rem;   /* 4px */
+  --s8: 0.5rem;    /* 8px */
+  --s12: 0.75rem;  /* 12px */
+  --s16: 1rem;     /* 16px */
+  --s24: 1.5rem;   /* 24px */
+  --s32: 2rem;     /* 32px */
+  --s48: 3rem;     /* 48px */
 }
 
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: hsl(222 84% 5%);
-    --surface: hsl(217 33% 17%);
-    --border: hsl(217 33% 24%);
-    --text: hsl(210 40% 98%);
-    --muted: hsl(215 20% 65%);
-  }
+/* CTA hierarchy */
+.btn-primary {
+  @apply bg-teal-600 text-white hover:bg-teal-700 px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-secondary {
+  @apply border border-slate-600 text-white hover:bg-slate-700 px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-tertiary {
+  @apply text-slate-400 hover:text-white px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-disabled {
+  @apply opacity-50 cursor-not-allowed pointer-events-none;
+}
+
+/* Card standardization */
+.card-standard {
+  @apply rounded-2xl border border-slate-700 bg-slate-800 shadow-xl;
+  padding: var(--s16);
+}
+
+.section-header {
+  margin-bottom: var(--s8);
+}
+
+/* Safe area for mobile dock */
+.safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
 }

@@ -1,0 +1,15 @@
+{
+  "tiers": {
+    "free": ["spotlight", "fearIndex", "digestLite", "watchlist", "alertsLocal"],
+    "pro": ["alertsCloud", "digestFull", "exports", "referrals", "leaderboards", "community"]
+  },
+  "flags": {
+    "ui.v2": true,
+    "alerts.feed": true,
+    "push.enabled": true,
+    "community.enabled": true,
+    "leaderboards.enabled": true,
+    "forYou.enabled": true,
+    "mobileDock.enabled": true
+  }
+}

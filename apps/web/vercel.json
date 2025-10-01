@@ -4,7 +4,7 @@
   "installCommand": "npm install",
   "env": {
     "NODE_ENV": "production",
-    "LEGACY_PROXY_BASE": "https://your-legacy-app-url.vercel.app",
+    "LEGACY_PROXY_BASE": "",
     "FEATURE_FLAGS_PATH": "./feature_flags.json"
   },
   "functions": {

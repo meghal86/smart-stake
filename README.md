@@ -1,290 +1,169 @@
-# AlphaWhale Monorepo
+# AlphaWhale - Whale Intelligence Platform
 
-A unified Next.js 14 monorepo for the AlphaWhale whale intelligence platform, combining Lite, Pro, and Enterprise features with tier-based access control.
-
-## 🏗️ Architecture
-
-```
-repo/
-├── apps/
-│   ├── web/                 # Next.js 14 – the only user-facing app
-│   └── legacy/              # Original Vite app (moved here, proxied)
-├── packages/
-│   ├── sdk/                 # Domain logic, typed client, zod contracts
-│   ├── ui/                  # Design system (Tailwind + Radix + shadcn)
-│   ├── types/               # Shared TS types
-│   └── config/              # eslint, tsconfig, tailwind config, tokens
-├── turbo.json
-├── package.json
-└── pnpm-workspace.yaml
-```
+A unified Next.js 14 monorepo for the AlphaWhale whale intelligence platform with automated data correctness and quality monitoring.
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 18+
-- pnpm (recommended) or npm
-- Turbo (for monorepo management)
-
-### Installation
 ```bash
 # Install dependencies
 pnpm install
 
-# Start development servers
+# Start development
 pnpm dev
 ```
 
-This will start:
-- **Next.js app** on http://localhost:3000
-- **Legacy Vite app** on http://localhost:8080 (proxied via /legacy/*)
+## 📊 Data Quality & Monitoring
 
-## 📦 Packages
+### Automated Data Correctness
 
-### Apps
+The platform includes comprehensive data quality monitoring:
 
-#### `apps/web` - Main Next.js Application
-- **Framework**: Next.js 14 with App Router
-- **Features**: Tier-gated Lite/Pro/Enterprise features
-- **Routing**: Middleware-based access control
-- **Performance**: Code splitting, progressive loading
+- **SQL Invariants**: Automated checks for negative USD amounts, missing hashes, data consistency
+- **Freshness SLOs**: Alerts when data is >10 minutes stale
+- **Provenance Tracking**: Monitors ratio of Real vs Simulated data
+- **Reconciliation**: Hourly comparison with Etherscan/Alchemy sources
 
-#### `apps/legacy` - Legacy Vite Application
-- **Framework**: React 18 + Vite
-- **Purpose**: Rollback capability during migration
-- **Access**: Proxied via `/legacy/*` routes
+### Supabase Functions
 
-### Shared Packages
-
-#### `packages/sdk` - Domain Logic
-- **Purpose**: Business logic, API contracts, data validation
-- **Tech**: TypeScript, Zod schemas
-- **Exports**: Data fetching functions, type definitions
-
-#### `packages/ui` - Design System
-- **Purpose**: Reusable UI components
-- **Tech**: React, Tailwind CSS, Radix UI
-- **Exports**: Components, design tokens
-
-#### `packages/types` - Shared Types
-- **Purpose**: TypeScript type definitions
-- **Tech**: TypeScript
-- **Exports**: Shared interfaces, enums, types
-
-#### `packages/config` - Shared Configuration
-- **Purpose**: ESLint, TypeScript, Tailwind configs
-- **Tech**: Configuration files
-- **Exports**: Shared configs for consistency
-
-## 🎯 Features
-
-### Lite Tier (Free)
-- 🐋 **Whale Spotlight**: Daily whale movements
-- 🧭 **Fear & Whale Index**: Market sentiment dial
-- 📩 **Daily Digest**: Whale activity summary
-- 📚 **Whale 101**: Educational content
-- 💼 **Portfolio Lite**: Basic portfolio tracking
-
-### Pro Tier (Paid)
-- 🏆 **Smart Money Leaderboard**: Top performers
-- 📅 **Unlock Calendar**: Advanced token unlock tracking
-- 🔔 **Custom Alerts**: User-defined notifications
-- 🔄 **Portfolio Sync**: External portfolio integration
-- 🤖 **Whale Coach**: AI-powered insights
-- 🔥 **Hotspots**: Market hotspot detection
-- 📊 **Backtesting Lite**: Basic strategy testing
-
-### Enterprise Tier (Custom)
-- 💰 **MM Flow Monitoring**: Market maker flow tracking
-- 🔗 **Signal Fusion**: Advanced signal processing
-- 📈 **Backtests API**: Comprehensive backtesting
-- ⚡ **Execution Layer (OMS)**: Order management system
-- 📊 **Monitoring**: Advanced system monitoring
-
-## 🛠️ Development
-
-### Commands
+#### Scheduled Functions
 
 ```bash
-# Development
-pnpm dev                 # Start all apps in development
-pnpm dev --filter=web    # Start only Next.js app
-pnpm dev --filter=legacy # Start only legacy app
+# Reconciliation (hourly at :07)
+supabase functions invoke reconcile
 
-# Building
-pnpm build               # Build all packages
-pnpm build --filter=web  # Build only Next.js app
+# Backfill (nightly at 02:15)  
+supabase functions invoke backfill_24h
 
-# Testing
-pnpm test                # Run all tests
-pnpm test:ui             # Run tests with UI
-pnpm test:e2e            # Run E2E tests
-
-# Linting & Formatting
-pnpm lint                # Lint all packages
-pnpm typecheck           # Type check all packages
-pnpm format              # Format all packages
+# QC Alerts (every 15 minutes)
+supabase functions invoke qc-alerts
 ```
 
-### Adding New Features
+#### Manual Deployment
 
-1. **Create feature branch**
-2. **Implement in appropriate package**
-3. **Add tests and documentation**
-4. **Update feature parity checklist**
-5. **Submit PR with migration gate validation**
-
-## 🔒 Tier Gating
-
-### Middleware Implementation
-The app uses Next.js middleware to control feature access:
-
-```typescript
-// middleware.ts
-export async function middleware(req: NextRequest) {
-  const tier = await getUserTier(req);
-  
-  // Gate Pro/Enterprise routes
-  if (url.pathname.startsWith('/pro') && tier === 'lite') {
-    return NextResponse.redirect(new URL('/upgrade', req.url));
-  }
-}
+```bash
+# Deploy all functions
+supabase functions deploy reconcile
+supabase functions deploy backfill_24h  
+supabase functions deploy qc-alerts
+supabase functions deploy uptime-monitor
 ```
 
-### Feature Gating Patterns
-```typescript
-// Component-level gating
-{tier === 'lite' && <UpgradePrompt />}
+### Cron Schedule
 
-// Route-level gating
-if (tier !== 'enterprise') {
-  return <AccessDenied />;
-}
+Configure in Supabase Dashboard > Edge Functions > Cron:
+
+```sql
+-- Reconciliation: Every hour at 7 minutes past
+SELECT cron.schedule('reconcile-hourly', '7 * * * *', 'https://your-project.supabase.co/functions/v1/reconcile');
+
+-- Backfill: Daily at 2:15 AM
+SELECT cron.schedule('backfill-nightly', '15 2 * * *', 'https://your-project.supabase.co/functions/v1/backfill_24h');
+
+-- QC Alerts: Every 15 minutes
+SELECT cron.schedule('qc-alerts', '*/15 * * * *', 'https://your-project.supabase.co/functions/v1/qc-alerts');
+
+-- Uptime Monitor: Every 5 minutes  
+SELECT cron.schedule('uptime-monitor', '*/5 * * * *', 'https://your-project.supabase.co/functions/v1/uptime-monitor');
 ```
 
-## 📊 Performance
+### Environment Variables
 
-### Bundle Size Targets
-- **Lite Route**: <200KB gzipped
-- **Pro Route**: <500KB gzipped
-- **Enterprise Route**: <1MB gzipped
+```bash
+# Supabase
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-### Performance Targets
-- **LCP**: ≤2.0s (P75)
-- **CLS**: ≤0.1
-- **Lighthouse Score**: >90
+# Data Providers
+ALCHEMY_API_KEY=your_alchemy_key
+ETHERSCAN_API_KEY=your_etherscan_key
 
-### Optimization Strategies
-- **Code Splitting**: Dynamic imports for tier-specific features
-- **Progressive Loading**: Load features based on user tier
-- **Server Components**: Reduce client-side JavaScript
-- **Edge Caching**: ISR for static content
+# Monitoring
+SLACK_WEBHOOK_URL=your_slack_webhook
+APP_URL=https://your-app.com
+
+# Sentry (Optional)
+SENTRY_DSN=your_sentry_dsn
+```
+
+## 🔍 Monitoring Endpoints
+
+- **Health Check**: `/api/healthz` - System health with data quality metrics
+- **Status Page**: `/status` - Public status dashboard  
+- **Ops Dashboard**: `/internal/ops` - Internal metrics and error budgets
 
 ## 🧪 Testing
 
-### Test Strategy
-- **Unit Tests**: Component and function testing
-- **Integration Tests**: API and data flow testing
-- **E2E Tests**: Critical user journey testing
-- **Visual Regression**: Component snapshot testing
-
-### Test Commands
 ```bash
-pnpm test                # Run unit tests
-pnpm test:coverage       # Run with coverage
-pnpm test:e2e           # Run E2E tests
-pnpm test:ui            # Run tests with UI
+# Run all tests
+pnpm test
+
+# Data quality tests
+pnpm test data-quality
+
+# E2E tests
+pnpm test:e2e
 ```
 
-## 🚀 Deployment
+## 📈 Data Quality Metrics
 
-### Production Deployment
-1. **Build**: `pnpm build`
-2. **Test**: `pnpm test:all`
-3. **Deploy**: Deploy to Vercel/Netlify
-4. **Monitor**: Check performance and error rates
+### Invariants Monitored
 
-### Migration Deployment
-1. **Shadow Mode**: Run new system alongside legacy
-2. **Traffic Splitting**: Gradually increase traffic to new system
-3. **Monitoring**: Watch for issues and performance degradation
-4. **Rollback**: Quick rollback if issues arise
+- **Negative USD**: `sum((amount_usd < 0)::int)` should be 0
+- **Missing TX Hash**: `sum((tx_hash IS NULL OR tx_hash='')::int)` should be 0  
+- **Missing Wallet**: `sum((wallet_hash IS NULL OR wallet_hash='')::int)` should be 0
 
-## 📈 Migration Strategy
+### Freshness SLOs
 
-### Migration Gates
-See [Migration Gates Checklist](./AlphaWhale_Migration_Gates_Checklist.md) for detailed migration process.
+- **Warning**: Data age 180-600 seconds
+- **Critical**: Data age >600 seconds (10 minutes)
 
-### Feature Parity
-See [Feature Parity Checklist](./AlphaWhale_Feature_Parity_Checklist.csv) for complete feature mapping.
+### Provenance Thresholds
 
-### Rollback Plan
-- **Immediate**: Route traffic back to legacy app
-- **Investigation**: Identify and fix issues
-- **Re-deploy**: Gradual re-rollout after fixes
+- **Healthy**: >40% Real data in last 2 hours
+- **Degraded**: <40% Real data triggers alerts
 
-## 🔧 Configuration
+## 🚨 Alert Conditions
 
-### Environment Variables
+Slack alerts are sent when:
+
+- Any invariant violations detected
+- Data freshness exceeds 10 minutes
+- Real data ratio drops below 40% for 2+ hours
+- Reconciliation variance exceeds tolerances
+- Provider APIs are down or degraded
+
+## 🔧 Development
+
+### Feature Flags
+
 ```bash
-# Database
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
+# Get flag value
+node scripts/flags.ts get ui.v2
 
-# Analytics
-NEXT_PUBLIC_POSTHOG_KEY=your_posthog_key
-SENTRY_DSN=your_sentry_dsn
+# Set flag value  
+node scripts/flags.ts set ui.v2 true
 
-# Feature Flags
-NEXT_PUBLIC_ENABLE_PRO_FEATURES=false
-NEXT_PUBLIC_ENABLE_ENTERPRISE_FEATURES=false
+# Ramp percentage
+node scripts/flags.ts ramp ui.v2 50
 ```
 
-### Turbo Configuration
-```json
-{
-  "pipeline": {
-    "dev": { "cache": false, "persistent": true },
-    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
-    "lint": { "outputs": [] },
-    "typecheck": { "outputs": [] }
-  }
-}
+### Safe Rollouts
+
+Use GitHub Actions workflow:
+
+```bash
+# Trigger safe rollout
+gh workflow run safe-rollout.yml -f feature_flag=ui.v2 -f environment=production
 ```
 
-## 📚 Documentation
+## 📊 Architecture
 
-- [Architecture Decision Record](./ADR-0001-Converge-to-Next14-Monorepo.md)
-- [Migration Gates Checklist](./AlphaWhale_Migration_Gates_Checklist.md)
-- [Feature Parity Checklist](./AlphaWhale_Feature_Parity_Checklist.csv)
-- [API Documentation](./COMPLETE_FEATURE_API_DOCUMENTATION.md)
-
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create feature branch**: `git checkout -b feature/amazing-feature`
-3. **Commit changes**: `git commit -m 'Add amazing feature'`
-4. **Push to branch**: `git push origin feature/amazing-feature`
-5. **Open Pull Request**
-
-### Development Guidelines
-- Follow TypeScript strict mode
-- Write tests for new features
-- Update documentation
-- Follow conventional commits
-- Ensure all checks pass
-
-## 📞 Support
-
-- **Documentation**: Check this README and linked docs
-- **Issues**: Create GitHub issue for bugs
-- **Discussions**: Use GitHub Discussions for questions
-- **Security**: Report security issues privately
-
-## 📄 License
-
-This project is proprietary and confidential. All rights reserved.
+- **Frontend**: Next.js 14 with App Router
+- **Database**: Supabase with automated views
+- **Functions**: Supabase Edge Functions for data processing
+- **Monitoring**: Sentry + custom health checks
+- **Alerts**: Slack webhooks for critical issues
 
 ---
 
-**Built with ❤️ by the AlphaWhale Team**
+Built with enterprise-grade data quality and monitoring. 🚀

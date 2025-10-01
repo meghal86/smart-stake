@@ -1,0 +1,651 @@
+[
+  {
+    "key": "layout_rhythm_tokens",
+    "feature": "Spacing tokens s4/8/12/16/24; normalized paddings",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "src/styles/tokens.css",
+      "apps/legacy/src/styles/tokens.css",
+      "src/styles/compact.css"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "cta_hierarchy",
+    "feature": "Primary Set Alert, secondary Follow, tertiary Share styles",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "foryou_carousel_newdot",
+    "feature": "For You row as horizontal carousel with New indicator",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/ForYouRow.tsx",
+      "node_modules/@alphawhale/web/src/components/ForYouRow.tsx",
+      "src/components/AlertChannels.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "digest_row_clickable_hotkeys",
+    "feature": "Digest rows clickable with mini CTAs and keyboard shortcuts",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "spotlight_time_confidence",
+    "feature": "Spotlight: absolute+relative time + confidence chip",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/ConfidenceChip.tsx",
+      "node_modules/@alphawhale/web/src/components/ConfidenceChip.tsx",
+      "src/components/AlertChannels.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "fear_index_marker_methodology",
+    "feature": "Fear Index score on marker + Methodology link",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "docs/methodology.md",
+      "docs/methodology.md"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "alerts_filters_markread",
+    "feature": "Alerts Feed tabs All/Mine/System + Mark all read",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/AlertsFeed.tsx",
+      "node_modules/@alphawhale/web/src/components/AlertsFeed.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "portfolio_demo_reset",
+    "feature": "Try Demo Portfolio + 24h P&L + Reset demo",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "pro_teaser_price_trust",
+    "feature": "$19/mo, bullets, Cancel anytime, trust indicators",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/ProTeaser.tsx",
+      "node_modules/@alphawhale/web/src/components/ProTeaser.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "mobile_sticky_subheaders_safearea",
+    "feature": "Mobile sticky headers and safe-area padding",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/MobileDock.tsx",
+      "node_modules/@alphawhale/web/src/components/MobileDock.tsx",
+      "src/components/AlertChannels.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "accessibility_core",
+    "feature": "Focus order, aria-live, gradient AA contrast",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "microcopy_tone_update",
+    "feature": "See full analysis copy + Simulated tooltip",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "foryou_row_actions",
+    "feature": "For You quick actions (Set Alert/Follow/Share)",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/ForYouRow.tsx",
+      "node_modules/@alphawhale/web/src/components/ForYouRow.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "alerts_feed",
+    "feature": "Alerts list grouped by time with create modal",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/AlertsFeed.tsx",
+      "node_modules/@alphawhale/web/src/components/AlertsFeed.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "actionable_digest_ctas",
+    "feature": "CTAs on each digest line",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "trust_anchors_global",
+    "feature": "Etherscan links, Last-updated, Provenance tooltips",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "pro_teaser_trial",
+    "feature": "7-day trial CTA",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/ProTeaser.tsx",
+      "node_modules/@alphawhale/web/src/components/ProTeaser.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "mobile_sticky_dock",
+    "feature": "Mobile dock: Spotlight|Watchlist|Alerts|Upgrade",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/MobileDock.tsx",
+      "node_modules/@alphawhale/web/src/components/MobileDock.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "demo_portfolio_btn",
+    "feature": "Demo portfolio button near Connect Wallet",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/components/AlertChannels.tsx",
+      "src/components/AlertTeaserCard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "telemetry_events_core",
+    "feature": "Core telemetry events tracked",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "node_modules/next/dist/telemetry/anonymous-meta.d.ts",
+      "node_modules/next/dist/telemetry/anonymous-meta.js",
+      "apps/web/src/hooks/useTelemetry.ts"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "share_og_cards",
+    "feature": "OG image endpoint + share copy",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/app/api/og/route.tsx",
+      "node_modules/@alphawhale/web/src/app/api/og/route.tsx",
+      "apps/web/src/app/api/share/spotlight/[id]/route.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "referrals_flow",
+    "feature": "Invite + progress tracking",
+    "tier": "pro",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/app/referrals/page.tsx",
+      "node_modules/@alphawhale/web/src/app/referrals/page.tsx",
+      "apps/web/src/app/referrals/page.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "nux_wizard_three_steps",
+    "feature": "Onboarding: pick assets → follow whales → enable alerts",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/OnboardingWizard.tsx",
+      "node_modules/@alphawhale/web/src/components/OnboardingWizard.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "visual_feedback_refresh",
+    "feature": "Refresh spinner, skeletons, auto-refresh pulse",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/components/RefreshButton.tsx",
+      "node_modules/@alphawhale/web/src/components/RefreshButton.tsx",
+      "src/components/AlertChannels.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "cloud_sync_cross_device",
+    "feature": "Cross-device sync with user_id or anon_id",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "apps/web/src/hooks/useCloudSync.ts",
+      "node_modules/@alphawhale/web/src/hooks/useCloudSync.ts",
+      "src/hooks/hub2.ts"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "link_to_email_or_share_code",
+    "feature": "Email linking or share code import flow",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "src/hooks/hub2.ts",
+      "src/hooks/use-mobile.tsx",
+      "src/components/AlertChannels.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "push_notifications_webpush",
+    "feature": "Service worker + VAPID push notifications",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "public/sw.js"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "funnel_dashboard_internal",
+    "feature": "Internal funnel dashboard page",
+    "tier": "ui.v2",
+    "status": "Missing",
+    "evidence": [],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "methodology_docs",
+    "feature": "Methodology documentation page",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "docs/methodology.md",
+      "apps/web/src/app/docs/methodology/page.tsx",
+      "node_modules/@alphawhale/web/src/app/docs/methodology/page.tsx"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "leaderboards_page",
+    "feature": "Most Followed Whales & Top Demo Portfolios",
+    "tier": "pro",
+    "status": "Missing",
+    "evidence": [],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "community_threads",
+    "feature": "Realtime community threads per wallet",
+    "tier": "pro",
+    "status": "Missing",
+    "evidence": [],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "tests_unit_key_paths",
+    "feature": "Unit tests for key components and hooks",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "src/__tests__/advanced-whale-predictions.test.ts",
+      "src/__tests__/e2e-user-flows.test.tsx",
+      "tests/hub2.spec.ts"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "tests_integration_msq",
+    "feature": "MSW integration tests",
+    "tier": "ui.v2",
+    "status": "Partial",
+    "evidence": [
+      "tests/hub2.spec.ts",
+      "tests/notification-system.test.js"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "tests_e2e_core",
+    "feature": "E2E tests for core user flows",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "cypress/e2e/portfolio.cy.ts",
+      "cypress/e2e/predictions-scenarios.cy.ts",
+      "node_modules/playwright/LICENSE"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "tests_a11y_axe",
+    "feature": "Accessibility tests with axe-core",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "tests/hub2.spec.ts",
+      "tests/notification-system.test.js",
+      "cypress/e2e/portfolio.cy.ts"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "tests_perf_k6",
+    "feature": "Performance tests with k6",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "tests/perf/home_smoke.js"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": false
+  },
+  {
+    "key": "ci_audit_gate",
+    "feature": "CI workflow running feature audit",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      ".github/workflows/drift-monitoring.yml",
+      ".github/workflows/enhanced-lite.yml"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  },
+  {
+    "key": "flags_registry",
+    "feature": "Feature flags defined and documented",
+    "tier": "ui.v2",
+    "status": "Built",
+    "evidence": [
+      "config/gating.json",
+      "apps/web/src/config/gating.json"
+    ],
+    "tests": {
+      "unit": true,
+      "e2e": true,
+      "a11y": false,
+      "perf": false
+    },
+    "mustHave": true
+  }
+]

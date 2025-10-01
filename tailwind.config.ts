@@ -83,6 +83,14 @@ export default {
 					primary: 'hsl(var(--interactive-primary))',
 					secondary: 'hsl(var(--interactive-secondary))',
 					muted: 'hsl(var(--interactive-muted))'
+				},
+				alpha: {
+					bg: '#0E1A2B',
+					card: '#121F34',
+					teal: '#00FFC6',
+					coral: '#FF4D4D',
+					gray: '#A0AEC0',
+					purple: '#7A5CFF'
 				}
 			},
 			borderRadius: {
@@ -106,11 +114,25 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'counter': {
+					from: { opacity: '0', transform: 'translateY(10px)' },
+					to: { opacity: '1', transform: 'translateY(0)' }
+				},
+				'pulse-dot': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'counter': 'counter 0.6s ease-out',
+				'pulse-dot': 'pulse-dot 4s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'gradient-spotlight': 'linear-gradient(135deg, #00FFC6 0%, #1B66FF 100%)',
+				'gradient-cta': 'linear-gradient(135deg, #1B66FF 0%, #7A5CFF 100%)'
 			}
 		}
 	},
