@@ -25,7 +25,7 @@ export default function SimpleEnhanced() {
   }, []);
 
   useEffect(() => {
-    const completed = localStorage.getItem('onboardingCompleted');
+    const completed = typeof window !== 'undefined' ? localStorage.getItem('onboardingCompleted') : null;
     if (!completed) {
       setShowOnboarding(true);
     }
@@ -41,7 +41,9 @@ export default function SimpleEnhanced() {
             <p className="text-slate-300 mb-4">Make it yours. Track the smart money. Never miss a move.</p>
             <button 
               onClick={() => {
-                localStorage.setItem('onboardingCompleted', 'true');
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('onboardingCompleted', 'true');
+                }
                 setShowOnboarding(false);
               }}
               className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700"

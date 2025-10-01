@@ -40,12 +40,16 @@ function EnhancedLiteV2() {
     const totalChange = portfolio.positions.reduce((sum: number, pos: any) => sum + (pos.amount * pos.price * pos.change24h / 100), 0);
     
     setDemoPortfolio({ ...portfolio, totalValue, totalChange, changePercent: (totalChange / totalValue) * 100 });
-    localStorage.setItem('alpha/demo-portfolio', JSON.stringify(portfolio));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('alpha/demo-portfolio', JSON.stringify(portfolio));
+    }
   };
   
   const resetDemoPortfolio = () => {
     setDemoPortfolio(null);
-    localStorage.removeItem('alpha/demo-portfolio');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('alpha/demo-portfolio');
+    }
   };
   
   const scrollCarousel = (direction: string) => {
@@ -59,7 +63,7 @@ function EnhancedLiteV2() {
   
   useEffect(() => {
     // Load demo portfolio
-    const saved = localStorage.getItem('alpha/demo-portfolio');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('alpha/demo-portfolio') : null;
     if (saved) {
       const portfolio = JSON.parse(saved);
       const totalValue = portfolio.positions.reduce((sum: number, pos: any) => sum + (pos.amount * pos.price), 0);

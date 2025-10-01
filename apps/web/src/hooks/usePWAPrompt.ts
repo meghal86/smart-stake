@@ -8,7 +8,7 @@ export function usePWAPrompt() {
 
   useEffect(() => {
     // Check if already dismissed recently
-    const dismissed = localStorage.getItem('alpha/pwa-dismissed');
+    const dismissed = typeof window !== 'undefined' ? localStorage.getItem('alpha/pwa-dismissed') : null;
     if (dismissed) {
       const dismissedTime = parseInt(dismissed);
       const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
@@ -52,7 +52,9 @@ export function usePWAPrompt() {
 
   const dismissPrompt = () => {
     setShowPrompt(false);
-    localStorage.setItem('alpha/pwa-dismissed', Date.now().toString());
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('alpha/pwa-dismissed', Date.now().toString());
+    }
   };
 
   return { showPrompt, installPWA, dismissPrompt };

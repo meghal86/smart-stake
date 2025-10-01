@@ -6,6 +6,7 @@ export type AlertItem = { id: string; ts: string }; // ISO string
 
 export function useAlertsUnread(alerts: AlertItem[]) {
   const [lastViewedAt, setLastViewedAt] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
     const v = localStorage.getItem(LS_KEY);
     return v ? Number(v) : 0;
   });
@@ -19,7 +20,9 @@ export function useAlertsUnread(alerts: AlertItem[]) {
   // call when user opens the Alerts view/sheet
   function markAlertsViewed() {
     const now = Date.now();
-    localStorage.setItem(LS_KEY, String(now));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LS_KEY, String(now));
+    }
     setLastViewedAt(now);
   }
 

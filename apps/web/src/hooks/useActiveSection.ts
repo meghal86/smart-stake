@@ -7,7 +7,7 @@ export function useActiveSection(sectionIds: string[]) {
 
   useEffect(() => {
     // Load persisted active section
-    const saved = localStorage.getItem('alpha/active-section');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('alpha/active-section') : null;
     if (saved && sectionIds.includes(saved)) {
       setActiveSection(saved);
     }
@@ -21,7 +21,9 @@ export function useActiveSection(sectionIds: string[]) {
         if (visibleSections.length > 0) {
           const mostVisible = visibleSections[0].target.id;
           setActiveSection(mostVisible);
-          localStorage.setItem('alpha/active-section', mostVisible);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('alpha/active-section', mostVisible);
+          }
         }
       },
       {
