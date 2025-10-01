@@ -2,13 +2,67 @@
 
 import { useState, useEffect, useRef } from 'react';
 import SimpleEnhanced from '../../components/SimpleEnhanced';
-import { Button } from '../../components/ui/Button';
-import { ExternalLink } from '../../components/ui/ExternalLink';
-import { RefreshButton } from '../../components/ui/RefreshButton';
-import { Tooltip } from '../../components/ui/Tooltip';
-import { copy } from '../../lib/copy';
-import { SkeletonCard, SkeletonRow } from '../../components/ui/SkeletonCard';
-import MobileDock from '../../components/MobileDock';
+// Inline minimal components
+const Button = ({ children, variant = 'primary', size = 'sm', onClick, disabled, ...props }: any) => {
+  const variants = {
+    primary: 'bg-teal-600 hover:bg-teal-700 text-white',
+    secondary: 'border border-slate-600 hover:bg-slate-700 text-white bg-transparent',
+    tertiary: 'text-slate-400 hover:text-white bg-transparent'
+  };
+  return (
+    <button 
+      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${variants[variant as keyof typeof variants]} ${disabled ? 'opacity-50' : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Tooltip = ({ children, content }: any) => children;
+const ExternalLink = ({ children, href, className }: any) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>
+);
+const RefreshButton = ({ onRefresh }: any) => (
+  <button onClick={onRefresh} className="text-teal-400 hover:underline">Refresh</button>
+);
+const SkeletonCard = () => (
+  <div className="flex-shrink-0 w-80 bg-slate-800 rounded-lg p-4 border border-slate-700 animate-pulse">
+    <div className="h-4 bg-slate-700 rounded mb-2"></div>
+    <div className="h-6 bg-slate-700 rounded mb-3"></div>
+    <div className="flex gap-2">
+      <div className="h-6 bg-slate-700 rounded w-16"></div>
+      <div className="h-6 bg-slate-700 rounded w-16"></div>
+    </div>
+  </div>
+);
+const SkeletonRow = () => (
+  <div className="h-12 bg-slate-700/30 rounded-lg animate-pulse"></div>
+);
+const MobileDock = ({ alerts, modalOpen }: any) => (
+  <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 p-2">
+    <div className="flex justify-around">
+      <button className="flex flex-col items-center p-2 text-slate-400">
+        <span>🐋</span>
+        <span className="text-xs">Spotlight</span>
+      </button>
+      <button className="flex flex-col items-center p-2 text-slate-400">
+        <span>🔔</span>
+        <span className="text-xs">Alerts</span>
+      </button>
+    </div>
+  </div>
+);
+
+const copy = {
+  setAlert: 'Alert',
+  follow: 'Follow',
+  share: 'Share',
+  simulatedTooltip: 'Simulated data',
+  lastUpdated: 'Updated'
+};
 
 function EnhancedLiteV2() {
   const [showBottomSheet, setShowBottomSheet] = useState<any>(null);
@@ -283,9 +337,9 @@ function EnhancedLiteV2() {
                   </div>
                   {!isMobile && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); }}>{copy.setAlert}</Button>
-                      <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); }}>{copy.follow}</Button>
-                      <Button variant="tertiary" size="sm" onClick={(e) => { e.stopPropagation(); }}>+Watchlist</Button>
+                      <Button variant="primary" size="sm" onClick={(e: any) => { e.stopPropagation(); }}>{copy.setAlert}</Button>
+                      <Button variant="secondary" size="sm" onClick={(e: any) => { e.stopPropagation(); }}>{copy.follow}</Button>
+                      <Button variant="tertiary" size="sm" onClick={(e: any) => { e.stopPropagation(); }}>+Watchlist</Button>
                     </div>
                   )}
                 </div>
