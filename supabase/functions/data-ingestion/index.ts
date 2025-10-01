@@ -18,6 +18,9 @@ class DataIngestionService {
 
   async fetchWhaleTransactions() {
     try {
+      // Get ETH price for USD filtering
+      const ethPrice = await this.getETHPrice();
+      
       const response = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${Deno.env.get('ALCHEMY_API_KEY')}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,9 +29,9 @@ class DataIngestionService {
           method: 'alchemy_getAssetTransfers',
           params: [{
             fromBlock: 'latest',
-            category: ['external'],
-            minValue: 50,
-            maxCount: 50
+            category: ['external', 'erc20'],
+            excludeZeroValue: true,
+            maxCount: 100
           }],
           id: 1
         })
@@ -37,37 +40,56 @@ class DataIngestionService {
       const data = await response.json();
       const transactions = data.result?.transfers || [];
       
-      return this.processTransactions(transactions);
+      return this.processTransactions(transactions, ethPrice);
     } catch (error) {
       await this.updateProviderHealth('alchemy', 'degraded');
       throw error;
     }
   }
 
-  private async processTransactions(transactions: any[]) {
+  private async processTransactions(transactions: any[], ethPrice: number) {
     const processed = [];
     
     for (const tx of transactions) {
-      const processedTx = {
-        hash: tx.hash,
-        from_address: tx.from,
-        to_address: tx.to,
-        value_eth: parseFloat(tx.value || '0'),
-        block_number: parseInt(tx.blockNum, 16),
-        timestamp: new Date().toISOString()
-      };
+      const value_eth = parseFloat(tx.value || '0');
+      const amount_usd = value_eth * ethPrice;
+      
+      // Filter for whale transactions (>= $250k)
+      if (amount_usd >= 250000) {
+        const processedTx = {
+          hash: tx.hash,
+          from_address: tx.from,
+          to_address: tx.to,
+          value_eth,
+          amount_usd,
+          asset: tx.asset || 'ETH',
+          block_number: parseInt(tx.blockNum, 16),
+          timestamp: new Date().toISOString(),
+          chain: 'ethereum'
+        };
 
-      processed.push(processedTx);
+        processed.push(processedTx);
+      }
     }
 
     if (processed.length > 0) {
       await this.supabase
-        .from('whale_transactions')
+        .from('whale_transfers')
         .upsert(processed, { onConflict: 'hash' });
     }
 
     await this.updateProviderHealth('alchemy', 'healthy');
     return processed;
+  }
+
+  private async getETHPrice(): Promise<number> {
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+      const data = await response.json();
+      return data.ethereum?.usd || 2500; // Fallback price
+    } catch {
+      return 2500; // Fallback price
+    }
   }
 
   private async updateProviderHealth(name: string, status: string) {

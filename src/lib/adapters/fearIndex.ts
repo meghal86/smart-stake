@@ -4,34 +4,48 @@ export interface FearIndexData {
   score: number;
   label: string;
   provenance: 'Real' | 'Simulated';
+  last_updated_iso?: string;
+  methodologyUrl?: string;
 }
 
 const circuitBreaker = withCircuitBreaker();
 
 export async function getFearIndex(): Promise<FearIndexData> {
-  return withCache('fear-index', 300000)(async () => {
+  return withCache('fear-index', 60000)(async () => {
     return circuitBreaker(async () => {
-      // Try to fetch from existing API first
-      try {
-        const response = await fetch('/api/whale-index');
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            score: data.fearIndex?.score || 62,
-            label: data.fearIndex?.label || 'Accumulation bias',
-            provenance: 'Real' as const
-          };
-        }
-      } catch (error) {
-        console.warn('Failed to fetch real fear index, using simulated data');
+      const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+      
+      if (dataMode === 'mock') {
+        return getMockFearIndexData();
       }
-
-      // Fallback to simulated data
-      return {
-        score: 62,
-        label: 'Accumulation bias',
-        provenance: 'Simulated' as const
-      };
+      
+      try {
+        const response = await fetch('/functions/v1/fear-index');
+        
+        if (!response.ok) {
+          throw new Error('Fear Index API failed');
+        }
+        
+        const data = await response.json();
+        return {
+          score: data.score || 62,
+          label: data.label || 'Accumulation',
+          provenance: data.provenance || 'Simulated',
+          last_updated_iso: data.last_updated_iso,
+          methodologyUrl: data.methodologyUrl
+        };
+      } catch (error) {
+        console.warn('Falling back to mock data:', error);
+        return getMockFearIndexData();
+      }
     });
   });
+}
+
+function getMockFearIndexData(): FearIndexData {
+  return {
+    score: 62,
+    label: 'Accumulation bias',
+    provenance: 'Simulated' as const
+  };
 }

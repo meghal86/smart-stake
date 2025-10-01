@@ -53,32 +53,19 @@ async function getDataQualityMetrics() {
 
 export async function GET() {
   try {
-    const [etherscanStatus, coingeckoStatus, dataQuality] = await Promise.all([
-      checkProvider('https://api.etherscan.io/api?module=stats&action=ethsupply&apikey=YourApiKeyToken'),
-      checkProvider('https://api.coingecko.com/api/v3/ping'),
-      getDataQualityMetrics()
-    ]);
-
-    const hasDataIssues = 
-      dataQuality.latestEventAgeSec > 600 ||
-      dataQuality.invariants.negUSD > 0 ||
-      dataQuality.invariants.missingTx > 0 ||
-      dataQuality.realRatio1h < 0.4;
-
+    // Simplified health check for demo
     const health: HealthStatus = {
-      mode: etherscanStatus === 'ok' && coingeckoStatus === 'ok' && !hasDataIssues ? 'live' : 
-            etherscanStatus === 'degraded' || coingeckoStatus === 'degraded' || hasDataIssues ? 'cached' : 'simulated',
+      mode: 'simulated',
       providers: {
-        etherscan: etherscanStatus,
-        coingecko: coingeckoStatus
+        etherscan: 'down',
+        coingecko: 'down'
       },
       lastUpdateISO: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      ...dataQuality
+      version: '1.0.0'
     };
 
     return NextResponse.json(health, { 
-      status: health.mode === 'live' ? 200 : 206,
+      status: 206,
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',

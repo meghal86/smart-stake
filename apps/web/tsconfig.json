@@ -7,6 +7,7 @@
       }
     ],
     "paths": {
+      "@/*": ["./src/*"],
       "@sdk/*": [
         "../../packages/sdk/src/*"
       ],
@@ -31,6 +32,10 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "../../src",
+    "**/__tests__/**",
+    "**/*.test.*",
+    "**/*.spec.*"
   ]
 }

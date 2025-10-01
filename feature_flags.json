@@ -1,5 +1,8 @@
 {
   "next_web_enabled": true,
   "spotlight_share": { "tiers": ["lite", "pro", "enterprise"], "rollout": 1 },
-  "pro_leaderboard": { "tiers": ["pro", "enterprise"], "rollout": 1 }
+  "pro_leaderboard": { "tiers": ["pro", "enterprise"], "rollout": 1 },
+  "data": {
+    "live": true
+  }
 }

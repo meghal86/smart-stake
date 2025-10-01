@@ -1,57 +1,42 @@
-import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function GET() {
   try {
-    // Mock health data - in production this would check actual service health
-    const healthData = {
-      status: 'ok',
-      providers: {
-        whaleAlerts: {
-          status: 'ok',
-          latency: Math.floor(Math.random() * 100) + 50, // 50-150ms
-          errorRate: Math.random() * 2 // 0-2%
-        },
-        marketSummary: {
-          status: 'ok',
-          latency: Math.floor(Math.random() * 150) + 100, // 100-250ms
-          errorRate: Math.random() * 1 // 0-1%
-        },
-        assetSentiment: {
-          status: 'ok',
-          latency: Math.floor(Math.random() * 80) + 30, // 30-110ms
-          errorRate: Math.random() * 0.5 // 0-0.5%
-        }
-      },
-      lastChecked: new Date().toISOString()
-    };
-
-    return NextResponse.json(healthData, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
+    const { data: freshness } = await supabase
+      .from('data_freshness')
+      .select('*')
+      .single()
+    
+    const { data: volume } = await supabase
+      .from('volume_24h')
+      .select('*')
+      .single()
+    
+    const latestEventAgeSec = freshness?.age_seconds || 999999
+    const provenance = latestEventAgeSec <= 180 ? 'Real' : 'Simulated'
+    
+    let status = 200
+    if (latestEventAgeSec > 600) status = 500
+    else if (latestEventAgeSec > 180) status = 206
+    
+    return Response.json({
+      status: status === 200 ? 'healthy' : status === 206 ? 'degraded' : 'unhealthy',
+      latestEventAgeSec,
+      provenance,
+      vol24h: volume?.total_volume || 0,
+      timestamp: new Date().toISOString()
+    }, { status })
+    
   } catch (error) {
-    return NextResponse.json(
-      {
-        status: 'down',
-        providers: {
-          whaleAlerts: { status: 'down', latency: 0, errorRate: 100 },
-          marketSummary: { status: 'down', latency: 0, errorRate: 100 },
-          assetSentiment: { status: 'down', latency: 0, errorRate: 100 }
-        },
-        lastChecked: new Date().toISOString(),
-        error: 'Health check failed'
-      },
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    return Response.json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 }

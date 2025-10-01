@@ -8,42 +8,58 @@ export interface WhaleSpotlightData {
   narrative: string;
   risk: 'low' | 'med' | 'high';
   provenance: 'Real' | 'Simulated';
+  tx_hash?: string;
+  last_updated_iso?: string;
 }
 
 const circuitBreaker = withCircuitBreaker();
 
 export async function getWhaleSpotlight(): Promise<WhaleSpotlightData> {
-  return withCache('whale-spotlight', 300000)(async () => {
+  return withCache('whale-spotlight', 60000)(async () => {
     return circuitBreaker(async () => {
-      // Try to fetch from existing API first
-      try {
-        const response = await fetch('/api/whale-index');
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            id: 'sp1',
-            whaleId: data.topWhale?.address || '0xabcd...1234',
-            asset: data.topWhale?.asset || 'ETH',
-            amount: data.topWhale?.amount || 12500000,
-            narrative: data.topWhale?.narrative || 'Large movement detected. Upgrade for full analysis.',
-            risk: data.topWhale?.risk || 'med',
-            provenance: 'Real' as const
-          };
-        }
-      } catch (error) {
-        console.warn('Failed to fetch real whale spotlight, using simulated data');
+      const dataMode = process.env.NEXT_PUBLIC_DATA_MODE;
+      
+      if (dataMode === 'mock') {
+        return getMockSpotlightData();
       }
-
-      // Fallback to simulated data
-      return {
-        id: 'sp1',
-        whaleId: '0xabcd...1234',
-        asset: 'ETH',
-        amount: 12500000,
-        narrative: 'Large ETH movement detected. Upgrade for full analysis.',
-        risk: 'med' as const,
-        provenance: 'Simulated' as const
-      };
+      
+      try {
+        const response = await fetch('/functions/v1/whale-spotlight', {
+          headers: { 'Cache-Control': 'max-age=60' }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Spotlight API failed');
+        }
+        
+        const data = await response.json();
+        return {
+          id: 'sp1',
+          whaleId: data.most_active_wallet || '0xabcd...1234',
+          asset: 'ETH',
+          amount: data.largest_move_usd || 0,
+          narrative: `$${(data.largest_move_usd || 0).toLocaleString()} whale movement detected`,
+          risk: data.largest_move_usd > 2000000 ? 'high' : 'med',
+          provenance: data.provenance || 'Simulated',
+          tx_hash: data.tx_hash,
+          last_updated_iso: data.last_updated_iso
+        };
+      } catch (error) {
+        console.warn('Falling back to mock data:', error);
+        return getMockSpotlightData();
+      }
     });
   });
+}
+
+function getMockSpotlightData(): WhaleSpotlightData {
+  return {
+    id: 'sp1',
+    whaleId: '0xabcd...1234',
+    asset: 'ETH',
+    amount: 12500000,
+    narrative: 'Large ETH movement detected. Upgrade for full analysis.',
+    risk: 'med' as const,
+    provenance: 'Simulated' as const
+  };
 }

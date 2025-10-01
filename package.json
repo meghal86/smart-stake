@@ -22,6 +22,8 @@
     "perf:smoke": "k6 run tests/perf/home_smoke.js",
     "data:mode:mock": "export NEXT_PUBLIC_DATA_MODE=mock",
     "data:mode:live": "export NEXT_PUBLIC_DATA_MODE=live",
+    "validate:existing-functions": "node scripts/validate-existing-functions.js",
+    "test:live-data": "npm test -- --testPathPattern=live-data",
     "db:reset": "supabase db reset",
     "db:seed": "tsx scripts/seed.ts",
     "db:migrate": "supabase migration up"

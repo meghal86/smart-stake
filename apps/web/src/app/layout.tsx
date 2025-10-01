@@ -1,8 +1,9 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import '../styles/design-tokens.css'
-import { Metadata, Viewport } from 'next'
+import { TooltipProvider } from '@/components/ui/Tooltip'
+import BrownoutBanner from '../components/BrownoutBanner'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -17,8 +18,6 @@ export const metadata: Metadata = {
   description: 'Track whale movements, token unlocks, and market intelligence with AlphaWhale.',
 }
 
-import BrownoutBanner from '../components/BrownoutBanner';
-
 export default function RootLayout({
   children,
 }: {
@@ -27,10 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <BrownoutBanner />
-        <main className="min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom)+72px)] md:pb-0">
-          {children}
-        </main>
+        <TooltipProvider>
+          <BrownoutBanner />
+          <main className="min-h-[100dvh] pb-[calc(env(safe-area-inset-bottom)+72px)] md:pb-0">
+            {children}
+          </main>
+        </TooltipProvider>
       </body>
     </html>
   )
