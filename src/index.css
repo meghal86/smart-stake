@@ -1,10 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import './styles/tokens.css';
 @import './styles/layout-guard.css';
 @import './styles/fixes.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Header Motto Animation */
 @keyframes fadeIn { 
