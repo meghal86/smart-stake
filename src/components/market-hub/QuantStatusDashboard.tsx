@@ -273,7 +273,7 @@ function FeatureStatusIcon({ status }: { status: string }) {
     case 'missing':
       return <XCircle className="w-4 h-4 text-red-600" />;
     default:
-      return <AlertTriangle className="w-4 h-4 text-gray-600" />;
+      return <AlertTriangle className="w-4 h-4 text-meta" />;
   }
 }
 

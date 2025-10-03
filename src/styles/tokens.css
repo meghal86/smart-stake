@@ -1,31 +1,25 @@
-/* WhalePlus Design Tokens - 2025 */
 :root {
-  /* Background & Surface */
-  --bg: hsl(0 0% 100%);
-  --surface: hsl(0 0% 98%);
-  --border: hsl(214 32% 91%);
+  /* Design tokens for consistent spacing */
+  --aw-card-px: 16px;
+  --aw-card-py: 14px;
+  --aw-gap: 12px;
+  --aw-radius: 16px;
   
-  /* Text */
-  --text: hsl(222 84% 5%);
-  --muted: hsl(215 16% 47%);
-  
-  /* Risk Colors */
-  --safe: hsl(142 76% 36%);
-  --watch: hsl(45 93% 47%);
-  --high: hsl(0 84% 60%);
-  
-  /* Interactive */
-  --ring: hsl(221 83% 53%);
-  --primary: hsl(221 83% 53%);
+  /* Brand colors */
+  --aw-brand: 72 190 255;
+  --aw-pro-from: 155 118 255;
+  --aw-pro-to: 255 107 149;
+  --aw-streak: 255 138 76;
+  --aw-surface: 18 22 28;
 }
 
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: hsl(222 84% 5%);
-    --surface: hsl(217 33% 17%);
-    --border: hsl(217 33% 24%);
-    --text: hsl(210 40% 98%);
-    --muted: hsl(215 20% 65%);
+@layer utilities {
+  .aw-spacing {
+    padding-left: var(--aw-card-px);
+    padding-right: var(--aw-card-px);
+    padding-top: var(--aw-card-py);
+    padding-bottom: var(--aw-card-py);
+    border-radius: var(--aw-radius);
+    gap: var(--aw-gap);
   }
 }

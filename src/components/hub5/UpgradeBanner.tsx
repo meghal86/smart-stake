@@ -28,7 +28,7 @@ export default function UpgradeBanner() {
       </p>
       <button 
         onClick={handleUpgrade}
-        className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-blue-700 shadow hover:bg-slate-100 transition-colors"
+        className="btn-white"
       >
         Upgrade to Pro
       </button>

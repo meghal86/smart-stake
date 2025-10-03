@@ -1,60 +1,81 @@
 'use client'
-import { useEffect, useState } from 'react'
 
-type WhaleIndex = { 
-  date: string
-  score: number
-  label: string 
+import { Card, CardContent } from '@/components/ui/card'
+import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
+
+interface IndexDialCardProps {
+  variant: 'sentiment' | 'pressure' | 'risk'
+  value: number
+  delta?: number
+  className?: string
 }
 
-export default function IndexDialCard() {
-  const [index, setIndex] = useState<WhaleIndex | null>(null)
-
-  useEffect(() => {
-    fetch('/api/lite5/whale-index')
-      .then((res) => res.json())
-      .then((d) => setIndex(d))
-  }, [])
-
-  if (!index) return null
-
-  // Gauge color based on score
-  const getColor = (score: number) => {
-    if (score < 40) return 'text-green-400'
-    if (score < 70) return 'text-yellow-400'
-    return 'text-red-500'
+const config = {
+  sentiment: {
+    title: 'Market Sentiment',
+    meaning: 'Buyers are stronger than sellers right now',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+    icon: TrendingUp
+  },
+  pressure: {
+    title: 'Whale Pressure',
+    meaning: 'Net inflow to big wallets over 24h',
+    color: 'text-cyan-600',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
+    icon: Activity
+  },
+  risk: {
+    title: 'Market Risk',
+    meaning: 'Higher value = riskier conditions for longs',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+    icon: TrendingDown
   }
+}
 
-  const getLabelColor = (label: string) => {
-    switch (label.toLowerCase()) {
-      case 'hot': return 'bg-red-500'
-      case 'elevated': return 'bg-orange-500'
-      case 'moderate': return 'bg-yellow-500'
-      case 'calm': return 'bg-green-500'
-      default: return 'bg-slate-500'
-    }
-  }
-
+export function IndexDialCard({ variant, value, delta, className }: IndexDialCardProps) {
+  const { title, meaning, color, bgColor, icon: Icon } = config[variant]
+  
   return (
-    <div className="rounded-2xl bg-slate-900 p-6 shadow text-center">
-      <h2 className="text-xl font-semibold text-white mb-4">📊 Whale Index</h2>
-      <div className="flex flex-col items-center justify-center">
-        <div
-          className={`text-6xl font-bold ${getColor(index.score)}`}
-          aria-label={`Whale activity index: ${index.label}`}
-        >
-          {index.score}
+    <Card className={`rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 border border-slate-200/40 dark:border-slate-800 ${className}`}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-label mb-1">
+              {title}
+            </h3>
+            <div className="text-kpi text-3xl">
+              {variant === 'sentiment' ? `${value}%` : variant === 'risk' ? `${value}/100` : value}
+            </div>
+          </div>
+          <div className={`p-3 rounded-xl ${bgColor}`}>
+            <Icon className={`w-6 h-6 ${color}`} />
+          </div>
         </div>
-        <div className={`mt-2 rounded-full px-3 py-1 text-sm font-semibold text-white ${getLabelColor(index.label)}`}>
-          {index.label}
-        </div>
-        <p className="mt-3 text-sm text-slate-400">
-          {index.score >= 80 && "High whale activity detected"}
-          {index.score >= 60 && index.score < 80 && "Moderate whale movement"}
-          {index.score >= 40 && index.score < 60 && "Normal market conditions"}
-          {index.score < 40 && "Low whale activity"}
+
+        {/* Meaning explanation */}
+        <p className="text-meta mb-3">
+          {meaning}
         </p>
-      </div>
-    </div>
+
+        {/* Delta */}
+        {delta !== undefined && (
+          <div className="flex items-center gap-2">
+            {delta >= 0 ? (
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            ) : (
+              <TrendingDown className="w-4 h-4 text-red-600" />
+            )}
+            <span className={`text-sm font-medium ${
+              delta >= 0 ? 'text-emerald-600' : 'text-red-600'
+            }`}>
+              {delta >= 0 ? '+' : ''}{delta.toFixed(1)}%
+            </span>
+            <span className="text-meta">vs yesterday</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

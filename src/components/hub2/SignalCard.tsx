@@ -32,7 +32,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
       case 'sentiment_change': return 'text-green-600 bg-green-50';
       case 'cex_outflow': return 'text-orange-600 bg-orange-50';
       case 'defi_leverage': return 'text-purple-600 bg-purple-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-muted-foreground bg-muted/50';
     }
   };
 
@@ -116,13 +116,13 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               {signal.impactUsd && (
-                <div className="text-sm font-medium">
+                <div className="text-kpi">
                   ${(signal.impactUsd / 1e6).toFixed(1)}M impact
                 </div>
               )}
               {signal.delta !== undefined && (
                 <div className={cn(
-                  "text-sm font-medium",
+                  "text-kpi",
                   signal.delta >= 0 ? "text-green-600" : "text-red-600"
                 )}>
                   {signal.delta >= 0 ? '+' : ''}{signal.delta}
@@ -131,7 +131,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
             </div>
             
             {/* Affected Assets Count */}
-            <div className="text-xs text-muted-foreground">
+            <div className="text-meta">
               {Math.floor(Math.random() * 12) + 1} affected assets
             </div>
           </div>

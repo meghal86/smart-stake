@@ -69,7 +69,7 @@ export function EnhancedRiskHeatmap({ timeWindow, className }: EnhancedRiskHeatm
                   <div>• Flow: Net inflow/outflow patterns</div>
                   <div>• Activity: Transaction frequency</div>
                 </div>
-                <div className="text-xs text-gray-400 mt-2">
+                <div className="text-xs text-meta mt-2">
                   Glowing borders indicate correlated spike activity
                 </div>
               </div>
@@ -111,7 +111,7 @@ export function EnhancedRiskHeatmap({ timeWindow, className }: EnhancedRiskHeatm
                       </div>
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-meta">
                       {chain.reason === 'insufficient_data' ? 'Insufficient whale data' : 'Low activity'}
                     </div>
                   )}
@@ -152,7 +152,7 @@ export function EnhancedRiskHeatmap({ timeWindow, className }: EnhancedRiskHeatm
                     color={getSparklineColor(chain.risk)}
                     className="opacity-70"
                   />
-                  <div className="text-xs text-gray-500 mt-1">7d trend</div>
+                  <div className="text-xs text-label mt-1">7d trend</div>
                 </div>
               </div>
             </EnhancedTooltip>

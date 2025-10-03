@@ -32,7 +32,7 @@ export function PredictionTypeCard({ predictionType, children }: PredictionTypeC
       default:
         return {
           color: 'border-l-gray-500 bg-gray-50/50 dark:bg-gray-950/20',
-          icon: <Activity className="h-4 w-4 text-gray-600" />,
+          icon: <Activity className="h-4 w-4 text-meta" />,
           label: 'Unknown'
         };
     }

@@ -59,7 +59,7 @@ export default function HealthBanner({ className, onRefresh }: HealthBannerProps
       case 'ok': return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'degraded': return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
       case 'down': return <XCircle className="w-4 h-4 text-red-600" />;
-      default: return <AlertTriangle className="w-4 h-4 text-gray-600" />;
+      default: return <AlertTriangle className="w-4 h-4 text-meta" />;
     }
   };
 

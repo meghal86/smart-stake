@@ -6,6 +6,52 @@
 @import './styles/layout-guard.css';
 @import './styles/fixes.css';
 
+/* Header Motto Animation */
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+/* UI Contrast & Clarity Tokens */
+@layer utilities {
+  /* Text tokens */
+  .text-meta {
+    @apply text-gray-700 dark:text-gray-400 text-sm;
+  }
+
+  .text-label {
+    @apply text-gray-700 dark:text-gray-300 font-medium;
+  }
+
+  .text-kpi {
+    @apply text-gray-900 dark:text-white font-bold;
+  }
+
+  /* AAA accessibility text */
+  .text-progress {
+    @apply text-gray-700 dark:text-gray-300 text-xs;
+  }
+
+  .text-placeholder {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* Button tokens */
+  .btn-white {
+    @apply bg-white text-slate-900 font-semibold px-4 py-2 rounded-md shadow-sm hover:bg-gray-50 hover:text-gray-900;
+  }
+
+  .btn-brand {
+    @apply bg-gradient-to-r from-indigo-500 to-violet-500 
+           text-white font-medium px-4 py-2 rounded-md shadow-sm hover:opacity-90 active:text-white;
+  }
+
+  /* CTA text emphasis */
+  .text-cta {
+    @apply text-gray-900 dark:text-white font-semibold;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -77,7 +77,7 @@ export function DeFiPositions({ walletAddress }: DeFiPositionsProps) {
   };
 
   const getHealthColor = (factor?: number) => {
-    if (!factor) return 'text-gray-500';
+    if (!factor) return 'text-label';
     if (factor > 2) return 'text-green-600';
     if (factor > 1.5) return 'text-yellow-600';
     return 'text-red-600';

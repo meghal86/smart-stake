@@ -52,7 +52,7 @@ const FeatureRow: React.FC<FeatureRowProps> = ({ feature, free, pro, premium, en
       );
     }
     if (typeof value === 'string') return <span className="text-sm font-medium text-center">{value}</span>;
-    return <X className="h-4 w-4 text-gray-400 mx-auto" />;
+    return <X className="h-4 w-4 text-muted-foreground mx-auto" />;
   };
 
   return (
@@ -167,8 +167,10 @@ export const PlanComparisonTable: React.FC<PlanComparisonTableProps> = ({
                     <>
                       {plan.enterprise ? (
                         <><Mail className="w-3 h-3 mr-1" />Contact</>
+                      ) : plan.id === 'free' ? (
+                        <><CreditCard className="w-3 h-3 mr-1" />Free</>
                       ) : (
-                        <><CreditCard className="w-3 h-3 mr-1" />{plan.id === 'free' ? 'Free' : 'Upgrade'}</>
+                        <><CreditCard className="w-3 h-3 mr-1" />Upgrade</>
                       )}
                     </>
                   )}

@@ -63,7 +63,7 @@ export function WhaleComparison({
       case 'Very High': return 'text-purple-600';
       case 'High': return 'text-blue-600';
       case 'Medium': return 'text-amber-600';
-      default: return 'text-gray-600';
+      default: return 'text-meta';
     }
   };
 

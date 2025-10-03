@@ -1,31 +1,53 @@
-interface FeatureFlag {
-  key: string;
-  enabled: boolean;
-  config?: Record<string, any>;
+import { useState, useEffect } from 'react'
+import { isFeatureEnabled, FeatureFlag } from '@/lib/featureFlags'
+
+const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
+  lite_home_default: true,
+  signals_on_home: true,
+  ai_copilot_card: true,
+  watchlist_v2: false
 }
 
-const DEFAULT_FLAGS: Record<string, boolean> = {
-  'kpi_microcopy': true,
-  'correlation_heatmap': true,
-  'what_if_rebalance': true,
-  'scheduled_exports': false,
-  'team_sharing': false,
-  'custom_kpi_cards': false,
-  'market_mood_weights': false,
-  'mobile_widgets': true,
-  'audit_logging': false
-};
+let flagCache: Record<FeatureFlag, boolean> = {}
 
 export function useFeatureFlags() {
-  const flags = DEFAULT_FLAGS;
+  const [flags, setFlags] = useState<Record<FeatureFlag, boolean>>(DEFAULT_FLAGS)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const isEnabled = (flagKey: string): boolean => {
-    return flags?.[flagKey] ?? false;
-  };
+  useEffect(() => {
+    const loadFlags = async () => {
+      const flagKeys: FeatureFlag[] = ['lite_home_default', 'signals_on_home', 'ai_copilot_card', 'watchlist_v2']
+      const loadedFlags: Record<FeatureFlag, boolean> = { ...DEFAULT_FLAGS }
+      
+      for (const key of flagKeys) {
+        if (flagCache[key] !== undefined) {
+          loadedFlags[key] = flagCache[key]
+        } else {
+          try {
+            const enabled = await isFeatureEnabled(key)
+            loadedFlags[key] = enabled
+            flagCache[key] = enabled
+          } catch {
+            loadedFlags[key] = DEFAULT_FLAGS[key]
+          }
+        }
+      }
+      
+      setFlags(loadedFlags)
+      setIsLoading(false)
+    }
+
+    loadFlags()
+  }, [])
+
+  const isEnabled = (flagKey: FeatureFlag): boolean => {
+    if (flagKey === 'lite_home_default') return true
+    return flags[flagKey] ?? DEFAULT_FLAGS[flagKey]
+  }
 
   return {
     flags,
     isEnabled,
-    isLoading: false
-  };
+    isLoading
+  }
 }

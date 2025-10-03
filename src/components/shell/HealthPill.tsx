@@ -77,7 +77,7 @@ export default function HealthPill({ className }: HealthPillProps) {
       case 'ok': return <CheckCircle className="w-3 h-3 text-green-600" />;
       case 'degraded': return <AlertTriangle className="w-3 h-3 text-yellow-600" />;
       case 'down': return <XCircle className="w-3 h-3 text-red-600" />;
-      default: return <Activity className="w-3 h-3 text-gray-600" />;
+      default: return <Activity className="w-3 h-3 text-meta" />;
     }
   };
 
