@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Live Data - AlphaWhale</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 8px; }
+        .success { border-color: #0f0; background: #001100; }
+        .error { border-color: #f00; background: #110000; }
+        .pending { border-color: #ff0; background: #111100; }
+        pre { background: #000; padding: 10px; overflow-x: auto; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #0066cc; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0052a3; }
+        input { padding: 8px; width: 400px; margin: 5px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; }
+        .config { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🐋 AlphaWhale Live Data Test</h1>
+    
+    <div class="config">
+        <h3>⚙️ Configuration</h3>
+        <div>
+            <label>Supabase URL:</label><br>
+            <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co">
+        </div>
+        <div>
+            <label>Supabase Anon Key:</label><br>
+            <input type="text" id="supabaseKey" placeholder="eyJ...">
+        </div>
+        <button onclick="saveConfig()">Save Config</button>
+        <button onclick="loadFromEnv()">Load from .env.local</button>
+    </div>
+
+    <button onclick="testAll()">🧪 Test All</button>
+    <button onclick="clearResults()">🗑️ Clear</button>
+
+    <div id="results"></div>
+
+    <script>
+        // Load config from localStorage
+        window.onload = function() {
+            const url = localStorage.getItem('supabaseUrl');
+            const key = localStorage.getItem('supabaseKey');
+            if (url) document.getElementById('supabaseUrl').value = url;
+            if (key) document.getElementById('supabaseKey').value = key;
+        };
+
+        function saveConfig() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('supabaseKey').value;
+            localStorage.setItem('supabaseUrl', url);
+            localStorage.setItem('supabaseKey', key);
+            alert('✅ Config saved!');
+        }
+
+        function loadFromEnv() {
+            alert('📝 Copy values from .env.local:\n\nNEXT_PUBLIC_SUPABASE_URL\nNEXT_PUBLIC_SUPABASE_ANON_KEY');
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testAll() {
+            clearResults();
+            await testWhaleAlerts();
+            await testMarketSummary();
+            await testUserProfiles();
+            await testTokenUnlocks();
+        }
+
+        async function testWhaleAlerts() {
+            const testDiv = createTestDiv('1️⃣ Whale Alerts (whale-alerts Edge Function)');
+            
+            try {
+                const url = document.getElementById('supabaseUrl').value;
+                const key = document.getElementById('supabaseKey').value;
+                
+                if (!url || !key) {
+                    throw new Error('Please configure Supabase URL and Key first');
+                }
+
+                testDiv.className = 'test pending';
+                testDiv.innerHTML += '<p>⏳ Calling Supabase Edge Function...</p>';
+
+                const response = await fetch(`${url}/functions/v1/whale-alerts`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${key}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.transactions) {
+                    testDiv.className = 'test success';
+                    testDiv.innerHTML += `
+                        <p>✅ SUCCESS - ${data.transactions.length} whale transactions</p>
+                        <pre>${JSON.stringify(data.transactions.slice(0, 2), null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'No transactions received');
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML += `<p>❌ FAILED: ${error.message}</p>`;
+            }
+        }
+
+        async function testMarketSummary() {
+            const testDiv = createTestDiv('2️⃣ Market Summary (market-summary-enhanced Edge Function)');
+            
+            try {
+                const url = document.getElementById('supabaseUrl').value;
+                const key = document.getElementById('supabaseKey').value;
+
+                testDiv.className = 'test pending';
+                testDiv.innerHTML += '<p>⏳ Calling Supabase Edge Function...</p>';
+
+                const response = await fetch(`${url}/functions/v1/market-summary-enhanced`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${key}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.riskIndex !== undefined) {
+                    testDiv.className = 'test success';
+                    testDiv.innerHTML += `
+                        <p>✅ SUCCESS - Risk Index: ${data.riskIndex}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'No market data received');
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML += `<p>❌ FAILED: ${error.message}</p>`;
+            }
+        }
+
+        async function testUserProfiles() {
+            const testDiv = createTestDiv('3️⃣ User Profiles (Supabase DB Table)');
+            
+            try {
+                const url = document.getElementById('supabaseUrl').value;
+                const key = document.getElementById('supabaseKey').value;
+
+                testDiv.className = 'test pending';
+                testDiv.innerHTML += '<p>⏳ Querying database...</p>';
+
+                const response = await fetch(`${url}/rest/v1/user_profiles?select=*&limit=1`, {
+                    headers: {
+                        'apikey': key,
+                        'Authorization': `Bearer ${key}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    testDiv.className = 'test success';
+                    testDiv.innerHTML += `
+                        <p>✅ SUCCESS - Table exists, ${data.length} rows returned</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.message || 'Database query failed');
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML += `<p>❌ FAILED: ${error.message}</p>`;
+            }
+        }
+
+        async function testTokenUnlocks() {
+            const testDiv = createTestDiv('4️⃣ Token Unlocks (Supabase DB Table)');
+            
+            try {
+                const url = document.getElementById('supabaseUrl').value;
+                const key = document.getElementById('supabaseKey').value;
+
+                testDiv.className = 'test pending';
+                testDiv.innerHTML += '<p>⏳ Querying database...</p>';
+
+                const response = await fetch(`${url}/rest/v1/token_unlocks?select=*&limit=5&order=unlock_time.asc`, {
+                    headers: {
+                        'apikey': key,
+                        'Authorization': `Bearer ${key}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    testDiv.className = 'test success';
+                    testDiv.innerHTML += `
+                        <p>✅ SUCCESS - ${data.length} upcoming unlocks</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.message || 'Database query failed');
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML += `<p>❌ FAILED: ${error.message}</p>`;
+            }
+        }
+
+        function createTestDiv(title) {
+            const div = document.createElement('div');
+            div.className = 'test pending';
+            div.innerHTML = `<h3>${title}</h3>`;
+            document.getElementById('results').appendChild(div);
+            return div;
+        }
+    </script>
+</body>
+</html>

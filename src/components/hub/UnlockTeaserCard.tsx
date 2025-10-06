@@ -1,12 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Plan } from '@/lib/featureFlags'
+import { supabase } from '@/integrations/supabase/client'
 
 type Unlock = { 
   token: string
   unlock_time: string
   amount_usd: number
   chain?: string
+  project_name?: string
 }
 
 export default function UnlockTeaserCard() {
@@ -15,15 +17,20 @@ export default function UnlockTeaserCard() {
   const [list, setList] = useState<Unlock[]>([])
 
   useEffect(() => {
-    fetch('/api/lite/unlocks').then(r=>r.json()).then(d => {
-      if (d.items) { 
-        setList(d.items)
-        setPlan(d.plan)
-      } else { 
-        setNext(d.next)
-        setPlan(d.plan)
+    async function loadUnlocks() {
+      const { data: unlocks } = await supabase
+        .from('token_unlocks')
+        .select('*')
+        .gte('unlock_time', new Date().toISOString())
+        .order('unlock_time', { ascending: true })
+        .limit(10)
+      
+      if (unlocks && unlocks.length > 0) {
+        setList(unlocks)
+        setNext(unlocks[0])
       }
-    })
+    }
+    loadUnlocks()
   }, [])
 
   const isLite = plan === 'LITE'

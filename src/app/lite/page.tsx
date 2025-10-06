@@ -18,11 +18,35 @@ export default function LitePage() {
   const { user } = useAuth()
   const { userPlan } = useSubscription()
   const [isLoading, setIsLoading] = useState(true)
+  const [kpiData, setKpiData] = useState<any>(null)
 
   useEffect(() => {
     trackEvent('home_view', { page: 'lite', plan: userPlan?.plan || 'lite' })
     setIsLoading(false)
   }, [userPlan])
+
+  useEffect(() => {
+    async function loadKPIs() {
+      console.log('🔄 Loading market KPIs...')
+      try {
+        const { supabase } = await import('@/integrations/supabase/client')
+        const { data, error } = await supabase.functions.invoke('market-kpis')
+        
+        if (error) {
+          console.error('❌ KPI error:', error)
+          return
+        }
+        
+        if (data) {
+          setKpiData(data)
+          console.log('✅ Loaded market KPIs:', data)
+        }
+      } catch (err) {
+        console.error('❌ Failed to load KPIs:', err)
+      }
+    }
+    loadKPIs()
+  }, [])
 
   if (isLoading) {
     return (
@@ -42,9 +66,27 @@ export default function LitePage() {
       <LiteGlobalHeader />
       <main className="mx-auto max-w-7xl px-4 space-y-4" role="main">
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4" aria-label="Key Performance Indicators">
-          <KPICard title="Whale Pressure" value="73" change="+5.2%" icon={<TrendingUp className="h-5 w-5" />} color="text-cyan-500" />
-          <KPICard title="Market Sentiment" value="Bullish" change="↗ Strong" icon={<Activity className="h-5 w-5" />} color="text-green-500" />
-          <KPICard title="Risk Index" value="Low" change="Stable" icon={<Shield className="h-5 w-5" />} color="text-blue-500" />
+          <KPICard 
+            title="Whale Pressure" 
+            value={kpiData ? kpiData.whalePressure.toString() : '...'} 
+            change={kpiData ? `${kpiData.pressureDelta > 0 ? '+' : ''}${kpiData.pressureDelta.toFixed(1)}%` : '...'} 
+            icon={<TrendingUp className="h-5 w-5" />} 
+            color="text-cyan-500" 
+          />
+          <KPICard 
+            title="Market Sentiment" 
+            value={kpiData ? (kpiData.marketSentiment > 60 ? 'Bullish' : kpiData.marketSentiment > 40 ? 'Neutral' : 'Bearish') : '...'} 
+            change={kpiData ? `${kpiData.marketSentiment}% confidence` : '...'} 
+            icon={<Activity className="h-5 w-5" />} 
+            color="text-green-500" 
+          />
+          <KPICard 
+            title="Risk Index" 
+            value={kpiData ? (kpiData.riskIndex > 70 ? 'High' : kpiData.riskIndex > 40 ? 'Medium' : 'Low') : '...'} 
+            change={kpiData ? `${kpiData.riskIndex}/100` : '...'} 
+            icon={<Shield className="h-5 w-5" />} 
+            color="text-blue-500" 
+          />
         </section>
         <DigestCard />
         <SignalsPreview />

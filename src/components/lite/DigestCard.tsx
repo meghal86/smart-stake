@@ -22,14 +22,43 @@ export default function DigestCard({ mode, demoMode, onDigestShared }: DigestCar
   const { copilotTipDismissed, hydrated, celebrateGraduation, dismissCopilotTip, hydrateFromStorage } = useOnboardingTipsStore()
   
   const [isExpanded, setIsExpanded] = useState(false)
-  const [confidence] = useState(87) // This would come from API
+  const [confidence, setConfidence] = useState(87)
   const [confidenceAnimated, setConfidenceAnimated] = useState(0)
+  const [whaleData, setWhaleData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
 
   // Hydrate store on mount
   useEffect(() => {
     hydrateFromStorage(userId)
   }, [userId, hydrateFromStorage])
+
+  // Load live whale data
+  useEffect(() => {
+    async function loadWhaleData() {
+      try {
+        const { supabase } = await import('@/integrations/supabase/client')
+        const { data, error } = await supabase.functions.invoke('whale-alerts')
+        
+        if (error) {
+          console.error('❌ Whale Alert API failed:', error)
+          setLoading(false)
+          return
+        }
+        
+        if (data?.transactions && data.transactions.length > 0) {
+          setWhaleData(data)
+          setConfidence(Math.min(95, 70 + data.transactions.length))
+          console.log('✅ Loaded', data.transactions.length, 'whale transactions')
+        }
+        setLoading(false)
+      } catch (err) {
+        console.error('❌ Failed to load whale data:', err)
+        setLoading(false)
+      }
+    }
+    loadWhaleData()
+  }, [])
 
   // Animate confidence meter on load
   useEffect(() => {
@@ -140,7 +169,9 @@ export default function DigestCard({ mode, demoMode, onDigestShared }: DigestCar
                     AI is watching whales for you...
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                    Major accumulation detected across 3 whale clusters. Smart money is positioning for the next move.
+                    {loading ? 'Loading live whale data...' : 
+                     whaleData ? `${whaleData.transactions.length} whale transactions detected. ${whaleData.transactions[0]?.symbol} movement of $${(whaleData.transactions[0]?.amount_usd / 1000000).toFixed(1)}M` :
+                     'Major accumulation detected across 3 whale clusters. Smart money is positioning for the next move.'}
                   </p>
                   <div className="flex items-center gap-2 mt-2 text-xs text-gray-700 dark:text-gray-300">
                     <div className="flex items-center gap-1">
@@ -154,7 +185,7 @@ export default function DigestCard({ mode, demoMode, onDigestShared }: DigestCar
                       <span>{confidence}%</span>
                     </div>
                     <span>•</span>
-                    <span>Updated 5 min ago</span>
+                    <span>{loading ? 'Loading...' : whaleData ? 'Live data' : 'Updated 5 min ago'}</span>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { supabase } from '@/integrations/supabase/client'
 
 type Streak = { 
   streak_count: number
@@ -10,9 +11,20 @@ export default function StreakCard() {
   const [streak, setStreak] = useState<Streak | null>(null)
 
   useEffect(() => {
-    fetch('/api/lite/streak')
-      .then((res) => res.json())
-      .then((d) => setStreak(d))
+    async function loadStreak() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setStreak({ streak_count: 0 })
+        return
+      }
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('streak_count, last_seen_date')
+        .eq('id', session.user.id)
+        .single()
+      setStreak(profile || { streak_count: 0 })
+    }
+    loadStreak()
   }, [])
 
   if (!streak) return null

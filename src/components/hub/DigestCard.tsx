@@ -1,9 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Plan } from '@/lib/featureFlags'
+import { supabase } from '@/integrations/supabase/client'
 
 type DigestItem = {
-  id: number
+  id: string
   event_time: string
   asset: string
   summary: string
@@ -13,11 +14,28 @@ type DigestItem = {
 export default function DigestCard() {
   const [items, setItems] = useState<DigestItem[]>([])
   const [plan, setPlan] = useState<Plan>('LITE')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/lite/digest').then(r=>r.json()).then(d => {
-      setItems(d.items || [])
-      setPlan(d.plan || 'LITE')
+    supabase.functions.invoke('whale-alerts').then(({ data, error }) => {
+      if (error) {
+        console.error('❌ Whale Alert API failed:', error)
+        setError(error.message)
+        return
+      }
+      if (!data?.transactions) {
+        setError('No whale data received')
+        return
+      }
+      const transformed = data.transactions.slice(0, 5).map((tx: any) => ({
+        id: `${tx.hash || tx.id}-${tx.timestamp}`,
+        event_time: new Date(tx.timestamp * 1000).toISOString(),
+        asset: tx.symbol,
+        summary: `${tx.amount?.toFixed(2)} ${tx.symbol} → ${tx.to?.owner_type || 'Unknown'}`,
+        severity: tx.amount_usd > 10000000 ? 5 : tx.amount_usd > 5000000 ? 4 : 3
+      }))
+      setItems(transformed)
+      setError(null)
     })
   }, [])
 
@@ -53,7 +71,14 @@ export default function DigestCard() {
         ))}
       </div>
 
-      {isLite && (
+      {error && (
+        <div className="mt-4 p-3 bg-red-500/10 border border-red-500 rounded">
+          <p className="text-red-500 text-sm font-semibold">⚠️ Live Data Error</p>
+          <p className="text-red-400 text-xs">{error}</p>
+        </div>
+      )}
+
+      {isLite && !error && (
         <div className="mt-4 text-right">
           <button
             className="text-sm text-teal-400 underline hover:text-teal-300"

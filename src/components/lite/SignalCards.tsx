@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { trackEvent } from '@/lib/telemetry'
 import { Card, CardContent } from '@/components/ui/card'
@@ -7,37 +8,42 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react'
 
-const signals = [
-  {
-    id: 1,
-    asset: 'BTC',
-    event: 'Whale Accumulation',
-    delta: '+2.3K BTC',
-    impact: 'High',
-    description: 'Large wallets adding significant positions',
-    timeframe: '2h ago'
-  },
-  {
-    id: 2,
-    asset: 'ETH',
-    event: 'Staking Surge',
-    delta: '+15%',
-    impact: 'Medium',
-    description: 'Institutional staking activity increased',
-    timeframe: '4h ago'
-  },
-  {
-    id: 3,
-    asset: 'USDC',
-    event: 'Outflows Detected',
-    delta: '-$50M',
-    impact: 'High',
-    description: 'Major movement to DeFi protocols',
-    timeframe: '6h ago'
-  }
-]
-
 export default function SignalCards() {
+  const [signals, setSignals] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadSignals() {
+      try {
+        const { supabase } = await import('@/integrations/supabase/client')
+        const { data, error } = await supabase.functions.invoke('whale-alerts')
+        
+        if (error || !data?.transactions) {
+          console.error('❌ Signals failed:', error)
+          setLoading(false)
+          return
+        }
+        
+        const liveSignals = data.transactions.slice(0, 3).map((tx: any, idx: number) => ({
+          id: idx + 1,
+          asset: tx.symbol,
+          event: tx.to?.owner_type === 'exchange' ? 'Exchange Inflow' : 'Whale Movement',
+          delta: `$${(tx.amount_usd / 1000000).toFixed(1)}M`,
+          impact: tx.amount_usd > 10000000 ? 'High' : tx.amount_usd > 5000000 ? 'Medium' : 'Low',
+          description: `${tx.amount?.toFixed(2)} ${tx.symbol} moved to ${tx.to?.owner_type || 'unknown'}`,
+          timeframe: new Date(tx.timestamp * 1000).toLocaleTimeString()
+        }))
+        
+        setSignals(liveSignals)
+        console.log('✅ Loaded', liveSignals.length, 'live signals')
+        setLoading(false)
+      } catch (err) {
+        console.error('❌ Failed to load signals:', err)
+        setLoading(false)
+      }
+    }
+    loadSignals()
+  }, [])
   const handleViewAll = () => {
     trackEvent('cta_click', { label: 'view_all_signals', plan: 'lite' })
   }
@@ -71,7 +77,11 @@ export default function SignalCards() {
       {/* Mobile: Horizontal scroll, Desktop: Grid */}
       <div className="md:hidden">
         <div className="flex overflow-x-auto snap-x gap-3 pb-2">
-          {signals.map((signal) => (
+          {loading ? (
+            <div className="text-sm text-slate-500">Loading live signals...</div>
+          ) : signals.length === 0 ? (
+            <div className="text-sm text-slate-500">No signals available</div>
+          ) : signals.map((signal) => (
             <SignalCard 
               key={signal.id} 
               signal={signal} 
@@ -83,7 +93,11 @@ export default function SignalCards() {
       </div>
       
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
-        {signals.map((signal) => (
+        {loading ? (
+          <div className="text-sm text-slate-500">Loading live signals...</div>
+        ) : signals.length === 0 ? (
+          <div className="text-sm text-slate-500">No signals available</div>
+        ) : signals.map((signal) => (
           <SignalCard 
             key={signal.id} 
             signal={signal} 
