@@ -1,10 +1,2 @@
-/manifest.json    /manifest.json   200
-/sw.js    /sw.js   200
-/robots.txt    /robots.txt   200
-/*.png    /*.png   200
-/*.jpg    /*.jpg   200
-/*.jpeg    /*.jpeg   200
-/*.gif    /*.gif   200
-/*.svg    /*.svg   200
-/*.ico    /*.ico   200
+# Redirect all routes to index.html for SPA routing
 /*    /index.html   200

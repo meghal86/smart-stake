@@ -192,7 +192,7 @@ export const PredictiveAnalytics = () => {
       case 'liquidation': return 'text-red-600 bg-red-50';
       case 'cluster_movement': return 'text-orange-600 bg-orange-50';
       case 'cross_chain': return 'text-blue-600 bg-blue-50';
-      default: return 'text-gray-600 bg-gray-50';
+      default: return 'text-meta bg-gray-50';
     }
   };
 

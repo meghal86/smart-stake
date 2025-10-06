@@ -28,15 +28,8 @@ export function useAnalytics() {
       sessionStorage.setItem('session_id', payload.session_id!);
     }
 
-    try {
-      // Store in Supabase analytics
-      await supabase.from('analytics_events').insert(payload);
-      
-      // Also log to console for debugging
-      console.log('Analytics:', payload);
-    } catch (error) {
-      console.error('Analytics tracking failed:', error);
-    }
+    // Log to console for debugging (Supabase analytics disabled)
+    console.log('Analytics:', payload);
   };
 
   return { track };

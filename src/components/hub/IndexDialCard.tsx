@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { supabase } from '@/integrations/supabase/client'
 
 type WhaleIndex = { 
   date: string
@@ -9,12 +10,35 @@ type WhaleIndex = {
 
 export default function IndexDialCard() {
   const [index, setIndex] = useState<WhaleIndex | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/lite/whale-index')
-      .then((res) => res.json())
-      .then((d) => setIndex(d))
+    supabase.functions.invoke('market-summary-enhanced').then(({ data, error }) => {
+      if (error) {
+        console.error('❌ Market summary failed:', error)
+        setError(error.message)
+        return
+      }
+      const score = data?.riskIndex || data?.whaleActivityScore || 65
+      setIndex({
+        date: new Date().toISOString(),
+        score: Math.round(score),
+        label: score >= 80 ? 'Hot' : score >= 60 ? 'Elevated' : score >= 40 ? 'Moderate' : 'Calm'
+      })
+      setError(null)
+    })
   }, [])
+
+  if (error) {
+    return (
+      <div className="rounded-2xl bg-slate-900 p-6 shadow text-center">
+        <h2 className="text-xl font-semibold text-white mb-4">📊 Whale Index</h2>
+        <div className="p-3 bg-red-500/10 border border-red-500 rounded">
+          <p className="text-red-500 text-sm">⚠️ {error}</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!index) return null
 

@@ -177,7 +177,7 @@ function DesktopClusterCard({
             <div>Confidence: {(cluster.confidence * 100).toFixed(0)}%</div>
           </div>
           {cluster.classificationReasons && (
-            <div className="text-xs text-gray-400 border-t pt-2">
+            <div className="text-xs text-meta border-t pt-2">
               {cluster.classificationReasons.join(', ')}
             </div>
           )}

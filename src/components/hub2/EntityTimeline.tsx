@@ -38,7 +38,7 @@ export default function EntityTimeline({ events, priceData, className }: EntityT
       case 'dormant_awake':
         return 'text-blue-600 bg-blue-50';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-meta bg-gray-50';
     }
   };
 

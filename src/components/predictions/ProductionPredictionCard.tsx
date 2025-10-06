@@ -251,7 +251,7 @@ export function ProductionPredictionCard({ prediction }: ProductionPredictionCar
                   {/* Evidence Panel */}
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-xs font-medium text-gray-600">Evidence & Provenance</div>
+                      <div className="text-xs font-medium text-meta">Evidence & Provenance</div>
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -262,7 +262,7 @@ export function ProductionPredictionCard({ prediction }: ProductionPredictionCar
                       </Button>
                     </div>
                     
-                    <div className="text-xs text-gray-500 space-y-1">
+                    <div className="text-xs text-label space-y-1">
                       <div>Sources: {prediction.provenance.sources.join(', ')}</div>
                       <div>Block: #{prediction.provenance.block_number}</div>
                       <div>Window: {prediction.provenance.window}</div>

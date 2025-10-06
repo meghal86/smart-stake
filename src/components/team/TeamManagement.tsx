@@ -148,14 +148,14 @@ export const TeamManagement = () => {
                     <span className="font-medium text-primary">{member.name.charAt(0).toUpperCase()}</span>
                   </div>
                   <Circle className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 fill-current ${
-                    member.online ? 'text-green-500' : 'text-gray-400'
+                    member.online ? 'text-green-500' : 'text-meta'
                   }`} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{member.name}</span>
                     <span className={`text-xs ${
-                      member.online ? 'text-green-600' : 'text-gray-500'
+                      member.online ? 'text-green-600' : 'text-label'
                     }`}>
                       {member.online ? 'Online' : 'Offline'}
                     </span>

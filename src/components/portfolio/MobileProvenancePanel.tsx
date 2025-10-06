@@ -37,7 +37,7 @@ export function MobileProvenancePanel({
       case 'healthy': return 'text-green-600';
       case 'degraded': return 'text-yellow-600';
       case 'down': return 'text-red-600';
-      default: return 'text-gray-600';
+      default: return 'text-meta';
     }
   };
 

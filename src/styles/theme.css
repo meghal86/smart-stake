@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --aw-brand: 72 190 255;             /* cyan/teal brand */
+  --aw-pro-from: 155 118 255;         /* gradient from */
+  --aw-pro-to: 255 107 149;           /* gradient to   */
+  --aw-streak: 255 138 76;            /* streak orange */
+  --aw-surface: 18 22 28;             /* dark surface  */
+  
+  /* Design tokens for consistent spacing */
+  --aw-card-px: 16px;
+  --aw-card-py: 14px;
+  --aw-gap: 12px;
+  --aw-radius: 16px;
+}
+
+@layer components {
+  /* Card defaults with spacing tokens */
+  .aw-card {
+    @apply rounded-2xl shadow-sm border border-gray-200/50 dark:border-gray-800/50 
+           bg-white/80 dark:bg-[#12161C]/80 backdrop-blur-sm;
+    padding-left: var(--aw-card-px);
+    padding-right: var(--aw-card-px);
+    padding-top: var(--aw-card-py);
+    padding-bottom: var(--aw-card-py);
+  }
+  
+  /* Improved light mode background for better contrast */
+  .aw-card-light {
+    @apply bg-zinc-50 dark:bg-[#12161C]/80;
+  }
+
+  /* Section headers */
+  .aw-section-title {
+    @apply text-lg font-semibold tracking-tight;
+  }
+
+  /* Soft shadows for elevated blocks */
+  .aw-shadow {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04), 
+                0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  /* Buttons */
+  .aw-btn {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-150;
+  }
+  .aw-btn-primary {
+    @apply aw-btn bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white shadow;
+  }
+  
+  /* Light mode: ensure better contrast */
+  @media (prefers-color-scheme: light) {
+    .aw-btn-primary {
+      @apply bg-gradient-to-r from-slate-900 to-slate-700;
+    }
+  }
+  .aw-btn-secondary {
+    @apply aw-btn bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100;
+  }
+
+  /* Pro gradient utility - adjusted hue for better contrast with streak */
+  .bg-pro-grad { 
+    background: linear-gradient(90deg, rgb(var(--aw-pro-from)) 0%, rgb(var(--aw-pro-to)) 100%); 
+  }
+  
+  /* Streak gradient - warmer orange tones */
+  .bg-streak-grad {
+    background: linear-gradient(90deg, rgb(255, 154, 76) 0%, rgb(255, 107, 107) 100%);
+  }
+  
+  /* Soft text utility */
+  .text-soft { 
+    @apply text-gray-700 dark:text-gray-300; 
+  }
+
+  /* Badges */
+  .aw-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium;
+  }
+  .aw-badge-high { @apply aw-badge bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300; }
+  .aw-badge-medium { @apply aw-badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300; }
+  .aw-badge-low { @apply aw-badge bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300; }
+
+  /* Progress bar */
+  .aw-progress {
+    @apply h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800;
+  }
+  .aw-progress-fill {
+    @apply h-full bg-gradient-to-r from-[#9B76FF] to-[#FF6B95];
+  }
+
+  /* Sticky dock styling */
+  .aw-dock {
+    @apply fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#12161C]/95 
+           border-t border-gray-200/50 dark:border-gray-800/50 
+           backdrop-blur-md shadow-lg;
+  }
+  
+  /* Motion utilities */
+  .motion-safe\:animate-microPulse {
+    animation: microPulse 900ms ease-out 1;
+  }
+  
+  .motion-safe\:animate-breathe {
+    animation: breathe 3s ease-in-out infinite;
+  }
+  
+  .motion-safe\:animate-streak-celebrate {
+    animation: glowSweep 1200ms ease-out 1;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe\:animate-microPulse,
+    .motion-safe\:animate-breathe,
+    .motion-safe\:animate-streak-celebrate {
+      animation: none;
+    }
+  }
+}

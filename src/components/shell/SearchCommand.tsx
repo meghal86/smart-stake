@@ -158,7 +158,7 @@ export default function SearchCommand({ open, onOpenChange }: SearchCommandProps
       case 'address': return 'text-blue-600';
       case 'alert': return 'text-orange-600';
       case 'cluster': return 'text-purple-600';
-      default: return 'text-gray-600';
+      default: return 'text-meta';
     }
   };
 

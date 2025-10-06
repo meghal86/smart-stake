@@ -15,6 +15,7 @@ import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
 import { DevInfo } from "@/components/DevInfo";
+import { getTheme, setTheme } from "@/lib/theme";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -55,6 +56,9 @@ import Plans from "./pages/Plans";
 import MarketHub from "./pages/MarketHub";
 import Overview from "./pages/Overview";
 import Alerts from "./pages/Alerts";
+import LiteHub from "./pages/LiteHub";
+import Hub5Page from "./pages/Hub5Page";
+import LitePage from "./app/lite/page";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -77,6 +81,12 @@ const App = () => {
 
   // Add error boundary and suppress extension errors
   useEffect(() => {
+    // Initialize theme
+    if (typeof window !== 'undefined') {
+      const currentTheme = getTheme();
+      setTheme(currentTheme);
+    }
+
     // Suppress extension errors globally
     suppressExtensionErrors();
 
@@ -153,6 +163,10 @@ const App = () => {
                   <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="/overview" element={<Overview />} />
                   <Route path="/alerts" element={<Alerts />} />
+                  <Route path="/lite" element={<LitePage />} />
+                  <Route path="/lite/hub" element={<LiteHub />} />
+                  <Route path="/lite/hub5" element={<Hub5Page />} />
+                  <Route path="/lite5/hub5" element={<Hub5Page />} />
                   <Route path="/billing" element={<Billing />} />
                   <Route path="/profile" element={<Profile />} />
                   {/* Hub 2 routes */}
