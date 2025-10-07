@@ -11,8 +11,7 @@ import ProgressStreak from '@/components/lite/ProgressStreak'
 import SignalCards from '@/components/lite/SignalCards'
 import PortfolioCompact from '@/components/hub5/PortfolioCompact'
 import KPITooltip from '@/components/ui/KPITooltip'
-import { Card, CardContent } from '@/components/ui/card'
-import { TrendingUp, Shield, Activity } from 'lucide-react'
+import { EnhancedSummaryKpis } from '@/components/hub5/EnhancedSummaryKpis'
 import '../styles/theme.css'
 
 const Index = () => {
@@ -88,27 +87,16 @@ const Index = () => {
       
       <main className="mx-auto max-w-7xl px-4 space-y-4" role="main">
         {/* 2. Above the Fold KPIs */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4" aria-label="Key Performance Indicators">
-          <KPICard 
-            title="Whale Pressure" 
-            value={kpiData ? kpiData.whalePressure.toString() : '...'} 
-            change={kpiData ? `${kpiData.pressureDelta > 0 ? '+' : ''}${kpiData.pressureDelta.toFixed(1)}%` : '...'} 
-            icon={<TrendingUp className="h-5 w-5" />} 
-            color="text-cyan-500" 
-          />
-          <KPICard 
-            title="Market Sentiment" 
-            value={kpiData ? (kpiData.marketSentiment > 60 ? 'Bullish' : kpiData.marketSentiment > 40 ? 'Neutral' : 'Bearish') : '...'} 
-            change={kpiData ? `${kpiData.marketSentiment}% confidence` : '...'} 
-            icon={<Activity className="h-5 w-5" />} 
-            color="text-green-500" 
-          />
-          <KPICard 
-            title="Risk Index" 
-            value={kpiData ? (kpiData.riskIndex > 70 ? 'High' : kpiData.riskIndex > 40 ? 'Medium' : 'Low') : '...'} 
-            change={kpiData ? `${kpiData.riskIndex}/100` : '...'} 
-            icon={<Shield className="h-5 w-5" />} 
-            color="text-blue-500" 
+        <section aria-label="Key Performance Indicators">
+          <EnhancedSummaryKpis
+            whalePressure={kpiData?.whalePressure || 100}
+            sentiment={kpiData?.marketSentiment || 50}
+            riskIndex={kpiData?.riskIndex || 50}
+            whaleInflow={kpiData?.whaleInflow}
+            whaleOutflow={kpiData?.whaleOutflow}
+            btcDominance={kpiData?.btcDominance}
+            activeWhales={kpiData?.activeWhales}
+            lastUpdated="2min ago"
           />
         </section>
 
@@ -146,45 +134,6 @@ const Index = () => {
         onDigestShared={digestShared}
       />
     </div>
-  )
-}
-
-function KPICard({ title, value, change, icon, color }: {
-  title: string; value: string; change: string; icon: React.ReactNode; color: string
-}) {
-  const getTooltipText = (title: string) => {
-    switch (title) {
-      case 'Whale Pressure': return 'Whale buy/sell balance. >50% = accumulation.'
-      case 'Market Sentiment': return 'Aggregate momentum from key on-chain flows.'
-      case 'Risk Index': return 'Volatility + outflow risk. Lower is safer.'
-      default: return ''
-    }
-  }
-
-  const getTooltipSource = (title: string) => {
-    switch (title) {
-      case 'Whale Pressure': return 'kpi_whale_pressure' as const
-      case 'Market Sentiment': return 'kpi_market_sentiment' as const
-      case 'Risk Index': return 'kpi_risk_index' as const
-      default: return 'kpi_whale_pressure' as const
-    }
-  }
-
-  return (
-    <Card className="aw-card aw-shadow" role="region" aria-label={`${title} metric`}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <KPITooltip source={getTooltipSource(title)} tooltip={getTooltipText(title)}>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{title}</p>
-            </KPITooltip>
-            <p className="text-lg font-semibold text-slate-900 dark:text-slate-100" aria-label={`${title} value: ${value}`}>{value}</p>
-            <p className={`text-xs ${color}`} aria-label={`Change: ${change}`}>{change}</p>
-          </div>
-          <div className={`${color} opacity-80`} aria-hidden="true">{icon}</div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 

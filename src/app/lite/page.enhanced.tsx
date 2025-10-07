@@ -9,8 +9,8 @@ import QuickActionsBar from '@/components/lite/QuickActionsBar'
 import DigestCard from '@/components/lite/DigestCard'
 import PortfolioDemo from '@/components/lite/PortfolioDemo'
 import UpgradeTeaser from '@/components/lite/UpgradeTeaser'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import FOMOLeaderboard from '@/components/hub5/FOMOLeaderboard'
 import { EnhancedSummaryKpis } from '@/components/hub5/EnhancedSummaryKpis'
 
@@ -65,18 +65,20 @@ export default function LitePage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-20">
       <LiteGlobalHeader />
       <main className="mx-auto max-w-7xl px-4 space-y-4" role="main">
+        {/* ENHANCED KPI CARDS - Novice-Friendly */}
         <section aria-label="Key Performance Indicators">
           <EnhancedSummaryKpis
             whalePressure={kpiData?.whalePressure || 100}
             sentiment={kpiData?.marketSentiment || 50}
             riskIndex={kpiData?.riskIndex || 50}
-            whaleInflow={kpiData?.whaleInflow}
-            whaleOutflow={kpiData?.whaleOutflow}
-            btcDominance={kpiData?.btcDominance}
-            activeWhales={kpiData?.activeWhales}
+            whaleInflow={kpiData?.whaleInflow || 125}
+            whaleOutflow={kpiData?.whaleOutflow || 87}
+            btcDominance={kpiData?.btcDominance || 52}
+            activeWhales={kpiData?.activeWhales || 76}
             lastUpdated="2min ago"
           />
         </section>
+
         <DigestCard />
         <SignalsPreview />
         <FOMOLeaderboard 
