@@ -63,6 +63,13 @@
   .text-cta {
     @apply text-gray-900 dark:text-white font-semibold;
   }
+
+  /* Signal card hover micro-shadow */
+  @media (prefers-reduced-motion: no-preference) {
+    .hover-shadow:hover {
+      box-shadow: 0 0 6px rgba(56, 113, 243, 0.25);
+    }
+  }
 }
 
 @layer base {

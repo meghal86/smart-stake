@@ -12,6 +12,17 @@ export default function SignalCards() {
   const [signals, setSignals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
+  const formatRelativeTime = (timestamp: number) => {
+    const now = Date.now()
+    const diff = now - timestamp
+    const mins = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    if (mins < 1) return 'just now'
+    if (mins < 60) return `${mins}m ago`
+    if (hours < 24) return `${hours}h ago`
+    return new Date(timestamp).toLocaleDateString()
+  }
+
   useEffect(() => {
     async function loadSignals() {
       try {
@@ -25,13 +36,15 @@ export default function SignalCards() {
         }
         
         const liveSignals = data.transactions.slice(0, 3).map((tx: any, idx: number) => ({
-          id: idx + 1,
+          id: `${tx.hash || idx}`,
           asset: tx.symbol,
-          event: tx.to?.owner_type === 'exchange' ? 'Exchange Inflow' : 'Whale Movement',
-          delta: `$${(tx.amount_usd / 1000000).toFixed(1)}M`,
+          event: tx.to?.owner_type === 'exchange' ? 'Large Exchange Inflow' : 'Large Whale Accumulation',
+          delta: `+${(tx.amount_usd / 1000000).toFixed(1)}M`,
           impact: tx.amount_usd > 10000000 ? 'High' : tx.amount_usd > 5000000 ? 'Medium' : 'Low',
-          description: `${tx.amount?.toFixed(2)} ${tx.symbol} moved to ${tx.to?.owner_type || 'unknown'}`,
-          timeframe: new Date(tx.timestamp * 1000).toLocaleTimeString()
+          description: `${tx.amount?.toFixed(2)} ${tx.symbol} moved to ${tx.to?.owner_type === 'exchange' ? 'exchange' : 'whale wallet'}`,
+          timeframe: formatRelativeTime(tx.timestamp * 1000),
+          reasons: tx.to?.owner_type === 'exchange' ? ['Exchange inflow', 'Whale activity'] : ['Whale accumulation', 'Large volume'],
+          confidence: tx.amount_usd > 10000000 ? 'high' : 'medium'
         }))
         
         setSignals(liveSignals)
@@ -60,7 +73,7 @@ export default function SignalCards() {
 
   return (
     <section aria-label="Top Market Signals">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Top Signals</h2>
         <Button 
           variant="ghost" 
@@ -74,37 +87,29 @@ export default function SignalCards() {
         </Button>
       </div>
       
-      {/* Mobile: Horizontal scroll, Desktop: Grid */}
-      <div className="md:hidden">
-        <div className="flex overflow-x-auto snap-x gap-3 pb-2">
-          {loading ? (
-            <div className="text-sm text-slate-500">Loading live signals...</div>
-          ) : signals.length === 0 ? (
-            <div className="text-sm text-slate-500">No signals available</div>
-          ) : signals.map((signal) => (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-40 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : signals.length === 0 ? (
+        <div className="text-center py-12 px-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+          <p className="text-slate-600 dark:text-slate-400 mb-3">No new whale moves</p>
+          <Button size="sm" variant="outline">Create an alert</Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" role="list">
+          {signals.map((signal, idx) => (
             <SignalCard 
               key={signal.id} 
               signal={signal} 
               onClick={() => handleSignalClick(signal)}
-              className="min-w-[90%] snap-center"
+              delay={idx * 100}
             />
           ))}
         </div>
-      </div>
-      
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
-        {loading ? (
-          <div className="text-sm text-slate-500">Loading live signals...</div>
-        ) : signals.length === 0 ? (
-          <div className="text-sm text-slate-500">No signals available</div>
-        ) : signals.map((signal) => (
-          <SignalCard 
-            key={signal.id} 
-            signal={signal} 
-            onClick={() => handleSignalClick(signal)}
-          />
-        ))}
-      </div>
+      )}
     </section>
   )
 }
@@ -112,63 +117,109 @@ export default function SignalCards() {
 function SignalCard({ 
   signal, 
   onClick,
-  className = ''
+  delay = 0
 }: { 
-  signal: typeof signals[0]
+  signal: any
   onClick: () => void
-  className?: string
+  delay?: number
 }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), delay)
+    return () => clearTimeout(timer)
+  }, [delay])
+
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'High': return 'aw-badge-high'
-      case 'Medium': return 'aw-badge-medium'
-      case 'Low': return 'aw-badge-low'
-      default: return 'aw-badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+      case 'High': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+      case 'Medium': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+      case 'Low': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-emerald-300'
+      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
     }
-  }
-
-  const getDeltaIcon = (delta: string) => {
-    if (delta.startsWith('+')) return <TrendingUp className="h-3 w-3 text-green-500" />
-    if (delta.startsWith('-')) return <TrendingDown className="h-3 w-3 text-red-500" />
-    return <AlertCircle className="h-3 w-3 text-orange-500" />
   }
 
   return (
     <Card 
-      className={`aw-card aw-shadow cursor-pointer hover:bg-white/90 dark:hover:bg-slate-900/80 transition-all ${className}`}
+      className={`aw-card aw-shadow cursor-pointer transition-all duration-300 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      } ${
+        isHovered 
+          ? 'bg-white/95 dark:bg-slate-900/90 shadow-[0_0_12px_rgba(56,189,248,0.25)] dark:shadow-[0_0_12px_rgba(56,189,248,0.15)] scale-[1.02]' 
+          : 'bg-white/60 dark:bg-slate-900/60'
+      }`}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       role="button"
       tabIndex={0}
       aria-label={`Signal: ${signal.event} for ${signal.asset}. ${signal.description}. Impact: ${signal.impact}. ${signal.timeframe}`}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-2">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 dark:text-slate-100">{signal.asset}</span>
-            <span className={getImpactColor(signal.impact)}>
+            <span className="font-bold text-lg text-slate-900 dark:text-slate-100">{signal.asset}</span>
+            <Badge className={getImpactColor(signal.impact)}>
               {signal.impact}
-            </span>
+            </Badge>
+            {signal.confidence === 'high' && isHovered && (
+              <Badge className="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 text-xs">
+                ⚡ Actionable
+              </Badge>
+            )}
           </div>
-          <div className="flex items-center gap-1">
-            {getDeltaIcon(signal.delta)}
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {signal.delta}
-            </span>
+          <div className="text-sm font-semibold text-green-600 dark:text-green-400">
+            {signal.delta}
           </div>
         </div>
         
-        <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">
+        <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
           {signal.event}
         </h3>
         
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
           {signal.description}
         </p>
         
-        <p className="text-xs text-slate-500 dark:text-slate-500">
-          {signal.timeframe}
-        </p>
+        {signal.reasons && signal.reasons.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {signal.reasons.map((reason: string, idx: number) => (
+              <Badge key={idx} variant="outline" className="text-xs">
+                {reason}
+              </Badge>
+            ))}
+          </div>
+        )}
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+            <span>⏱</span>
+            <span>{signal.timeframe}</span>
+          </div>
+          
+          {isHovered && (
+            <div className="flex gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 px-2 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
+                onClick={(e) => { e.stopPropagation(); trackEvent('signal_explain_clicked', { id: signal.id }) }}
+              >
+                Explain
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 px-2 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
+                onClick={(e) => { e.stopPropagation(); trackEvent('signal_alert_clicked', { id: signal.id }) }}
+              >
+                Alert
+              </Button>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

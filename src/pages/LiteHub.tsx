@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TrendingUp, Shield, Activity } from 'lucide-react'
 import FOMOLeaderboard from '@/components/hub5/FOMOLeaderboard'
+import SignalsPreview from '@/components/hub5/SignalsPreview.lite'
 
 export default function LiteHub() {
   const { user } = useAuth()
@@ -78,49 +79,3 @@ function KPICard({ title, value, change, icon, color }: {
   )
 }
 
-function SignalsPreview() {
-  return (
-    <section aria-label="Market Signals">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Top Signals</h2>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => trackEvent('cta_click', { label: 'view_all_signals', plan: 'lite' })} 
-          className="text-cyan-500"
-          aria-label="View all market signals"
-        >
-          View All
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="list" aria-label="Top market signals">
-        <SignalCard title="BTC Whale Accumulation" description="Large wallets adding 2.3K BTC" confidence="High" timeframe="2h ago" />
-        <SignalCard title="ETH Staking Surge" description="Institutional staking +15%" confidence="Medium" timeframe="4h ago" />
-      </div>
-    </section>
-  )
-}
-
-function SignalCard({ title, description, confidence, timeframe }: {
-  title: string; description: string; confidence: string; timeframe: string
-}) {
-  return (
-    <Card 
-      className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border-slate-200/50 dark:border-slate-700/50 cursor-pointer hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all" 
-      onClick={() => trackEvent('cta_click', { label: 'signal_click', signal: title, plan: 'lite' })}
-      role="button"
-      tabIndex={0}
-      aria-label={`Signal: ${title}. ${description}. Confidence: ${confidence}. ${timeframe}`}
-      onKeyDown={(e) => e.key === 'Enter' && trackEvent('cta_click', { label: 'signal_click', signal: title, plan: 'lite' })}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-medium text-slate-900 dark:text-slate-100">{title}</h3>
-          <span className={`text-xs px-2 py-1 rounded-full ${confidence === 'High' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}`} aria-label={`Confidence level: ${confidence}`}>{confidence}</span>
-        </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">{description}</p>
-        <p className="text-xs text-slate-500" aria-label={`Time: ${timeframe}`}>{timeframe}</p>
-      </CardContent>
-    </Card>
-  )
-}

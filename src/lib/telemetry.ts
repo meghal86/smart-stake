@@ -34,6 +34,12 @@ export type TelemetryEventName =
   | 'risk_analyst_toggle'
   | 'risk_do_next_clicked'
   | 'risk_pulse_shown'
+  | 'signal_rendered'
+  | 'signal_hovered'
+  | 'signal_follow_clicked'
+  | 'signal_details_clicked'
+  | 'signal_explain_clicked'
+  | 'signal_alert_clicked'
 
 interface TelemetryEvent {
   event: string

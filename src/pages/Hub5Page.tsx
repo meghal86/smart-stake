@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Activity, Brain, Wallet } from 'lucide-react'
 import RiskToday from '@/components/kpi/RiskToday'
+import { SignalsPreview } from '@/components/hub5/SignalsPreview'
 
 
 
@@ -181,6 +182,9 @@ export default function Hub5Page() {
             <p className="text-sm text-slate-500">Click a button above to get AI insights about current market conditions.</p>
           </CardContent>
         </Card>
+
+        {/* Top Signals */}
+        <SignalsPreview />
 
         {/* Portfolio Demo */}
         <Card className="rounded-2xl">
