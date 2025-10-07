@@ -263,7 +263,7 @@ function AlertsContent() {
               size="sm"
               onClick={() => {
                 setSearchParams({});
-                navigate('/?tab=hub');
+                navigate('/hub');
               }}
               className="flex items-center gap-2"
             >
@@ -622,6 +622,8 @@ function AlertsContent() {
 }
 
 export default function Alerts() {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen flex flex-col bg-background circuit-pattern">
       {/* Header */}
@@ -646,7 +648,7 @@ export default function Alerts() {
         activeTab="alerts" 
         onTabChange={(tab) => {
           if (tab === 'alerts') return;
-          window.location.href = `/?tab=${tab}`;
+          navigate(`/${tab}`);
         }} 
       />
     </div>

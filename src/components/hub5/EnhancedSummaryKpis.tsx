@@ -103,36 +103,47 @@ export function EnhancedSummaryKpis({
   const riskStatus = getRiskStatus()
 
   const badgeColors = {
-    green: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    red: 'bg-red-500/20 text-red-400 border-red-500/30',
-    yellow: 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+    green: 'bg-emerald-500 text-white border-emerald-600',
+    red: 'bg-red-500 text-white border-red-600',
+    yellow: 'bg-amber-500 text-slate-900 border-amber-600'
+  }
+
+  const cardBorders = {
+    green: 'border-[#3BFFAE1F] shadow-sm hover:shadow-md dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.45)] dark:hover:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.45),0_0_12px_rgba(59,255,174,0.25)]',
+    red: 'border-[#FF7B7B1F] shadow-sm hover:shadow-md dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.45)] dark:hover:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.45),0_0_12px_rgba(255,123,123,0.25)]',
+    yellow: 'border-[#FFD84D1F] shadow-sm hover:shadow-md dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.45)] dark:hover:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.45),0_0_12px_rgba(255,216,77,0.25)]'
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
       {/* Big Money Moves - Compressed */}
-      <Card className="rounded-xl hover:shadow-md transition-all bg-slate-900/70 border-slate-700 hover:border-slate-600">
+      <Card className={cn('rounded-xl transition-all duration-300 ease-in-out bg-white/80 dark:bg-[#141E36] border-slate-200 hover:border-slate-300 dark:hover:bg-[#141E36]/95 backdrop-blur-sm', cardBorders[whalePressureStatus.color])}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 flex-1">
-              <Activity className="w-4 h-4 text-cyan-400" />
+              <Activity className="w-4 h-4 text-cyan-500" />
               <div>
-                <div className="text-xs text-slate-400">Big Money</div>
+                <div className="text-xs tracking-wide text-slate-500 dark:text-slate-400">Big Money</div>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-sm font-semibold text-white">{whalePressureStatus.text}</div>
-                  <span className="text-base font-semibold text-slate-300">+{whalePressure.toFixed(0)}</span>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{whalePressureStatus.text}</div>
+                  <span className="text-base font-semibold text-slate-700 dark:text-slate-300">+{whalePressure.toFixed(0)}</span>
                 </div>
               </div>
             </div>
-            <Badge className={cn('text-xs px-2 py-0.5', badgeColors[whalePressureStatus.color])}>
+            <Badge className={cn('text-xs px-2.5 py-1 font-bold shadow-sm', badgeColors[whalePressureStatus.color])}>
               {whalePressureStatus.label}
             </Badge>
           </div>
           <Button 
+            type="button"
             size="sm" 
             variant="ghost" 
             className="w-full text-xs h-7 justify-start px-2"
-            onClick={() => trackEvent('kpi_action', { kpi: 'whale_pressure', action: 'alert' })}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              trackEvent('kpi_action', { kpi: 'whale_pressure', action: 'alert' })
+            }}
           >
             {whalePressureStatus.action}
           </Button>
@@ -140,28 +151,33 @@ export function EnhancedSummaryKpis({
       </Card>
 
       {/* Market Mood - Compressed */}
-      <Card className="rounded-xl hover:shadow-md transition-all bg-slate-900/70 border-slate-700 hover:border-slate-600">
+      <Card className={cn('rounded-xl transition-all duration-300 ease-in-out bg-white/80 dark:bg-[#141E36] border-slate-200 hover:border-slate-300 dark:hover:bg-[#141E36]/95 backdrop-blur-sm', cardBorders[sentimentStatus.color])}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 flex-1">
               <span className="text-xl">{sentimentStatus.emoji}</span>
               <div>
-                <div className="text-xs text-slate-400">Market Mood</div>
+                <div className="text-xs tracking-wide text-slate-500 dark:text-slate-400">Market Mood</div>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-sm font-semibold text-white">{sentimentStatus.label}</div>
-                  <span className="text-base font-semibold text-slate-300">{sentiment}%</span>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{sentimentStatus.label}</div>
+                  <span className="text-base font-semibold text-slate-700 dark:text-slate-300">{sentiment}%</span>
                 </div>
               </div>
             </div>
-            <Badge className={cn('text-xs px-2 py-0.5', badgeColors[sentimentStatus.color])}>
+            <Badge className={cn('text-xs px-2.5 py-1 font-bold shadow-sm', badgeColors[sentimentStatus.color])}>
               {sentimentStatus.label}
             </Badge>
           </div>
           <Button 
+            type="button"
             size="sm" 
             variant="ghost" 
             className="w-full text-xs h-7 justify-start px-2"
-            onClick={() => trackEvent('kpi_action', { kpi: 'sentiment', action: 'learn' })}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              trackEvent('kpi_action', { kpi: 'sentiment', action: 'learn' })
+            }}
           >
             {sentimentStatus.action}
           </Button>
@@ -169,28 +185,33 @@ export function EnhancedSummaryKpis({
       </Card>
 
       {/* Market Risk - Compressed */}
-      <Card className="rounded-xl hover:shadow-md transition-all bg-slate-900/70 border-slate-700 hover:border-slate-600">
+      <Card className={cn('rounded-xl transition-all duration-300 ease-in-out bg-white/80 dark:bg-[#141E36] border-slate-200 hover:border-slate-300 dark:hover:bg-[#141E36]/95 backdrop-blur-sm', cardBorders[riskStatus.color])}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 flex-1">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
               <div>
-                <div className="text-xs text-slate-400">Risk Level</div>
+                <div className="text-xs tracking-wide text-slate-500 dark:text-slate-400">Risk Level</div>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-sm font-semibold text-white">{riskStatus.label}</div>
-                  <span className="text-base font-semibold text-slate-300">{riskIndex}/100</span>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{riskStatus.label}</div>
+                  <span className="text-base font-semibold text-slate-700 dark:text-slate-300">{riskIndex}/100</span>
                 </div>
               </div>
             </div>
-            <Badge className={cn('text-xs px-2 py-0.5', badgeColors[riskStatus.color])}>
+            <Badge className={cn('text-xs px-2.5 py-1 font-bold shadow-sm', badgeColors[riskStatus.color])}>
               {riskStatus.label}
             </Badge>
           </div>
           <Button 
+            type="button"
             size="sm" 
             variant="ghost" 
             className="w-full text-xs h-7 justify-start px-2"
-            onClick={() => trackEvent('kpi_action', { kpi: 'risk', action: 'alert' })}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              trackEvent('kpi_action', { kpi: 'risk', action: 'alert' })
+            }}
           >
             {riskStatus.action}
           </Button>

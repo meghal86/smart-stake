@@ -37,26 +37,35 @@ export const AppLayout = ({
     
     // Navigate to the appropriate route
     switch (tab) {
-      case "home":
-        navigate("/");
+      case "whales":
+        navigate("/whales");
         break;
-      case "yields":
-        navigate("/yields");
+      case "alerts":
+        navigate("/alerts");
         break;
-      case "scanner":
-        navigate("/scanner");
+      case "market":
+        navigate("/market/hub");
         break;
-      case "premium":
-        navigate("/subscription");
-        break;
-      case "profile":
-        navigate("/profile");
+      case "hub":
+        navigate("/hub");
         break;
       case "hub2":
         navigate("/hub2");
         break;
-      case "hub":
-        navigate("/hub");
+      case "portfolio":
+        navigate("/portfolio");
+        break;
+      case "predictions":
+        navigate("/predictions");
+        break;
+      case "scanner":
+        navigate("/scanner");
+        break;
+      case "reports":
+        navigate("/reports");
+        break;
+      case "settings":
+        navigate("/settings");
         break;
       default:
         navigate("/");

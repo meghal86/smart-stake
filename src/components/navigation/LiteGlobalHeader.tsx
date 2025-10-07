@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
 import { trackEvent } from '@/lib/telemetry'
 import { getTheme, setTheme, nextTheme, type Theme } from '@/lib/theme'
@@ -9,7 +9,12 @@ import PlanBadge, { type PlanTier } from '@/components/ui/PlanBadge'
 import { IconButton } from '@/components/ui/IconButton'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { HeaderMotto } from './HeaderMotto'
-import { Bell, Sun, Moon, Monitor, User, Wallet } from 'lucide-react'
+import { Bell, Sun, Moon, Monitor, User, Wallet, Settings, LogOut, CreditCard, ChevronDown } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface UserProfile {
   plan_tier: PlanTier
@@ -18,6 +23,7 @@ interface UserProfile {
 }
 
 export default function LiteGlobalHeader() {
+  const navigate = useNavigate()
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [unreadCount, setUnreadCount] = useState<number>(0)
@@ -31,6 +37,13 @@ export default function LiteGlobalHeader() {
     pro: '#10b981', 
     premium: '#0ea5e9',
     institutional: '#a78bfa'
+  }
+
+  const badgeColors = {
+    lite: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+    pro: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    premium: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    institutional: 'bg-purple-500/20 text-purple-400 border-purple-500/30'
   }
 
   useEffect(() => {
@@ -264,25 +277,53 @@ export default function LiteGlobalHeader() {
 
             {/* Avatar / Sign In */}
             {user ? (
-              <Link 
-                to="/settings" 
-                onClick={handleProfileClick}
-                aria-label="Profile settings"
-                className="h-8 w-8 overflow-hidden rounded-full ring-1 ring-slate-700 transition-all duration-200 hover:scale-105 hover:ring-2"
-                style={{ ringColor: `${currentPlanColor}55` }}
-              >
-                {profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Profile" 
-                    className="h-full w-full object-cover transition-transform duration-200 hover:scale-110"
-                  />
-                ) : (
-                  <div className="grid h-full w-full place-items-center bg-slate-700 text-slate-300 transition-colors duration-200 hover:bg-slate-600">
-                    <User className="h-4 w-4" />
-                  </div>
-                )}
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile?.avatar_url} alt="Profile" />
+                      <AvatarFallback className="text-xs bg-slate-700 text-slate-300">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user.email?.split('@')[0] || 'User'}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <Badge className={cn('text-xs w-fit mt-1', badgeColors[currentPlan])}>
+                        {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                      </Badge>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/plans')}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Plans & Billing</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/notifications')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={async () => {
+                      await supabase.auth.signOut()
+                      navigate('/')
+                    }}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link 
                 to="/sign-in" 

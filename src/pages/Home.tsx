@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertTeaserCard } from "@/components/AlertTeaserCard";
+import { BottomNavigation } from '@/components/layout/BottomNavigation';
 
 // Utility function to format time
 const formatTime = (timestamp: Date) => {
@@ -369,6 +370,10 @@ export default function Home() {
     return `$${n.toFixed(0)}`;
   };
 
+  const handleTabChange = (tab: string) => {
+    navigate(`/${tab}`);
+  };
+
   return (
     <TooltipProvider>
       <div className="flex-1 bg-gradient-to-br from-background to-background/80">
@@ -579,7 +584,7 @@ export default function Home() {
                       size="sm" 
                       variant="outline"
                       onClick={() => {
-                        navigate('/?tab=predictions');
+                        navigate('/predictions');
                         setAlertCenterOpen(false);
                       }}
                     >
@@ -973,6 +978,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <BottomNavigation activeTab="whales" onTabChange={handleTabChange} />
     </TooltipProvider>
   );
 }

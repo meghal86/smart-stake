@@ -19,7 +19,20 @@ export default {
 		},
 		extend: {
 			colors: {
+				surface: {
+					DEFAULT: '#F9FBFF',
+					dark: '#0C1221',
+					darker: '#0E152D'
+				},
+				ocean: {
+					light: '#EBF3FF',
+					dark: '#131B33',
+					darker: '#0E152D'
+				},
 				brand: {
+					main: '#3871F3',
+					light: '#6DC9F7',
+					dark: '#034093',
 					indigo: '#6366F1',
 					violet: '#8B5CF6',
 					deep: '#212121',
@@ -58,12 +71,18 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				success: {
-					DEFAULT: 'hsl(var(--success))',
+					DEFAULT: '#3BFFAE',
+					text: '#0D2A25',
 					foreground: 'hsl(var(--success-foreground))'
 				},
 				warning: {
-					DEFAULT: 'hsl(var(--warning))',
+					DEFAULT: '#FFD84D',
+					text: '#2D2600',
 					foreground: 'hsl(var(--warning-foreground))'
+				},
+				danger: {
+					DEFAULT: '#FF7B7B',
+					text: '#3B0000'
 				},
 				premium: {
 					DEFAULT: 'hsl(var(--premium))',
@@ -89,6 +108,12 @@ export default {
 					secondary: 'hsl(var(--interactive-secondary))',
 					muted: 'hsl(var(--interactive-muted))'
 				}
+			},
+			boxShadow: {
+				'card-dark': '0 0 0 1px rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.35)',
+				'card-glow-blue': '0 0 12px rgba(56,113,243,0.25)',
+				'card-glow-green': '0 0 12px rgba(59,255,174,0.25)',
+				'card-glow-amber': '0 0 12px rgba(255,216,77,0.25)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

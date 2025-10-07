@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { trackEvent } from '@/lib/telemetry'
@@ -15,6 +16,8 @@ import { EnhancedSummaryKpis } from '@/components/hub5/EnhancedSummaryKpis'
 import '../styles/theme.css'
 
 const Index = () => {
+  const [searchParams] = useSearchParams()
+  const tab = searchParams.get('tab')
   const { user } = useAuth()
   const { userPlan } = useSubscription()
   const [isLoading, setIsLoading] = useState(true)

@@ -1,6 +1,3 @@
-import Pulse from "./pages/Pulse";
-import Explore from "./pages/Explore";
-import EntityDetail from "./pages/EntityDetail";
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,7 +12,6 @@ import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
 import { DevInfo } from "@/components/DevInfo";
-import { getTheme, setTheme } from "@/lib/theme";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -31,7 +27,6 @@ import SubscriptionCancel from "./pages/SubscriptionCancel";
 import Scanner from "./pages/Scanner";
 import Yields from "./pages/Yields";
 import Profile from "./pages/Profile";
-import Billing from "./pages/Billing";
 import Premium from "./pages/Premium";
 import Debug from "./pages/Debug";
 import NotificationSettings from "./pages/NotificationSettings";
@@ -58,7 +53,8 @@ import Overview from "./pages/Overview";
 import Alerts from "./pages/Alerts";
 import LiteHub from "./pages/LiteHub";
 import Hub5Page from "./pages/Hub5Page";
-import LitePage from "./app/lite/page";
+import WhaleAnalyticsDashboard from "./pages/WhaleAnalytics";
+import ReportsExports from "./pages/ReportsExports";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -81,12 +77,6 @@ const App = () => {
 
   // Add error boundary and suppress extension errors
   useEffect(() => {
-    // Initialize theme
-    if (typeof window !== 'undefined') {
-      const currentTheme = getTheme();
-      setTheme(currentTheme);
-    }
-
     // Suppress extension errors globally
     suppressExtensionErrors();
 
@@ -159,28 +149,27 @@ const App = () => {
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="/portfolio-enhanced" element={<PortfolioEnhanced />} />
                   <Route path="/portfolio" element={<Portfolio />} />
-                  <Route path="/plans" element={<Plans />} />
+                  <Route path="/plans" element={<Subscription />} />
                   <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="/overview" element={<Overview />} />
                   <Route path="/alerts" element={<Alerts />} />
-                  <Route path="/lite" element={<LitePage />} />
                   <Route path="/lite/hub" element={<LiteHub />} />
                   <Route path="/lite/hub5" element={<Hub5Page />} />
                   <Route path="/lite5/hub5" element={<Hub5Page />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/profile" element={<Profile />} />
-                  {/* Hub 2 routes */}
+                  <Route path="/whales" element={<Home />} />
+                  <Route path="/scanner" element={<Scanner />} />
+                  <Route path="/reports" element={<ReportsExports />} />
+                  <Route path="/settings" element={<Profile />} />
+                  <Route path="/predictions" element={<PredictionsScenarios />} />
+                  <Route path="/hub" element={<PulsePage />} />
                   <Route path="/hub2" element={<PulsePage />} />
+                  {/* Hub 2 routes */}
                   <Route path="/hub2/pulse" element={<PulsePage />} />
                   <Route path="/hub2/explore" element={<ExplorePage />} />
                   <Route path="/hub2/entity/:id" element={<EntityDetailWrapper />} />
                   <Route path="/hub2/alerts" element={<AlertsPage />} />
                   <Route path="/hub2/watchlist" element={<WatchlistPage />} />
                   <Route path="/hub2/copilot" element={<CopilotPage />} />
-                  {/* Direct routes for Pulse, Explore, Entity Detail */}
-                  <Route path="/pulse" element={<Pulse />} />
-                  <Route path="/explore" element={<Explore />} />
-                  <Route path="/entity/:id" element={<EntityDetail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

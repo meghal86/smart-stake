@@ -49,31 +49,31 @@ export default function Hub5Page() {
             <div className="flex items-center gap-3">
               {/* Mode Toggle */}
               <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-                <Button variant="default" size="sm" className="text-xs px-2 py-1">Novice</Button>
-                <Button variant="ghost" size="sm" className="text-xs px-2 py-1">Pro</Button>
-                <Button variant="ghost" size="sm" className="text-xs px-2 py-1">Auto</Button>
+                <Button type="button" variant="default" size="sm" className="text-xs px-2 py-1">Novice</Button>
+                <Button type="button" variant="ghost" size="sm" className="text-xs px-2 py-1">Pro</Button>
+                <Button type="button" variant="ghost" size="sm" className="text-xs px-2 py-1">Auto</Button>
               </div>
 
               {/* Theme Toggle */}
               <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-                <Button variant="default" size="sm" className="w-8 h-8 p-0">
+                <Button type="button" variant="default" size="sm" className="w-8 h-8 p-0">
                   <Activity className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                <Button type="button" variant="ghost" size="sm" className="w-8 h-8 p-0">
                   <Brain className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                <Button type="button" variant="ghost" size="sm" className="w-8 h-8 p-0">
                   <TrendingUp className="w-4 h-4" />
                 </Button>
               </div>
 
               {/* Pro/Upgrade Button */}
-              <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white">
+              <Button type="button" size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white">
                 <Badge variant="secondary" className="mr-1 bg-amber-100 text-amber-800">Upgrade</Badge>
               </Button>
 
               {/* Profile */}
-              <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-full bg-cyan-100">
+              <Button type="button" variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-full bg-cyan-100">
                 <span className="text-cyan-700 text-xs font-bold">U</span>
               </Button>
             </div>
@@ -155,13 +155,13 @@ export default function Hub5Page() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
-              <Button size="sm" variant="outline" className="text-xs">
+              <Button type="button" size="sm" variant="outline" className="text-xs">
                 What's happening now?
               </Button>
-              <Button size="sm" variant="outline" className="text-xs">
+              <Button type="button" size="sm" variant="outline" className="text-xs">
                 What's different vs yesterday?
               </Button>
-              <Button size="sm" variant="outline" className="text-xs">
+              <Button type="button" size="sm" variant="outline" className="text-xs">
                 What should I do next?
               </Button>
             </div>
@@ -189,10 +189,10 @@ export default function Hub5Page() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button type="button" size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white">
                 Open
               </Button>
-              <Button size="sm" variant="outline" className="flex-1">
+              <Button type="button" size="sm" variant="outline" className="flex-1">
                 Connect wallet
               </Button>
             </div>
@@ -204,25 +204,25 @@ export default function Hub5Page() {
       {/* Footer */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm border-t md:hidden">
         <div className="flex items-center justify-around px-2 py-2">
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-cyan-600">
+          <Button type="button" variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-cyan-600">
             <Activity className="w-5 h-5" />
             <span className="text-xs font-medium">Home</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
+          <Button type="button" variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
             <TrendingUp className="w-5 h-5" />
             <span className="text-xs font-medium">Explore</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
+          <Button type="button" variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
             <Wallet className="w-5 h-5" />
             <span className="text-xs font-medium">Alerts</span>
             <div className="w-1 h-1 bg-amber-500 rounded-full" />
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
+          <Button type="button" variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
             <TrendingUp className="w-5 h-5" />
             <span className="text-xs font-medium">Watch</span>
             <div className="w-1 h-1 bg-amber-500 rounded-full" />
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
+          <Button type="button" variant="ghost" size="sm" className="flex flex-col items-center gap-1 px-3 py-2 h-auto min-h-[44px] text-slate-600">
             <Brain className="w-5 h-5" />
             <span className="text-xs font-medium">AI</span>
             <div className="w-1 h-1 bg-amber-500 rounded-full" />

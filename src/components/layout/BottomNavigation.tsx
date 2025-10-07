@@ -15,7 +15,7 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { id: "home", label: "Whales", icon: Home },
+  { id: "whales", label: "Whales", icon: Home },
   { id: "alerts", label: "Alerts", icon: Bell },
   { id: "market", label: "Market", icon: TrendingUp },
   { id: "hub", label: "Hub", icon: Zap, isPremium: true },
@@ -24,7 +24,7 @@ const navigationItems: NavigationItem[] = [
   { id: "predictions", label: "Predictions", icon: Activity, isPremium: true },
   { id: "scanner", label: "Scanner", icon: Shield, isPremium: true },
   { id: "reports", label: "Reports", icon: FileText },
-  { id: "profile", label: "Settings", icon: Users },
+  { id: "settings", label: "Settings", icon: Users },
 ];
 
 interface BottomNavigationProps {
@@ -55,7 +55,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
               size="xs" 
               showText={true} 
               clickable={true}
-              onClick={() => navigate('/?tab=home')}
+              onClick={() => navigate('/')}
               src="/hero_logo_512.png"
               textClassName="text-xs font-medium" 
             />
@@ -84,7 +84,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
         <div className="md:hidden px-3 py-1.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <Logo size="xs" showText={false} clickable onClick={() => navigate('/?tab=home')} src="/hero_logo_512.png" />
+              <Logo size="xs" showText={false} clickable onClick={() => navigate('/')} src="/hero_logo_512.png" />
               <span className="text-muted-foreground text-[10px]">© {currentYear}</span>
             </div>
             <div className="flex items-center gap-1.5">
