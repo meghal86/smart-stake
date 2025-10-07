@@ -1,12 +1,11 @@
 'use client'
 
 import { Card, CardContent } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 
 export function KpiSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-      {[1, 2, 3].map((i) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      {[1, 2].map((i) => (
         <Card key={i} className="rounded-xl bg-white/80 dark:bg-[#141E36] border-slate-200 animate-pulse">
           <CardContent className="p-3">
             <div className="flex items-center justify-between mb-2">

@@ -14,15 +14,12 @@ import { cn } from '@/lib/utils'
 interface EnhancedSummaryKpisProps {
   whalePressure: number
   sentiment: number
-  riskIndex: number
   whaleInflow?: number
   whaleOutflow?: number
   btcDominance?: number
-  activeWhales?: number
   lastUpdated?: string
   pressureDelta?: number
   sentimentDelta?: number
-  riskDelta?: number
   source?: 'live' | 'cache'
   onRefresh?: () => Promise<void>
   error?: string
@@ -30,16 +27,13 @@ interface EnhancedSummaryKpisProps {
 
 export function EnhancedSummaryKpis({ 
   whalePressure, 
-  sentiment, 
-  riskIndex,
+  sentiment,
   whaleInflow = 125,
   whaleOutflow = 87,
   btcDominance = 52,
-  activeWhales = 76,
   lastUpdated,
   pressureDelta = 0,
   sentimentDelta = 0,
-  riskDelta = 0,
   source = 'live',
   onRefresh,
   error
@@ -61,15 +55,13 @@ export function EnhancedSummaryKpis({
   useEffect(() => {
     if (showDelta(pressureDelta)) trackEvent('kpis_trend_rendered', { delta_sign: pressureDelta > 0 ? 'positive' : 'negative', metric: 'pressure' })
     if (showDelta(sentimentDelta)) trackEvent('kpis_trend_rendered', { delta_sign: sentimentDelta > 0 ? 'positive' : 'negative', metric: 'sentiment' })
-    if (showDelta(riskDelta)) trackEvent('kpis_trend_rendered', { delta_sign: riskDelta > 0 ? 'positive' : 'negative', metric: 'risk' })
     
     if (!showDelta(pressureDelta)) trackEvent('kpi_delta_noise_filtered', { metric: 'pressure', delta: pressureDelta })
     if (!showDelta(sentimentDelta)) trackEvent('kpi_delta_noise_filtered', { metric: 'sentiment', delta: sentimentDelta })
-    if (!showDelta(riskDelta)) trackEvent('kpi_delta_noise_filtered', { metric: 'risk', delta: riskDelta })
     
     trackEvent('kpis_source_type', { source })
     if (source === 'cache') trackEvent('kpi_cache_hit', {})
-  }, [pressureDelta, sentimentDelta, riskDelta, source])
+  }, [pressureDelta, sentimentDelta, source])
 
   const handleRefresh = async () => {
     if (!onRefresh || refreshing) return
@@ -125,27 +117,8 @@ export function EnhancedSummaryKpis({
     }
   }
 
-  const getRiskStatus = () => {
-    if (riskIndex > 60) return { 
-      label: 'High', 
-      color: 'red' as const,
-      action: '🔔 Alert on spikes'
-    }
-    if (riskIndex > 40) return { 
-      label: 'Medium', 
-      color: 'yellow' as const,
-      action: '📚 Learn more'
-    }
-    return { 
-      label: 'Low', 
-      color: 'green' as const,
-      action: '🔔 Alert on change'
-    }
-  }
-
   const whalePressureStatus = getWhalePressureStatus()
   const sentimentStatus = getSentimentStatus()
-  const riskStatus = getRiskStatus()
 
   const badgeColors = {
     green: 'bg-emerald-500 text-white border-emerald-600',
@@ -194,7 +167,7 @@ export function EnhancedSummaryKpis({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
       <Popover>
         <PopoverTrigger asChild>
           <Card 
@@ -302,63 +275,6 @@ export function EnhancedSummaryKpis({
               <div className="flex justify-between"><span>BTC Dominance:</span><span className="font-medium">{btcDominance}%</span></div>
               {showDelta(sentimentDelta) && (
                 <div className="flex justify-between"><span>24h Change:</span><span className={cn('font-medium', sentimentDelta > 0 ? 'text-emerald-500' : 'text-red-500')}>{sentimentDelta > 0 ? '+' : ''}{sentimentDelta.toFixed(1)}%</span></div>
-              )}
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      <Popover>
-        <PopoverTrigger asChild>
-          <Card 
-            className={cn('rounded-xl transition-all duration-300 ease-in-out bg-white/80 dark:bg-[#141E36] border-slate-200 hover:border-slate-300 dark:hover:bg-[#141E36]/95 dark:hover:shadow-[0_0_8px_rgba(56,113,243,0.3)] backdrop-blur-sm cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-500', cardBorders[riskStatus.color])}
-            aria-label={`Risk Index: ${riskIndex}, ${riskStatus.label}, ${source === 'live' ? 'Live Data' : 'Cached Data'}`}
-            onMouseEnter={() => trackEvent('kpis_hover_detail', { metric: 'risk' })}
-            tabIndex={0}
-          >
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 flex-1">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <div>
-                <div className="text-xs tracking-wide text-slate-500 dark:text-slate-400">Risk Level</div>
-                <div className="flex items-baseline gap-1">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{riskStatus.label}</div>
-                  <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                    {riskIndex}/100
-                    <TrendArrow delta={riskDelta} metric="risk" />
-                  </span>
-                </div>
-              </div>
-            </div>
-            <Badge className={cn('text-xs px-2.5 py-1 font-bold shadow-sm', badgeColors[riskStatus.color])}>
-              {riskStatus.label}
-            </Badge>
-          </div>
-          <Button 
-            type="button"
-            size="sm" 
-            variant="ghost" 
-            className="w-full text-xs h-7 justify-start px-2"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              trackEvent('kpi_action', { kpi: 'risk', action: 'alert' })
-            }}
-          >
-            {riskStatus.action}
-          </Button>
-        </CardContent>
-          </Card>
-        </PopoverTrigger>
-        <PopoverContent className="w-64 bg-white dark:bg-[#0C1221] border-cyan-500/20">
-          <div className="space-y-2">
-            <h4 className="font-semibold text-sm text-slate-900 dark:text-white">Risk Index Details</h4>
-            <div className="text-xs space-y-1 text-slate-600 dark:text-slate-400">
-              <div className="flex justify-between"><span>Active Whales:</span><span className="font-medium">{activeWhales}</span></div>
-              <div className="flex justify-between"><span>Volatility:</span><span className="font-medium">35%</span></div>
-              {showDelta(riskDelta) && (
-                <div className="flex justify-between"><span>24h Change:</span><span className={cn('font-medium', riskDelta > 0 ? 'text-red-500' : 'text-emerald-500')}>{riskDelta > 0 ? '+' : ''}{riskDelta.toFixed(1)}%</span></div>
               )}
             </div>
           </div>

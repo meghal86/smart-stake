@@ -13,6 +13,7 @@ import SignalCards from '@/components/lite/SignalCards'
 import PortfolioCompact from '@/components/hub5/PortfolioCompact'
 import KPITooltip from '@/components/ui/KPITooltip'
 import { EnhancedSummaryKpis } from '@/components/hub5/EnhancedSummaryKpis'
+import RiskToday from '@/components/kpi/RiskToday'
 import '../styles/theme.css'
 
 const Index = () => {
@@ -89,21 +90,33 @@ const Index = () => {
       <LiteGlobalHeader />
       
       <main className="mx-auto max-w-7xl px-4 space-y-4" role="main">
-        {/* 2. Above the Fold KPIs */}
+        {/* 2. Risk Today */}
+        <section aria-label="Risk Today">
+          <RiskToday
+            riskIndex={kpiData?.riskIndex || 57}
+            volatilityPct={35}
+            activeWhales={kpiData?.activeWhales || 76}
+            source="live"
+            lastUpdated={kpiData?.updatedAt || new Date().toISOString()}
+            onOpenAlert={() => console.log('Alert modal')}
+            plan={userPlan?.plan || 'Lite'}
+            trackEvent={trackEvent}
+          />
+        </section>
+
+        {/* 3. Above the Fold KPIs */}
         <section aria-label="Key Performance Indicators">
           <EnhancedSummaryKpis
             whalePressure={kpiData?.whalePressure || 100}
             sentiment={kpiData?.marketSentiment || 50}
-            riskIndex={kpiData?.riskIndex || 50}
             whaleInflow={kpiData?.whaleInflow}
             whaleOutflow={kpiData?.whaleOutflow}
             btcDominance={kpiData?.btcDominance}
-            activeWhales={kpiData?.activeWhales}
             lastUpdated="2min ago"
           />
         </section>
 
-        {/* 3. AI Digest */}
+        {/* 4. AI Digest */}
         <DigestCard 
           mode="novice" 
           demoMode={!user}
@@ -115,10 +128,10 @@ const Index = () => {
           }}
         />
 
-        {/* 4. Top Signals */}
+        {/* 5. Top Signals */}
         <SignalCards />
 
-        {/* 5. Progress Streak */}
+        {/* 6. Progress Streak */}
         <ProgressStreak 
           userStreak={user ? 4 : 0} 
           userRank={user ? 127 : null}
@@ -126,11 +139,11 @@ const Index = () => {
           onStreakAdvanced={streakAdvanced}
         />
 
-        {/* 6. Portfolio + Unlock Compact */}
+        {/* 7. Portfolio + Unlock Compact */}
         <PortfolioCompact connected={!!user} />
       </main>
 
-      {/* 8. Sticky Bottom Quick Actions */}
+      {/* 9. Sticky Bottom Quick Actions */}
       <QuickActionsBar 
         onStreakAdvanced={streakAdvanced}
         onAlertCreated={alertCreated}

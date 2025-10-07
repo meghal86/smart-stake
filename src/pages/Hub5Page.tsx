@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Activity, Brain, Wallet } from 'lucide-react'
+import RiskToday from '@/components/kpi/RiskToday'
 
 
 
@@ -88,6 +89,18 @@ export default function Hub5Page() {
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">AlphaWhale — Lite</h1>
           <p className="text-lg text-slate-600 dark:text-slate-400">Every whale move, explained.</p>
         </div>
+
+        {/* Risk Today */}
+        <RiskToday
+          riskIndex={57}
+          volatilityPct={35}
+          activeWhales={76}
+          source="live"
+          lastUpdated={new Date().toISOString()}
+          onOpenAlert={() => console.log('Alert modal')}
+          plan="Lite"
+          trackEvent={trackEvent}
+        />
 
         {/* Market Dials */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

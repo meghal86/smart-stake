@@ -30,6 +30,10 @@ export type TelemetryEventName =
   | 'kpi_fetch_timeout'
   | 'kpi_cache_hit'
   | 'kpi_delta_noise_filtered'
+  | 'risk_rendered'
+  | 'risk_analyst_toggle'
+  | 'risk_do_next_clicked'
+  | 'risk_pulse_shown'
 
 interface TelemetryEvent {
   event: string
