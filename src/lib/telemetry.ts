@@ -22,6 +22,14 @@ export type TelemetryEventName =
   | 'tip_dismissed'
   | 'tip_reenabled'
   | 'tip_shown'
+  | 'kpi_manual_refresh'
+  | 'kpis_trend_rendered'
+  | 'kpis_hover_detail'
+  | 'kpis_source_type'
+  | 'kpi_action'
+  | 'kpi_fetch_timeout'
+  | 'kpi_cache_hit'
+  | 'kpi_delta_noise_filtered'
 
 interface TelemetryEvent {
   event: string
