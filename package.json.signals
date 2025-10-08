@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "react-virtuoso": "^4.6.2",
+    "framer-motion": "^10.16.16"
+  },
+  "scripts": {
+    "signals:test": "vitest run src/__tests__/signals",
+    "signals:storybook": "storybook dev -p 6006",
+    "signals:build": "tsc && vite build"
+  }
+}

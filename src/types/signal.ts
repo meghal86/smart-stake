@@ -25,6 +25,21 @@ export interface Signal {
   groupedIds?: string[]; // IDs of grouped signals
   isLive?: boolean;
   reason?: string;
+  // Enhanced raw data fields
+  token_symbol?: string;
+  token_name?: string;
+  token_type?: string;
+  chain?: string;
+  from_label?: string;
+  to_label?: string;
+  entity_type?: string;
+  block_number?: number;
+  token_amount?: number;
+  token_price_usd?: number;
+  latency_ms?: number;
+  ai_confidence?: number;
+  risk_score?: number;
+  alert_source?: string;
 }
 
 export interface Paged<T> {

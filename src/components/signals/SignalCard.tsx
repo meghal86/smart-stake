@@ -129,7 +129,12 @@ export default function SignalCard({ signal, onAction, onDetailsClick, className
         .then(() => setDetailsPreloaded(true))
         .catch(() => {});
       
-      trackEvent('signal_hovered', { id: signal.id, type: signal.type });
+      trackEvent('signal_hovered', { 
+        id: signal.id, 
+        type: signal.type,
+        amountUsd: signal.impactUsd,
+        timestamp: Date.now()
+      });
     }
   };
 
@@ -139,7 +144,12 @@ export default function SignalCard({ signal, onAction, onDetailsClick, className
 
   const handleFollowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    trackEvent('signal_alert_clicked', { id: signal.id, type: signal.type });
+    trackEvent('alert_created', { 
+      id: signal.id, 
+      type: signal.type,
+      source: 'signal_card',
+      amountUsd: signal.impactUsd
+    });
     onAction?.(signal);
   };
 
@@ -148,8 +158,13 @@ export default function SignalCard({ signal, onAction, onDetailsClick, className
     trackEvent('signal_explain_clicked', { id: signal.id, type: signal.type });
   };
 
-  const handleDetailsClick = () => {
-    trackEvent('signal_details_clicked', { id: signal.id });
+  const handleDetailsClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    trackEvent('signal_pattern_clicked', { 
+      id: signal.id, 
+      type: signal.type,
+      source: 'signal_card_button'
+    });
     onDetailsClick?.(signal);
   };
 
@@ -167,10 +182,10 @@ export default function SignalCard({ signal, onAction, onDetailsClick, className
       className={cn("cursor-pointer signal-card", className)}
     >
       <Card className={cn(
-        "transition-all duration-200 border-l-4 border-l-primary/20",
-        isHovered && !prefersReducedMotion && "motion-safe:scale-[1.02] motion-safe:shadow-[0_0_6px_rgba(56,189,248,0.25)] bg-card/95"
+        "transition-all duration-300 border-l-4 border-l-primary/20",
+        isHovered && !prefersReducedMotion && "motion-safe:scale-[1.02] motion-safe:shadow-[0_4px_12px_rgba(20,184,166,0.25)] bg-card/95 motion-safe:translate-y-[-2px]"
       )}>
-        <CardContent className="p-4">
+        <CardContent className="p-5" style={{ paddingTop: 'var(--compact-vertical, 20px)', paddingBottom: 'var(--compact-vertical, 20px)' }}>
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className={cn("p-2 rounded-lg", getSignalColor(signal.type))}>
@@ -304,6 +319,14 @@ export default function SignalCard({ signal, onAction, onDetailsClick, className
                 className="flex-1 text-xs"
               >
                 Explain
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDetailsClick}
+                className="flex-1 text-xs font-medium"
+              >
+                View Pattern
               </Button>
               <Button
                 size="sm"

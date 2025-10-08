@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaWhale Mobile Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .logo h1 {
+            color: #14B8A6;
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .logo p {
+            color: #64748b;
+            margin: 4px 0 0 0;
+            font-size: 14px;
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .link {
+            display: block;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #334155;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .link:hover {
+            background: #14B8A6;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+        }
+        .link .title {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .link .desc {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #92400e;
+        }
+        .instructions {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #0c4a6e;
+        }
+        .instructions h3 {
+            margin: 0 0 8px 0;
+            color: #0c4a6e;
+        }
+        .instructions ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🐋 AlphaWhale Lite</h1>
+            <p>Mobile Access Helper</p>
+        </div>
+
+        <div class="status">
+            <strong>⚠️ Port Issue Detected:</strong> You're trying to access port 8087, but the app runs on port 8080.
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Mobile Testing Instructions:</h3>
+            <ol>
+                <li>Start the dev server: <code>npm run dev</code></li>
+                <li>Access via: <code>http://localhost:8080</code></li>
+                <li>For mobile testing, use your phone's browser</li>
+                <li>Or use Chrome DevTools mobile emulation</li>
+            </ol>
+        </div>
+
+        <div class="links">
+            <a href="http://localhost:8080/signals" class="link">
+                <div class="title">📊 Signals Feed</div>
+                <div class="desc">Main signals page with mobile optimizations</div>
+            </a>
+            
+            <a href="http://localhost:8080/hub/whale-signals" class="link">
+                <div class="title">🐋 Whale Signals (Phase D)</div>
+                <div class="desc">Enhanced whale signals with pattern analysis</div>
+            </a>
+            
+            <a href="http://localhost:8080/lite5/hub5" class="link">
+                <div class="title">🏠 Lite Hub</div>
+                <div class="desc">Main dashboard with mobile navigation</div>
+            </a>
+            
+            <a href="http://localhost:8080/portfolio" class="link">
+                <div class="title">💼 Portfolio</div>
+                <div class="desc">Portfolio tracking and management</div>
+            </a>
+        </div>
+
+        <div class="instructions">
+            <h3>🔧 Fixed Mobile Issues:</h3>
+            <ol>
+                <li>✅ Added proper touch-action properties</li>
+                <li>✅ Enhanced webkit overflow scrolling for iOS</li>
+                <li>✅ Fixed modal scrolling on mobile</li>
+                <li>✅ Improved touch manipulation</li>
+                <li>✅ Added mobile-specific CSS optimizations</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Auto-detect if running on mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            document.body.style.background = 'linear-gradient(135deg, #14B8A6 0%, #0891b2 100%)';
+            const container = document.querySelector('.container');
+            container.style.margin = '10px';
+            container.style.borderRadius = '20px';
+        }
+
+        // Test if server is running
+        fetch('http://localhost:8080/api/health')
+            .then(() => {
+                document.querySelector('.status').innerHTML = '✅ <strong>Server Running:</strong> AlphaWhale is accessible on port 8080';
+                document.querySelector('.status').style.background = '#d1fae5';
+                document.querySelector('.status').style.borderColor = '#10b981';
+                document.querySelector('.status').style.color = '#065f46';
+            })
+            .catch(() => {
+                document.querySelector('.status').innerHTML = '❌ <strong>Server Not Running:</strong> Please start with <code>npm run dev</code>';
+                document.querySelector('.status').style.background = '#fee2e2';
+                document.querySelector('.status').style.borderColor = '#ef4444';
+                document.querySelector('.status').style.color = '#991b1b';
+            });
+    </script>
+</body>
+</html>

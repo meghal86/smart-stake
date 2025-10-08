@@ -55,6 +55,10 @@ import LiteHub from "./pages/LiteHub";
 import Hub5Page from "./pages/Hub5Page";
 import WhaleAnalyticsDashboard from "./pages/WhaleAnalytics";
 import ReportsExports from "./pages/ReportsExports";
+import SignalsPage from "./pages/SignalsFeed";
+import TestWorldClass from "./pages/TestWorldClass";
+import WhaleSignalsPhaseD from "./pages/whale-signals/index";
+import PatternModalDemo from "./pages/PatternModalDemo";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -170,6 +174,14 @@ const App = () => {
                   <Route path="/hub2/alerts" element={<AlertsPage />} />
                   <Route path="/hub2/watchlist" element={<WatchlistPage />} />
                   <Route path="/hub2/copilot" element={<CopilotPage />} />
+                  <Route path="/signals" element={<SignalsPage />} />
+                  <Route path="/test-world-class" element={<TestWorldClass />} />
+                  <Route path="/pattern-demo" element={<PatternModalDemo />} />
+                  <Route path="/hub/whale-signals" element={<WhaleSignalsPhaseD />} />
+                  {/* Unified Pro Signals - redirect old routes */}
+                  <Route path="/whales" element={<SignalsPage />} />
+                  <Route path="/whale-alerts" element={<SignalsPage />} />
+                  <Route path="/pro-signals" element={<SignalsPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

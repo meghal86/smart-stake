@@ -6,6 +6,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* World-class animations */
+@media (prefers-reduced-motion: no-preference) {
+  .live-pulse { 
+    animation: pulse 1.2s ease-in-out infinite; 
+  }
+  @keyframes pulse { 
+    0% { opacity: 0.5; } 
+    50% { opacity: 1; } 
+    100% { opacity: 0.5; } 
+  }
+}
+
+.rank-shimmer {
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.15), rgba(56, 189, 248, 0.15));
+  background-size: 300% 100%;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes shimmer { 
+  0% { background-position: 0%; } 
+  100% { background-position: 100%; } 
+}
+
+.confidence-fill {
+  transition: width 0.5s ease-out;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Header Motto Animation */
 @keyframes fadeIn { 
   from { opacity: 0; } 
@@ -185,10 +216,7 @@
     padding-top: env(safe-area-inset-top);
   }
   
-  /* Touch-friendly interactions */
-  .touch-manipulation {
-    touch-action: manipulation;
-  }
+
   
   /* Prevent text selection on interactive elements */
   .select-none {
@@ -230,12 +258,18 @@
       display: none;
     }
     
+    .xs\:inline {
+      display: inline;
+    }
+    
     .xs\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    
-    .xs\:inline {
-      display: inline;
+  }
+  
+  @media (max-width: 374px) {
+    .xs\:hidden {
+      display: none;
     }
   }
 }
@@ -325,16 +359,21 @@
 
 /* Mobile viewport optimizations */
 @media (max-width: 768px) {
-  /* Ensure proper mobile viewport */
   html {
     -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Force all cards to be compact on mobile */
   .card, [data-radix-collection-item] {
     padding: 0.5rem !important;
     margin: 0.25rem 0 !important;
+    /* Chrome scroll optimization */
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
   
   /* Make all text smaller on mobile */

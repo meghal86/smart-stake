@@ -15,16 +15,11 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { id: "whales", label: "Whales", icon: Home },
-  { id: "alerts", label: "Alerts", icon: Bell },
+  { id: "whales", label: "Home", icon: Home },
+  { id: "signals", label: "Signals", icon: Activity, isPremium: true },
   { id: "market", label: "Market", icon: TrendingUp },
   { id: "hub", label: "Hub", icon: Zap, isPremium: true },
-  { id: "hub2", label: "Hub 2", icon: Target, isPremium: true },
   { id: "portfolio", label: "Portfolio", icon: Briefcase, isPremium: true },
-  { id: "predictions", label: "Predictions", icon: Activity, isPremium: true },
-  { id: "scanner", label: "Scanner", icon: Shield, isPremium: true },
-  { id: "reports", label: "Reports", icon: FileText },
-  { id: "settings", label: "Settings", icon: Users },
 ];
 
 interface BottomNavigationProps {

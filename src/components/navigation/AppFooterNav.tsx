@@ -7,8 +7,8 @@ import { trackEvent } from '@/lib/telemetry'
 import { useGate } from '@/hooks/useGate'
 
 const tabs = [
-  { id: 'home', label: 'Home', icon: Home, href: '/lite5/hub5' },
-  { id: 'explore', label: 'Explore', icon: Search, href: '/lite5/hub5#explore' },
+  { id: 'home', label: 'Home', icon: Home, href: '/' },
+  { id: 'explore', label: 'Explore', icon: Search, href: '/signals' },
   { id: 'alerts', label: 'Alerts', icon: Bell, href: '/alerts', gated: 'alerts_advanced' },
   { id: 'watch', label: 'Watch', icon: Eye, href: '/portfolio', gated: 'watchlist' },
   { id: 'ai', label: 'AI', icon: Brain, href: '/hub2', gated: 'api_access' }
@@ -39,7 +39,8 @@ export function AppFooterNav() {
   }
 
   const isActive = (tab: typeof tabs[0]) => {
-    if (tab.id === 'home') return pathname === '/lite5/hub5'
+    if (tab.id === 'home') return pathname === '/'
+    if (tab.id === 'explore') return pathname === '/signals'
     return pathname.startsWith(tab.href.split('#')[0])
   }
 

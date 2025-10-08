@@ -83,7 +83,7 @@ export default function SignalCards() {
           className="text-cyan-500 hover:text-cyan-600"
           aria-label="View all market signals"
         >
-          <Link to="/signals">View All</Link>
+          <Link to="/signals?from=home">View All</Link>
         </Button>
       </div>
       

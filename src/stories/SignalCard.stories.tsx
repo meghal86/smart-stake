@@ -110,7 +110,7 @@ export const HoverState: S = {
   parameters: {
     docs: {
       description: {
-        story: 'Hover over the card to see the micro-shadow effect and trigger details preload.',
+        story: 'Hover over the card to see the enhanced brand shadow effect, lift animation, and trigger details preload.',
       },
     },
   },
@@ -175,7 +175,7 @@ export const NewSignalFadeIn: S = {
           onClick={addSignal}
           className="px-4 py-2 bg-green-500 text-white rounded"
         >
-          Add New Signal (Fade-In Demo)
+          Add New Signal (Phase C Fade-In)
         </button>
         <div className="space-y-2">
           {signals.map((signal) => (
@@ -193,7 +193,7 @@ export const NewSignalFadeIn: S = {
   parameters: {
     docs: {
       description: {
-        story: 'Click to add new signals and see the fade-in animation (250ms opacity transition).',
+        story: 'Click to add new signals and see the enhanced 250ms fade-in animation with cubic-bezier easing.',
       },
     },
   },
@@ -296,14 +296,15 @@ export const AllVariants: S = {
     ]
     
     return (
-      <div className="space-y-3 w-[400px]">
-        {signals.map((signal) => (
-          <SignalCard 
-            key={signal.id}
-            signal={signal}
-            onAction={(s) => console.log('Follow:', s)}
-            onDetailsClick={(s) => console.log('Details:', s)}
-          />
+      <div className="space-y-5 w-[400px]">
+        {signals.map((signal, index) => (
+          <div key={signal.id} className={index > 0 && index % 5 === 0 ? 'border-t border-slate-200/40 pt-5' : ''}>
+            <SignalCard 
+              signal={signal}
+              onAction={(s) => console.log('Follow:', s)}
+              onDetailsClick={(s) => console.log('Details:', s)}
+            />
+          </div>
         ))}
       </div>
     )
@@ -311,7 +312,7 @@ export const AllVariants: S = {
   parameters: {
     docs: {
       description: {
-        story: 'All signal type variants displayed together.',
+        story: 'All signal type variants with Phase C spacing and dividers every 5 rows.',
       },
     },
   },

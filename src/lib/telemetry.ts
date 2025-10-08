@@ -1,69 +1,101 @@
-export type TelemetryEventName = 
-  | 'home_view'
-  | 'card_click' 
-  | 'create_alert'
-  | 'follow_asset'
-  | 'upgrade_click'
-  | 'trial_start'
-  | 'gated_feature_shown'
-  | 'gated_feature_clicked'
-  | 'upgrade_success'
-  | 'share_click'
-  | 'demo_mode_shown'
-  | 'wallet_connect_click'
-  | 'leaderboard_click'
-  | 'pro_preview_shown'
-  | 'cta_click'
-  | 'novice_tip_shown'
-  | 'novice_tip_dismissed'
-  | 'header_click'
-  | 'header_view'
-  | 'header_motto_rendered'
-  | 'tip_dismissed'
-  | 'tip_reenabled'
-  | 'tip_shown'
-  | 'kpi_manual_refresh'
-  | 'kpis_trend_rendered'
-  | 'kpis_hover_detail'
-  | 'kpis_source_type'
-  | 'kpi_action'
-  | 'kpi_fetch_timeout'
-  | 'kpi_cache_hit'
-  | 'kpi_delta_noise_filtered'
-  | 'risk_rendered'
-  | 'risk_analyst_toggle'
-  | 'risk_do_next_clicked'
-  | 'risk_pulse_shown'
+/**
+ * Telemetry & Analytics Events
+ */
+
+export type TelemetryEvent =
+  // Feed events
+  | 'feed_stream_connected'
+  | 'feed_stream_error'
+  | 'feed_page_loaded'
+  | 'feed_grouped'
+  | 'feed_sorted'
+  // Signal events
   | 'signal_rendered'
   | 'signal_hovered'
-  | 'signal_follow_clicked'
-  | 'signal_details_clicked'
   | 'signal_explain_clicked'
   | 'signal_alert_clicked'
+  | 'signal_details_clicked'
+  | 'signal_explain_opened'
+  | 'signal_expanded'
+  | 'signal_do_next_clicked'
+  | 'signal_follow_pattern_clicked'
+  | 'signal_muted'
+  | 'signal_unmuted'
+  | 'signal_filters_cleared'
+  | 'signal_feedback_given'
+  | 'signal_dismissed'
+  // Phase C events
+  | 'narrative_rendered'
+  | 'alert_created'
+  | 'explain_modal_opened'
+  | 'nav_signals_tab_changed'
+  | 'nav_back_to_dashboard'
+  | 'fab_create_alert_clicked'
+  // Must-fix events
+  | 'feed_filter_applied'
+  | 'autoscroll_paused'
+  | 'new_items_seen'
+  | 'explain_tab_viewed'
+  | 'alert_prefill_changed'
+  | 'alert_created_success'
+  | 'row_source_tooltip_opened'
+  | 'row_group_expanded'
+  | 'raw_data_copied'
+  | 'raw_row_expanded'
+  // World-class UX events
+  | 'tab_switch'
+  | 'sort_applied'
+  | 'card_hover'
+  | 'explain_preview'
+  | 'dark_mode_toggle'
+  | 'search_applied'
+  // Tesla-level events
+  | 'narrative_rendered'
+  | 'narrative_refresh_clicked'
+  | 'feed_filter_applied'
+  | 'new_batch_arrived'
+  | 'new_items_applied'
+  | 'card_expanded'
+  | 'card_action_clicked'
+  | 'explain_modal_opened'
+  | 'do_next_clicked'
+  | 'raw_group_changed'
+  | 'raw_export_clicked'
+  // Phase D: Energy & Emotion events
+  | 'heartbeat_pulsed'
+  | 'signal_expanded'
+  | 'action_row_clicked'
+  | 'microticker_refreshed'
+  | 'tab_switch';
 
-interface TelemetryEvent {
-  event: string
-  properties?: Record<string, any>
+export interface TelemetryProperties {
+  [key: string]: string | number | boolean | undefined;
 }
 
-export function trackEvent(event: string, properties?: Record<string, any>) {
-  const payload: TelemetryEvent = {
-    event,
-    properties: {
-      timestamp: new Date().toISOString(),
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      ...properties
-    }
+export function trackEvent(event: TelemetryEvent, properties?: TelemetryProperties) {
+  // Mask sensitive data
+  const sanitized = properties ? { ...properties } : {};
+  delete sanitized.txHash;
+  delete sanitized.from;
+  delete sanitized.to;
+
+  // Log to console in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Telemetry]', event, sanitized);
   }
 
-  // Log to console for debugging
-  console.log('Telemetry:', payload)
-
-  // In production, this would send to your analytics service
-  // For now, just store in sessionStorage for debugging
-  if (typeof window !== 'undefined') {
-    const events = JSON.parse(sessionStorage.getItem('telemetry_events') || '[]')
-    events.push(payload)
-    sessionStorage.setItem('telemetry_events', JSON.stringify(events.slice(-100))) // Keep last 100 events
+  // Send to analytics service
+  try {
+    if (typeof window !== 'undefined' && (window as any).analytics) {
+      (window as any).analytics.track(event, {
+        ...sanitized,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+      });
+    }
+  } catch (error) {
+    console.error('Telemetry error:', error);
   }
 }
