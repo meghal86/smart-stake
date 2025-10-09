@@ -10,9 +10,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowUp, ArrowDown, Bell, BarChart3, MessageCircle, ChevronDown } from 'lucide-react';
 import { HeartbeatDot } from './HeartbeatDot';
 import { SparklineChart } from './SparklineChart';
-import { AnimatedConfidenceBar } from './AnimatedConfidenceBar';
+import { ConfidenceBar } from '@/components/ui/ConfidenceBar';
+import { AlertCTA } from '@/components/ui/AlertCTA';
 import { trackEvent } from '@/lib/telemetry';
 import { PhaseDTelemetry } from '@/lib/phase-d-telemetry';
+import { formatAmount } from '@/lib/format-helpers';
+import { motionClasses, animations } from '@/lib/motion-tokens';
 import type { Signal } from '@/types/signal';
 
 interface ExpandableSignalCardProps {
@@ -35,7 +38,9 @@ export function ExpandableSignalCard({
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const [expanded, setExpanded] = useState(false);
   const [showNarrative, setShowNarrative] = useState(false);
+  const [isStable, setIsStable] = useState(true);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const cardRef = useRef<HTMLDivElement>(null);
   const timeAgo = new Date(signal.timestamp).toLocaleString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -57,9 +62,12 @@ export function ExpandableSignalCard({
   });
 
   const handleExpand = () => {
+    console.log('🔄 DETAILS BUTTON CLICKED for:', signal.asset, 'Current expanded:', expanded);
+    console.log('🚀 DETAILS BUTTON IS WORKING! Toggling expanded state...');
     setExpanded(!expanded);
     
     if (!expanded) {
+      console.log('📖 Showing narrative for:', signal.asset);
       setShowNarrative(true);
       // Auto-collapse after 30s inactivity
       timeoutRef.current = setTimeout(() => {
@@ -74,6 +82,7 @@ export function ExpandableSignalCard({
         totalUsd: signal.amountUsd
       });
     } else {
+      console.log('📖 Hiding narrative for:', signal.asset);
       setShowNarrative(false);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -99,17 +108,7 @@ export function ExpandableSignalCard({
     };
   }, []);
 
-  const formatAmount = (amount: number) => {
-    if (amount >= 1e9) {
-      const val = amount / 1e9;
-      return val % 1 === 0 ? `$${val.toFixed(0)}B` : `$${val.toFixed(1)}B`;
-    }
-    if (amount >= 1e6) {
-      const val = amount / 1e6;
-      return val % 1 === 0 ? `$${val.toFixed(0)}M` : `$${val.toFixed(1)}M`;
-    }
-    return `$${(amount / 1e3).toFixed(0)}K`;
-  };
+
 
   const ambientGradient = signal.risk === 'high' 
     ? 'bg-gradient-to-br from-red-50/50 to-rose-100/30 dark:from-red-900/10 dark:to-rose-800/20'
@@ -117,25 +116,24 @@ export function ExpandableSignalCard({
 
   return (
     <motion.div
-      layout
+      ref={cardRef}
+      layout="position"
       initial={!reducedMotion ? { opacity: 0, y: 20 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       transition={!reducedMotion ? { duration: 0.25, ease: [0.4, 0, 0.2, 1] } : { duration: 0 }}
+      style={{ minHeight: expanded ? 'auto' : '120px' }}
     >
       <Card 
         role="region"
         aria-label={`${signal.asset} ${signal.direction} to ${destination}, ${formatAmount(signal.amountUsd)}, ${signal.risk} severity ${confidence}%, ${timeAgo}`}
         className={`
-          cursor-pointer transition-all duration-200 overflow-hidden
+          transition-all duration-200 overflow-hidden
           ${isTopFlow ? 'border-l-4 border-l-[var(--brand-teal,#14B8A6)] bg-gradient-to-r from-[var(--brand-teal,#14B8A6)]/5 to-transparent' : ''}
           ${expanded ? ambientGradient : ''}
-          hover:shadow-lg hover:scale-[1.01]
+          hover:shadow-lg
         `}
       >
-        <CardContent 
-          className="p-4 cursor-pointer" 
-          onClick={handleExpand}
-        >
+        <CardContent className="p-4">
           {/* Header Row */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -178,25 +176,64 @@ export function ExpandableSignalCard({
             </div>
           </div>
 
-          {/* Confidence Bar */}
-          <AnimatedConfidenceBar 
-            value={confidence} 
-            delay={expanded ? 200 : 0}
+          {/* Confidence Bar with data charging animation */}
+          <ConfidenceBar 
+            confidence={confidence}
+            className="mb-2"
           />
 
-          {/* Expand/Collapse Indicator */}
-          <div className="flex justify-center mt-2">
-            <motion.div 
-              className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
-              animate={!reducedMotion ? { rotate: expanded ? 180 : 0 } : {}}
-              transition={!reducedMotion ? { duration: 0.25, ease: [0.4, 0, 0.2, 1] } : { duration: 0 }}
-              role="button"
-              aria-label={expanded ? 'Hide details' : 'Show details'}
-              tabIndex={0}
+          {/* Compact Beautiful Details Toggle */}
+          <div className="flex justify-end mt-3">
+            <motion.button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isStable) return;
+                
+                console.log('🚀🚀🚀 COMPACT DETAILS BUTTON CLICKED! Current expanded:', expanded);
+                console.log('🔄 Toggling from', expanded, 'to', !expanded);
+                
+                setIsStable(false);
+                const newExpanded = !expanded;
+                setExpanded(newExpanded);
+                setShowNarrative(newExpanded);
+                
+                setTimeout(() => setIsStable(true), 300);
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`
+                group relative overflow-hidden
+                bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600
+                hover:from-[var(--brand-teal,#14B8A6)]/10 hover:to-[var(--brand-teal,#14B8A6)]/20
+                border border-slate-300 dark:border-slate-600
+                hover:border-[var(--brand-teal,#14B8A6)]/30
+                rounded-full px-3 py-1.5
+                transition-all duration-300 ease-out
+                shadow-sm hover:shadow-md
+                ${!isStable ? 'pointer-events-none opacity-70' : ''}
+              `}
             >
-              <ChevronDown className="h-3 w-3" />
-              <span>{expanded ? 'Hide' : 'Details'}</span>
-            </motion.div>
+              <div className="flex items-center gap-1.5 relative z-10">
+                <motion.div
+                  animate={{ rotate: expanded ? 180 : 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400 group-hover:text-[var(--brand-teal,#14B8A6)]" />
+                </motion.div>
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-[var(--brand-teal,#14B8A6)] transition-colors">
+                  {expanded ? 'Less' : 'Details'}
+                </span>
+              </div>
+              
+              {/* Subtle shimmer effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100"
+                animate={{ x: [-100, 200] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              />
+            </motion.button>
           </div>
 
           {/* Expanded Content */}
@@ -273,17 +310,17 @@ export function ExpandableSignalCard({
                     {/* Group Dynamics Tags */}
                     <div className="flex flex-wrap gap-1">
                       {Math.random() > 0.7 && (
-                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 text-xs">
+                        <Badge className={`bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 text-xs ${animations.fadeInOnHover}`}>
                           Coordinated wallets (4)
                         </Badge>
                       )}
                       {Math.random() > 0.8 && (
-                        <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs">
+                        <Badge className={`bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs ${animations.fadeInOnHover}`}>
                           Rising density
                         </Badge>
                       )}
                       {Math.random() > 0.9 && (
-                        <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 text-xs">
+                        <Badge className={`bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 text-xs ${animations.fadeInOnHover}`}>
                           Recurring pattern
                         </Badge>
                       )}
@@ -291,42 +328,35 @@ export function ExpandableSignalCard({
                   </div>
                 </div>
 
-                {/* Action Row */}
-                <div className="flex gap-2 pt-2 border-t border-slate-200/40 dark:border-slate-700">
-                  <Button
-                    size="sm"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      handleActionClick('create_alert', onCreateAlert); 
-                    }}
-                    className="flex-1 bg-[var(--brand-teal,#14B8A6)] hover:bg-[var(--brand-teal,#14B8A6)]/90 text-white"
-                  >
-                    <Bell className="h-3 w-3 mr-1" />
-                    Create Alert
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      handleActionClick('view_pattern', onViewPattern); 
-                    }}
-                    className="flex-1"
-                  >
-                    <BarChart3 className="h-3 w-3 mr-1" />
-                    View Pattern
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      handleActionClick('explain', onExplain); 
-                    }}
-                  >
-                    <MessageCircle className="h-3 w-3 mr-1" />
-                    Explain
-                  </Button>
+                {/* Refined Action Bar with CTA hierarchy */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-200/50 dark:border-slate-700/50">
+                  <AlertCTA 
+                    variant="inline"
+                    onCreateAlert={() => handleActionClick('create_alert', onCreateAlert)}
+                    disabled={!isStable}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleActionClick('view_pattern', onViewPattern)}
+                      disabled={!isStable}
+                      className={`${motionClasses.buttonRipple} text-slate-600 hover:text-slate-900`}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-1" />
+                      Pattern
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleActionClick('explain', onExplain)}
+                      disabled={!isStable}
+                      className={`${motionClasses.buttonRipple} text-blue-600 hover:text-blue-700`}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      Explain
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Pre-filled Alert Preview */}

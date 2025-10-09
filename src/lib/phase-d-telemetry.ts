@@ -43,7 +43,7 @@ export interface RawExportEvent {
 
 export class PhaseDTelemetry {
   static trackFeedHeartbeat(data: FeedHeartbeatEvent) {
-    trackEvent('feed_heartbeat_pulsed', data);
+    // trackEvent('feed_heartbeat_pulsed', data); // Disabled - too noisy
   }
 
   static trackNarrativeRendered(data: NarrativeRenderedEvent) {

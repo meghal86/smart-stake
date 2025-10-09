@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Whale-alerts function called');
     const WHALE_ALERT_API_KEY = Deno.env.get('WHALE_ALERT_API_KEY')
     
     if (!WHALE_ALERT_API_KEY) {
@@ -23,6 +24,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+    
+    console.log('Supabase client initialized');
+    console.log('WHALE_ALERT_API_KEY exists:', !!WHALE_ALERT_API_KEY);
 
     // Fetch live whale transactions from whale-alert.io API
     // Add start_date parameter to get only recent transactions (last 24 hours)
@@ -42,31 +46,63 @@ serve(async (req) => {
     // Store transactions in database for pattern analysis
     let storedCount = 0
     if (data.transactions && data.transactions.length > 0) {
+      console.log(`Processing ${data.transactions.length} transactions`);
+      
       for (const tx of data.transactions) {
         try {
+          // Skip if hash is "Multiple Hashes" (aggregated transactions)
+          if (tx.hash === 'Multiple Hashes') {
+            console.log('Skipping aggregated transaction');
+            continue;
+          }
+          
+          // Check if already exists to avoid duplicates
+          const { data: existing } = await supabase
+            .from('whale_signals')
+            .select('id')
+            .eq('provider', 'whale-alert')
+            .eq('supporting_events', `{"${tx.hash}"}`)
+            .single();
+            
+          if (existing) {
+            console.log('Transaction already exists:', tx.hash);
+            continue;
+          }
+          
+          console.log('Storing new transaction:', tx.hash, tx.symbol, '$' + tx.amount_usd);
+          
+          const insertData = {
+            address: tx.from?.address || tx.to?.address || 'unknown',
+            chain: tx.blockchain || 'bitcoin',
+            signal_type: 'whale_transaction',
+            value: tx.amount_usd,
+            confidence: 0.85,
+            reasons: [`${tx.symbol?.toUpperCase()} ${tx.transaction_type}: $${tx.amount_usd.toLocaleString()}`],
+            supporting_events: [tx.hash],
+            ts: new Date(tx.timestamp * 1000).toISOString(),
+            provider: 'whale-alert',
+            method: 'live_api',
+            ingested_at: new Date().toISOString(),
+            risk_score: tx.amount_usd > 10000000 ? 85 : tx.amount_usd > 1000000 ? 65 : 45,
+            alert_triggered: false
+          };
+          
           const { error } = await supabase
             .from('whale_signals')
-            .upsert({
-              tx_hash: tx.hash,
-              from_addr: tx.from.address || 'unknown',
-              to_addr: tx.to.address || 'unknown', 
-              amount_usd: tx.amount_usd,
-              token: tx.symbol,
-              chain: tx.blockchain || 'ethereum',
-              tx_type: determineTxType(tx.from, tx.to),
-              timestamp: new Date(tx.timestamp * 1000).toISOString()
-            }, { onConflict: 'tx_hash' })
+            .insert(insertData)
           
-          if (!error) storedCount++
+          if (error) {
+            console.error('Database error for', tx.hash, ':', error.message);
+          } else {
+            console.log('✓ Stored:', tx.hash);
+            storedCount++;
+          }
         } catch (err) {
-          console.log('Failed to store transaction:', tx.hash, err.message)
+          console.error('Exception storing', tx.hash, ':', err.message);
         }
       }
       
-      // Cleanup old records (30+ days)
-      await supabase.rpc('cleanup_old_whale_signals')
-      
-      console.log(`Stored ${storedCount}/${data.transactions.length} new whale signals`)
+      console.log(`✓ Successfully stored ${storedCount}/${data.transactions.length} new whale signals`)
     }
     
     return new Response(

@@ -21,7 +21,7 @@ import { WorldClassFiltersBar } from '@/components/signals/WorldClassFiltersBar'
 import { WorldClassNewItemsBadge } from '@/components/signals/WorldClassNewItemsBadge';
 import { MicroTicker } from '@/components/signals/MicroTicker';
 import { HeartbeatDot } from '@/components/signals/HeartbeatDot';
-import { EnhancedRawTable } from '@/components/signals/EnhancedRawTable';
+import { AdvancedRawTable } from '@/components/signals/AdvancedRawTable';
 import { RawViewFooter } from '@/components/signals/RawViewFooter';
 import { groupSignals, shouldGroup } from '@/lib/signalGrouping';
 import type { Signal, SignalFilter } from '@/types/signal';
@@ -477,10 +477,16 @@ export default function SignalsPage() {
           </TabsContent>
 
           <TabsContent value="raw" className="mt-6 pb-24 relative">
-            <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200/40 dark:border-slate-800 p-4 mb-4">
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Raw Transaction Data</h3>
+            <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-b-slate-200/40 dark:border-slate-800 p-4 mb-4">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Advanced Raw Data Analysis</h3>
             </div>
-            <EnhancedRawTable signals={filteredSignals} />
+            <AdvancedRawTable 
+              signals={filteredSignals} 
+              onExport={(exportSignals) => {
+                console.log('Exporting filtered signals:', exportSignals.length);
+                // TODO: Integrate with ExportModal
+              }}
+            />
           </TabsContent>
         </div>
       </Tabs>

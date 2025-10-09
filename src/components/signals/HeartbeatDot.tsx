@@ -23,7 +23,7 @@ export function HeartbeatDot({ isLive = true, size = 'sm', className = '' }: Hea
   useEffect(() => {
     if (isLive) {
       const interval = setInterval(() => {
-        trackEvent('heartbeat_pulsed', { timestamp: Date.now() });
+        // trackEvent('heartbeat_pulsed', { timestamp: Date.now() }); // Disabled - too noisy
       }, 5000);
       return () => clearInterval(interval);
     }
