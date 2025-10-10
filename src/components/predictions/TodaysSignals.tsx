@@ -110,12 +110,12 @@ export function TodaysSignals({ predictions, isFreeTier }: TodaysSignalsProps) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                 {Object.entries(prediction.features).map(([key, value]) => {
                   const score = typeof value === 'object' && value !== null && 'score' in value 
-                    ? value.score 
+                    ? (value as any).score 
                     : typeof value === 'number' 
                     ? value 
                     : 0.5;
                   
-                  const percentage = isNaN(score) ? '50' : Math.round(score * 100);
+                  const percentage = isNaN(Number(score)) ? '50' : Math.round(Number(score) * 100);
                   
                   return (
                     <div key={key} className="flex justify-between">

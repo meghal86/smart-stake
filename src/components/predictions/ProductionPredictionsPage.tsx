@@ -53,7 +53,7 @@ export function ProductionPredictionsPage() {
   }, [userPlan]);
 
   const getRefreshInterval = () => {
-    switch (userPlan) {
+    switch (userPlan.plan) {
       case 'premium':
       case 'enterprise':
         return 30000; // 30 seconds
@@ -69,7 +69,7 @@ export function ProductionPredictionsPage() {
       setIsLoading(true);
       
       const { data, error } = await supabase.functions.invoke('whale-predictions', {
-        body: { userTier: userPlan }
+        body: { userTier: userPlan.plan }
       });
       
       if (error) throw error;
@@ -90,9 +90,9 @@ export function ProductionPredictionsPage() {
     let filtered = predictions;
     
     // Apply tier-based filtering
-    if (userPlan === 'free') {
+    if (userPlan.plan === 'free') {
       filtered = filtered.slice(0, 3); // Limit to 3 predictions
-    } else if (userPlan === 'pro') {
+    } else if (userPlan.plan === 'pro') {
       filtered = filtered.slice(0, 10); // Limit to 10 predictions
     }
     
@@ -158,15 +158,15 @@ export function ProductionPredictionsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium text-blue-900">
-                  {userPlan?.toUpperCase()} Plan Active
+                  {userPlan.plan?.toUpperCase()} Plan Active
                 </div>
                 <div className="text-sm text-blue-700">
                   Refresh rate: {getRefreshInterval() / 1000}s • 
-                  Predictions: {userPlan === 'free' ? '3' : userPlan === 'pro' ? '10' : 'Unlimited'} • 
-                  Features: {userPlan === 'free' ? 'Basic' : userPlan === 'pro' ? 'Advanced' : 'Enterprise'}
+                  Predictions: {userPlan.plan === 'free' ? '3' : userPlan.plan === 'pro' ? '10' : 'Unlimited'} • 
+                  Features: {userPlan.plan === 'free' ? 'Basic' : userPlan.plan === 'pro' ? 'Advanced' : 'Enterprise'}
                 </div>
               </div>
-              {userPlan === 'free' && (
+              {userPlan.plan === 'free' && (
                 <Button size="sm">
                   Upgrade for Real-time
                 </Button>

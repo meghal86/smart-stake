@@ -225,11 +225,22 @@ export function LiveChainDistribution({ holdings = [], totalValue }: LiveChainDi
           metricsService.trackFeatureUsage('modal_close', 1);
         }}
         chainSlice={selectedChain}
-        whaleEvents={whaleSimulator.generateWhaleEvents({
-          addresses: ['0x742d35Cc6634C0532925a3b8D4C9db4C532925a3'],
-          portfolioValue: totalValue,
-          holdings: holdings.map(h => ({ token: h.token, value: h.value }))
-        })}
+        whaleEvents={(() => {
+          const events = whaleSimulator.generateWhaleEvents({
+            addresses: ['0x742d35Cc6634C0532925a3b8D4C9db4C532925a3'],
+            portfolioValue: totalValue,
+            holdings: holdings.map(h => ({ token: h.token, value: h.value }))
+          });
+          return events.map(event => ({
+            id: event.id,
+            timestamp: event.timestamp,
+            type: event.type,
+            token: event.asset,
+            amount: event.amountUsd,
+            value: event.amountUsd,
+            impact: event.impactScore >= 7 ? 'high' as const : event.impactScore >= 4 ? 'medium' as const : 'low' as const
+          }));
+        })()}
       />
     </Card>
   );

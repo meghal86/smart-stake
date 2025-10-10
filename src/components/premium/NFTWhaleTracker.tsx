@@ -70,8 +70,24 @@ export const NFTWhaleTracker = () => {
         .select('*')
         .eq('is_monitored', true)
 
-      setNftTransactions(txData || [])
-      setCollections(collectionsData || [])
+      setNftTransactions((txData || []).map(tx => ({
+        ...tx,
+        contract_address: tx.contract_address || '',
+        is_whale_transaction: tx.is_whale_transaction ?? false,
+        whale_threshold_met: tx.whale_threshold_met || [],
+        transaction_type: (tx.transaction_type as 'sale' | 'transfer' | 'mint' | 'burn') || 'transfer',
+        marketplace: (tx.marketplace as 'opensea' | 'blur' | 'looksrare' | 'x2y2' | 'direct') || 'opensea',
+        price_eth: tx.price_eth ?? undefined,
+        price_usd: tx.price_usd ?? undefined
+      })))
+      setCollections((collectionsData || []).map(collection => ({
+        ...collection,
+        floor_price_eth: collection.floor_price_eth || 0,
+        volume_24h_eth: collection.volume_24h_eth || 0,
+        total_supply: collection.total_supply || 0,
+        is_monitored: collection.is_monitored ?? false,
+        whale_threshold_usd: collection.whale_threshold_usd || 0
+      })))
     } catch (error) {
       console.error('Error fetching NFT data:', error)
     } finally {
@@ -118,7 +134,7 @@ export const NFTWhaleTracker = () => {
   }
 
   const getMarketplaceBadge = (marketplace: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       opensea: 'bg-blue-100 text-blue-800',
       blur: 'bg-orange-100 text-orange-800',
       looksrare: 'bg-green-100 text-green-800',

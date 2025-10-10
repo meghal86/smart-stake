@@ -50,7 +50,7 @@ export function ScenarioHistory({ onRerun, onCompare }: ScenarioHistoryProps) {
       let query = supabase
         .from('scenarios')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .order('updated_at', { ascending: false });
 
       if (filters.asset !== 'all') {
@@ -60,7 +60,13 @@ export function ScenarioHistory({ onRerun, onCompare }: ScenarioHistoryProps) {
       const { data, error } = await query;
       if (error) throw error;
 
-      setScenarios(data || []);
+      setScenarios((data || []).map(scenario => ({
+        ...scenario,
+        created_at: scenario.created_at || new Date().toISOString(),
+        updated_at: scenario.updated_at || new Date().toISOString(),
+        inputs: scenario.inputs || {},
+        last_result: scenario.last_result || null
+      })));
     } catch (error) {
       console.error('Failed to fetch scenario history:', error);
     } finally {

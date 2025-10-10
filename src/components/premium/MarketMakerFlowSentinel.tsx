@@ -56,8 +56,20 @@ export const MarketMakerFlowSentinel = () => {
         .order('created_at', { ascending: false })
         .limit(20)
 
-      setFlows(flowsData || [])
-      setSignals(signalsData || [])
+      setFlows((flowsData || []).map(flow => ({
+        ...flow,
+        flow_type: (flow.flow_type as 'inbound' | 'outbound' | 'rebalance') || 'inbound',
+        signal_strength: (flow.signal_strength as 'weak' | 'moderate' | 'strong') || 'weak',
+        confidence_score: flow.confidence_score || 0,
+        market_impact_prediction: flow.market_impact_prediction || 0
+      })))
+      setSignals((signalsData || []).map(signal => ({
+        ...signal,
+        flow_id: signal.flow_id || '',
+        signal_type: (signal.signal_type as 'accumulation' | 'distribution' | 'arbitrage' | 'liquidation') || 'accumulation',
+        predicted_price_impact: signal.predicted_price_impact || 0,
+        reasoning: Array.isArray(signal.reasoning) ? signal.reasoning.map(r => String(r)) : []
+      })))
     } catch (error) {
       console.error('Error fetching MM flows:', error)
     } finally {

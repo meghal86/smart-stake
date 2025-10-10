@@ -42,10 +42,17 @@ export const MultiChannelAlerts = () => {
       const { data } = await supabase
         .from('alert_channels')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
 
-      setChannels(data || [])
+      setChannels((data || []).map(channel => ({
+        ...channel,
+        user_id: channel.user_id || '',
+        channel_type: (channel.channel_type as 'push' | 'email' | 'webhook' | 'sms') || 'email',
+        is_active: channel.is_active ?? true,
+        subscription_tier_required: (channel.subscription_tier_required as 'free' | 'premium' | 'enterprise') || 'premium',
+        settings: (typeof channel.settings === 'object' && channel.settings !== null) ? channel.settings as Record<string, any> : {}
+      })))
     } catch (error) {
       console.error('Error fetching alert channels:', error)
     }
@@ -59,13 +66,20 @@ export const MultiChannelAlerts = () => {
         .from('alert_channels')
         .insert({
           ...newChannel,
-          user_id: user?.id
+          user_id: user!.id
         })
         .select()
         .single()
 
       if (!error) {
-        setChannels(prev => [data, ...prev])
+        setChannels(prev => [{
+          ...data,
+          user_id: data.user_id || '',
+          channel_type: (data.channel_type as 'push' | 'email' | 'webhook' | 'sms') || 'email',
+          is_active: data.is_active ?? true,
+          subscription_tier_required: (data.subscription_tier_required as 'free' | 'premium' | 'enterprise') || 'premium',
+          settings: (typeof data.settings === 'object' && data.settings !== null) ? data.settings as Record<string, any> : {}
+        }, ...prev])
         setNewChannel({ channel_type: 'email', endpoint: '', subscription_tier_required: 'premium' })
         setShowAddChannel(false)
       }
@@ -103,8 +117,8 @@ export const MultiChannelAlerts = () => {
   }
 
   const canAccessChannel = (requiredTier: string) => {
-    const tiers = { free: 0, premium: 1, enterprise: 2 }
-    return tiers[userPlan.plan] >= tiers[requiredTier]
+    const tiers: Record<string, number> = { free: 0, guest: 0, pro: 1, premium: 1, enterprise: 2 }
+    return (tiers[userPlan.plan] || 0) >= (tiers[requiredTier] || 0)
   }
 
   const getChannelIcon = (type: string) => {
