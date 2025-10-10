@@ -13,7 +13,7 @@ type Props = ComponentProps<typeof Link> & {
 export function NavLink({ href, icon, label, activeMatch, className, ...rest }: Props) {
   const pathname = usePathname()
   const isActive = activeMatch
-    ? pathname.startsWith(activeMatch)
+    ? pathname?.startsWith(activeMatch)
     : pathname === href
 
   return (

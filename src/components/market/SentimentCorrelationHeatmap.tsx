@@ -80,7 +80,7 @@ export function SentimentCorrelationHeatmap({ coins }: SentimentCorrelationHeatm
     </svg>
   );
 
-  if (userPlan.plan === 'free') {
+  if (userPlan.plan === 'free' || userPlan.plan === 'guest') {
     return (
       <Card className="p-6 text-center">
         <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -203,7 +203,7 @@ export function SentimentCorrelationHeatmap({ coins }: SentimentCorrelationHeatm
       </Card>
 
       {/* Premium Upsell for Desktop - Only show for non-premium users */}
-      {userPlan.plan === 'free' && (
+      {(userPlan.plan === 'free' || userPlan.plan === 'guest') && (
         <Card className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
           <div className="text-center">
             <Lock className="h-8 w-8 mx-auto mb-3 text-amber-500" />

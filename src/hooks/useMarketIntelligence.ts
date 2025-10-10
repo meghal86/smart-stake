@@ -6,12 +6,24 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import type { 
   MarketSummary, 
   WhaleCluster, 
-  Alert, 
   AlertFilters, 
-  AlertStream,
-  WatchlistItem,
-  ExportRequest 
+  AlertsStream,
+  ProcessedAlert
 } from '@/types/market-intelligence';
+
+interface WatchlistItem {
+  id: string;
+  entity_type: 'address' | 'token' | 'cluster';
+  entity_id: string;
+  label?: string;
+  created_at: string;
+}
+
+interface ExportRequest {
+  type: 'alerts' | 'clusters' | 'watchlist';
+  format: 'csv' | 'json';
+  filters?: any;
+}
 
 // Market Summary Hook
 export function useMarketSummary() {
@@ -62,7 +74,7 @@ export function useAlertsStream(filters?: AlertFilters) {
   
   return useQuery({
     queryKey: ['alerts', 'stream', filters],
-    queryFn: async (): Promise<AlertStream> => {
+    queryFn: async (): Promise<AlertsStream> => {
       let query = supabase
         .from('alert_events')
         .select(`
@@ -85,26 +97,30 @@ export function useAlertsStream(filters?: AlertFilters) {
       const { data: alertEvents, error } = await query;
       if (error) throw error;
 
-      const alerts = alertEvents?.map(event => ({
+      const alerts: ProcessedAlert[] = alertEvents?.map(event => ({
         id: event.id,
-        timestamp: event.created_at,
-        chain: event.trigger_data?.chain || 'ETH',
-        token: event.trigger_data?.token || 'USDT',
-        usdAmount: event.trigger_data?.amount || 0,
-        fromEntity: event.trigger_data?.from || 'Unknown',
-        toEntity: event.trigger_data?.to || 'Unknown',
-        severity: event.trigger_data?.severity || 'Info',
-        score: event.trigger_data?.score || 0,
-        reasons: event.trigger_data?.reasons || [],
-        clusterId: event.trigger_data?.clusterId,
-        isRead: event.is_read
+        ts: event.created_at,
+        chain: (event.trigger_data as any)?.chain || 'ETH',
+        token: (event.trigger_data as any)?.token || 'USDT',
+        usd: (event.trigger_data as any)?.amount || 0,
+        cluster: (event.trigger_data as any)?.clusterId || 'unknown',
+        severity: (event.trigger_data as any)?.severity || 'Info',
+        impactScore: (event.trigger_data as any)?.score || 0,
+        confidence: 0.8,
+        reasons: (event.trigger_data as any)?.reasons || [],
+        threadKey: `${event.id}`,
+        isRead: event.is_read || false,
+        score: (event.trigger_data as any)?.score || 0
       })) || [];
 
       return {
         alerts,
-        cursor: alerts.length > 0 ? alerts[alerts.length - 1].timestamp : null,
+        cursor: alerts.length > 0 ? alerts[alerts.length - 1].ts : null,
         hasMore: alerts.length === 50,
-        totalCount: alerts.length
+        keepRate: 1.0,
+        totalProcessed: alerts.length,
+        totalKept: alerts.length,
+        filters: filters || { severity: 'All', minUsd: '0', chain: 'All', watchlistOnly: false }
       };
     },
     enabled: !!user,

@@ -11,7 +11,7 @@ type Props = ComponentProps<typeof Link> & {
 
 export function NavLink5({ href, icon, label, activeMatch, className, ...rest }: Props) {
   const pathname = usePathname();
-  const isActive = activeMatch ? pathname.startsWith(activeMatch) : pathname === href;
+  const isActive = activeMatch ? pathname?.startsWith(activeMatch) : pathname === href;
 
   return (
     <Link

@@ -8,6 +8,7 @@ export type FeatureFlag =
   | 'lite_header_rotate_motto'
   | 'custom_kpi_cards'
   | 'oneClickTrade'
+  | 'mobile_widgets'
 
 // Client-safe defaults
 const getEnvFlag = (key: string, defaultValue: boolean): boolean => {
@@ -25,11 +26,12 @@ const envFlags: Record<FeatureFlag, boolean> = {
   lite_header_rotate_motto: getEnvFlag('NEXT_PUBLIC_FF_LITE_HEADER_ROTATE_MOTTO', false),
   custom_kpi_cards: getEnvFlag('NEXT_PUBLIC_FF_CUSTOM_KPI_CARDS', false),
   oneClickTrade: getEnvFlag('NEXT_PUBLIC_FF_ONE_CLICK_TRADE', false),
+  mobile_widgets: getEnvFlag('NEXT_PUBLIC_FF_MOBILE_WIDGETS', false),
 }
 
 let flagCache: Record<string, boolean> = {}
 
-export async function isFeatureEnabled(flag: FeatureFlag): boolean {
+export async function isFeatureEnabled(flag: FeatureFlag): Promise<boolean> {
   if (flagCache[flag] !== undefined) {
     return flagCache[flag]
   }
