@@ -66,7 +66,37 @@ export type TelemetryEvent =
   | 'signal_expanded'
   | 'action_row_clicked'
   | 'microticker_refreshed'
-  | 'tab_switch';
+  | 'tab_switch'
+  // Discovery & ROI events
+  | 'card_click'
+  | 'tip_shown'
+  | 'tip_dismissed'
+  | 'digest_toggle'
+  | 'digest_confidence_view'
+  | 'cta_click'
+  | 'streak_celebrate'
+  | 'cta_micro_pulse'
+  | 'upgrade_click'
+  | 'create_alert'
+  | 'follow_asset'
+  | 'portfolio_toggle'
+  | 'kpis_trend_rendered'
+  | 'kpi_delta_noise_filtered'
+  | 'kpis_source_type'
+  | 'kpi_cache_hit'
+  | 'kpi_manual_refresh'
+  | 'kpis_hover_detail'
+  | 'kpi_action'
+  | 'header_view'
+  | 'header_click'
+  | 'nav_floating_back'
+  | 'tooltip_open'
+  | 'header_motto_rendered'
+  | 'signal_pattern_clicked'
+  | 'signals_back_clicked'
+  | 'signals_create_alert_clicked'
+  | 'signals_tab_changed'
+  | 'execute_roi_query';
 
 export interface TelemetryProperties {
   [key: string]: string | number | boolean | undefined;

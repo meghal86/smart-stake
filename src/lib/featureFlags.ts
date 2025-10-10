@@ -48,3 +48,5 @@ export async function isFeatureEnabled(flag: FeatureFlag): boolean {
 export function getFeatureFlag(key: string): Promise<boolean> {
   return isFeatureEnabled(key as FeatureFlag)
 }
+
+export type Plan = 'free' | 'pro' | 'premium' | 'enterprise'

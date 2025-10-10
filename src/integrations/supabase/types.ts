@@ -231,6 +231,45 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_rules: {
+        Row: {
+          id: string
+          name: string
+          conditions: Json
+          logic_operator: string
+          delivery_channels: string[]
+          is_active: boolean
+          last_triggered_at: string | null
+          times_triggered: number
+          created_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          conditions: Json
+          logic_operator: string
+          delivery_channels: string[]
+          is_active?: boolean
+          last_triggered_at?: string | null
+          times_triggered?: number
+          created_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          conditions?: Json
+          logic_operator?: string
+          delivery_channels?: string[]
+          is_active?: boolean
+          last_triggered_at?: string | null
+          times_triggered?: number
+          created_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alert_deliveries: {
         Row: {
           alert_id: string
@@ -2941,6 +2980,123 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          email: string | null
+          plan_tier: string | null
+          avatar_url: string | null
+          ui_mode: string | null
+          streak_count: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email?: string | null
+          plan_tier?: string | null
+          avatar_url?: string | null
+          ui_mode?: string | null
+          streak_count?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email?: string | null
+          plan_tier?: string | null
+          avatar_url?: string | null
+          ui_mode?: string | null
+          streak_count?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      whale_digest: {
+        Row: {
+          id: string
+          user_id: string | null
+          asset: string
+          severity: string
+          amount_usd: number | null
+          event_time: string
+          source: string
+          summary: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          asset: string
+          severity: string
+          amount_usd?: number | null
+          event_time: string
+          source: string
+          summary: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          asset?: string
+          severity?: string
+          amount_usd?: number | null
+          event_time?: string
+          source?: string
+          summary?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      token_unlocks: {
+        Row: {
+          id: string
+          token: string
+          unlock_time: string
+          amount_usd: number
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          token: string
+          unlock_time: string
+          amount_usd: number
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          token?: string
+          unlock_time?: string
+          amount_usd?: number
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      entitlement_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          event_type: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          event_type: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          event_type?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       wallet_annotations: {
         Row: {
           annotation: string
@@ -3717,6 +3873,16 @@ export type Database = {
           p_expected_impact: number
         }
         Returns: boolean
+      }
+      execute_roi_query: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      search_whale_signals: {
+        Args: {
+          query_text: string
+        }
+        Returns: Json
       }
     }
     Enums: {

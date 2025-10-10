@@ -5,7 +5,8 @@ const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
   lite_home_default: true,
   signals_on_home: true,
   ai_copilot_card: true,
-  watchlist_v2: false
+  watchlist_v2: false,
+  lite_header_rotate_motto: false
 }
 
 let flagCache: Record<FeatureFlag, boolean> = {}
@@ -16,7 +17,7 @@ export function useFeatureFlags() {
 
   useEffect(() => {
     const loadFlags = async () => {
-      const flagKeys: FeatureFlag[] = ['lite_home_default', 'signals_on_home', 'ai_copilot_card', 'watchlist_v2']
+      const flagKeys: FeatureFlag[] = ['lite_home_default', 'signals_on_home', 'ai_copilot_card', 'watchlist_v2', 'lite_header_rotate_motto']
       const loadedFlags: Record<FeatureFlag, boolean> = { ...DEFAULT_FLAGS }
       
       for (const key of flagKeys) {
