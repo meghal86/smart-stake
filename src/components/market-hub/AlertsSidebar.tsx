@@ -187,7 +187,7 @@ export function AlertsSidebar({
                 key={alert.id}
                 alert={alert}
                 isSelected={selectedAlert === alert.id}
-                onClick={() => onAlertSelect(alert.id)}
+                onClick={() => handleAlertSelect(alert.id)}
               />
             ))}
           </div>
@@ -225,21 +225,21 @@ export function AlertsSidebar({
                 subtitle="$50M wallet activated"
                 time="2 hours ago"
                 severity="High"
-                onClick={() => onAlertSelect('anchor_1')}
+                onClick={() => handleAlertSelect('anchor_1')}
               />
               <AnchorAlert 
                 title="Large CEX outflow"
                 subtitle="Binance → Unknown"
                 time="6 hours ago"
                 severity="Medium"
-                onClick={() => onAlertSelect('anchor_2')}
+                onClick={() => handleAlertSelect('anchor_2')}
               />
               <AnchorAlert 
                 title="DeFi whale activity"
                 subtitle="Uniswap V3 position"
                 time="1 day ago"
                 severity="Low"
-                onClick={() => onAlertSelect('anchor_3')}
+                onClick={() => handleAlertSelect('anchor_3')}
               />
               <Button 
                 variant="ghost" 

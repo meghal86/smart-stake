@@ -1,5 +1,5 @@
 export type Confidence = 'low'|'med'|'high';
-export type Source = 'etherscan'|'coingecko'|'defillama'|'simulated'|'internal';
+export type Source = 'etherscan'|'coingecko'|'defillama'|'simulated'|'internal'|'live';
 
 export interface SignalEvent {
   id: string;

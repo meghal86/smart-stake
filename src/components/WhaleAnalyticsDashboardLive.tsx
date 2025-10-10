@@ -135,7 +135,7 @@ const fetchMetrics = async (): Promise<MarketMetrics> => {
       .gte('ts', yesterday)
       .not('value_usd', 'is', null);
     
-    const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(String(t.value_usd)), 0) / 1000000 || 0;
+    const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(String(t.value_usd || 0)), 0) / 1000000 || 0;
     
     const { count: activeWhales } = await supabase
       .from('whale_balances')
@@ -426,6 +426,9 @@ const WhaleAnalyticsDashboard: React.FC = () => {
         ]);
         setWhales(whaleData || []);
         setMetrics(metricsData || { volume24h: 0, activeWhales: 0, riskAlerts: 0, topSignals: [] });
+        if (whaleData && whaleData.length === 0) {
+          setError('No whale data found in database');
+        }
         if (whaleData.length === 0) {
           setError('No whale data found in database');
         }

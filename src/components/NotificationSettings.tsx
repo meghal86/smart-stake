@@ -110,7 +110,7 @@ export const NotificationSettings = () => {
       
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || undefined
       });
 
       // Save subscription to database (skip if table doesn't exist)
@@ -155,10 +155,12 @@ export const NotificationSettings = () => {
 
       // Remove from database (skip if table doesn't exist)
       try {
-        await supabase
-          .from('push_subscriptions')
-          .update({ active: false })
-          .eq('user_id', user?.id);
+        if (user?.id) {
+          await supabase
+            .from('push_subscriptions')
+            .update({ active: false })
+            .eq('user_id', user.id);
+        }
       } catch (dbError) {
         console.log('Push unsubscription handled locally (DB not available)');
       }

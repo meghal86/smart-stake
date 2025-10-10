@@ -72,8 +72,8 @@ export const UserHeader = () => {
         }
       } else if (data && data.length > 0) {
         const userData = data[0];
-        setUserPlan(userData.plan);
-        setActualPlan(userData.plan);
+        setUserPlan(userData.plan || 'free');
+        setActualPlan(userData.plan || 'free');
       } else {
         const { error: insertError } = await supabase
           .from('users')
@@ -424,6 +424,8 @@ export const UserHeader = () => {
         onTimeframeChange={(value) => handleFilterChange('timeframe', value)}
         onChainChange={(value) => handleFilterChange('chain', value)}
         onSearchChange={(value) => handleFilterChange('search', value)}
+        activeView={searchParams.get('tab') || 'overview'}
+        onViewChange={(view) => navigate(`/?tab=${view}`)}
       />
     </>
   );
