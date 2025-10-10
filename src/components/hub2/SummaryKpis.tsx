@@ -16,7 +16,7 @@ export default function SummaryKpis({ window, className }: SummaryKpisProps) {
     queryKey: ['hub2', 'summary', window],
     queryFn: () => fetchSummaryKpis(window),
     staleTime: 30_000,
-    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -56,8 +56,8 @@ export default function SummaryKpis({ window, className }: SummaryKpisProps) {
     );
   }
 
-  const whalePressure = data.whalePressure.score;
-  const sentiment = data.marketSentiment;
+  const whalePressure = data.whalePressure?.score || 0;
+  const sentiment = data.marketSentiment || 50;
   const riskIndex = data.marketRisk?.score || 50;
 
   const getWhalePressureStatus = () => {
@@ -90,7 +90,7 @@ export default function SummaryKpis({ window, className }: SummaryKpisProps) {
         subtitle={`(${whalePressure.toFixed(0)})`}
         badge={whalePressureStatus.label}
         badgeColor={whalePressureStatus.color}
-        tooltip={`Whales are ${data.whalePressure.direction === 'inflow' ? 'moving money into' : 'moving money out of'} exchanges. This usually means they're preparing to ${whalePressureStatus.text.toLowerCase()}. Based on ${window} whale transactions over $500K.`}
+        tooltip={`Whales are ${data.whalePressure?.direction === 'inflow' ? 'moving money into' : 'moving money out of'} exchanges. This usually means they're preparing to ${whalePressureStatus.text.toLowerCase()}. Based on ${window} whale transactions over $500K.`}
         lastUpdated="2min ago"
         icon={<Activity className="w-5 h-5 text-cyan-400" />}
       />

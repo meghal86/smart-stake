@@ -83,7 +83,7 @@ export default function StarButton({
   
   return (
     <Button
-      size={size}
+      size={size === 'md' ? 'default' : size}
       variant={variant}
       onClick={handleClick}
       disabled={addMutation.isPending || removeMutation.isPending || isOptimistic}

@@ -123,9 +123,9 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
               {signal.delta !== undefined && (
                 <div className={cn(
                   "text-kpi",
-                  signal.delta >= 0 ? "text-green-600" : "text-red-600"
+                  (signal.delta || 0) >= 0 ? "text-green-600" : "text-red-600"
                 )}>
-                  {signal.delta >= 0 ? '+' : ''}{signal.delta}
+                  {(signal.delta || 0) >= 0 ? '+' : ''}{signal.delta}
                 </div>
               )}
             </div>
@@ -141,7 +141,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
             <div 
               className={cn(
                 "h-2 rounded-full transition-all duration-500",
-                signal.delta >= 0 ? "bg-green-500" : "bg-red-500"
+                (signal.delta || 0) >= 0 ? "bg-green-500" : "bg-red-500"
               )}
               style={{ 
                 width: `${Math.min(Math.abs(signal.delta || 0) * 10, 100)}%` 
