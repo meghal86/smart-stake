@@ -23,7 +23,7 @@ export function AIDigestNovice() {
     
     setIsLoading(true)
     setActiveQuery(type)
-    trackEvent('card_click', { id: 'ai_digest', query_type: type })
+    trackEvent('card_click', { id: 'ai_digest', query_type: type as string })
 
     // Simulate API call
     setTimeout(() => {

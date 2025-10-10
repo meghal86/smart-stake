@@ -19,10 +19,10 @@ export default function StreakCard() {
       }
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('streak_count, last_seen_date')
+        .select('streak_count')
         .eq('id', session.user.id)
         .single()
-      setStreak(profile || { streak_count: 0 })
+      setStreak(profile as Streak || { streak_count: 0 })
     }
     loadStreak()
   }, [])

@@ -125,7 +125,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
                   "text-kpi",
                   (signal.delta || 0) >= 0 ? "text-green-600" : "text-red-600"
                 )}>
-                  {(signal.delta || 0) >= 0 ? '+' : ''}{signal.delta}
+                  {(signal.delta || 0) >= 0 ? '+' : ''}{signal.delta ?? 0}
                 </div>
               )}
             </div>
@@ -163,7 +163,7 @@ export default function SignalCard({ signal, onAction, className }: SignalCardPr
                 data={sparklineData}
                 width={40}
                 height={12}
-                color={signal.delta >= 0 ? "#10b981" : "#ef4444"}
+                color={(signal.delta ?? 0) >= 0 ? "#10b981" : "#ef4444"}
                 animated={true}
               />
             </motion.div>

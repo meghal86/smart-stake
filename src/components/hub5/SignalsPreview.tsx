@@ -61,15 +61,17 @@ export function SignalsPreview() {
     id: alert.id,
     type: 'cex_outflow',
     entity: {
+      kind: 'asset',
+      id: alert.wallet,
       name: alert.token,
       symbol: alert.token,
-      address: alert.wallet,
     },
     ts: alert.timestamp,
     confidence: 'high',
     impactUsd: alert.amountUsd,
     delta: -5.2,
     reasonCodes: ['large_volume', 'whale_activity'],
+    source: 'live',
   })
 
   const handleViewAll = () => {

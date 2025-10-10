@@ -424,8 +424,8 @@ const WhaleAnalyticsDashboard: React.FC = () => {
           fetchWhaleData(),
           fetchMetrics()
         ]);
-        setWhales(whaleData);
-        setMetrics(metricsData);
+        setWhales(whaleData || []);
+        setMetrics(metricsData || { volume24h: 0, activeWhales: 0, riskAlerts: 0, topSignals: [] });
         if (whaleData.length === 0) {
           setError('No whale data found in database');
         }

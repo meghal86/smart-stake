@@ -88,13 +88,13 @@ export default function RiskToday({
             <circle cx="32" cy="32" r="28" className="stroke-slate-200 dark:stroke-white/10" strokeWidth="8" fill="none" />
             <circle
               cx="32" cy="32" r="28" strokeWidth="8" fill="none"
-              className={cn('transition-all duration-500 ease-out', color.ring)}
+              className={cn('transition-all duration-500 ease-out', color?.ring)}
               strokeDasharray={`${dash} ${circumference - dash}`}
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute inset-0 grid place-items-center">
-            <span className={cn('text-sm font-semibold', color.text)}>
+            <span className={cn('text-sm font-semibold', color?.text)}>
               {band.label}
             </span>
           </div>
@@ -149,7 +149,7 @@ export default function RiskToday({
             className={cn(
               'shrink-0 rounded-full px-3 py-1.5 text-sm font-medium',
               'focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900',
-              color.cta
+              color?.cta
             )}
             aria-label="Set price alert"
           >

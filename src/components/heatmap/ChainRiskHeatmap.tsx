@@ -85,7 +85,7 @@ export function ChainRiskHeatmap({ data, timeWindow, mobile }: ChainRiskHeatmapP
     return data?.chains?.find((c: ChainData) => c.chain === chain.toUpperCase()) || { 
       chain: chain.toUpperCase(), 
       risk: null, 
-      components: null 
+      components: undefined 
     };
   };
 
