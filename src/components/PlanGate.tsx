@@ -11,7 +11,7 @@ interface PlanGateProps {
 export function PlanGate({ min = 'pro', children, feature }: PlanGateProps) {
   const { userPlan } = useSubscription();
   
-  const planHierarchy = { free: 0, pro: 1, premium: 2, enterprise: 3 };
+  const planHierarchy = { free: 0, guest: 0, pro: 1, premium: 2, enterprise: 3 };
   const userLevel = planHierarchy[userPlan.plan] || 0;
   const requiredLevel = planHierarchy[min];
   

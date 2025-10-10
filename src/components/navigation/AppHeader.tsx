@@ -37,7 +37,7 @@ export function AppHeader() {
     logEvent('tour_help_clicked', {})
   }
 
-  const isPro = tier === 'pro' || tier === 'premium' || tier === 'institutional'
+  const isPro = tier === 'pro' || tier === 'premium' || tier === 'enterprise'
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/40 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">

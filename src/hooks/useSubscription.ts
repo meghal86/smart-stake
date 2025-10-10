@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UserPlan {
-  plan: 'free' | 'pro' | 'premium' | 'enterprise';
+  plan: 'free' | 'pro' | 'premium' | 'enterprise' | 'guest';
   subscribed: boolean;
   subscription_end?: string;
 }
@@ -35,7 +35,7 @@ export const useSubscription = () => {
       console.log('Current user plan from database:', userData.plan);
 
       // Map plan names to match Stripe pricing
-      let mappedPlan: 'free' | 'pro' | 'premium' | 'enterprise' = 'free';
+      let mappedPlan: 'free' | 'pro' | 'premium' | 'enterprise' | 'guest' = 'free';
       if (userData.plan === 'premium-monthly' || userData.plan === 'pro') {
         mappedPlan = 'pro';
       } else if (userData.plan === 'premium-yearly' || userData.plan === 'premium' || userData.plan === 'premier-plus') {
@@ -87,6 +87,7 @@ export const useSubscription = () => {
     const plan = user ? userPlan.plan : 'free';
     const limits = {
       free: { whaleAlertsPerDay: 50, whaleAnalyticsLimit: 10, walletScansPerDay: 1, watchlistLimit: 3, yieldsLimit: 20, realTimeAlerts: false, exportData: false, apiAccess: false, advancedFilters: false },
+      guest: { whaleAlertsPerDay: 10, whaleAnalyticsLimit: 5, walletScansPerDay: 0, watchlistLimit: 0, yieldsLimit: 5, realTimeAlerts: false, exportData: false, apiAccess: false, advancedFilters: false },
       pro: { whaleAlertsPerDay: 500, whaleAnalyticsLimit: -1, walletScansPerDay: -1, watchlistLimit: -1, yieldsLimit: -1, realTimeAlerts: true, exportData: true, apiAccess: false, advancedFilters: true },
       premium: { whaleAlertsPerDay: -1, whaleAnalyticsLimit: -1, walletScansPerDay: -1, watchlistLimit: -1, yieldsLimit: -1, realTimeAlerts: true, exportData: true, apiAccess: true, advancedFilters: true },
       enterprise: { whaleAlertsPerDay: -1, whaleAnalyticsLimit: -1, walletScansPerDay: -1, watchlistLimit: -1, yieldsLimit: -1, realTimeAlerts: true, exportData: true, apiAccess: true, advancedFilters: true }

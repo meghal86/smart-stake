@@ -111,7 +111,8 @@ export function MobileSentimentCorrelation({ coins }: MobileSentimentCorrelation
     </svg>
   );
 
-  if (userPlan.plan === 'free' || userPlan.plan === 'guest') {
+  const isFreeTier = userPlan.plan === 'free' || userPlan.plan === 'guest';
+  if (isFreeTier) {
     return (
       <Card className="p-6 text-center">
         <Crown className="h-12 w-12 mx-auto mb-4 text-amber-500" />
@@ -311,7 +312,7 @@ export function MobileSentimentCorrelation({ coins }: MobileSentimentCorrelation
       )}
 
       {/* Premium Upsell - Only show for non-premium users */}
-      {(userPlan.plan === 'free' || userPlan.plan === 'guest') && (
+      {isFreeTier && (
         <Card className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
           <div className="text-center">
             <Crown className="h-8 w-8 mx-auto mb-3 text-amber-500" />

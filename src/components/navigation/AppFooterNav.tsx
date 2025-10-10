@@ -7,8 +7,8 @@ import { trackEvent } from '@/lib/telemetry'
 import { useGate } from '@/hooks/useGate'
 
 const tabs = [
-  { id: 'home', label: 'Home', icon: Home, href: '/' },
-  { id: 'explore', label: 'Explore', icon: Search, href: '/signals' },
+  { id: 'home', label: 'Home', icon: Home, href: '/', gated: undefined },
+  { id: 'explore', label: 'Explore', icon: Search, href: '/signals', gated: undefined },
   { id: 'alerts', label: 'Alerts', icon: Bell, href: '/alerts', gated: 'alerts_advanced' },
   { id: 'watch', label: 'Watch', icon: Eye, href: '/portfolio', gated: 'watchlist' },
   { id: 'ai', label: 'AI', icon: Brain, href: '/hub2', gated: 'api_access' }
@@ -20,7 +20,7 @@ export function AppFooterNav() {
   const pathname = location.pathname
   const { canAccess, showUpgrade } = useGate()
 
-  const handleTabClick = (tab: typeof tabs[0]) => {
+  const handleTabClick = (tab: typeof tabs[number]) => {
     trackEvent('card_click', { id: 'footer_nav', tab: tab.id })
 
     if (tab.gated && !canAccess(tab.gated)) {
@@ -38,7 +38,7 @@ export function AppFooterNav() {
     }
   }
 
-  const isActive = (tab: typeof tabs[0]) => {
+  const isActive = (tab: typeof tabs[number]) => {
     if (tab.id === 'home') return pathname === '/'
     if (tab.id === 'explore') return pathname === '/signals'
     return pathname.startsWith(tab.href.split('#')[0])
