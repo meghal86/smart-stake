@@ -274,7 +274,7 @@ export function MarketIntelligenceHub() {
             <Card className="p-3 mb-4 bg-primary/5">
               <h3 className="font-medium text-sm mb-2">AI Digest - Last 24h</h3>
               <ul className="space-y-1">
-                {aiDigest.map((item, i) => (
+                {aiDigest.map((item: string, i: number) => (
                   <li key={i} className="text-xs text-muted-foreground">• {item}</li>
                 ))}
               </ul>
@@ -320,7 +320,7 @@ export function MarketIntelligenceHub() {
                   </Card>
                 ))
               ) : (
-                groupedAlerts.map((group) => (
+                groupedAlerts.map((group: { key: string; title: string; count: number; alerts: ProcessedAlert[]; severity: string }) => (
                   <Card key={group.key} className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium text-sm">{group.title}</h4>
