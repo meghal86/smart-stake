@@ -113,13 +113,17 @@ export const CustomAlertCreator = ({ whaleAddress }: { whaleAddress?: string }) 
         .from('alert_rules')
         .insert({
           user_id: (await supabase.auth.getUser()).data.user?.id,
+          name: `${config.type} Alert`,
+          conditions: [{
+            type: 'amount',
+            operator: 'gte',
+            value: config.threshold
+          }],
+          logic_operator: 'AND',
+          delivery_channels: { [config.deliveryMethod]: true },
           whale_address: config.whaleAddress,
-          alert_type: config.type,
-          threshold_value: config.threshold,
-          cooldown_minutes: config.cooldown,
           hysteresis_percent: config.hysteresis,
-          delivery_method: config.deliveryMethod,
-          active: true
+          is_active: true
         });
 
       if (error) throw error;

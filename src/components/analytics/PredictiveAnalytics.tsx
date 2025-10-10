@@ -30,12 +30,12 @@ interface SimulationScenario {
 }
 
 export const PredictiveAnalytics = () => {
-  const [models, setModels] = useState([]);
+  const [models, setModels] = useState<any[]>([]);
   const [predictions, setPredictions] = useState<WhaleBehaviorPrediction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [simulationResult, setSimulationResult] = useState(null);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
   const [simulationLoading, setSimulationLoading] = useState(false);
-  const [showAccuracyDetails, setShowAccuracyDetails] = useState(null);
+  const [showAccuracyDetails, setShowAccuracyDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('predictions');
   const [simulationParams, setSimulationParams] = useState<SimulationScenario>({
     whaleCount: 5,
@@ -55,10 +55,10 @@ export const PredictiveAnalytics = () => {
       const { data, error } = await supabase.functions.invoke('ml-predictions');
       if (error) throw error;
       
-      const uniqueModels = data.models?.reduce((acc, model) => {
-        const existing = acc.find(m => m.type === model.type);
+      const uniqueModels = data.models?.reduce((acc: any[], model: any) => {
+        const existing = acc.find((m: any) => m.type === model.type);
         if (!existing || new Date(model.last_trained) > new Date(existing.last_trained)) {
-          return [...acc.filter(m => m.type !== model.type), model];
+          return [...acc.filter((m: any) => m.type !== model.type), model];
         }
         return acc;
       }, []) || [];
@@ -118,7 +118,7 @@ export const PredictiveAnalytics = () => {
     }
   };
 
-  const getIconForType = (type) => {
+  const getIconForType = (type: string) => {
     switch (type) {
       case 'clustering': return <Target className="h-4 w-4" />;
       case 'liquidation': return <TrendingDown className="h-4 w-4" />;
@@ -127,7 +127,7 @@ export const PredictiveAnalytics = () => {
     }
   };
 
-  const getColorForType = (type) => {
+  const getColorForType = (type: string) => {
     switch (type) {
       case 'clustering': return 'text-orange-600';
       case 'liquidation': return 'text-red-600';

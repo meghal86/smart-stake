@@ -107,7 +107,7 @@ const fetchWhaleData = async (): Promise<WhaleData[]> => {
         address: whale.address.slice(0, 10) + '...' + whale.address.slice(-6),
         fullAddress: whale.address,
         label: `Whale ${index + 1}`,
-        balance: parseFloat(whale.balance) || 0,
+        balance: parseFloat(String(whale.balance)) || 0,
         balanceUsd: whale.balance_usd || 0,
         riskScore: signal?.risk_score || 50,
         recentActivity,
@@ -135,7 +135,7 @@ const fetchMetrics = async (): Promise<MarketMetrics> => {
       .gte('ts', yesterday)
       .not('value_usd', 'is', null);
     
-    const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(t.value_usd), 0) / 1000000 || 0;
+    const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(String(t.value_usd)), 0) / 1000000 || 0;
     
     const { count: activeWhales } = await supabase
       .from('whale_balances')
