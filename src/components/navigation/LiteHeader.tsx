@@ -23,9 +23,11 @@ export default function LiteHeader({
         <div className="flex items-center justify-between">
           {/* Logo & Motto */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">🐋</span>
-            </div>
+            <img 
+              src="/hero_logo_512.png" 
+              alt="AlphaWhale" 
+              className="w-8 h-8"
+            />
             <div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
                 AlphaWhale

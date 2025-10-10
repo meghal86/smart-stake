@@ -9,7 +9,8 @@ export default defineConfig({
   ],
   define: {
     'process.env': {},
-    'process': { env: {} }
+    'process': { env: {} },
+    '__HMR_CONFIG_NAME__': '"default"'
   },
   resolve: {
     alias: {

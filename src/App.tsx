@@ -59,6 +59,7 @@ import SignalsPage from "./pages/SignalsFeed";
 import TestWorldClass from "./pages/TestWorldClass";
 import WhaleSignalsPhaseD from "./pages/whale-signals/index";
 import PatternModalDemo from "./pages/PatternModalDemo";
+import { MyROI } from "./pages/insights/MyROI";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -175,9 +176,11 @@ const App = () => {
                   <Route path="/hub2/watchlist" element={<WatchlistPage />} />
                   <Route path="/hub2/copilot" element={<CopilotPage />} />
                   <Route path="/signals" element={<SignalsPage />} />
+                  <Route path="/signals-feed" element={<SignalsPage />} />
                   <Route path="/test-world-class" element={<TestWorldClass />} />
                   <Route path="/pattern-demo" element={<PatternModalDemo />} />
                   <Route path="/hub/whale-signals" element={<WhaleSignalsPhaseD />} />
+                  <Route path="/insights" element={<div className="p-6"><MyROI /></div>} />
                   {/* Unified Pro Signals - redirect old routes */}
                   <Route path="/whales" element={<SignalsPage />} />
                   <Route path="/whale-alerts" element={<SignalsPage />} />

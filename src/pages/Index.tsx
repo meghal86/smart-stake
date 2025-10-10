@@ -14,6 +14,10 @@ import PortfolioCompact from '@/components/hub5/PortfolioCompact'
 import KPITooltip from '@/components/ui/KPITooltip'
 import { EnhancedSummaryKpis } from '@/components/hub5/EnhancedSummaryKpis'
 import RiskToday from '@/components/kpi/RiskToday'
+import { DiscoveryTour } from '@/components/discovery/DiscoveryTour'
+import { FeatureBanner } from '@/components/discovery/FeatureBanner'
+import { SpotlightCarousel } from '@/components/discovery/SpotlightCarousel'
+import { BadgeNewPro } from '@/components/discovery/BadgeNewPro'
 import '../styles/theme.css'
 
 const Index = () => {
@@ -86,12 +90,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-20">
+      {/* Discovery Tour */}
+      <DiscoveryTour />
+      
       {/* 1. Global Header */}
-      <LiteGlobalHeader />
+      <div data-tour="header">
+        <LiteGlobalHeader />
+      </div>
       
       <main className="mx-auto max-w-7xl px-4 space-y-4" role="main">
+        {/* Feature Banner */}
+        <FeatureBanner />
+        
         {/* 2. Risk Today */}
-        <section aria-label="Risk Today">
+        <div data-tour="market-banner">
+        <section aria-label="Risk Today" className="relative">
           <RiskToday
             riskIndex={kpiData?.riskIndex || 57}
             volatilityPct={35}
@@ -102,6 +115,9 @@ const Index = () => {
             plan={userPlan?.plan || 'Lite'}
             trackEvent={trackEvent}
           />
+          <div className="absolute top-2 right-2">
+            <BadgeNewPro type="updated" feature="risk-today" tooltip="Enhanced with AI predictions" />
+          </div>
         </section>
 
         {/* 3. Above the Fold KPIs */}
@@ -129,7 +145,13 @@ const Index = () => {
         />
 
         {/* 5. Top Signals */}
-        <SignalCards />
+        <div className="relative" data-tour="whale-cards">
+          <SignalCards />
+          <div className="absolute top-2 right-2">
+            <BadgeNewPro type="new" feature="ai-signals" tooltip="AI-powered whale signals" />
+          </div>
+        </div>
+        </div>
 
         {/* 6. Progress Streak */}
         <ProgressStreak 
@@ -141,6 +163,11 @@ const Index = () => {
 
         {/* 7. Portfolio + Unlock Compact */}
         <PortfolioCompact connected={!!user} />
+        
+        {/* Spotlight Carousel */}
+        <div data-tour="alert-cta">
+          <SpotlightCarousel />
+        </div>
       </main>
 
       {/* 9. Sticky Bottom Quick Actions */}

@@ -9,6 +9,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { trackEvent } from '@/lib/telemetry'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTier } from '@/hooks/useTier'
+import { HelpCircle } from 'lucide-react'
+import { useDiscoveryTelemetry } from '@/components/discovery/useDiscoveryTelemetry'
 
 type UiMode = 'novice' | 'pro' | 'auto'
 
@@ -16,6 +18,7 @@ export function AppHeader() {
   const { user } = useAuth()
   const { tier } = useTier()
   const [uiMode, setUiMode] = useState<UiMode>('novice')
+  const { logEvent } = useDiscoveryTelemetry()
 
   useEffect(() => {
     const stored = localStorage.getItem('ui_mode') as UiMode
@@ -28,6 +31,12 @@ export function AppHeader() {
     trackEvent('card_click', { id: 'mode_toggle', value: mode })
   }
 
+  const startDiscoveryTour = () => {
+    localStorage.removeItem('discoveryTourCompleted')
+    window.location.reload()
+    logEvent('tour_help_clicked', {})
+  }
+
   const isPro = tier === 'pro' || tier === 'premium' || tier === 'institutional'
 
   return (
@@ -36,9 +45,11 @@ export function AppHeader() {
         <div className="flex items-center justify-between h-16">
           {/* Left: Logo + Wordmark */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">🐋</span>
-            </div>
+            <img 
+              src="/hero_logo_512.png" 
+              alt="AlphaWhale" 
+              className="w-8 h-8"
+            />
             <div className="flex flex-col">
               <span className="font-bold text-slate-900 dark:text-slate-100 text-lg">ALPHAWHALE</span>
               <span className="text-xs text-slate-500 dark:text-slate-500 hidden sm:block">Learn → Act → Profit</span>
@@ -51,7 +62,7 @@ export function AppHeader() {
           </div>
 
           {/* Right: Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3" data-tour="header">
             {/* Mode Toggle */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               <Button
@@ -79,6 +90,17 @@ export function AppHeader() {
                 Auto
               </Button>
             </div>
+
+            {/* Help Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={startDiscoveryTour}
+              className="p-2"
+              aria-label="Start discovery tour"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </Button>
 
             {/* Theme Toggle */}
             <ThemeToggle />

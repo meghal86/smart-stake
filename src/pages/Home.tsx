@@ -23,6 +23,9 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertTeaserCard } from "@/components/AlertTeaserCard";
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
+import { DiscoveryTour } from '@/components/discovery/DiscoveryTour';
+import { FeatureBanner } from '@/components/discovery/FeatureBanner';
+import { SpotlightCarousel } from '@/components/discovery/SpotlightCarousel';
 
 // Utility function to format time
 const formatTime = (timestamp: Date) => {
@@ -376,10 +379,14 @@ export default function Home() {
 
   return (
     <TooltipProvider>
+      <DiscoveryTour />
       <div className="flex-1 bg-gradient-to-br from-background to-background/80">
-        <div className="p-3 sm:p-4 space-y-4">
+        <div className="p-3 sm:p-4 space-y-4" data-tour="whale-cards">
+        {/* Feature Banner */}
+        <FeatureBanner />
+        
         {/* Sticky Header */}
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-40 -mx-4 px-4 py-3 mb-6">
+        <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-40 -mx-4 px-4 py-3 mb-6" data-tour="market-banner">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
@@ -499,7 +506,7 @@ export default function Home() {
         )}
 
         {/* Alert Teaser Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="alert-cta">
           <AlertTeaserCard plan="premium" />
           <AlertTeaserCard plan="enterprise" />
         </div>
@@ -716,7 +723,7 @@ export default function Home() {
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-6"></div>
         
         {/* Transaction Feed */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6" data-tour="raw-data">
           {isLoading ? (
           // Loading skeletons
           Array.from({ length: 5 }).map((_, index) => (
@@ -977,6 +984,9 @@ export default function Home() {
         )}
           </div>
         </div>
+        
+        {/* Spotlight Carousel */}
+        <SpotlightCarousel />
       </div>
       <BottomNavigation activeTab="whales" onTabChange={handleTabChange} />
     </TooltipProvider>

@@ -90,10 +90,10 @@ export const Logo: React.FC<LogoProps> = ({
         />
       ) : (
         <div className={cn(
-          "bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-bold",
+          "bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-bold text-xs",
           sizeClasses[size]
         )}>
-          🐋
+          AW
         </div>
       )}
       {showText && (

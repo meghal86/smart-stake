@@ -9,7 +9,7 @@ import PlanBadge, { type PlanTier } from '@/components/ui/PlanBadge'
 import { IconButton } from '@/components/ui/IconButton'
 import { UpgradeModal } from '@/components/ui/UpgradeModal'
 import { HeaderMotto } from './HeaderMotto'
-import { Bell, Sun, Moon, Monitor, User, Wallet, Settings, LogOut, CreditCard, ChevronDown } from 'lucide-react'
+import { Bell, Sun, Moon, Monitor, User, Wallet, Settings, LogOut, CreditCard, ChevronDown, HelpCircle } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
@@ -179,6 +179,19 @@ export default function LiteGlobalHeader() {
     })
   }
 
+  const handleHelpClick = () => {
+    // Trigger discovery tour restart
+    localStorage.removeItem('discoveryTourCompleted')
+    localStorage.setItem('appVersion', '1.0.0') // Force version bump
+    window.location.reload()
+    trackEvent('header_click', { 
+      item: 'help',
+      plan: profile?.plan_tier || 'lite', 
+      theme, 
+      source: 'global_header' 
+    })
+  }
+
   const device = typeof window !== "undefined" && window.innerWidth < 640 ? "mobile" : "web"
   const hasNewNotifications = unreadCount > prevUnreadCount && unreadCount > 0
   const currentPlan = profile?.plan_tier || 'lite'
@@ -217,17 +230,11 @@ export default function LiteGlobalHeader() {
               aria-label="AlphaWhale Home"
               className="flex items-center transition-transform hover:scale-105"
             >
-              <div className="relative h-6 w-6">
-                <div 
-                  className="absolute inset-0 rounded-full opacity-90 transition-all duration-300" 
-                  style={{ background: currentPlanColor }} 
-                />
-                <div 
-                  className="absolute inset-0 animate-pulse rounded-full opacity-30" 
-                  style={{ background: currentPlanColor }} 
-                />
-                <span className="absolute inset-0 flex items-center justify-center text-xs animate-pulse">🐋</span>
-              </div>
+              <img 
+                src="/hero_logo_512.png" 
+                alt="AlphaWhale" 
+                className="h-6 w-6"
+              />
             </Link>
             <HeaderMotto plan={currentPlan} mode={profile?.ui_mode || "novice"} device={device} />
           </div>
@@ -256,6 +263,16 @@ export default function LiteGlobalHeader() {
               {theme === 'light' && <Sun className="h-4 w-4 transition-transform duration-300" />}
               {theme === 'dark' && <Moon className="h-4 w-4 transition-transform duration-300" />}
               {theme === 'system' && <Monitor className="h-4 w-4 transition-transform duration-300" />}
+            </IconButton>
+
+            {/* Help Button */}
+            <IconButton
+              onClick={handleHelpClick}
+              aria-label="Start discovery tour"
+              className="transition-all duration-300 hover:scale-110"
+              data-tour="help-button"
+            >
+              <HelpCircle className="h-4 w-4 transition-transform duration-300" />
             </IconButton>
 
             {/* Notifications */}

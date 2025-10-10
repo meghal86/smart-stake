@@ -6,11 +6,15 @@ import { trackEvent } from '@/lib/telemetry'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react'
+import { PatternModal } from '@/components/signals/PatternModal'
+import { TrendingUp, TrendingDown, AlertCircle, BarChart3 } from 'lucide-react'
+import type { Signal } from '@/types/signal'
 
 export default function SignalCards() {
   const [signals, setSignals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null)
+  const [isPatternOpen, setIsPatternOpen] = useState(false)
 
   const formatRelativeTime = (timestamp: number) => {
     const now = Date.now()
@@ -38,6 +42,16 @@ export default function SignalCards() {
         const liveSignals = data.transactions.slice(0, 3).map((tx: any, idx: number) => ({
           id: `${tx.hash || idx}`,
           asset: tx.symbol,
+          assetSymbol: tx.symbol,
+          direction: tx.to?.owner_type === 'exchange' ? 'outflow' : 'inflow',
+          amountUsd: tx.amount_usd || 0,
+          amount: tx.amount || 0,
+          timestamp: new Date(tx.timestamp * 1000).toISOString(),
+          ownerType: 'whale' as const,
+          source: 'whale_alert',
+          risk: tx.amount_usd > 10000000 ? 'high' : tx.amount_usd > 5000000 ? 'medium' : 'low',
+          isLive: true,
+          reason: `${tx.amount?.toFixed(2)} ${tx.symbol} moved`,
           event: tx.to?.owner_type === 'exchange' ? 'Large Exchange Inflow' : 'Large Whale Accumulation',
           delta: `+${(tx.amount_usd / 1000000).toFixed(1)}M`,
           impact: tx.amount_usd > 10000000 ? 'High' : tx.amount_usd > 5000000 ? 'Medium' : 'Low',
@@ -110,6 +124,20 @@ export default function SignalCards() {
           ))}
         </div>
       )}
+      
+      {/* Pattern Modal */}
+      <PatternModal
+        signal={selectedSignal}
+        isOpen={isPatternOpen}
+        onClose={() => {
+          setIsPatternOpen(false)
+          setSelectedSignal(null)
+        }}
+        onCreateAlert={() => {
+          setIsPatternOpen(false)
+          trackEvent('alert_created', { asset: selectedSignal?.asset, source: 'pattern_modal' })
+        }}
+      />
     </section>
   )
 }
@@ -125,6 +153,8 @@ function SignalCard({
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null)
+  const [isPatternOpen, setIsPatternOpen] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), delay)
@@ -199,28 +229,38 @@ function SignalCard({
             <span>{signal.timeframe}</span>
           </div>
           
-          {isHovered && (
-            <div className="flex gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-7 px-2 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
-                onClick={(e) => { e.stopPropagation(); trackEvent('signal_explain_clicked', { id: signal.id }) }}
-              >
-                Explain
-              </Button>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-7 px-2 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
-                onClick={(e) => { e.stopPropagation(); trackEvent('signal_alert_clicked', { id: signal.id }) }}
-              >
-                Alert
-              </Button>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="h-7 px-2 text-xs bg-[var(--brand-teal,#14B8A6)]/10 text-[var(--brand-teal,#14B8A6)] hover:bg-[var(--brand-teal,#14B8A6)]/20 font-medium"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setSelectedSignal(signal); 
+                setIsPatternOpen(true);
+                console.log('Pattern button clicked for:', signal.asset);
+              }}
+            >
+              <BarChart3 className="h-3 w-3 mr-1" />
+              Pattern
+            </Button>
+          </div>
         </div>
       </CardContent>
+      
+      {/* Pattern Modal for this card */}
+      <PatternModal
+        signal={selectedSignal}
+        isOpen={isPatternOpen}
+        onClose={() => {
+          setIsPatternOpen(false)
+          setSelectedSignal(null)
+        }}
+        onCreateAlert={() => {
+          setIsPatternOpen(false)
+          trackEvent('alert_created', { asset: selectedSignal?.asset, source: 'pattern_modal' })
+        }}
+      />
     </Card>
   )
 }

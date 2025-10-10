@@ -143,8 +143,12 @@ export default function Header({ className }: HeaderProps) {
             onClick={() => navigate('/hub2/pulse')}
             className="flex items-center gap-2 p-0 h-auto"
           >
-            <Zap className="w-6 h-6 text-primary" />
-            <span className="font-bold text-lg">Hub 2</span>
+            <img 
+              src="/hero_logo_512.png" 
+              alt="AlphaWhale" 
+              className="w-8 h-8"
+            />
+            <span className="font-bold text-lg">AlphaWhale</span>
           </Button>
 
           {/* Environment Badge */}
