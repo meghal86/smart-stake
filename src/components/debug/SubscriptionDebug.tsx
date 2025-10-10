@@ -46,7 +46,7 @@ export const SubscriptionDebug = () => {
         setError(`Function error: ${error.message}`);
       } else {
         console.log('Function success:', data);
-        setDebugInfo(prev => ({ ...prev, functionResult: data }));
+        setDebugInfo((prev: any) => ({ ...prev, functionResult: data }));
       }
     } catch (err: any) {
       console.error('Catch error:', err);

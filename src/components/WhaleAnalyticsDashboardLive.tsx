@@ -97,10 +97,10 @@ const fetchWhaleData = async (): Promise<WhaleData[]> => {
     if (!balances) return [];
 
     return balances.map((whale, index) => {
-      const signal = signals?.find(s => s.address === whale.address && s.chain === whale.chain);
+      const signal = signals?.find(s => s?.address === whale.address && s?.chain === whale.chain);
       const recentActivity = transfers?.filter(t => 
         t.from_address === whale.address || t.to_address === whale.address
-      ).length || 0;
+      )?.length || 0;
 
       return {
         id: `whale-${index}`,

@@ -52,7 +52,7 @@ export const ManualSync = () => {
 
       console.log('Fix results:', data);
       
-      const successful = data.fixes_applied.some(fix => fix.success);
+      const successful = data.fixes_applied.some((fix: any) => fix.success);
       
       if (successful) {
         toast({
@@ -99,7 +99,7 @@ export const ManualSync = () => {
 
       toast({
         title: "Current Plan Data",
-        description: `Plan: ${data.plan}, Status: ${data.subscription_status || 'none'}, Updated: ${data.updated_at}`,
+        description: `Plan: ${data.plan}, Updated: ${data.updated_at}`,
       });
 
       console.log('Full user data from database:', data);
@@ -164,7 +164,7 @@ export const ManualSync = () => {
               });
             } catch (error) {
               console.error('Test error:', error);
-              toast({ variant: "destructive", title: "Test Failed", description: error.message });
+              toast({ variant: "destructive", title: "Test Failed", description: error instanceof Error ? error.message : String(error) });
             } finally {
               setLoading(false);
             }

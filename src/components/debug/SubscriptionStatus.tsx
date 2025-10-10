@@ -67,7 +67,7 @@ export const SubscriptionStatus = () => {
         alert(`Sync failed: ${result.error}`);
       }
     } catch (error) {
-      alert(`Sync error: ${error.message}`);
+      alert(`Sync error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setSyncing(false);
     }

@@ -109,7 +109,7 @@ export function ClusterDetail({ cluster, onClose }: ClusterDetailProps) {
                 <span>{isLowValue ? 'Cluster 24h Value:' : 'Total Value:'}:</span>
                 <span className="font-semibold">
                   {isLowValue ? 
-                    `$${(cluster.sumBalanceUsd / 1e6).toFixed(1)}M` : 
+                    `$${((cluster.sumBalanceUsd || 0) / 1e6).toFixed(1)}M` : 
                     `$${clusterValue.toFixed(2)}B`
                   }
                 </span>
@@ -244,7 +244,7 @@ export function ClusterDetail({ cluster, onClose }: ClusterDetailProps) {
                   variant="outline"
                   className="flex-1 min-w-[44px] min-h-[44px] focus:ring-2 focus:ring-primary"
                   onClick={() => {
-                    const csvData = `Address,Amount,Direction,Timestamp\n${cluster.id},$${cluster.sumBalanceUsd},${cluster.netFlow24h >= 0 ? 'IN' : 'OUT'},${new Date().toISOString()}`;
+                    const csvData = `Address,Amount,Direction,Timestamp\n${cluster.id},$${cluster.sumBalanceUsd || 0},${cluster.netFlow24h >= 0 ? 'IN' : 'OUT'},${new Date().toISOString()}`;
                     const blob = new Blob([csvData], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');

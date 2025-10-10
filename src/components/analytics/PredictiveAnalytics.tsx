@@ -463,7 +463,7 @@ export const PredictiveAnalytics = () => {
                   <div>
                     <h5 className="font-medium mb-3">Price Risk Zones</h5>
                     <div className="space-y-2">
-                      {simulationResult.riskZones.map((zone, idx) => (
+                      {simulationResult.riskZones.map((zone: any, idx: number) => (
                         <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                           <span className="font-medium">{zone.price}</span>
                           <div className="flex items-center gap-4">
