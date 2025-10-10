@@ -507,6 +507,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
   const [filterBy, setFilterBy] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('balance');
+  const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');
 
   // Handle whale selection
   const handleWhaleSelect = (whale: any) => {
@@ -683,7 +684,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
     }
 
     return filtered;
-  }, [whaleData?.whales, searchTerm, filterBy, sortBy]);
+  }, [whaleData?.whales, searchTerm, filterBy, sortBy, whaleFilter]);
 
   if (loading || whalesLoading) {
     return (
