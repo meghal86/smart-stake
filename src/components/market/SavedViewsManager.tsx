@@ -50,7 +50,7 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
   const loadSavedViews = async () => {
     try {
       // Try to load from localStorage first as fallback
-      const localViews = localStorage.getItem(`saved_views_${user?.id}`);
+      const localViews = localStorage.getItem(`saved_views_${user!.id}`);
       if (localViews) {
         setViews(JSON.parse(localViews));
         return;
@@ -59,7 +59,7 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
       const { data, error } = await supabase
         .from('saved_views')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

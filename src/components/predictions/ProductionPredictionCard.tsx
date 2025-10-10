@@ -77,9 +77,9 @@ export function ProductionPredictionCard({ prediction }: ProductionPredictionCar
   };
 
   const impact = getImpactLevel(prediction.confidence);
-  const isFree = userPlan === 'free';
-  const isPro = userPlan === 'pro';
-  const isPremium = userPlan === 'premium' || userPlan === 'enterprise';
+  const isFree = userPlan.plan === 'free';
+  const isPro = userPlan.plan === 'pro';
+  const isPremium = userPlan.plan === 'premium' || userPlan.plan === 'enterprise';
 
   return (
     <TooltipProvider>
@@ -223,7 +223,7 @@ export function ProductionPredictionCard({ prediction }: ProductionPredictionCar
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">Target:</span>
                   <Badge variant="outline">
-                    ${prediction.target_price} ({prediction.delta_pct > 0 ? '+' : ''}{prediction.delta_pct?.toFixed(1)}%)
+                    ${prediction.target_price} ({(prediction.delta_pct || 0) > 0 ? '+' : ''}{(prediction.delta_pct || 0).toFixed(1)}%)
                   </Badge>
                 </div>
               )}

@@ -30,9 +30,9 @@ export function LiveBenchmarkComparison({
     
     // Calculate portfolio weights
     const totalValue = holdings.reduce((sum, h) => sum + h.value, 0);
-    const ethWeight = holdings.find(h => h.token === 'ETH')?.value / totalValue || 0;
-    const btcWeight = holdings.find(h => h.token === 'BTC' || h.token === 'BITCOIN')?.value / totalValue || 0;
-    const solWeight = holdings.find(h => h.token === 'SOL' || h.token === 'SOLANA')?.value / totalValue || 0;
+    const ethWeight = (holdings.find(h => h.token === 'ETH')?.value || 0) / totalValue || 0;
+    const btcWeight = (holdings.find(h => h.token === 'BTC' || h.token === 'BITCOIN')?.value || 0) / totalValue || 0;
+    const solWeight = (holdings.find(h => h.token === 'SOL' || h.token === 'SOLANA')?.value || 0) / totalValue || 0;
     
     for (let i = 0; i < days; i++) {
       const date = new Date();
@@ -126,7 +126,7 @@ export function LiveBenchmarkComparison({
         </div>
         
         <div className="flex items-center gap-2">
-          <Select value={timeframe} onValueChange={setTimeframe}>
+          <Select value={timeframe} onValueChange={(value: '1D' | '7D' | '30D' | '90D') => setTimeframe(value)}>
             <SelectTrigger className="w-20">
               <SelectValue />
             </SelectTrigger>

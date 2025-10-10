@@ -78,15 +78,15 @@ export default function LiteGlobalHeader() {
 
           if (!profileError && userProfile) {
             setProfile({
-              plan_tier: userProfile.plan_tier || 'lite',
-              avatar_url: userProfile.avatar_url || authUser.user_metadata?.avatar_url,
-              ui_mode: userProfile.ui_mode
+              plan_tier: (userProfile.plan_tier as PlanTier) || 'lite',
+              avatar_url: userProfile.avatar_url || authUser.user_metadata?.avatar_url || undefined,
+              ui_mode: userProfile.ui_mode || undefined
             })
           } else {
             // Fallback to default profile
             setProfile({
               plan_tier: 'lite',
-              avatar_url: authUser.user_metadata?.avatar_url
+              avatar_url: authUser.user_metadata?.avatar_url || undefined
             })
           }
 
