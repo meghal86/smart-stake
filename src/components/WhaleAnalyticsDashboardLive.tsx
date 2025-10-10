@@ -135,7 +135,13 @@ const fetchMetrics = async (): Promise<MarketMetrics> => {
       .gte('ts', yesterday)
       .not('value_usd', 'is', null);
     
-    const volume24h = transferData?.reduce((sum, t) => sum + parseFloat(String(t.value_usd || 0)), 0) / 1000000 || 0;
+    const volume24h = (transferData && transferData.length > 0) 
+      ? transferData.reduce((sum, t) => {
+          if (!t) return sum;
+          const valueUsd = t.value_usd;
+          return sum + (valueUsd ? parseFloat(String(valueUsd)) : 0);
+        }, 0) / 1000000 
+      : 0;
     
     const { count: activeWhales } = await supabase
       .from('whale_balances')
