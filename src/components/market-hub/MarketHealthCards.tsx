@@ -113,7 +113,7 @@ export function MarketHealthCards({ data, loading, onAlertClick }: MarketHealthC
               className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded"
               onClick={() => onAlertClick(alert)}
             >
-              <Badge className={getSeverityColor(alert.severity)} size="sm">
+              <Badge className={getSeverityColor(alert.severity)}>
                 {alert.severity}
               </Badge>
               <span className="truncate">{alert.title}</span>

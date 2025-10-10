@@ -300,7 +300,6 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
                   cluster={cluster}
                   isSelected={selectedCluster === cluster.id}
                   onSelect={() => setSelectedCluster(selectedCluster === cluster.id ? null : cluster.id)}
-                  className="hover:shadow-md transition-all duration-200"
                 />
               ))}
             </div>

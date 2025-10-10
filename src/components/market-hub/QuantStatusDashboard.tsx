@@ -31,7 +31,9 @@ export function QuantStatusDashboard({
   whaleClusters, 
   alertsStream 
 }: QuantStatusDashboardProps) {
-  const { coverage, isLoading: coverageLoading } = useCoverageMonitor(timeWindow);
+  const coverageResult = useCoverageMonitor(timeWindow);
+  const coverage = coverageResult?.data;
+  const coverageLoading = coverageResult?.isLoading;
   const { exportData, isExporting } = useCSVExport();
   const { alerts, isLoading: alertsLoading } = useWatchlistAlerts();
 
@@ -44,7 +46,7 @@ export function QuantStatusDashboard({
       },
       {
         name: 'Whale Clustering',
-        status: whaleClusters?.length >= 5 ? 'complete' : 'partial',
+        status: (whaleClusters && whaleClusters.length >= 5) ? 'complete' : 'partial',
         description: '5 canonical clusters with priority classification'
       },
       {

@@ -6,6 +6,8 @@ export type FeatureFlag =
   | 'ai_copilot_card'
   | 'watchlist_v2'
   | 'lite_header_rotate_motto'
+  | 'custom_kpi_cards'
+  | 'oneClickTrade'
 
 // Client-safe defaults
 const getEnvFlag = (key: string, defaultValue: boolean): boolean => {
@@ -21,6 +23,8 @@ const envFlags: Record<FeatureFlag, boolean> = {
   ai_copilot_card: getEnvFlag('NEXT_PUBLIC_FF_AI_COPILOT_CARD', true), 
   watchlist_v2: getEnvFlag('NEXT_PUBLIC_FF_WATCHLIST_V2', false),
   lite_header_rotate_motto: getEnvFlag('NEXT_PUBLIC_FF_LITE_HEADER_ROTATE_MOTTO', false),
+  custom_kpi_cards: getEnvFlag('NEXT_PUBLIC_FF_CUSTOM_KPI_CARDS', false),
+  oneClickTrade: getEnvFlag('NEXT_PUBLIC_FF_ONE_CLICK_TRADE', false),
 }
 
 let flagCache: Record<string, boolean> = {}

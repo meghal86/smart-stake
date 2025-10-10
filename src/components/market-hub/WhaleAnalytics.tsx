@@ -683,7 +683,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
     }
 
     return filtered;
-  }, [whaleData?.whales, searchTerm, filterBy, sortBy, whaleFilter]);
+  }, [whaleData?.whales, searchTerm, filterBy, sortBy]);
 
   if (loading || whalesLoading) {
     return (

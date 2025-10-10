@@ -397,11 +397,6 @@ function EnhancedClusterCard({ cluster, isSelected, onSelect, alerts }: Enhanced
             <Progress 
               value={cluster.riskScore || 0} 
               className="h-2"
-              // @ts-ignore
-              style={{
-                '--progress-background': (cluster.riskScore || 0) >= 70 ? '#ef4444' : 
-                                       (cluster.riskScore || 0) >= 40 ? '#f97316' : '#22c55e'
-              }}
             />
           </div>
 
