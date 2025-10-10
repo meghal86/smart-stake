@@ -72,19 +72,6 @@ const ChartComponent = memo(({ data, color = '#8884d8', height = 200, showToolti
 ChartComponent.displayName = 'ChartComponent';
 
 export function OptimizedChart(props: OptimizedChartProps) {
-  return (
-    <LazyComponent
-      fallback={
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      }
-      threshold={0.1}
-      rootMargin="100px"
-    >
-      <ChartComponent {...props} />
-    </LazyComponent>
-  );
+  // Temporarily return ChartComponent directly until LazyComponent is implemented
+  return <ChartComponent {...props} />;
 }

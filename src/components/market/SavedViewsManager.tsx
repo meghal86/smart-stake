@@ -13,11 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface SavedView {
   id: string;
   name: string;
-  url_state: any;
-  is_default: boolean;
-  user_tier: string;
-  created_at: string;
-  shared: boolean;
+  view_state: any;
+  is_default: boolean | null;
+  user_id: string | null;
+  created_at: string | null;
 }
 
 interface SavedViewsManagerProps {
@@ -90,11 +89,10 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
       const newView: SavedView = {
         id: `view_${Date.now()}`,
         name: newViewName.trim(),
-        url_state: currentState,
-        user_tier: userPlan.plan,
+        view_state: currentState,
         is_default: views.length === 0,
-        created_at: new Date().toISOString(),
-        shared: false
+        user_id: user.id,
+        created_at: new Date().toISOString()
       };
       
       // Try database first, fallback to localStorage
@@ -102,10 +100,8 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
         const { error } = await supabase
           .from('saved_views')
           .insert({
-            user_id: user.id,
             name: newView.name,
-            url_state: newView.url_state,
-            user_tier: newView.user_tier,
+            view_state: newView.view_state,
             is_default: newView.is_default
           });
 
@@ -141,10 +137,12 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
   const setAsDefault = async (viewId: string) => {
     try {
       // Remove default from all views
-      await supabase
-        .from('saved_views')
-        .update({ is_default: false })
-        .eq('user_id', user?.id);
+      if (user?.id) {
+        await supabase
+          .from('saved_views')
+          .update({ is_default: false })
+          .eq('user_id', user.id);
+      }
 
       // Set new default
       await supabase
@@ -180,10 +178,10 @@ export function SavedViewsManager({ currentState, onViewSelect, onSaveView }: Sa
     try {
       const shareUrl = `${window.location.origin}${window.location.pathname}?` + 
         new URLSearchParams({
-          tf: view.url_state.timeframe,
-          chain: view.url_state.chain,
-          search: view.url_state.searchQuery,
-          marketTab: view.url_state.activeTab
+          tf: view.view_state.timeframe,
+          chain: view.view_state.chain,
+          search: view.view_state.searchQuery,
+          marketTab: view.view_state.activeTab
         }).toString();
       
       await navigator.clipboard.writeText(shareUrl);
