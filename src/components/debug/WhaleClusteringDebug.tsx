@@ -77,9 +77,9 @@ export function WhaleClusteringDebug() {
                 <p className="text-muted-foreground">
                   {cluster.membersCount} members • ${(cluster.sumBalanceUsd / 1000000).toFixed(1)}M
                 </p>
-                {cluster.confidence && (
+                {cluster.avgConfidence && (
                   <p className="text-muted-foreground">
-                    Confidence: {(cluster.confidence * 100).toFixed(1)}%
+                    Confidence: {(cluster.avgConfidence * 100).toFixed(1)}%
                   </p>
                 )}
               </div>

@@ -18,24 +18,59 @@ export function OutcomeDigestEmail({ userName, weeklyStats, darkMode = false }: 
   const theme = darkMode ? 'dark' : 'light';
   
   const styles = {
-    container: `font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; ${
-      darkMode ? 'background-color: #1f2937; color: #f9fafb;' : 'background-color: #ffffff; color: #111827;'
-    }`,
-    header: `padding: 32px 24px; text-align: center; ${
-      darkMode ? 'background: linear-gradient(135deg, #1e40af, #7c3aed);' : 'background: linear-gradient(135deg, #3b82f6, #8b5cf6);'
-    } color: white;`,
-    content: `padding: 24px;`,
-    card: `padding: 20px; margin: 16px 0; border-radius: 8px; ${
-      darkMode ? 'background-color: #374151; border: 1px solid #4b5563;' : 'background-color: #f9fafb; border: 1px solid #e5e7eb;'
-    }`,
-    statGrid: `display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 20px 0;`,
-    statCard: `text-align: center; padding: 16px; border-radius: 6px; ${
-      darkMode ? 'background-color: #4b5563;' : 'background-color: #ffffff; border: 1px solid #e5e7eb;'
-    }`,
-    button: `display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 16px 8px 0 0;`,
-    footer: `padding: 24px; text-align: center; font-size: 14px; ${
-      darkMode ? 'color: #9ca3af; border-top: 1px solid #4b5563;' : 'color: #6b7280; border-top: 1px solid #e5e7eb;'
-    }`
+    container: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      maxWidth: '600px',
+      margin: '0 auto',
+      backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+      color: darkMode ? '#f9fafb' : '#111827'
+    },
+    header: {
+      padding: '32px 24px',
+      textAlign: 'center' as const,
+      background: darkMode ? 'linear-gradient(135deg, #1e40af, #7c3aed)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+      color: 'white'
+    },
+    content: {
+      padding: '24px'
+    },
+    card: {
+      padding: '20px',
+      margin: '16px 0',
+      borderRadius: '8px',
+      backgroundColor: darkMode ? '#374151' : '#f9fafb',
+      border: darkMode ? '1px solid #4b5563' : '1px solid #e5e7eb'
+    },
+    statGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '16px',
+      margin: '20px 0'
+    },
+    statCard: {
+      textAlign: 'center' as const,
+      padding: '16px',
+      borderRadius: '6px',
+      backgroundColor: darkMode ? '#4b5563' : '#ffffff',
+      border: darkMode ? 'none' : '1px solid #e5e7eb'
+    },
+    button: {
+      display: 'inline-block',
+      padding: '12px 24px',
+      backgroundColor: '#3b82f6',
+      color: 'white',
+      textDecoration: 'none',
+      borderRadius: '6px',
+      fontWeight: '500',
+      margin: '16px 8px 0 0'
+    },
+    footer: {
+      padding: '24px',
+      textAlign: 'center' as const,
+      fontSize: '14px',
+      color: darkMode ? '#9ca3af' : '#6b7280',
+      borderTop: darkMode ? '1px solid #4b5563' : '1px solid #e5e7eb'
+    }
   };
 
   return (

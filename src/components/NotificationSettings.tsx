@@ -185,7 +185,7 @@ export const NotificationSettings = () => {
           message: `This is a test ${channel} notification from WhalePlus. If you receive this, your ${channel} notifications are working correctly!`,
           channels: [channel],
           priority: 'low',
-          email: (user?.email as string) || 'test@example.com',
+          email: user?.email || 'test@example.com',
           phone: phone || '+1234567890'
         }
       });

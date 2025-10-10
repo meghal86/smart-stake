@@ -54,7 +54,12 @@ export function TierTester() {
       <QuotaProgressBar />
 
       <TieredPredictionCard prediction={mockPrediction}>
-        {/* Content handled by TieredPredictionCard */}
+        <div className="p-4">
+          <h3 className="font-medium mb-2">Test Prediction</h3>
+          <p className="text-sm text-muted-foreground">
+            This is a test prediction to verify tier-based access controls.
+          </p>
+        </div>
       </TieredPredictionCard>
     </div>
   );
