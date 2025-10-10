@@ -35,13 +35,17 @@ export const QuickAlertCreator = ({ whaleAddress, currentBalance, riskScore, onC
         .from('alert_rules')
         .insert({
           user_id: user.id,
+          name: `${alertTypes[alertType as keyof typeof alertTypes].label} Alert`,
+          conditions: [{
+            type: 'amount',
+            operator: 'gte',
+            value: threshold
+          }],
+          logic_operator: 'AND',
+          delivery_channels: { email: true },
           whale_address: whaleAddress,
-          alert_type: alertType,
-          threshold_value: threshold,
-          cooldown_minutes: 60,
           hysteresis_percent: 5,
-          delivery_method: 'email',
-          active: true
+          is_active: true
         });
 
       if (error) throw error;

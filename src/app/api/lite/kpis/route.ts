@@ -3,7 +3,7 @@ import { createClient } from '@/integrations/supabase/server'
 
 export async function GET() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Call Supabase Edge Function that fetches both Whale Alert and CoinGecko data
     const { data, error } = await supabase.functions.invoke('market-kpis')

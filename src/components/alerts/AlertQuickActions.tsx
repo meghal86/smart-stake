@@ -10,10 +10,10 @@ export const AlertQuickActions = () => {
   const [showAlertsManager, setShowAlertsManager] = useState(false);
   const { rules = [] } = useCustomAlerts();
 
-  const activeRules = rules.filter(r => r.isActive);
+  const activeRules = rules.filter(r => r.is_active);
   const recentlyTriggered = rules.filter(r => 
-    r.lastTriggeredAt && 
-    new Date(r.lastTriggeredAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    r.last_triggered_at && 
+    new Date(r.last_triggered_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
   );
 
   return (
@@ -116,7 +116,7 @@ export const AlertQuickActions = () => {
                   <div key={rule.id} className="flex items-center justify-between text-xs">
                     <span className="truncate">{rule.name}</span>
                     <Badge variant="outline" className="text-xs">
-                      {rule.timesTriggered || 0}
+                      {rule.times_triggered || 0}
                     </Badge>
                   </div>
                 ))}
