@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, AlertTriangle, Activity, Zap } from "lucide-react";
 import { SignalEvent } from "@/types/hub2";
 import { cn } from "@/lib/utils";

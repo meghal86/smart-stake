@@ -234,39 +234,63 @@ export type Database = {
       alert_rules: {
         Row: {
           id: string
+          user_id: string | null
           name: string
+          description: string | null
           conditions: Json
           logic_operator: string
-          delivery_channels: string[]
+          time_window_hours: number | null
+          frequency_limit: number | null
+          delivery_channels: Json
+          webhook_url: string | null
+          priority: number
           is_active: boolean
-          last_triggered_at: string | null
           times_triggered: number
+          last_triggered_at: string | null
+          whale_address: string | null
+          hysteresis_percent: number | null
           created_at: string | null
-          user_id: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
-          name: string
-          conditions: Json
-          logic_operator: string
-          delivery_channels: string[]
-          is_active?: boolean
-          last_triggered_at?: string | null
-          times_triggered?: number
-          created_at?: string | null
           user_id?: string | null
+          name: string
+          description?: string | null
+          conditions?: Json
+          logic_operator?: string
+          time_window_hours?: number | null
+          frequency_limit?: number | null
+          delivery_channels?: Json
+          webhook_url?: string | null
+          priority?: number
+          is_active?: boolean
+          times_triggered?: number
+          last_triggered_at?: string | null
+          whale_address?: string | null
+          hysteresis_percent?: number | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
+          user_id?: string | null
           name?: string
+          description?: string | null
           conditions?: Json
           logic_operator?: string
-          delivery_channels?: string[]
+          time_window_hours?: number | null
+          frequency_limit?: number | null
+          delivery_channels?: Json
+          webhook_url?: string | null
+          priority?: number
           is_active?: boolean
-          last_triggered_at?: string | null
           times_triggered?: number
+          last_triggered_at?: string | null
+          whale_address?: string | null
+          hysteresis_percent?: number | null
           created_at?: string | null
-          user_id?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -387,31 +411,40 @@ export type Database = {
       }
       alert_templates: {
         Row: {
-          channel_type: string
-          created_at: string | null
           id: string
-          is_default: boolean | null
           name: string
-          template_content: string
-          variables: Json | null
+          description: string
+          category: string
+          template_conditions: Json
+          default_logic_operator: string
+          suggested_delivery_channels: Json
+          is_premium: boolean
+          popularity_score: number
+          created_at: string | null
         }
         Insert: {
-          channel_type: string
-          created_at?: string | null
           id?: string
-          is_default?: boolean | null
           name: string
-          template_content: string
-          variables?: Json | null
+          description: string
+          category: string
+          template_conditions?: Json
+          default_logic_operator?: string
+          suggested_delivery_channels?: Json
+          is_premium?: boolean
+          popularity_score?: number
+          created_at?: string | null
         }
         Update: {
-          channel_type?: string
-          created_at?: string | null
           id?: string
-          is_default?: boolean | null
           name?: string
-          template_content?: string
-          variables?: Json | null
+          description?: string
+          category?: string
+          template_conditions?: Json
+          default_logic_operator?: string
+          suggested_delivery_channels?: Json
+          is_premium?: boolean
+          popularity_score?: number
+          created_at?: string | null
         }
         Relationships: []
       }
