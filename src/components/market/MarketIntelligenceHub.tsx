@@ -90,7 +90,7 @@ export function MarketIntelligenceHub() {
       if (!groups[key]) groups[key] = [];
       groups[key].push(alert);
     });
-    return Object.entries(groups).map(([key, alerts]) => ({
+    return Object.entries(groups).map(([key, alerts]: [string, ProcessedAlert[]]) => ({
       key,
       title: alerts.length > 1 ? `${alerts[0].chain} ${alerts[0].token} Cluster` : `${alerts[0].chain} ${alerts[0].token}`,
       count: alerts.length,
@@ -232,11 +232,11 @@ export function MarketIntelligenceHub() {
             <ClusterProvider>
               <WhaleClusters 
                 clusters={clusters}
-                onClusterSelect={(cluster) => {
+                onClusterSelect={(cluster: WhaleCluster) => {
                   setSelectedCluster(cluster.id);
                   track('whale_cluster_selected', { clusterId: cluster.id, type: cluster.type });
                 }}
-                onWhaleSelect={(whale) => {
+                onWhaleSelect={(whale: any) => {
                   track('whale_selected', { address: whale.address });
                 }}
               />
