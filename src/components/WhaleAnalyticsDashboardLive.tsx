@@ -152,8 +152,12 @@ const fetchMetrics = async (): Promise<MarketMetrics> => {
     return {
       volume24h: Math.round(volume24h),
       activeWhales: activeWhales || 0,
-      riskAlerts: signalsData?.filter(s => parseFloat(s.value) >= 70).length || 0,
-      topSignals: signalsData || []
+      riskAlerts: signalsData?.filter(s => s.value && parseFloat(String(s.value)) >= 70).length || 0,
+      topSignals: (signalsData || []).map(s => ({
+        signal_type: s.signal_type,
+        confidence: s.confidence,
+        value: String(s.value || 0)
+      }))
     };
   } catch (error) {
     console.error('Failed to fetch metrics:', error);
@@ -528,7 +532,7 @@ const WhaleAnalyticsDashboard: React.FC = () => {
                   {signal.signal_type.replace('_', ' ')}
                 </span>
                 <span style={{opacity: 0.7, fontSize: '11px'}}>
-                  ({Math.round(signal.confidence * 100)}%)
+                  ({Math.round((signal.confidence || 0) * 100)}%)
                 </span>
               </span>
             ))}

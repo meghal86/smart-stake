@@ -93,10 +93,10 @@ export const CustomAlertCreator = ({ whaleAddress }: { whaleAddress?: string }) 
       const logs: DeliveryLog[] = (data || []).map(log => ({
         id: log.id,
         timestamp: log.created_at,
-        status: log.status,
-        method: log.delivery_method,
+        status: log.status as 'sent' | 'failed' | 'pending',
+        method: log.channels?.[0] || 'email',
         message: log.message,
-        error: log.error_message
+        error: undefined
       }));
 
       setDeliveryLogs(logs);

@@ -45,7 +45,8 @@ export const NotificationSettings = () => {
 
       if (data && data.length > 0 && !error) {
         const userData = data[0];
-        setPreferences(userData.notification_preferences || { email: true, sms: false, push: true });
+        const prefs = userData.notification_preferences as NotificationPreferences | null;
+        setPreferences(prefs || { email: true, sms: false, push: true });
         setPhone(userData.phone || '');
       } else {
         // Use defaults if table doesn't exist or user not found
