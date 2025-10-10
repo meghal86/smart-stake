@@ -39,8 +39,7 @@ export function toEntitySummary(src:any): EntitySummary {
     lastEvents: (src.events ?? src.alerts ?? src.recent_events ?? []).map(toSignalEvent).slice(0,3),
     provenance: {
       source: (src.source ?? metrics?.source ?? 'internal'),
-      updatedAt: src.updated_at ?? metrics?.updated_at ?? new Date().toISOString(),
-      latencyMs: src.latency_ms ?? metrics?.latency_ms
+      updatedAt: src.updated_at ?? metrics?.updated_at ?? new Date().toISOString()
     }
   };
 }

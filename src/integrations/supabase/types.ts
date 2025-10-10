@@ -760,6 +760,30 @@ export type Database = {
         }
         Relationships: []
       }
+      discovery_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          event_type: string
+          event_data: Json
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          event_type: string
+          event_data?: Json
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          event_type?: string
+          event_data?: Json
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       drift_alerts: {
         Row: {
           alert_type: string
@@ -1900,6 +1924,36 @@ export type Database = {
           status?: string | null
           user_id?: string | null
           wallet_address?: string
+        }
+        Relationships: []
+      }
+      roi_patterns: {
+        Row: {
+          id: string
+          user_id: string | null
+          pattern_id: string
+          hit_rate: number
+          pnl: number
+          alerts: number
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          pattern_id: string
+          hit_rate?: number
+          pnl?: number
+          alerts?: number
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          pattern_id?: string
+          hit_rate?: number
+          pnl?: number
+          alerts?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3604,6 +3658,17 @@ export type Database = {
           cohort_week: string | null
           retention_rate: number | null
           total_users: number | null
+        }
+        Relationships: []
+      }
+      v_user_roi_summary: {
+        Row: {
+          user_id: string | null
+          total_patterns: number | null
+          avg_hit_rate: number | null
+          total_pnl: number | null
+          total_alerts: number | null
+          last_updated: string | null
         }
         Relationships: []
       }

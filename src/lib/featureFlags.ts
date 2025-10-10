@@ -45,6 +45,6 @@ export async function isFeatureEnabled(flag: FeatureFlag): boolean {
   }
 }
 
-export async function getFeatureFlag(key: string): Promise<boolean> {
+export function getFeatureFlag(key: string): Promise<boolean> {
   return isFeatureEnabled(key as FeatureFlag)
 }
