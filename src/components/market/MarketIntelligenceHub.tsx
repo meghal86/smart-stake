@@ -12,6 +12,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useEnhancedMarketData } from '@/hooks/useEnhancedMarketData';
 import { useMarketSummary, useWhaleClusters, useAlertsStream } from '@/hooks/useMarketIntelligence';
 import { WhaleClusters } from '@/components/market-hub/WhaleClusters';
+import { AlertFilters, ProcessedAlert, WhaleCluster, MarketSummary, CriticalAlert } from '@/types/market-intelligence';
 
 import { ClusterProvider } from '@/stores/clusterStore';
 import { cn } from '@/lib/utils';
@@ -24,45 +25,7 @@ interface MarketHealthData {
   activeWhales: number;
   whalesDelta: number;
   riskIndex: number;
-  topAlerts: Alert[];
-}
-
-interface Alert {
-  id: string;
-  severity: 'High' | 'Medium' | 'Info';
-  title: string;
-  description: string;
-  timestamp: Date;
-  chain: string;
-  token?: string;
-  amount?: number;
-  clusterId?: string;
-}
-
-interface WhaleCluster {
-  id: string;
-  type: 'CEX_INFLOW' | 'DEFI' | 'DORMANT' | 'ACCUMULATION' | 'DISTRIBUTION';
-  name: string;
-  count: number;
-  totalValue: number;
-  riskScore: number;
-  members: WhaleAddress[];
-}
-
-interface WhaleAddress {
-  address: string;
-  balance: number;
-  riskScore: number;
-  riskFactors: string[];
-  lastActivity: Date;
-}
-
-interface AlertFilters {
-  severity: string[];
-  chains: string[];
-  tokens: string[];
-  minUsd: number;
-  entities: string[];
+  topAlerts: CriticalAlert[];
 }
 
 // No mock data - using live APIs only
@@ -78,11 +41,10 @@ export function MarketIntelligenceHub() {
   // State
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [alertFilters, setAlertFilters] = useState<AlertFilters>({
-    severity: [],
-    chains: [],
-    tokens: [],
-    minUsd: 0,
-    entities: []
+    severity: 'All',
+    minUsd: '0',
+    chain: 'All',
+    watchlistOnly: false
   });
   const [alertsView, setAlertsView] = useState<'stream' | 'grouped'>('stream');
 
@@ -101,49 +63,48 @@ export function MarketIntelligenceHub() {
 
   // Filter live alerts
   const filteredAlerts = useMemo(() => {
-    return alerts.filter(alert => {
-      if (alertFilters.severity.length && !alertFilters.severity.includes(alert.severity)) return false;
-      if (alertFilters.chains.length && !alertFilters.chains.includes(alert.chain)) return false;
-      if (alertFilters.tokens.length && alert.token && !alertFilters.tokens.includes(alert.token)) return false;
-      if (alertFilters.minUsd && alert.usdAmount && alert.usdAmount < alertFilters.minUsd) return false;
+    return alerts.filter((alert: ProcessedAlert) => {
+      if (alertFilters.severity !== 'All' && alert.severity !== alertFilters.severity) return false;
+      if (alertFilters.chain !== 'All' && alert.chain !== alertFilters.chain) return false;
+      if (alertFilters.minUsd !== '0' && alert.usd < parseFloat(alertFilters.minUsd)) return false;
       return true;
     });
   }, [alerts, alertFilters]);
 
   // Market health data
   const marketHealth: MarketHealthData = {
-    marketMoodIndex: marketSummary?.marketMoodIndex || enhancedMarketData?.marketMood?.mood || 65,
+    marketMoodIndex: marketSummary?.marketMood || enhancedMarketData?.marketMood?.mood || 65,
     volume24h: marketSummary?.volume24h || enhancedMarketData?.volume24h || 1500000000,
     volumeDelta: marketSummary?.volumeDelta || enhancedMarketData?.volumeDelta || 12.5,
     activeWhales: marketSummary?.activeWhales || enhancedMarketData?.activeWhales || 892,
     whalesDelta: marketSummary?.whalesDelta || enhancedMarketData?.whalesDelta || 8.2,
     riskIndex: marketSummary?.riskIndex || enhancedMarketData?.avgRiskScore || 45,
-    topAlerts: marketSummary?.topAlerts || filteredAlerts.filter(a => a.severity === 'High').slice(0, 3)
+    topAlerts: marketSummary?.topAlerts || filteredAlerts.filter((a: ProcessedAlert) => a.severity === 'High').slice(0, 3).map((a: ProcessedAlert) => ({ id: a.id, severity: a.severity, title: `${a.chain} ${a.token}`, timestamp: a.ts }))
   };
 
   // Group alerts by similarity
   const groupedAlerts = useMemo(() => {
-    const groups: { [key: string]: Alert[] } = {};
-    filteredAlerts.forEach(alert => {
+    const groups: { [key: string]: ProcessedAlert[] } = {};
+    filteredAlerts.forEach((alert: ProcessedAlert) => {
       const key = `${alert.chain}-${alert.token}`;
       if (!groups[key]) groups[key] = [];
       groups[key].push(alert);
     });
     return Object.entries(groups).map(([key, alerts]) => ({
       key,
-      title: alerts.length > 1 ? `${alerts[0].chain} ${alerts[0].token} Cluster` : alerts[0].title,
+      title: alerts.length > 1 ? `${alerts[0].chain} ${alerts[0].token} Cluster` : `${alerts[0].chain} ${alerts[0].token}`,
       count: alerts.length,
       alerts,
-      severity: alerts.some(a => a.severity === 'High') ? 'High' : 
-                alerts.some(a => a.severity === 'Medium') ? 'Medium' : 'Info'
+      severity: alerts.some((a: ProcessedAlert) => a.severity === 'High') ? 'High' : 
+                alerts.some((a: ProcessedAlert) => a.severity === 'Medium') ? 'Medium' : 'Info'
     }));
   }, [filteredAlerts]);
 
   // AI Digest from live data
   const aiDigest = useMemo(() => {
-    const highAlerts = filteredAlerts.filter(a => a.severity === 'High').length;
-    const totalVolume = filteredAlerts.reduce((sum, a) => sum + (a.usdAmount || 0), 0);
-    const topChains = [...new Set(filteredAlerts.map(a => a.chain))].slice(0, 2).join(' and ');
+    const highAlerts = filteredAlerts.filter((a: ProcessedAlert) => a.severity === 'High').length;
+    const totalVolume = filteredAlerts.reduce((sum: number, a: ProcessedAlert) => sum + (a.usd || 0), 0);
+    const topChains = [...new Set(filteredAlerts.map((a: ProcessedAlert) => a.chain))].slice(0, 2).join(' and ');
     return [
       `${highAlerts} high-priority whale movements detected`,
       `$${(totalVolume / 1000000).toFixed(0)}M in large transactions`,
@@ -156,7 +117,7 @@ export function MarketIntelligenceHub() {
     track('whale_cluster_selected', { clusterId });
   };
 
-  const handleAlertClick = (alert: Alert) => {
+  const handleAlertClick = (alert: ProcessedAlert) => {
     track('alert_clicked', { alertId: alert.id, severity: alert.severity });
   };
 
@@ -249,7 +210,7 @@ export function MarketIntelligenceHub() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  {marketHealth.topAlerts.slice(0, 2).map((alert, i) => (
+                  {marketHealth.topAlerts.slice(0, 2).map((alert: CriticalAlert, i: number) => (
                     <div key={alert.id} className="text-xs text-muted-foreground truncate">
                       • {alert.title}
                     </div>
@@ -331,7 +292,7 @@ export function MarketIntelligenceHub() {
           <ScrollArea className="flex-1 h-[calc(100vh-300px)]">
             <div className="p-4 space-y-3">
               {alertsView === 'stream' ? (
-                filteredAlerts.map((alert) => (
+                filteredAlerts.map((alert: ProcessedAlert) => (
                   <Card 
                     key={alert.id}
                     className="p-3 cursor-pointer hover:shadow-sm transition-shadow"
@@ -342,16 +303,16 @@ export function MarketIntelligenceHub() {
                         {alert.severity}
                       </Badge>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{alert.title}</p>
+                        <p className="font-medium text-sm">{alert.chain} {alert.token}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {alert.description}
+                          ${alert.usd.toLocaleString()} transaction
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-xs">
                             {alert.chain}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {alert.timestamp.toLocaleTimeString()}
+                            {new Date(alert.ts).toLocaleTimeString()}
                           </span>
                         </div>
                       </div>
