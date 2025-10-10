@@ -20,7 +20,7 @@ interface ChainSlice {
   }>;
 }
 
-interface WhaleEvent {
+export interface DrilldownWhaleEvent {
   id: string;
   timestamp: Date;
   type: string;
@@ -34,7 +34,7 @@ interface PieDrilldownModalProps {
   isOpen: boolean;
   onClose: () => void;
   chainSlice: ChainSlice | null;
-  whaleEvents: WhaleEvent[];
+  whaleEvents: DrilldownWhaleEvent[];
 }
 
 export function PieDrilldownModal({ isOpen, onClose, chainSlice, whaleEvents }: PieDrilldownModalProps) {

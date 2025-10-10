@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Brain, Settings, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,6 +7,7 @@ import { SystemHealthDashboard } from '@/components/monitoring/SystemHealthDashb
 import { PriceProviderStatus } from './PriceProviderStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import type { UserPlan } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ProductionPrediction {
@@ -37,23 +38,15 @@ interface ProductionPrediction {
 export function ProductionPredictionsPage() {
   const { user } = useAuth();
   const { userPlan, canAccessFeature } = useSubscription();
+  type PlanTier = UserPlan['plan'];
+  const planTier: PlanTier = userPlan?.plan ?? 'free';
   const [predictions, setPredictions] = useState<ProductionPrediction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('predictions');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  useEffect(() => {
-    fetchPredictions();
-    
-    // Set refresh interval based on user tier
-    const refreshInterval = getRefreshInterval();
-    const interval = setInterval(fetchPredictions, refreshInterval);
-    
-    return () => clearInterval(interval);
-  }, [userPlan]);
-
-  const getRefreshInterval = () => {
-    switch (userPlan.plan) {
+  const getRefreshInterval = useCallback((plan: PlanTier) => {
+    switch (plan) {
       case 'premium':
       case 'enterprise':
         return 30000; // 30 seconds
@@ -62,14 +55,14 @@ export function ProductionPredictionsPage() {
       default:
         return 300000; // 5 minutes
     }
-  };
+  }, []);
 
-  const fetchPredictions = async () => {
+  const fetchPredictions = useCallback(async () => {
     try {
       setIsLoading(true);
       
       const { data, error } = await supabase.functions.invoke('whale-predictions', {
-        body: { userTier: userPlan.plan }
+        body: { userTier: planTier }
       });
       
       if (error) throw error;
@@ -84,20 +77,28 @@ export function ProductionPredictionsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [planTier]);
 
-  const getFilteredPredictions = () => {
-    let filtered = predictions;
-    
-    // Apply tier-based filtering
-    if (userPlan.plan === 'free') {
-      filtered = filtered.slice(0, 3); // Limit to 3 predictions
-    } else if (userPlan.plan === 'pro') {
-      filtered = filtered.slice(0, 10); // Limit to 10 predictions
+  const refreshInterval = useMemo(() => getRefreshInterval(planTier), [getRefreshInterval, planTier]);
+
+  useEffect(() => {
+    fetchPredictions();
+
+    const interval = setInterval(fetchPredictions, refreshInterval);
+    return () => clearInterval(interval);
+  }, [fetchPredictions, refreshInterval]);
+
+  const filteredPredictions = useMemo(() => {
+    if (planTier === 'free') {
+      return predictions.slice(0, 3);
     }
-    
-    return filtered;
-  };
+
+    if (planTier === 'pro') {
+      return predictions.slice(0, 10);
+    }
+
+    return predictions;
+  }, [predictions, planTier]);
 
   if (!canAccessFeature('whalePredictions')) {
     return (
@@ -158,15 +159,15 @@ export function ProductionPredictionsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium text-blue-900">
-                  {userPlan.plan?.toUpperCase()} Plan Active
+                  {planTier.toUpperCase()} Plan Active
                 </div>
                 <div className="text-sm text-blue-700">
-                  Refresh rate: {getRefreshInterval() / 1000}s • 
-                  Predictions: {userPlan.plan === 'free' ? '3' : userPlan.plan === 'pro' ? '10' : 'Unlimited'} • 
-                  Features: {userPlan.plan === 'free' ? 'Basic' : userPlan.plan === 'pro' ? 'Advanced' : 'Enterprise'}
+                  Refresh rate: {refreshInterval / 1000}s • 
+                  Predictions: {planTier === 'free' ? '3' : planTier === 'pro' ? '10' : 'Unlimited'} • 
+                  Features: {planTier === 'free' ? 'Basic' : planTier === 'pro' ? 'Advanced' : 'Enterprise'}
                 </div>
               </div>
-              {userPlan.plan === 'free' && (
+              {planTier === 'free' && (
                 <Button size="sm">
                   Upgrade for Real-time
                 </Button>
@@ -196,8 +197,8 @@ export function ProductionPredictionsPage() {
                     <div key={i} className="h-32 bg-muted rounded-lg animate-pulse" />
                   ))}
                 </div>
-              ) : getFilteredPredictions().length > 0 ? (
-                getFilteredPredictions().map((prediction) => (
+              ) : filteredPredictions.length > 0 ? (
+                filteredPredictions.map((prediction) => (
                   <ProductionPredictionCard 
                     key={prediction.id} 
                     prediction={prediction} 

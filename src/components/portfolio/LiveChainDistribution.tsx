@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Zap } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { useState } from 'react';
-import { PieDrilldownModal } from './PieDrilldownModal';
+import { useMemo, useState } from 'react';
+import { PieDrilldownModal, type DrilldownWhaleEvent } from './PieDrilldownModal';
 import { metricsService } from '@/services/MetricsService';
 import { whaleSimulator } from '@/services/whaleSimulator';
 
@@ -86,6 +86,24 @@ export function LiveChainDistribution({ holdings = [], totalValue }: LiveChainDi
   };
 
   const chainDistribution = calculateChainDistribution();
+
+  const whaleEventsForModal = useMemo<DrilldownWhaleEvent[]>(() => {
+    const events = whaleSimulator.generateWhaleEvents({
+      addresses: ['0x742d35Cc6634C0532925a3b8D4C9db4C532925a3'],
+      portfolioValue: totalValue,
+      holdings: holdings.map(h => ({ token: h.token, value: h.value }))
+    });
+
+    return events.map((event) => ({
+      id: event.id,
+      timestamp: event.timestamp,
+      type: event.type,
+      token: event.asset,
+      amount: event.amountUsd,
+      value: event.amountUsd,
+      impact: event.impactScore >= 7 ? 'high' : event.impactScore >= 4 ? 'medium' : 'low'
+    }));
+  }, [holdings, totalValue]);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -225,22 +243,7 @@ export function LiveChainDistribution({ holdings = [], totalValue }: LiveChainDi
           metricsService.trackFeatureUsage('modal_close', 1);
         }}
         chainSlice={selectedChain}
-        whaleEvents={(() => {
-          const events = whaleSimulator.generateWhaleEvents({
-            addresses: ['0x742d35Cc6634C0532925a3b8D4C9db4C532925a3'],
-            portfolioValue: totalValue,
-            holdings: holdings.map(h => ({ token: h.token, value: h.value }))
-          });
-          return events.map(event => ({
-            id: event.id,
-            timestamp: event.timestamp,
-            type: event.type,
-            token: event.asset,
-            amount: event.amountUsd,
-            value: event.amountUsd,
-            impact: event.impactScore >= 7 ? 'high' as const : event.impactScore >= 4 ? 'medium' as const : 'low' as const
-          }));
-        })()}
+        whaleEvents={whaleEventsForModal}
       />
     </Card>
   );
