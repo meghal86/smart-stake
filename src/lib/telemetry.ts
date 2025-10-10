@@ -96,7 +96,20 @@ export type TelemetryEvent =
   | 'signals_back_clicked'
   | 'signals_create_alert_clicked'
   | 'signals_tab_changed'
-  | 'execute_roi_query';
+  | 'execute_roi_query'
+  // Additional missing events
+  | 'group_expanded'
+  | 'quick_action_clicked'
+  | 'explain_opened'
+  | 'raw_export'
+  | 'updates_paused'
+  | 'confidence_animated'
+  | 'sparkline_rendered'
+  | 'card_state_changed'
+  | 'motion_preference_detected'
+  | 'home_view'
+  | 'streak_advanced'
+  | 'tip_reenabled';
 
 export interface TelemetryProperties {
   [key: string]: string | number | boolean | undefined;

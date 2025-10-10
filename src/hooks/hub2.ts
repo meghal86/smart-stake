@@ -225,7 +225,8 @@ const API = {
 
       return { 
         summary, 
-        events: timeline, 
+        events: timeline,
+        timeline: timeline, 
         ai: { 
           soWhat: `Analysis shows ${id} with ${summary.gauges.sentiment}% sentiment and ${summary.gauges.risk}/10 risk level.`, 
           next: ['Monitor for breakout', 'Watch whale activity', 'Set stop-loss'] 
@@ -346,7 +347,7 @@ export function usePulse(window: '24h'|'7d'|'30d') {
       return data as PulseData;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -361,7 +362,7 @@ export function useExplore(qs: string) {
       return data as ExploreData;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -376,7 +377,7 @@ export function useEntity(id: string) {
       return data as EntityDetail;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -400,7 +401,7 @@ export function useAlerts() {
       return data as AlertRule[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

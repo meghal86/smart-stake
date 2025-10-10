@@ -49,4 +49,6 @@ export function getFeatureFlag(key: string): Promise<boolean> {
   return isFeatureEnabled(key as FeatureFlag)
 }
 
-export type Plan = 'free' | 'pro' | 'premium' | 'enterprise'
+export type Plan = 'free' | 'pro' | 'premium' | 'enterprise' | 'LITE'
+
+export type PlanTier = 'free' | 'pro' | 'premium' | 'enterprise'
