@@ -1,0 +1,149 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  
+  /* AlphaWhale Odyssey Color System */
+  --abyss: #050B17;
+  --deep-blue: #081A34;
+  --glow-blue: #1CA9FF;
+  --violet-pulse: #6B5FFF;
+  --turquoise-profit: #2DD4BF;
+  --coral-alert: #F95C39;
+  --amber-review: #FFC55C;
+  
+  /* Light Theme - Ocean Day */
+  --ocean-sky: #F0F9FF;
+  --ocean-blue: #0891B2;
+  --ocean-deep: #0E7490;
+  --ocean-light: #BAE6FD;
+  --sand: #FEF3C7;
+  --coral-light: #FED7AA;
+  
+  /* Dynamic Theme Variables */
+  --background: var(--ocean-sky);
+  --foreground: #0A2540;
+  --card: rgba(255, 255, 255, 0.9);
+  --card-foreground: #0A2540;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A2540;
+  --primary: var(--ocean-blue);
+  --primary-foreground: #FFFFFF;
+  --secondary: rgba(14, 116, 144, 0.15);
+  --secondary-foreground: #0A2540;
+  --muted: rgba(8, 145, 178, 0.15);
+  --muted-foreground: #0E4A6B;
+  --accent: rgba(8, 145, 178, 0.2);
+  --accent-foreground: var(--ocean-blue);
+  --destructive: var(--coral-alert);
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(8, 145, 178, 0.25);
+  --input: transparent;
+  --input-background: rgba(255, 255, 255, 0.7);
+  --switch-background: rgba(8, 145, 178, 0.25);
+  --font-weight-medium: 600;
+  --font-weight-normal: 400;
+  --ring: var(--ocean-blue);
+  --chart-1: var(--ocean-blue);
+  --chart-2: var(--violet-pulse);
+  --chart-3: var(--turquoise-profit);
+  --chart-4: var(--amber-review);
+  --chart-5: var(--coral-alert);
+  --radius: 1rem;
+}
+
+.dark {
+  /* Cinematic Dark Ocean Theme */
+  --background: var(--deep-blue);
+  --foreground: #F0F6FF;
+  --card: rgba(8, 26, 52, 0.6);
+  --card-foreground: #F0F6FF;
+  --popover: var(--deep-blue);
+  --popover-foreground: #F0F6FF;
+  --primary: var(--glow-blue);
+  --primary-foreground: #F0F6FF;
+  --secondary: rgba(107, 95, 255, 0.2);
+  --secondary-foreground: #F0F6FF;
+  --muted: rgba(127, 155, 191, 0.2);
+  --muted-foreground: #7F9BBF;
+  --accent: rgba(28, 169, 255, 0.15);
+  --accent-foreground: var(--glow-blue);
+  --border: rgba(28, 169, 255, 0.2);
+  --input-background: rgba(8, 26, 52, 0.8);
+  --ring: var(--glow-blue);
+}
+
+.pro {
+  /* Pro Mode - Minimal Dark */
+  --background: var(--abyss);
+  --card: rgba(5, 11, 23, 0.8);
+  --border: rgba(28, 169, 255, 0.1);
+  --accent: rgba(28, 169, 255, 0.08);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  /* Animated Background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, #F0F9FF 0%, #E0F2FE 50%, #BAE6FD 100%);
+    z-index: -2;
+    animation: shimmer 8s ease-in-out infinite;
+  }
+  
+  .dark body::before {
+    background: linear-gradient(180deg, #050B17 0%, #081A34 50%, #0A1F3D 100%);
+  }
+  
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(8, 145, 178, 0.1), transparent),
+      radial-gradient(circle at 80% 80%, rgba(45, 212, 191, 0.08), transparent);
+    z-index: -1;
+    pointer-events: none;
+    animation: float 12s ease-in-out infinite;
+  }
+  
+  .dark body::after {
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(107, 95, 255, 0.15), transparent),
+      radial-gradient(circle at 80% 80%, rgba(28, 169, 255, 0.1), transparent);
+  }
+  
+  @keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.95; }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(10px, -10px); }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(8, 145, 178, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(8, 145, 178, 0.6); }
+  }
+  
+  .dark @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(28, 169, 255, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(28, 169, 255, 0.6); }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}

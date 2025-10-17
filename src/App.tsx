@@ -60,6 +60,7 @@ import TestWorldClass from "./pages/TestWorldClass";
 import WhaleSignalsPhaseD from "./pages/whale-signals/index";
 import PatternModalDemo from "./pages/PatternModalDemo";
 import { MyROI } from "./pages/insights/MyROI";
+import Hub2Plus from "./pages/Hub2Plus";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -175,6 +176,7 @@ const App = () => {
                   <Route path="/hub2/alerts" element={<AlertsPage />} />
                   <Route path="/hub2/watchlist" element={<WatchlistPage />} />
                   <Route path="/hub2/copilot" element={<CopilotPage />} />
+                  <Route path="/hub2-plus" element={<Hub2Plus />} />
                   <Route path="/signals" element={<SignalsPage />} />
                   <Route path="/signals-feed" element={<SignalsPage />} />
                   <Route path="/test-world-class" element={<TestWorldClass />} />
