@@ -91,12 +91,8 @@ export default function PulsePage() {
           {/* Health Banner */}
           <HealthBanner className="mb-4" />
           
-          {/* Brand Header */}
-          <div className="flex items-center justify-between mb-6">
-            <BrandHeader 
-              mode={mode} 
-              onModeChange={setMode}
-            />
+          {/* Theme Toggle */}
+          <div className="flex justify-end mb-6">
             <ThemeToggle />
           </div>
           
@@ -226,31 +222,26 @@ export default function PulsePage() {
             >
               <div style={{ marginBottom: '20px' }}>
                 <p style={{
-                  fontSize: mode === 'novice' ? '1.1rem' : '1rem',
+                  fontSize: '1rem',
                   lineHeight: '1.6',
                   color: '#F0F6FF',
                   margin: 0
                 }}>
-                  {mode === 'novice' 
-                    ? `Market waves are ${data.kpis.marketSentiment >= 70 ? 'strong and rising' : data.kpis.marketSentiment >= 40 ? 'steady' : 'choppy'}. ${data.kpis.whalePressure >= 0 ? 'Big whales are accumulating' : 'Big whales are distributing'}. ${data.kpis.risk >= 7 ? 'Expect major moves soon' : data.kpis.risk >= 4 ? 'Some volatility expected' : 'Calm waters ahead'}.`
-                    : `Market sentiment at ${data.kpis.marketSentiment.toFixed(1)}% (${data.kpis.marketSentiment >= 70 ? 'bullish' : data.kpis.marketSentiment >= 40 ? 'neutral' : 'bearish'}). Whale pressure ${data.kpis.whalePressure >= 0 ? 'positive' : 'negative'} with ${Math.abs(data.kpis.whalePressure).toFixed(1)} score.`
-                  }
+                  Market sentiment at {data.kpis.marketSentiment.toFixed(1)}% ({data.kpis.marketSentiment >= 70 ? 'bullish' : data.kpis.marketSentiment >= 40 ? 'neutral' : 'bearish'}). Whale pressure {data.kpis.whalePressure >= 0 ? 'positive' : 'negative'} with {Math.abs(data.kpis.whalePressure).toFixed(1)} score.
                 </p>
               </div>
 
-              {mode === 'pro' && (
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                  <PercentileBadge percentile={Math.min(100, Math.max(0, (data.kpis.whalePressure + 100) / 2))} type="inflow" />
-                  <PercentileBadge percentile={Math.min(100, Math.max(0, data.kpis.risk * 10))} type="risk" />
-                  <AsOfLabel asOf={data.ts} />
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                <PercentileBadge percentile={Math.min(100, Math.max(0, (data.kpis.whalePressure + 100) / 2))} type="inflow" />
+                <PercentileBadge percentile={Math.min(100, Math.max(0, data.kpis.risk * 10))} type="risk" />
+                <AsOfLabel asOf={data.ts} />
+              </div>
 
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <ActionButton 
                   onClick={() => navigate('/hub2/watchlist')}
                   icon={<Eye className="w-4 h-4" />}
-                  size={mode === 'novice' ? 'lg' : 'md'}
+                  size="md"
                 >
                   Watch All
                 </ActionButton>
@@ -258,7 +249,7 @@ export default function PulsePage() {
                   onClick={() => navigate('/hub2/alerts')}
                   icon={<Bell className="w-4 h-4" />}
                   variant="secondary"
-                  size={mode === 'novice' ? 'lg' : 'md'}
+                  size="md"
                 >
                   Create Alert
                 </ActionButton>
@@ -266,7 +257,7 @@ export default function PulsePage() {
                   onClick={() => setShowEvidenceModal(true)}
                   icon={<ExternalLink className="w-4 h-4" />}
                   variant="ghost"
-                  size={mode === 'novice' ? 'lg' : 'md'}
+                  size="md"
                 >
                   Evidence
                 </ActionButton>
@@ -283,12 +274,12 @@ export default function PulsePage() {
               marginBottom: '24px'
             }}>
               <h2 style={{
-                fontSize: mode === 'novice' ? '1.5rem' : '1.25rem',
+                fontSize: '1.25rem',
                 fontWeight: 700,
                 color: '#F0F6FF',
                 margin: 0
               }}>
-                {mode === 'novice' ? 'Important Signals' : 'Top Market Signals'}
+                Top Market Signals
               </h2>
               <ActionButton variant="ghost" size="sm">
                 View All ({data?.topSignals?.length || 0})
@@ -297,13 +288,11 @@ export default function PulsePage() {
 
             <div style={{
               display: 'grid',
-              gap: mode === 'novice' ? '24px' : '16px',
-              gridTemplateColumns: mode === 'novice' 
-                ? 'repeat(auto-fit, minmax(350px, 1fr))'
-                : 'repeat(auto-fit, minmax(320px, 1fr))'
+              gap: '16px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
             }}>
               {showLoading ? (
-                Array.from({ length: mode === 'novice' ? 4 : 6 }).map((_, i) => (
+                Array.from({ length: 6 }).map((_, i) => (
                   <ModularCard
                     key={i}
                     title="Loading..."
@@ -324,7 +313,7 @@ export default function PulsePage() {
                   </ModularCard>
                 ))
               ) : data?.topSignals ? (
-                data.topSignals.slice(0, mode === 'novice' ? 4 : 6).map((entity) => (
+                data.topSignals.slice(0, 6).map((entity) => (
                   <ModularCard
                     key={entity.id}
                     title={`${entity.symbol || entity.id}`}
@@ -356,7 +345,7 @@ export default function PulsePage() {
           {data?.topSignals && data.topSignals.length > 0 && (() => {
             const allEvents = data.topSignals.flatMap(entity => entity.lastEvents || []);
             const sortedEvents = allEvents.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
-            const displayedEvents = showAllSignals ? sortedEvents : sortedEvents.slice(0, mode === 'novice' ? 4 : 6);
+            const displayedEvents = showAllSignals ? sortedEvents : sortedEvents.slice(0, 6);
             
             const mockEvents = allEvents.length === 0 ? [
               {
@@ -408,10 +397,7 @@ export default function PulsePage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <p style={{ color: '#7F9BBF', margin: 0 }}>
-                      {mode === 'novice' 
-                        ? 'Recent whale movements and market events'
-                        : `${totalEvents} live signals in the last ${selectedWindow}`
-                      }
+                      {totalEvents} live signals in the last {selectedWindow}
                     </p>
                     <ActionButton 
                       onClick={() => setShowAllSignals(!showAllSignals)}
@@ -424,8 +410,8 @@ export default function PulsePage() {
                   
                   <div style={{
                     display: 'grid',
-                    gap: mode === 'novice' ? '16px' : '12px',
-                    gridTemplateColumns: mode === 'novice' ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))'
+                    gap: '12px',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'
                   }}>
                     {eventsToShow.map((event) => (
                       <SignalCard
@@ -436,7 +422,7 @@ export default function PulsePage() {
                     ))}
                   </div>
                   
-                  {!showAllSignals && totalEvents > (mode === 'novice' ? 4 : 6) && (
+                  {!showAllSignals && totalEvents > 6 && (
                     <div style={{ textAlign: 'center', marginTop: '16px' }}>
                       <ActionButton 
                         onClick={() => setShowAllSignals(true)}
@@ -453,11 +439,7 @@ export default function PulsePage() {
         </div>
       </Hub2Layout>
       
-      {/* Legendary Footer */}
-      <LegendaryFooter 
-        theme="dark" 
-        onThemeToggle={() => console.log('Theme toggle clicked')} 
-      />
+
       
       {/* Explain Modal */}
       <ExplainModal 

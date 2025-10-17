@@ -7,7 +7,9 @@ import {
   Star, 
   Bot,
   Zap,
-  Home
+  Home,
+  Briefcase,
+  Radar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,8 @@ const navItems = [
   { id: 'explore', label: 'Explore', icon: Search, path: '/hub2/explore' },
   { id: 'alerts', label: 'Alerts', icon: Bell, path: '/hub2/alerts' },
   { id: 'watchlist', label: 'Watch', icon: Star, path: '/hub2/watchlist' },
+  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced' },
+  { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner' },
   { id: 'copilot', label: 'AI', icon: Bot, path: '/hub2/copilot' },
 ];
 
@@ -33,6 +37,8 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
     if (path.startsWith('/hub2/explore')) return 'explore';
     if (path.startsWith('/hub2/alerts')) return 'alerts';
     if (path.startsWith('/hub2/watchlist')) return 'watchlist';
+    if (path.startsWith('/portfolio-enhanced')) return 'portfolio';
+    if (path.startsWith('/scanner')) return 'scanner';
     if (path.startsWith('/hub2/copilot')) return 'copilot';
     return 'pulse';
   };

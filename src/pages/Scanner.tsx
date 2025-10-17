@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare, Bell, Star, Palette, Image } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
+import Hub2Layout from "@/components/hub2/Hub2Layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -251,7 +251,7 @@ export default function Scanner() {
   ];
 
   return (
-    <AppLayout>
+    <Hub2Layout>
     <EnhancedErrorBoundary
       onError={(error, errorInfo) => {
         toast({
@@ -1236,6 +1236,6 @@ export default function Scanner() {
         </div>
       </div>
     </EnhancedErrorBoundary>
-    </AppLayout>
+    </Hub2Layout>
   );
  }

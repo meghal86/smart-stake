@@ -43,6 +43,7 @@ import { ProvenancePanel } from '@/components/portfolio/ProvenancePanel';
 import { AlertsCard } from '@/components/portfolio/AlertsCard';
 import { MobileProvenancePanel } from '@/components/portfolio/MobileProvenancePanel';
 import { metricsService } from '@/services/MetricsService';
+import Hub2Layout from '@/components/hub2/Hub2Layout';
 
 interface MonitoredAddress {
   id: string;
@@ -146,8 +147,9 @@ export default function PortfolioEnhanced() {
   }
 
   return (
-    <TooltipProvider>
-      <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
+    <Hub2Layout>
+      <TooltipProvider>
+        <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
         <div className="p-4 space-y-6">
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -539,5 +541,6 @@ export default function PortfolioEnhanced() {
         </div>
       </div>
     </TooltipProvider>
-  );
+  </Hub2Layout>
+);
 }
