@@ -172,10 +172,10 @@ export default function SearchCommand({ open, onOpenChange }: SearchCommandProps
           </DialogTitle>
         </DialogHeader>
         
-        <Command className="rounded-lg border shadow-md">
+        <div className="rounded-lg border shadow-md">
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <CommandPrimitive.Input
+            <input
               ref={inputRef}
               value={query}
               onValueChange={setQuery}
@@ -190,7 +190,7 @@ export default function SearchCommand({ open, onOpenChange }: SearchCommandProps
             </div>
           </div>
           
-          <CommandList className="max-h-96">
+          <div className="max-h-96 overflow-y-auto">
             {isLoading && (
               <div className="flex items-center justify-center py-6">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -198,19 +198,18 @@ export default function SearchCommand({ open, onOpenChange }: SearchCommandProps
             )}
             
             {!isLoading && results.length === 0 && query && (
-              <CommandEmpty>No results found for "{query}"</CommandEmpty>
+              <div className="p-4 text-center text-muted-foreground">No results found for "{query}"</div>
             )}
             
             {!isLoading && results.length > 0 && (
-              <CommandGroup>
+              <div>
                 {results.map((result) => {
                   const Icon = getTypeIcon(result.type);
                   return (
-                    <CommandItem
+                    <div
                       key={result.id}
-                      value={result.id}
-                      onSelect={() => handleSelect(result)}
-                      className="flex items-center gap-3 p-3 cursor-pointer"
+                      onClick={() => handleSelect(result)}
+                      className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted"
                     >
                       <Icon className={cn("w-4 h-4", getTypeColor(result.type))} />
                       <div className="flex-1 min-w-0">
@@ -225,10 +224,10 @@ export default function SearchCommand({ open, onOpenChange }: SearchCommandProps
                         </Badge>
                       )}
                       <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                    </CommandItem>
+                    </div>
                   );
                 })}
-              </CommandGroup>
+              </div>
             )}
             
             {!query && (
@@ -244,8 +243,8 @@ export default function SearchCommand({ open, onOpenChange }: SearchCommandProps
                 </div>
               </div>
             )}
-          </CommandList>
-        </Command>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

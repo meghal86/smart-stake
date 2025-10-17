@@ -44,6 +44,11 @@ import { AlertsCard } from '@/components/portfolio/AlertsCard';
 import { MobileProvenancePanel } from '@/components/portfolio/MobileProvenancePanel';
 import { metricsService } from '@/services/MetricsService';
 import Hub2Layout from '@/components/hub2/Hub2Layout';
+import LegendaryLayout from '@/components/ui/LegendaryLayout';
+
+import { EnhancedGlassCard } from '@/components/cinematic/EnhancedGlassCard';
+
+import { useUIMode } from '@/store/uiMode';
 
 interface MonitoredAddress {
   id: string;
@@ -70,6 +75,15 @@ export default function PortfolioEnhanced() {
   const [whaleFilter, setWhaleFilter] = useState('all');
   const [alerts, setAlerts] = useState<any[]>([]);
   const [dailyAlertUsage, setDailyAlertUsage] = useState(0);
+  const { mode } = useUIMode();
+  
+  useEffect(() => {
+    // Apply cinematic theme
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.documentElement.classList.remove("dark", "pro");
+    if (savedTheme === "dark") document.documentElement.classList.add("dark");
+    if (savedTheme === "pro") document.documentElement.classList.add("dark", "pro");
+  }, []);
   
   const addressList = addresses.map(a => a.address);
   const { data: portfolioData, loading, error, refetch, simulateScenario } = useEnhancedPortfolio(addressList);
@@ -147,9 +161,17 @@ export default function PortfolioEnhanced() {
   }
 
   return (
-    <Hub2Layout>
-      <TooltipProvider>
-        <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
+    <LegendaryLayout mode={mode}>
+      <Hub2Layout>
+        <TooltipProvider>
+          <div style={{ 
+            maxWidth: '1400px',
+            margin: '0 auto',
+            padding: '0 24px'
+          }}>
+
+            
+
         <div className="p-4 space-y-6">
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -542,5 +564,6 @@ export default function PortfolioEnhanced() {
       </div>
     </TooltipProvider>
   </Hub2Layout>
+</LegendaryLayout>
 );
 }

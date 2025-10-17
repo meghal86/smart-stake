@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Shield, Search, AlertTriangle, CheckCircle, XCircle, Eye, Ban, Zap, Users, TrendingDown, ExternalLink, Activity, Clock, DollarSign, Info, HelpCircle, ChevronDown, ChevronUp, BarChart3, Droplets, History, Network, FileText, MessageSquare, Bell, Star, Palette, Image } from "lucide-react";
 import Hub2Layout from "@/components/hub2/Hub2Layout";
+import LegendaryLayout from "@/components/ui/LegendaryLayout";
+
+import { EnhancedGlassCard } from "@/components/cinematic/EnhancedGlassCard";
+
+import { useUIMode } from "@/store/uiMode";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,6 +60,15 @@ export default function Scanner() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
   const [scanProgress, setScanProgress] = useState(0);
+  const { mode } = useUIMode();
+  
+  useEffect(() => {
+    // Apply cinematic theme
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.documentElement.classList.remove("dark", "pro");
+    if (savedTheme === "dark") document.documentElement.classList.add("dark");
+    if (savedTheme === "pro") document.documentElement.classList.add("dark", "pro");
+  }, []);
   
   // Debounce wallet address input for performance
   const debouncedWalletAddress = useDebounce(walletAddress, 300);
@@ -251,8 +265,18 @@ export default function Scanner() {
   ];
 
   return (
-    <Hub2Layout>
-    <EnhancedErrorBoundary
+    <LegendaryLayout mode={mode}>
+      <Hub2Layout>
+        <div style={{ 
+          maxWidth: '1400px',
+          margin: '0 auto',
+          padding: '0 24px'
+        }}>
+
+          
+
+        </div>
+        <EnhancedErrorBoundary
       onError={(error, errorInfo) => {
         toast({
           title: "Application Error",
@@ -1235,7 +1259,8 @@ export default function Scanner() {
          )}
         </div>
       </div>
-    </EnhancedErrorBoundary>
-    </Hub2Layout>
+        </EnhancedErrorBoundary>
+      </Hub2Layout>
+    </LegendaryLayout>
   );
  }

@@ -30,6 +30,7 @@ import HealthPill from "./HealthPill";
 import ModeToggle from "../hub2/ModeToggle";
 import TimeWindowToggle from "../hub2/TimeWindowToggle";
 import ProvenanceChip from "../hub2/ProvenanceChip";
+import { ThemeToggle } from "../ui/theme-toggle";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -192,6 +193,9 @@ export default function Header({ className }: HeaderProps) {
 
         {/* Right: Controls + User Menu */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           {/* Mode Toggle */}
           <ModeToggle mode={mode} onModeChange={setMode} />
 
