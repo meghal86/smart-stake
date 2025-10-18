@@ -1,0 +1,28 @@
+/* Pulse wave animation for scenario cards */
+@keyframes pulse-wave {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(var(--primary), 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 20px rgba(var(--primary), 0);
+  }
+}
+
+.pulse-wave {
+  animation: pulse-wave 0.3s ease-out;
+}
+
+/* Reduced motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-wave {
+    animation: none;
+    background-color: rgba(var(--primary), 0.1);
+    transition: background-color 0.2s ease;
+  }
+}

@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, Plus, RefreshCw, Settings, TrendingUp } from 'lucide-react';
+import { Briefcase, Plus, RefreshCw, Settings, TrendingUp, Shield, Download, MessageSquare, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FeatureGate, ProFeature, InstitutionalFeature } from '@/components/subscription/FeatureGate';
+
+// Portfolio Intelligence Components
+import { PortfolioHeader } from '@/components/portfolio/PortfolioHeader';
+import { DataLineageCard } from '@/components/portfolio/DataLineageCard';
+import { RiskAnalysisPanel } from '@/components/portfolio/RiskAnalysisPanel';
+import { StressTest } from '@/components/portfolio/StressTest';
+import { GuardianWidget } from '@/components/portfolio/GuardianWidget';
+import { ExportProofModal } from '@/components/portfolio/ExportProofModal';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 
 // Enhanced Portfolio Components
@@ -75,6 +83,11 @@ export default function PortfolioEnhanced() {
   const [whaleFilter, setWhaleFilter] = useState('all');
   const [alerts, setAlerts] = useState<any[]>([]);
   const [dailyAlertUsage, setDailyAlertUsage] = useState(0);
+  const [isGuardianScanning, setIsGuardianScanning] = useState(false);
+  const [guardianData, setGuardianData] = useState<any>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [copilotQuery, setCopilotQuery] = useState('');
+  const [copilotResponse, setCopilotResponse] = useState('');
   const { mode } = useUIMode();
   
   useEffect(() => {
@@ -93,6 +106,90 @@ export default function PortfolioEnhanced() {
   const currentData = productionData || portfolioData;
   const currentLoading = prodLoading || loading || addressesLoading;
   const { subscription } = useSubscription();
+
+  // Mock Guardian API service
+  const guardianAPI = {
+    async scanPortfolio(addresses: string[]) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return {
+        trustScore: Math.floor(Math.random() * 40) + 60,
+        flags: [
+          {
+            id: '1',
+            type: 'mixer',
+            severity: 'medium' as const,
+            address: addresses[0] || '0x1234...5678',
+            description: 'Interaction with privacy mixer detected',
+            timestamp: new Date(),
+            source: 'Chainalysis'
+          }
+        ],
+        scanTimestamp: new Date()
+      };
+    }
+  };
+
+  // Mock data for Portfolio Intelligence
+  const mockDataSources = [
+    {
+      name: 'Etherscan API',
+      type: 'real' as const,
+      status: 'healthy' as const,
+      lastUpdate: new Date(),
+      coverage: 95
+    },
+    {
+      name: 'CoinGecko Prices',
+      type: 'real' as const,
+      status: 'healthy' as const,
+      lastUpdate: new Date(),
+      coverage: 100
+    },
+    {
+      name: 'DeFi Protocols',
+      type: 'simulated' as const,
+      status: 'degraded' as const,
+      lastUpdate: new Date(Date.now() - 300000),
+      coverage: 75
+    }
+  ];
+
+  const mockRiskFactors = [
+    {
+      name: 'Concentration Risk',
+      score: 6,
+      trend: 'stable' as const,
+      impact: 'medium' as const,
+      description: 'Portfolio concentrated in top 3 assets'
+    },
+    {
+      name: 'Liquidity Risk',
+      score: 8,
+      trend: 'down' as const,
+      impact: 'low' as const,
+      description: 'High liquidity across major holdings'
+    },
+    {
+      name: 'Smart Contract Risk',
+      score: 4,
+      trend: 'up' as const,
+      impact: 'high' as const,
+      description: 'Exposure to unaudited protocols'
+    }
+  ];
+
+  const mockGuardianFlags = [
+    { type: 'mixer', severity: 'medium' as const, count: 2 },
+    { type: 'suspicious', severity: 'low' as const, count: 1 }
+  ];
+
+  const mockRiskTrend = [
+    { date: '2024-01-01', score: 7 },
+    { date: '2024-01-02', score: 6.5 },
+    { date: '2024-01-03', score: 6.8 },
+    { date: '2024-01-04', score: 6.2 },
+    { date: '2024-01-05', score: 6.0 }
+  ];
 
   // Addresses are now managed by useUserAddresses hook
   
@@ -130,6 +227,65 @@ export default function PortfolioEnhanced() {
     } catch (error) {
       console.error('Failed to remove address:', error);
     }
+  };
+
+  const handleGuardianScan = async () => {
+    if (addressList.length === 0) return;
+    
+    setIsGuardianScanning(true);
+    try {
+      const result = await guardianAPI.scanPortfolio(addressList);
+      setGuardianData(result);
+    } catch (error) {
+      console.error('Guardian scan failed:', error);
+    } finally {
+      setIsGuardianScanning(false);
+    }
+  };
+
+  const handleStressTest = async (scenarios: any) => {
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    return {
+      worstCase: currentData?.totalValue ? currentData.totalValue * 0.6 : 60000,
+      expectedLoss: currentData?.totalValue ? currentData.totalValue * 0.25 : 25000,
+      recoveryTime: 18,
+      scenarioResults: Object.entries(scenarios).map(([name, impact]) => ({
+        name: name.replace(/([A-Z])/g, ' $1').trim(),
+        impact: Math.abs(impact as number)
+      })),
+      recoveryPath: Array.from({ length: 24 }, (_, i) => ({
+        month: i + 1,
+        value: currentData?.totalValue ? 
+          currentData.totalValue * (0.4 + (i / 24) * 0.6) : 
+          40000 + (i * 2500)
+      })),
+      recommendations: [
+        'Diversify into uncorrelated asset classes',
+        'Maintain 20% cash reserves for opportunities',
+        'Consider hedging strategies for major positions',
+        'Implement gradual position sizing adjustments'
+      ]
+    };
+  };
+
+  const handleCopilotQuery = async () => {
+    if (!copilotQuery.trim()) return;
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const responses = {
+      'is my portfolio clean': `Based on Guardian scan results, your portfolio shows a ${guardianData?.trustScore || 75}% trust score. ${guardianData?.flags?.length || 0} security flags detected. Overall assessment: ${guardianData?.trustScore >= 80 ? 'Clean' : guardianData?.trustScore >= 60 ? 'Moderate Risk' : 'High Risk'}.`,
+      'what is my risk': `Your portfolio risk score is ${currentData?.riskScore || 6}/10. Key risks include concentration (${mockRiskFactors[0].score}/10) and smart contract exposure (${mockRiskFactors[2].score}/10). Liquidity risk is low at ${mockRiskFactors[1].score}/10.`,
+      'should i diversify': `Yes, analysis shows concentration risk at ${mockRiskFactors[0].score}/10. Consider reducing exposure to top holdings and adding uncorrelated assets. Target: <50% in any single asset class.`
+    };
+    
+    const query = copilotQuery.toLowerCase();
+    const response = Object.entries(responses).find(([key]) => 
+      query.includes(key)
+    )?.[1] || `I analyzed your query about "${copilotQuery}". Based on current portfolio data: Total value $${currentData?.totalValue?.toLocaleString() || '0'}, Risk ${currentData?.riskScore || 6}/10, Trust ${guardianData?.trustScore || 75}%. Would you like specific recommendations?`;
+    
+    setCopilotResponse(response);
   };
 
   // Mock functions for report generation
@@ -208,15 +364,26 @@ export default function PortfolioEnhanced() {
               </Button>
               <Button 
                 variant="outline" 
-                size="sm" 
+                onClick={handleGuardianScan}
+                disabled={isGuardianScanning || addressList.length === 0}
                 className="flex-shrink-0"
+                size="sm"
               >
-                <Settings className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Settings</span>
+                <Shield className={`h-4 w-4 ${isGuardianScanning ? 'animate-pulse' : ''}`} />
+                <span className="hidden sm:inline ml-2">{isGuardianScanning ? 'Scanning...' : 'Guardian'}</span>
+              </Button>
+              <Button 
+                onClick={() => setShowExportModal(true)}
+                className="bg-[#14B8A6] hover:bg-[#0F9488] flex-shrink-0" 
+                size="sm"
+              >
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Export Proof</span>
               </Button>
               <Button 
                 onClick={() => setShowAddModal(true)} 
-                className="bg-[#14B8A6] hover:bg-[#0F9488] flex-shrink-0" 
+                variant="outline"
+                className="flex-shrink-0" 
                 size="sm"
               >
                 <Plus className="h-4 w-4 sm:mr-2" />
@@ -232,16 +399,15 @@ export default function PortfolioEnhanced() {
             </Alert>
           )}
 
-          {/* Portfolio Overview - Now with Live Data */}
+          {/* Portfolio Intelligence Header */}
           {currentData && (
             <>
-              <PortfolioOverviewCard
+              <PortfolioHeader
                 totalValue={currentData.totalValue || 0}
-                pnl24h={currentData.pnl24h || 0}
-                pnlPercent={currentData.pnlPercent || 0}
-                riskScore={currentData.riskScore || 0}
-                riskChange={currentData.riskChange || 0}
-                whaleActivity={currentData.whaleActivity || 0}
+                pnl24h={currentData.pnlPercent || 0}
+                riskScore={currentData.riskScore || 6}
+                trustScore={guardianData?.trustScore || 75}
+                isLive={isLive}
               />
               
               {/* Production Data Source Badge */}
@@ -253,59 +419,109 @@ export default function PortfolioEnhanced() {
                 />
               )}
               
-              {/* Desktop Provenance Panel */}
-              <div className="hidden md:block">
-                {productionData && (
-                  <ProvenancePanel
-                    etherscanStatus={{
-                      status: healthStatus?.eth_provider?.circuit_state === 'closed' ? 'healthy' : 'degraded',
-                      lastUpdate: new Date(),
-                      latency: productionData.meta.latencyMs || 0
-                    }}
-                    coingeckoStatus={{
-                      status: 'healthy',
-                      lastUpdate: productionData.meta.lastUpdated,
-                      cacheAge: 60
-                    }}
-                    simVersion={productionData.meta.simVersion}
-                    totalHoldings={productionData.holdings.length}
-                    realHoldings={productionData.holdings.filter(h => h.source === 'real').length}
-                  />
-                )}
-              </div>
-              
-              {/* Mobile Provenance Panel */}
-              <div className="md:hidden">
-                {productionData && (
-                  <MobileProvenancePanel
-                    etherscanStatus={{
-                      status: healthStatus?.eth_provider?.circuit_state === 'closed' ? 'healthy' : 'degraded',
-                      lastUpdate: new Date(),
-                      latency: productionData.meta.latencyMs || 0
-                    }}
-                    coingeckoStatus={{
-                      status: 'healthy',
-                      lastUpdate: productionData.meta.lastUpdated,
-                      cacheAge: 60
-                    }}
-                    simVersion={productionData.meta.simVersion}
-                    totalHoldings={productionData.holdings.length}
-                    realHoldings={productionData.holdings.filter(h => h.source === 'real').length}
-                    isSticky={true}
-                  />
-                )}
-              </div>
-              
-              {/* Visual Data Source Breakdown */}
-              {productionData && (
-                <DataSourceBreakdown
-                  holdings={productionData.holdings}
-                  totalValue={productionData.totalValue}
-                  isLive={isLive}
-                />
-              )}
+
             </>
           )}
+
+          {/* AI Copilot - Prominent Position */}
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/20 rounded-xl">
+                <MessageSquare className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">AI Portfolio Copilot</h3>
+                <p className="text-sm text-muted-foreground">Ask questions about your portfolio, risk, and investment strategy</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="Ask about your portfolio..."
+                  value={copilotQuery}
+                  onChange={(e) => setCopilotQuery(e.target.value)}
+                  className="flex-1 px-4 py-3 text-sm border border-primary/20 rounded-lg bg-background/50 focus:bg-background focus:border-primary/40 transition-colors"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCopilotQuery()}
+                />
+                <Button onClick={handleCopilotQuery} className="bg-primary hover:bg-primary/90 px-6">
+                  <Zap className="h-4 w-4 mr-2" />
+                  Ask AI
+                </Button>
+              </div>
+              
+              {copilotResponse && (
+                <div className="p-4 bg-background/80 border border-primary/20 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1 bg-primary/20 rounded">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 text-sm leading-relaxed">
+                      {copilotResponse}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-muted-foreground mr-2">Try asking:</span>
+                {['Is my portfolio clean?', 'What is my risk?', 'Should I diversify?'].map((query) => (
+                  <button
+                    key={query}
+                    onClick={() => {
+                      setCopilotQuery(query);
+                      setTimeout(handleCopilotQuery, 100);
+                    }}
+                    className="px-3 py-1 text-xs bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-full transition-colors"
+                  >
+                    {query}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Portfolio Intelligence Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Data & Risk */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Data Lineage */}
+              <DataLineageCard
+                sources={mockDataSources}
+                totalDataPoints={1247}
+                realDataPercentage={87.5}
+              />
+
+              {/* Risk Analysis */}
+              <RiskAnalysisPanel
+                overallRiskScore={currentData?.riskScore || 6}
+                riskFactors={mockRiskFactors}
+                guardianFlags={mockGuardianFlags}
+                riskTrend={mockRiskTrend}
+                liquidityRisk={mockRiskFactors[1].score}
+                concentrationRisk={mockRiskFactors[0].score}
+                marketCorrelation={7}
+              />
+            </div>
+
+            {/* Right Column - Guardian Widget */}
+            <div className="space-y-6">
+              <GuardianWidget
+                trustScore={guardianData?.trustScore || 75}
+                flags={guardianData?.flags || []}
+                scanTimestamp={guardianData?.scanTimestamp || new Date()}
+                isScanning={isGuardianScanning}
+                onRescan={handleGuardianScan}
+              />
+            </div>
+          </div>
+
+          {/* Stress Test Section */}
+          <StressTest
+            currentValue={currentData?.totalValue || 100000}
+            onRunStressTest={handleStressTest}
+          />
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="overview" className="space-y-6">
@@ -559,6 +775,20 @@ export default function PortfolioEnhanced() {
             isOpen={showAddModal}
             onClose={() => setShowAddModal(false)}
             onAdd={handleAddAddress}
+          />
+
+          {/* Export Proof Modal */}
+          <ExportProofModal
+            isOpen={showExportModal}
+            onClose={() => setShowExportModal(false)}
+            portfolioData={{
+              totalValue: currentData?.totalValue || 0,
+              riskScore: currentData?.riskScore || 6,
+              trustScore: guardianData?.trustScore || 75,
+              timestamp: new Date(),
+              guardianFlags: guardianData?.flags || [],
+              dataLineage: mockDataSources
+            }}
           />
         </div>
       </div>

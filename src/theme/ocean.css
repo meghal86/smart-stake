@@ -1,0 +1,21 @@
+:root {
+  --bg-ocean-950: #0B1220;
+  --panel-ocean-900: #121A2B;
+  --ocean-800: #1E293B;
+  --ink-100: #F9FBFC;
+  --ink-400: #B4C3D5;
+  --action-teal-400: #00D3C7;
+  --accent-lavender-400: #A8A2FF;
+  --pulse-coral-400: #FF8C7A;
+  --warn-amber-400: #FFC247;
+  --danger-rose-400: #FF5E73;
+  --success-emerald-400: #27E0A3;
+}
+
+.bg-ocean-950 { background-color: var(--bg-ocean-950); }
+.bg-panel-ocean-900 { background-color: var(--panel-ocean-900); }
+.bg-ocean-800 { background-color: var(--ocean-800); }
+.text-ink-100 { color: var(--ink-100); }
+.text-ink-400 { color: var(--ink-400); }
+.text-action-teal-400 { color: var(--action-teal-400); }
+.border-ocean-800 { border-color: var(--ocean-800); }

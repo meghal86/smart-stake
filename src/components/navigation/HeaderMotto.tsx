@@ -27,9 +27,8 @@ export function HeaderMotto({
   );
 
   useEffect(() => {
-    isFeatureEnabled("lite_header_rotate_motto")
-      .then(setRotateOn)
-      .catch(() => setRotateOn(false));
+    const enabled = isFeatureEnabled("lite_header_rotate_motto");
+    setRotateOn(enabled);
 
     const theme =
       typeof document !== "undefined" &&

@@ -12,6 +12,7 @@ import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
 import { DevInfo } from "@/components/DevInfo";
+import "@/theme/ocean.css";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
@@ -46,7 +47,14 @@ import AlertsPage from "./pages/hub2/Alerts";
 import WatchlistPage from "./pages/hub2/Watchlist";
 import CopilotPage from "./pages/hub2/Copilot";
 import PortfolioEnhanced from "./pages/PortfolioEnhanced";
+import PortfolioIntelligence from "./pages/PortfolioIntelligence";
 import Portfolio from "./pages/Portfolio";
+import PortfolioOverview from "./pages/portfolio/index";
+import PortfolioRisk from "./pages/portfolio/risk";
+import PortfolioGuardian from "./pages/portfolio/guardian";
+import PortfolioStress from "./pages/portfolio/stress";
+import PortfolioResults from "./pages/portfolio/results";
+import PortfolioAddresses from "./pages/portfolio/addresses";
 import Plans from "./pages/Plans";
 import MarketHub from "./pages/MarketHub";
 import Overview from "./pages/Overview";
@@ -153,8 +161,14 @@ const App = () => {
                   <Route path="/admin/ops" element={<AdminOps />} />
                   <Route path="/admin/ops/health" element={<HealthEndpoint />} />
                   <Route path="/health" element={<HealthCheck />} />
-                  <Route path="/portfolio-enhanced" element={<PortfolioEnhanced />} />
-                  <Route path="/portfolio" element={<Portfolio />} />
+                  <Route path="/portfolio-enhanced" element={<PortfolioOverview />} />
+                  <Route path="/portfolio-intelligence" element={<PortfolioIntelligence />} />
+                  <Route path="/portfolio" element={<PortfolioOverview />} />
+                  <Route path="/portfolio/risk" element={<PortfolioRisk />} />
+                  <Route path="/portfolio/guardian" element={<PortfolioGuardian />} />
+                  <Route path="/portfolio/stress" element={<PortfolioStress />} />
+                  <Route path="/portfolio/results" element={<PortfolioResults />} />
+                  <Route path="/portfolio/addresses" element={<PortfolioAddresses />} />
                   <Route path="/plans" element={<Subscription />} />
                   <Route path="/market/hub" element={<MarketHub />} />
                   <Route path="/overview" element={<Overview />} />
