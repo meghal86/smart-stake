@@ -95,14 +95,14 @@
 }
 
 .claim-button {
-  background: linear-gradient(180deg, #D4941A 0%, #B8722E 100%);
+  background: linear-gradient(180deg, #ed8f2d 0%, #B8722E 100%);
   border: none;
   border-radius: 24px;
   padding: 12px 24px;
   font-weight: 600;
   color: #FFFFFF;
   font-size: 15px;
-  box-shadow: 0 0 24px rgba(212, 148, 26, 0.4);
+  box-shadow: 0 0 24px rgba(237, 143, 45, 0.4);
   transition: all 0.3s ease;
   cursor: pointer;
 }
@@ -322,14 +322,14 @@
 
 .execute-button {
   width: 100%;
-  background: linear-gradient(180deg, #D4941A 0%, #B8722E 100%);
+  background: linear-gradient(180deg, #ed8f2d 0%, #B8722E 100%);
   border: none;
   border-radius: 16px;
   padding: 16px;
   font-weight: 600;
   color: #FFFFFF;
   font-size: 16px;
-  box-shadow: 0 0 24px rgba(212, 148, 26, 0.4);
+  box-shadow: 0 0 24px rgba(237, 143, 45, 0.4);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -388,7 +388,7 @@
 
 .opportunity-claim-btn {
   width: 100%;
-  background: linear-gradient(180deg, #D4941A 0%, #B8722E 100%);
+  background: linear-gradient(180deg, #ed8f2d 0%, #B8722E 100%);
   border: none;
   border-radius: 12px;
   padding: 10px;
