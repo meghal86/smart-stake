@@ -24,6 +24,20 @@ const navItems = [
     shortcut: 'g p'
   },
   {
+    id: 'predictions',
+    label: 'Predictions',
+    icon: Bot,
+    path: '/hub2/predictions',
+    shortcut: 'g r'
+  },
+  {
+    id: 'predictions',
+    label: 'Predictions',
+    icon: Zap,
+    path: '/hub2/predictions',
+    shortcut: 'g r'
+  },
+  {
     id: 'explore',
     label: 'Explore',
     icon: Search,
@@ -45,14 +59,6 @@ const navItems = [
     path: '/hub2/alerts',
     shortcut: 'g a',
     requiresAuth: true
-  },
-  {
-    id: 'copilot',
-    label: 'Copilot',
-    icon: Bot,
-    path: '/hub2/copilot',
-    shortcut: 'g c',
-    requiresPlan: 'pro'
   }
 ];
 

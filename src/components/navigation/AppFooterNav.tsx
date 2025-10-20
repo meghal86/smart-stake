@@ -8,10 +8,10 @@ import { useGate } from '@/hooks/useGate'
 
 const tabs = [
   { id: 'home', label: 'Home', icon: Home, href: '/', gated: undefined },
+  { id: 'predictions', label: 'Predictions', icon: Brain, href: '/hub2/predictions', gated: undefined },
   { id: 'explore', label: 'Explore', icon: Search, href: '/signals', gated: undefined },
   { id: 'alerts', label: 'Alerts', icon: Bell, href: '/alerts', gated: 'alerts_advanced' },
-  { id: 'watch', label: 'Watch', icon: Eye, href: '/portfolio', gated: 'watchlist' },
-  { id: 'ai', label: 'AI', icon: Brain, href: '/hub2', gated: 'api_access' }
+  { id: 'watch', label: 'Watch', icon: Eye, href: '/portfolio', gated: 'watchlist' }
 ] as const
 
 export function AppFooterNav() {

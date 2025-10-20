@@ -185,6 +185,7 @@ const App = () => {
                   <Route path="/hub2" element={<PulsePage />} />
                   {/* Hub 2 routes */}
                   <Route path="/hub2/pulse" element={<PulsePage />} />
+                  <Route path="/hub2/predictions" element={<PredictionsScenarios />} />
                   <Route path="/hub2/explore" element={<ExplorePage />} />
                   <Route path="/hub2/entity/:id" element={<EntityDetailWrapper />} />
                   <Route path="/hub2/alerts" element={<AlertsPage />} />

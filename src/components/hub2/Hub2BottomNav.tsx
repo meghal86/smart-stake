@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { id: 'pulse', label: 'Pulse', icon: Activity, path: '/hub2/pulse' },
+  { id: 'predictions', label: 'Predictions', icon: Zap, path: '/hub2/predictions' },
   { id: 'explore', label: 'Explore', icon: Search, path: '/hub2/explore' },
   { id: 'alerts', label: 'Alerts', icon: Bell, path: '/hub2/alerts' },
   { id: 'watchlist', label: 'Watch', icon: Star, path: '/hub2/watchlist' },
@@ -34,6 +35,7 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
   const getActiveTab = () => {
     const path = location.pathname;
     if (path.startsWith('/hub2/pulse')) return 'pulse';
+    if (path.startsWith('/hub2/predictions')) return 'predictions';
     if (path.startsWith('/hub2/explore')) return 'explore';
     if (path.startsWith('/hub2/alerts')) return 'alerts';
     if (path.startsWith('/hub2/watchlist')) return 'watchlist';
