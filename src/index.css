@@ -8,6 +8,8 @@
 
 /* Cinematic Ocean Theme Integration */
 @import './styles/cinematic-theme.css';
+@import './styles/hunter-theme.css';
+@import './styles/guardian-theme.css';
 
 /* World-class animations */
 @media (prefers-reduced-motion: no-preference) {

@@ -1,0 +1,422 @@
+/* Hunter Screen - Exact Match Styling */
+
+.hunter-screen {
+  min-height: 100vh;
+  background: 
+    radial-gradient(ellipse 80% 50% at 80% 20%, rgba(255, 140, 60, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0, 224, 194, 0.06) 0%, transparent 70%),
+    linear-gradient(180deg, #0A0F14 0%, #0E141B 100%);
+  color: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.hunter-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 120px;
+}
+
+/* Header */
+.hunter-header {
+  margin-bottom: 32px;
+}
+
+.hunter-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+  line-height: 1.1;
+}
+
+.hunter-subtitle {
+  font-size: 18px;
+  font-weight: 500;
+  color: #E6A532;
+  margin: 0;
+}
+
+/* Featured Quest Card */
+.featured-quest {
+  margin-bottom: 40px;
+}
+
+.quest-card-main {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  padding: 28px 32px;
+  backdrop-filter: blur(24px);
+  box-shadow: 
+    0 16px 40px rgba(0,0,0,0.4),
+    0 0 60px rgba(255,140,60,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quest-card-main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,140,60,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.quest-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #E6A532;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quest-dot {
+  width: 8px;
+  height: 8px;
+  background: #E6A532;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(230, 165, 50, 0.6);
+}
+
+.claim-button {
+  background: linear-gradient(180deg, #D4941A 0%, #B8722E 100%);
+  border: none;
+  border-radius: 24px;
+  padding: 12px 24px;
+  font-weight: 600;
+  color: #FFFFFF;
+  font-size: 15px;
+  box-shadow: 0 0 24px rgba(212, 148, 26, 0.4);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.claim-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(255, 140, 60, 0.6);
+  filter: brightness(1.1);
+}
+
+.quest-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.quest-found {
+  font-size: 32px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.quest-arrow {
+  width: 24px;
+  height: 24px;
+  color: rgba(255,255,255,0.6);
+}
+
+.protocol-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  margin: 0 0 16px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.quest-description {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.quest-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  position: relative;
+  z-index: 1;
+}
+
+/* Active Quests Section */
+.active-quests-section {
+  margin-bottom: 40px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.all-opportunities-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.all-opportunities-btn:hover {
+  color: rgba(255,255,255,0.9);
+}
+
+.active-quests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.active-quest-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  box-shadow: 
+    0 8px 24px rgba(0,0,0,0.3),
+    0 0 40px rgba(255,140,60,0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.active-quest-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 32px rgba(0,0,0,0.4),
+    0 0 50px rgba(255,140,60,0.12);
+}
+
+.active-quest-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+}
+
+.active-quest-desc {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.8);
+  margin: 0 0 16px 0;
+}
+
+.active-quest-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Modals */
+.hunter-modal,
+.opportunities-modal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.6) 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(32px);
+  border-radius: 24px;
+  color: white;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+}
+
+.modal-content {
+  margin-top: 20px;
+}
+
+.execution-steps {
+  background: rgba(255,140,60,0.05);
+  border: 1px solid rgba(255,140,60,0.2);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.steps-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 16px 0;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  background: rgba(255,140,60,0.3);
+  color: #FFC766;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.step-text {
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+}
+
+.execute-button {
+  width: 100%;
+  background: linear-gradient(180deg, #D4941A 0%, #B8722E 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+  font-size: 16px;
+  box-shadow: 0 0 24px rgba(212, 148, 26, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.execute-button:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 32px rgba(255, 140, 60, 0.6);
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #FFFFFF;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* Opportunities Modal */
+.opportunities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.opportunity-card {
+  background: rgba(255,140,60,0.05);
+  border: 1px solid rgba(255,140,60,0.2);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.opportunity-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #FFC766;
+  margin-bottom: 12px;
+}
+
+.opportunity-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+}
+
+.opportunity-reward {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 16px 0;
+}
+
+.opportunity-claim-btn {
+  width: 100%;
+  background: linear-gradient(180deg, #D4941A 0%, #B8722E 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: 600;
+  color: #FFFFFF;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .hunter-container {
+    padding: 20px 16px 120px;
+  }
+  
+  .hunter-title {
+    font-size: 36px;
+  }
+  
+  .quest-card-main {
+    padding: 20px 24px;
+  }
+  
+  .quest-found {
+    font-size: 24px;
+  }
+  
+  .active-quests-grid {
+    grid-template-columns: 1fr;
+  }
+}

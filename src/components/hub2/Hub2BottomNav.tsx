@@ -10,7 +10,8 @@ import {
   Home,
   Briefcase,
   Radar,
-  Shield
+  Shield,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced' },
   { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner' },
   { id: 'guardian', label: 'Guardian', icon: Shield, path: '/guardian' },
+  { id: 'hunter', label: 'Hunter', icon: Target, path: '/hunter' },
   { id: 'copilot', label: 'AI', icon: Bot, path: '/hub2/copilot' },
 ];
 
@@ -44,6 +46,7 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
     if (path.startsWith('/portfolio-enhanced')) return 'portfolio';
     if (path.startsWith('/scanner')) return 'scanner';
     if (path.startsWith('/guardian')) return 'guardian';
+    if (path.startsWith('/hunter')) return 'hunter';
     if (path.startsWith('/hub2/copilot')) return 'copilot';
     return 'pulse';
   };

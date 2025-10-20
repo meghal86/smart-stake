@@ -19,6 +19,9 @@ export default {
 		},
 		extend: {
 			colors: {
+				// Hunter Theme Colors
+				mint: '#00E0C2',
+				amber: '#ff8c42',
 				surface: {
 					DEFAULT: '#F9FBFF',
 					dark: '#0C1221',

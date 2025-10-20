@@ -1,0 +1,415 @@
+/* Guardian Screen - Cinematic Styling */
+
+.guardian-screen {
+  min-height: 100vh;
+  background: 
+    radial-gradient(ellipse 80% 50% at 80% 20%, rgba(0, 224, 194, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(45, 212, 191, 0.08) 0%, transparent 70%),
+    linear-gradient(180deg, #0A0F14 0%, #0E141B 100%);
+  color: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.guardian-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 120px;
+}
+
+/* Header */
+.guardian-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.guardian-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+  line-height: 1.1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.guardian-subtitle {
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}
+
+/* Trust Score Card */
+.trust-score-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  padding: 28px 32px;
+  backdrop-filter: blur(24px);
+  box-shadow: 
+    0 16px 40px rgba(0,0,0,0.4),
+    0 0 60px rgba(0, 224, 194, 0.15),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.trust-score-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 224, 194, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.trust-score-header {
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.trust-index-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.trust-score-value {
+  font-size: 64px;
+  font-weight: 800;
+  color: #00E0C2;
+  text-shadow: 0 0 20px rgba(0, 224, 194, 0.4);
+  margin: 0;
+  line-height: 1;
+}
+
+.trust-status-badge {
+  display: inline-block;
+  background: rgba(0, 224, 194, 0.15);
+  border: 1px solid rgba(0, 224, 194, 0.3);
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #00E0C2;
+  margin-top: 12px;
+}
+
+.wallet-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.wallet-info-item {
+  background: rgba(0, 224, 194, 0.05);
+  border: 1px solid rgba(0, 224, 194, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.wallet-info-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.wallet-info-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.wallet-info-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 4px;
+}
+
+/* Action Buttons */
+.guardian-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.rescan-button {
+  background: linear-gradient(180deg, #00E0C2 0%, #00B8A0 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 14px 24px;
+  font-weight: 600;
+  color: #000000;
+  font-size: 15px;
+  box-shadow: 0 0 24px rgba(0, 224, 194, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.rescan-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(0, 224, 194, 0.6);
+  filter: brightness(1.1);
+}
+
+.rescan-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fix-issues-button {
+  background: transparent;
+  border: 1px solid rgba(0, 224, 194, 0.3);
+  border-radius: 16px;
+  padding: 14px 24px;
+  font-weight: 600;
+  color: #00E0C2;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fix-issues-button:hover {
+  background: rgba(0, 224, 194, 0.1);
+  border-color: rgba(0, 224, 194, 0.5);
+}
+
+/* Security Flags Section */
+.security-flags-section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 20px 0;
+}
+
+.flags-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.security-flag-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 20px 24px;
+  backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+
+.flag-high {
+  border-color: rgba(255, 94, 115, 0.3);
+}
+
+.flag-high::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 94, 115, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.flag-medium {
+  border-color: rgba(255, 194, 71, 0.3);
+}
+
+.flag-medium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 194, 71, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.flag-low {
+  border-color: rgba(39, 224, 163, 0.3);
+}
+
+.flag-low::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(39, 224, 163, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.flag-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.flag-info {
+  flex: 1;
+}
+
+.flag-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 8px 0;
+}
+
+.flag-description {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 12px 0;
+}
+
+.flag-severity {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.severity-high {
+  background: rgba(255, 94, 115, 0.15);
+  color: #FF5E73;
+  border: 1px solid rgba(255, 94, 115, 0.3);
+}
+
+.severity-medium {
+  background: rgba(255, 194, 71, 0.15);
+  color: #FFC247;
+  border: 1px solid rgba(255, 194, 71, 0.3);
+}
+
+.severity-low {
+  background: rgba(39, 224, 163, 0.15);
+  color: #27E0A3;
+  border: 1px solid rgba(39, 224, 163, 0.3);
+}
+
+.flag-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flag-action-button {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.flag-action-button:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+  color: #FFFFFF;
+}
+
+/* No Flags State */
+.no-flags-state {
+  background: rgba(39, 224, 163, 0.05);
+  border: 1px solid rgba(39, 224, 163, 0.2);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+}
+
+.no-flags-text {
+  font-size: 16px;
+  color: #27E0A3;
+  margin: 0;
+}
+
+/* Modals */
+.guardian-modal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.6) 100%);
+  border: 1px solid rgba(0, 224, 194, 0.2);
+  backdrop-filter: blur(32px);
+  border-radius: 24px;
+  color: white;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .guardian-container {
+    padding: 20px 16px 120px;
+  }
+  
+  .guardian-title {
+    font-size: 36px;
+  }
+  
+  .trust-score-card {
+    padding: 20px 24px;
+  }
+  
+  .trust-score-value {
+    font-size: 48px;
+  }
+  
+  .wallet-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .guardian-actions {
+    flex-direction: column;
+  }
+  
+  .flag-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .flag-actions {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+}

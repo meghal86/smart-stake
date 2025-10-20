@@ -70,6 +70,7 @@ import PatternModalDemo from "./pages/PatternModalDemo";
 import { MyROI } from "./pages/insights/MyROI";
 import Hub2Plus from "./pages/Hub2Plus";
 import Guardian from "./pages/Guardian";
+import Hunter from "./pages/Hunter";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -156,6 +157,7 @@ const App = () => {
                   <Route path="/analysis" element={<WalletAnalysis />} />
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
                   <Route path="/guardian" element={<Guardian />} />
+                  <Route path="/hunter" element={<Hunter />} />
                   <Route path="/premium-test" element={<PremiumTest />} />
                   <Route path="/subscription-test" element={<SubscriptionTest />} />
                   <Route path="/predictions-scenarios" element={<PredictionsScenarios />} />
