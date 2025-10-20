@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  Activity, 
-  Search, 
-  Bell, 
-  Star, 
+import {
+  Activity,
+  Search,
+  Bell,
+  Star,
   Bot,
   Zap,
   Home,
   Briefcase,
-  Radar
+  Radar,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const navItems = [
   { id: 'watchlist', label: 'Watch', icon: Star, path: '/hub2/watchlist' },
   { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced' },
   { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner' },
+  { id: 'guardian', label: 'Guardian', icon: Shield, path: '/guardian' },
   { id: 'copilot', label: 'AI', icon: Bot, path: '/hub2/copilot' },
 ];
 
@@ -41,6 +43,7 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
     if (path.startsWith('/hub2/watchlist')) return 'watchlist';
     if (path.startsWith('/portfolio-enhanced')) return 'portfolio';
     if (path.startsWith('/scanner')) return 'scanner';
+    if (path.startsWith('/guardian')) return 'guardian';
     if (path.startsWith('/hub2/copilot')) return 'copilot';
     return 'pulse';
   };
