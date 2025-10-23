@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guardian Scan Debugger</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #0a1628;
+      color: #e2e8f0;
+    }
+    h1 { color: #14b8a6; }
+    .scan-row {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .scan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .scan-number {
+      font-weight: bold;
+      color: #14b8a6;
+    }
+    .trust-score {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .trust-score.high { color: #10b981; }
+    .trust-score.medium { color: #fbbf24; }
+    .trust-score.low { color: #ef4444; }
+    .factors {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .factor {
+      background: #334155;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .factor-name { font-weight: bold; }
+    .factor-impact { 
+      color: #94a3b8;
+      font-size: 11px;
+    }
+    button {
+      background: #14b8a6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 12px;
+    }
+    button:hover { background: #0d9488; }
+    button:disabled { 
+      background: #475569;
+      cursor: not-allowed;
+    }
+    .controls {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    input {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 10px;
+      border-radius: 6px;
+      flex: 1;
+      font-family: 'Courier New', monospace;
+    }
+    .stats {
+      background: #1e293b;
+      border: 2px solid #14b8a6;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #14b8a6;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #334155;
+      border-top-color: #14b8a6;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Guardian Scan Debugger</h1>
+  <p>Run multiple scans and compare results to debug inconsistency issues.</p>
+
+  <div class="controls">
+    <input 
+      type="text" 
+      id="wallet" 
+      placeholder="Enter wallet address (0x...)"
+      value="0xA6bF1D4E9c34d12BfC5e8A946f912e7cC42D2D9C"
+    />
+    <button onclick="runScan()" id="scanBtn">Run Scan</button>
+    <button onclick="runMultiple()" id="multiBtn">Run 5 Scans</button>
+    <button onclick="clearResults()" id="clearBtn">Clear</button>
+  </div>
+
+  <div class="stats" id="stats" style="display: none;">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-value" id="totalScans">0</div>
+        <div class="stat-label">Total Scans</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="uniqueScores">0</div>
+        <div class="stat-label">Unique Scores</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="avgDuration">0ms</div>
+        <div class="stat-label">Avg Duration</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="consistency">0%</div>
+        <div class="stat-label">Consistency</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://rebeznxivaxgserswhbn.supabase.co';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYmV6bnhpdmF4Z3NlcnN3aGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDc0NDIsImV4cCI6MjA3MDk4MzQ0Mn0.u2t2SEmm3rTpseRRdgym3jnaOq7lRLHW531PxPmu6xo';
+    
+    let scans = [];
+
+    async function runScan() {
+      const wallet = document.getElementById('wallet').value.trim();
+      if (!wallet || !wallet.startsWith('0x')) {
+        alert('Please enter a valid wallet address');
+        return;
+      }
+
+      const btn = document.getElementById('scanBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span> Scanning...';
+
+      const startTime = Date.now();
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/guardian-scan-v2`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            wallet_address: wallet,
+            network: 'ethereum',
+          }),
+        });
+
+        const duration = Date.now() - startTime;
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`HTTP ${response.status}: ${error}`);
+        }
+
+        const data = await response.json();
+        
+        scans.push({
+          ...data,
+          duration,
+          timestamp: new Date().toISOString(),
+        });
+
+        renderResults();
+        updateStats();
+
+      } catch (error) {
+        alert(`Scan failed: ${error.message}`);
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Run Scan';
+      }
+    }
+
+    async function runMultiple() {
+      const btn = document.getElementById('multiBtn');
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+
+      for (let i = 1; i <= 5; i++) {
+        btn.innerHTML = `Running ${i}/5...`;
+        await runScan();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1s delay between scans
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+
+    function renderResults() {
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+
+      scans.forEach((scan, idx) => {
+        const scoreClass = scan.trust_score >= 80 ? 'high' : scan.trust_score >= 60 ? 'medium' : 'low';
+        
+        const factorsHTML = (scan.factors || []).map(f => `
+          <div class="factor">
+            <div class="factor-name">${f.category}</div>
+            <div class="factor-impact">Impact: ${f.impact > 0 ? '+' : ''}${f.impact} | ${f.severity}</div>
+          </div>
+        `).join('');
+
+        container.innerHTML += `
+          <div class="scan-row">
+            <div class="scan-header">
+              <span class="scan-number">Scan #${scans.length - idx}</span>
+              <span class="trust-score ${scoreClass}">${scan.trust_score}%</span>
+            </div>
+            <div style="font-size: 12px; color: #94a3b8;">
+              Duration: ${scan.duration}ms | 
+              Confidence: ${(scan.confidence * 100).toFixed(0)}% | 
+              Grade: ${scan.grade} |
+              ${new Date(scan.timestamp).toLocaleTimeString()}
+            </div>
+            ${factorsHTML ? `<div class="factors">${factorsHTML}</div>` : '<div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">No risk factors</div>'}
+          </div>
+        `;
+      });
+    }
+
+    function updateStats() {
+      if (scans.length === 0) return;
+
+      document.getElementById('stats').style.display = 'block';
+
+      const scores = scans.map(s => s.trust_score);
+      const uniqueScores = new Set(scores);
+      const avgDuration = Math.round(scans.reduce((sum, s) => sum + s.duration, 0) / scans.length);
+      
+      // Consistency = percentage of scans with most common score
+      const scoreCounts = {};
+      scores.forEach(score => {
+        scoreCounts[score] = (scoreCounts[score] || 0) + 1;
+      });
+      const maxCount = Math.max(...Object.values(scoreCounts));
+      const consistency = Math.round((maxCount / scans.length) * 100);
+
+      document.getElementById('totalScans').textContent = scans.length;
+      document.getElementById('uniqueScores').textContent = uniqueScores.size;
+      document.getElementById('avgDuration').textContent = `${avgDuration}ms`;
+      document.getElementById('consistency').textContent = `${consistency}%`;
+    }
+
+    function clearResults() {
+      scans = [];
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('stats').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
+

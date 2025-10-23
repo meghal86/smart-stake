@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guardian Visual Diagnostic</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top right, #0B0F1A, #020409);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 48px;
+      margin-bottom: 24px;
+      background: linear-gradient(to right, #10B981, #14B8A6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .shield {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 32px;
+      opacity: 0.1;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.1; }
+      50% { transform: scale(1.05); opacity: 0.15; }
+    }
+    .shield-icon {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 24px;
+      color: #10B981;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    button {
+      background: linear-gradient(to right, #10B981, #14B8A6);
+      color: white;
+      border: none;
+      padding: 16px 48px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 0 50px rgba(16, 185, 129, 0.6);
+    }
+    .checklist {
+      margin-top: 48px;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: #94a3b8;
+    }
+    .check-item.pass { color: #10B981; }
+    .check-item.fail { color: #EF4444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Giant background shield -->
+    <svg class="shield" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="0.5"/>
+    </svg>
+
+    <!-- Animated shield icon -->
+    <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+
+    <h1>Guardian Diagnostic</h1>
+    <p style="color: #94a3b8; margin-bottom: 32px; font-size: 18px;">
+      If you can see this page with animations and colors,<br/>
+      your browser supports all Guardian features!
+    </p>
+
+    <button onclick="runChecks()">Run Visual Checks</button>
+
+    <div class="checklist" id="checklist" style="display: none;">
+      <h3 style="margin-bottom: 16px;">System Check Results:</h3>
+      <div class="check-item" id="check1">⏳ Checking gradient background...</div>
+      <div class="check-item" id="check2">⏳ Checking animations...</div>
+      <div class="check-item" id="check3">⏳ Checking transforms...</div>
+      <div class="check-item" id="check4">⏳ Checking Framer Motion...</div>
+      <div class="check-item" id="check5">⏳ Checking viewport...</div>
+    </div>
+
+    <p style="margin-top: 32px; color: #64748b; font-size: 14px;">
+      Open DevTools Console (F12) for detailed diagnostics
+    </p>
+  </div>
+
+  <script>
+    function runChecks() {
+      const checklist = document.getElementById('checklist');
+      checklist.style.display = 'block';
+
+      // Check 1: Gradient background
+      setTimeout(() => {
+        const bg = window.getComputedStyle(document.body).backgroundImage;
+        const check1 = document.getElementById('check1');
+        if (bg.includes('radial-gradient')) {
+          check1.className = 'check-item pass';
+          check1.innerHTML = '✅ Gradient background working';
+          console.log('✅ Gradient:', bg);
+        } else {
+          check1.className = 'check-item fail';
+          check1.innerHTML = '❌ Gradient not loading';
+          console.error('❌ Background:', bg);
+        }
+      }, 100);
+
+      // Check 2: Animations
+      setTimeout(() => {
+        const shield = document.querySelector('.shield');
+        const animation = window.getComputedStyle(shield).animation;
+        const check2 = document.getElementById('check2');
+        if (animation && animation !== 'none') {
+          check2.className = 'check-item pass';
+          check2.innerHTML = '✅ CSS animations working';
+          console.log('✅ Animation:', animation);
+        } else {
+          check2.className = 'check-item fail';
+          check2.innerHTML = '❌ Animations not running';
+          console.error('❌ Animation:', animation);
+        }
+      }, 200);
+
+      // Check 3: Transforms
+      setTimeout(() => {
+        const button = document.querySelector('button');
+        const check3 = document.getElementById('check3');
+        button.style.transform = 'scale(1.1)';
+        const transform = window.getComputedStyle(button).transform;
+        if (transform !== 'none') {
+          check3.className = 'check-item pass';
+          check3.innerHTML = '✅ CSS transforms working';
+          console.log('✅ Transform:', transform);
+        } else {
+          check3.className = 'check-item fail';
+          check3.innerHTML = '❌ Transforms not supported';
+          console.error('❌ Transform:', transform);
+        }
+        button.style.transform = '';
+      }, 300);
+
+      // Check 4: Framer Motion
+      setTimeout(async () => {
+        const check4 = document.getElementById('check4');
+        try {
+          const fm = await import('framer-motion');
+          check4.className = 'check-item pass';
+          check4.innerHTML = '✅ Framer Motion available';
+          console.log('✅ Framer Motion:', fm);
+        } catch (e) {
+          check4.className = 'check-item fail';
+          check4.innerHTML = '❌ Framer Motion not loading: ' + e.message;
+          console.error('❌ Framer Motion error:', e);
+        }
+      }, 400);
+
+      // Check 5: Viewport
+      setTimeout(() => {
+        const check5 = document.getElementById('check5');
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        check5.className = 'check-item pass';
+        check5.innerHTML = `✅ Viewport: ${width}x${height}px`;
+        console.log(`✅ Viewport: ${width}x${height}`);
+      }, 500);
+
+      // Final report
+      setTimeout(() => {
+        console.log('\n🔍 Guardian Visual Diagnostic Complete');
+        console.log('If all checks pass, your browser can run Guardian UX 2.0');
+        console.log('If any fail, share the console output for debugging\n');
+      }, 600);
+    }
+
+    // Auto-run checks on load
+    window.addEventListener('load', () => {
+      console.log('🛡️ Guardian Diagnostic Tool');
+      console.log('This page tests all visual features Guardian needs');
+      console.log('Click "Run Visual Checks" to see if your browser is ready\n');
+    });
+  </script>
+</body>
+</html>
+

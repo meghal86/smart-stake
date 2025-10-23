@@ -1,0 +1,17 @@
+Status,Priority,#,Category,Item,Current State,Action Required,Owner,Estimate,Dependencies
+⚠️,CRITICAL,1,Data Pipeline,Real-time wallet scan results,"Edge Function exists, but probes return mock data","Implement Alchemy API (approvals), Etherscan API (reputation), mixer detection",,2 days,API keys configured
+✅,HIGH,2,UI Consistency,Theme and design consistency,Complete - dark theme matches Hub 2,None,,0,
+⚠️,CRITICAL,3,Trust Score Logic,Score calculation formula,"Formula exists (100 + impacts), depends on mock data",Wire to real probe results,,1 hour,Item #1 complete
+⚠️,HIGH,4,Risk Categorization,Risk cards with severity,Cards display correctly with mock data,Connect to live probe results,,1 hour,Item #1 complete
+⚠️,HIGH,5,Fix-Risks Flow,Revoke approvals modal,RevokeModal component exists but not wired,Add modal trigger + handler in GuardianUX2Pure,,1 hour,
+❌,MEDIUM,6,Ask Guardian AI,AI assistant integration,Button placeholder only - no implementation,Build AI chat interface with wallet context,,3 days,
+✅,HIGH,7,Loading / Scan State,Animated scanning UI,Complete - radar sweep + progress ring + fade,None,,0,
+✅,HIGH,8,Mobile Responsiveness,320px to 1440px layouts,Complete - fluid typography + touch targets,None,,0,
+⚠️,HIGH,9,Accessibility,ARIA labels and keyboard nav,Exists in GuardianMobile but not GuardianUX2Pure,Port accessibility features to active component,,30 min,
+⚠️,MEDIUM,10,Performance,Lighthouse score > 90,Not tested yet,Run Lighthouse audit,,15 min,
+❌,CRITICAL,11,Auth / Wallet Connect,Real wallet connection,Mock only - hardcoded address,Replace useMockWallet with Wagmi + RainbowKit,,4 hours,Wagmi configured
+❌,HIGH,12,Error States,Network failure + retry UI,No user-facing error handling,Add error boundary + retry banner,,2 hours,
+✅,MEDIUM,13,Telemetry / Analytics,Event tracking,Complete - useGuardianAnalytics integrated,None,,0,
+✅,HIGH,14,Copy & Tone,Human-friendly messaging,Complete - warm tone throughout,None,,0,
+⚠️,HIGH,15,Security Verification,Input sanitization + RLS,Address validation exists; RLS policies need verification,Verify API keys secure + enable Supabase RLS,,2 hours,
+

@@ -225,11 +225,22 @@ function resolveNetwork(network: string) {
 
 async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanResult> {
   const resolvedNetwork = resolveNetwork(request.network);
+  
+  // Use Supabase Edge Function instead of /api route (Vite doesn't have /api directory)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  if (!supabaseUrl || !anonKey) {
+    throw new Error('VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY/VITE_SUPABASE_PUBLISHABLE_KEY not configured');
+  }
+  
+  const functionUrl = `${supabaseUrl}/functions/v1/guardian-scan-v2`;
 
-  const response = await fetch('/api/guardian/scan', {
+  const response = await fetch(functionUrl, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${anonKey}`,
     },
     body: JSON.stringify({
       wallet_address: request.walletAddress,
@@ -237,11 +248,37 @@ async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanR
     })
   });
 
+  // Capture response headers for debugging
+  const requestId = response.headers.get('x-request-id');
+  console.log('🛡️ Guardian Scan Request:', {
+    wallet: request.walletAddress,
+    network: resolvedNetwork.code,
+    requestId,
+    status: response.status,
+  });
+
   if (!response.ok) {
-    throw new Error(`Guardian API responded with status ${response.status}`);
+    const errorText = await response.text();
+    console.error('🚨 Guardian Scan Error:', {
+      status: response.status,
+      requestId,
+      error: errorText,
+    });
+    throw new Error(`Guardian API responded with status ${response.status}: ${errorText}`);
   }
 
   const data = (await response.json()) as GuardianScanApiResponse;
+  
+  // Log the full response for debugging
+  console.log('✅ Guardian Scan Response:', {
+    requestId,
+    trustScore: data.trust_score,
+    riskLevel: data.risk_level,
+    flags: data.flags?.length || 0,
+    network: data.network,
+    fullResponse: data,
+  });
+
   return normalizeGuardianScan(data);
 }
 
@@ -292,4 +329,62 @@ export async function requestGuardianScan(request: GuardianScanRequest): Promise
 
     return finalResult;
   }
+}
+
+/**
+ * Request to revoke approvals
+ */
+export interface GuardianRevokeRequest {
+  wallet: string;
+  approvals: Array<{
+    token: string;
+    spender: string;
+  }>;
+  network: string;
+  dry_run?: boolean;
+}
+
+export interface GuardianRevokeResponse {
+  transactions: Array<{
+    token: string;
+    spender: string;
+    data: string;
+    to: string;
+    value: string;
+  }>;
+  gas_estimate?: {
+    total_gas: number;
+    per_tx: number;
+  };
+  score_delta?: number;
+  idempotency_key?: string;
+}
+
+export async function requestGuardianRevoke(
+  request: GuardianRevokeRequest
+): Promise<GuardianRevokeResponse> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !anonKey) {
+    throw new Error('VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY/VITE_SUPABASE_PUBLISHABLE_KEY not configured');
+  }
+
+  const functionUrl = `${supabaseUrl}/functions/v1/guardian-revoke-v2`;
+
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${anonKey}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Guardian revoke API responded with status ${response.status}: ${errorText}`);
+  }
+
+  return await response.json();
 }

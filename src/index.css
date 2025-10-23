@@ -1,15 +1,13 @@
 @import './styles/tokens.css';
 @import './styles/layout-guard.css';
 @import './styles/fixes.css';
+@import './styles/cinematic-theme.css';
+@import './styles/hunter-theme.css';
+@import './styles/guardian-theme.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Cinematic Ocean Theme Integration */
-@import './styles/cinematic-theme.css';
-@import './styles/hunter-theme.css';
-@import './styles/guardian-theme.css';
 
 /* World-class animations */
 @media (prefers-reduced-motion: no-preference) {
