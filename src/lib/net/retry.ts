@@ -1,3 +1,30 @@
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  tries: number = 3,
+  baseMs: number = 800
+): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < tries; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10_000)
+    try {
+      // Allow fn to optionally use the signal via closure
+      const result = await fn()
+      clearTimeout(timeout)
+      return result
+    } catch (error) {
+      lastError = error
+      clearTimeout(timeout)
+      if (attempt < tries - 1) {
+        const jitter = Math.floor(Math.random() * 200)
+        const delay = baseMs * Math.pow(2, attempt) + jitter
+        await new Promise((r) => setTimeout(r, delay))
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('withRetry failed')
+}
+
 /**
  * Retry utility with exponential backoff and timeout
  */

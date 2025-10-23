@@ -1,79 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Quest, HunterFilters } from '@/types/hunter';
+import { supabase } from '@/integrations/supabase/client';
 
-const mockQuests: Quest[] = [
-  {
-    id: 'dxp',
-    protocol: 'DeltaX Protocol',
-    network: 'Base',
-    rewardUSD: 1200,
-    confidence: 0.8,
-    guardianScore: 98,
-    steps: 3,
-    estimatedTime: '6 min',
-    category: 'Airdrop',
-    isNew: true,
-    completionPercent: 0
-  },
-  {
-    id: 'arb-staking',
-    protocol: 'Arbitrum Staking',
-    network: 'Arbitrum',
-    rewardUSD: 850,
-    confidence: 0.92,
-    guardianScore: 96,
-    steps: 2,
-    estimatedTime: '4 min',
-    category: 'Staking',
-    completionPercent: 25
-  },
-  {
-    id: 'base-farm',
-    protocol: 'Base Yield Farm',
-    network: 'Base',
-    rewardUSD: 2100,
-    confidence: 0.75,
-    guardianScore: 94,
-    steps: 4,
-    estimatedTime: '8 min',
-    category: 'Farming',
-    isNew: true,
-    completionPercent: 0
-  },
-  {
-    id: 'sol-quest',
-    protocol: 'Solana Quest Hub',
-    network: 'Solana',
-    rewardUSD: 650,
-    confidence: 0.88,
-    guardianScore: 99,
-    steps: 2,
-    estimatedTime: '3 min',
-    category: 'Quest',
-    completionPercent: 60
+function mapOpportunityToQuest(o: any): Quest {
+  return {
+    id: o.slug,
+    protocol: o.protocol,
+    network: (o.chains && o.chains[0]) || 'ethereum',
+    rewardUSD: Math.round(((o.reward_min ?? 0) + (o.reward_max ?? 0)) || (o.apr ? (o.tvl_usd || 0) * (o.apr / 100) * 0.01 : 0)),
+    confidence: (o.trust_score || 70) / 100,
+    guardianScore: o.trust_score || 70,
+    steps: (o.steps || []).length || 2,
+    estimatedTime: o.time_required || '10 min',
+    category: (o.type === 'yield' || o.type === 'staking') ? 'Staking' : 'Airdrop',
+    isNew: o.isNew || false,
+    completionPercent: 0,
   }
-];
+}
 
 export const useHunterFeed = (filters?: HunterFilters) => {
   return useQuery({
     queryKey: ['hunter-feed', filters],
     queryFn: async (): Promise<Quest[]> => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      let data = [...mockQuests];
-      
-      if (filters) {
-        data = data.filter((quest: Quest) => {
-          if (filters.network !== 'all' && quest.network !== filters.network) return false;
-          if (filters.category !== 'all' && quest.category !== filters.category) return false;
-          if (filters.safety === '≥95%' && quest.guardianScore < 95) return false;
-          return true;
-        });
-      }
-      
-      return data;
+      const { data, error } = await supabase.functions.invoke('hunter-opportunities', {
+        body: { filters: {
+          type: filters?.category?.toLowerCase() === 'staking' ? 'yield' : undefined,
+          chains: filters?.network && filters.network !== 'all' ? [filters.network] : undefined,
+          onlyVerified: filters?.safety === '≥95%'
+        } }
+      })
+      if (error) throw error
+      const items = data?.data?.opportunities || []
+      return items.map(mapOpportunityToQuest)
     },
-    refetchInterval: 60000,
-    staleTime: 30000,
-  });
-};
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+}
