@@ -3,9 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
+import '@rainbow-me/rainbowkit/styles.css';
+import { config } from '@/config/wagmi';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { CompactViewProvider } from "@/contexts/CompactViewContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { SplashScreen } from "@/components/ui/SplashScreen";
@@ -84,6 +88,20 @@ const queryClient = new QueryClient({
   },
 });
 
+// RainbowKit theme wrapper that respects app theme
+const RainbowKitThemeWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { actualTheme } = useTheme();
+  
+  return (
+    <RainbowKitProvider
+      theme={actualTheme === 'dark' ? darkTheme() : lightTheme()}
+      modalSize="compact"
+    >
+      {children}
+    </RainbowKitProvider>
+  );
+};
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -128,19 +146,21 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <CompactViewProvider>
-            <AuthProvider>
-              <SubscriptionProvider>
-              <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <DevInfo />
-              {showSplash && (
-                <SplashScreen onComplete={handleSplashComplete} duration={5000} />
-              )}
-              <BrowserRouter>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <RainbowKitThemeWrapper>
+              <CompactViewProvider>
+                <AuthProvider>
+                  <SubscriptionProvider>
+                  <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <DevInfo />
+                  {showSplash && (
+                    <SplashScreen onComplete={handleSplashComplete} duration={5000} />
+                  )}
+                  <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
@@ -213,8 +233,10 @@ const App = () => {
               </SubscriptionProvider>
             </AuthProvider>
           </CompactViewProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+            </RainbowKitThemeWrapper>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </ErrorBoundary>
   );
 };

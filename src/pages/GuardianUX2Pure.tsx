@@ -2,9 +2,12 @@
  * Guardian UX 2.0 — Pure CSS/Inline Styles Version
  * Works without Tailwind or Framer Motion
  * Supports both dark and light themes
+ * Now with REAL wallet connection via Wagmi!
  */
 import { useState, useEffect, CSSProperties } from 'react';
 import { Shield, RefreshCw, Wrench, Sparkles, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -245,26 +248,23 @@ const getStyles = (isDark: boolean) => {
   };
 };
 
-// Mock wallet hook
-const useMockWallet = () => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-
-  const connect = () => {
-    const mockAddress = '0xA6bF1D4E9c34d12BfC5e8A946f912e7cC42D2D9C';
-    setAddress(mockAddress);
-    setIsConnected(true);
-  };
-
-  return { address, isConnected, connect };
-};
-
 export function GuardianUX2Pure() {
   const { actualTheme } = useTheme();
   const isDark = actualTheme === 'dark';
   const styles = getStyles(isDark);
   
-  const { address, isConnected, connect } = useMockWallet();
+  // Real wallet connection via Wagmi
+  const { address: connectedAddress, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  
+  // Manual address input state
+  const [manualAddress, setManualAddress] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
+  
+  // Determine which address to use (connected wallet or manual input)
+  const address = connectedAddress || (manualAddress.match(/^0x[a-fA-F0-9]{40}$/) ? manualAddress : null);
+  const isManualMode = !isConnected && !!manualAddress.match(/^0x[a-fA-F0-9]{40}$/);
+  
   const [isScanning, setIsScanning] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const analytics = useGuardianAnalytics();
@@ -272,14 +272,14 @@ export function GuardianUX2Pure() {
   const { data, isLoading, rescan, isRescanning } = useGuardianScan({
     walletAddress: address || undefined,
     network: 'ethereum',
-    enabled: isConnected && !!address,
+    enabled: !!(isConnected || isManualMode) && !!address,
   });
 
   useEffect(() => {
-    if (isConnected && address && !data) {
+    if ((isConnected || isManualMode) && address && !data) {
       setIsScanning(true);
       setShowResults(false);
-      analytics.scanStarted(address, 'ethereum', true);
+      analytics.scanStarted(address, 'ethereum', isConnected);
       setTimeout(() => {
         setIsScanning(false);
         // Delay results fade-in for smooth transition
@@ -288,7 +288,7 @@ export function GuardianUX2Pure() {
     } else if (data) {
       setShowResults(true);
     }
-  }, [isConnected, address, data, analytics]);
+  }, [isConnected, isManualMode, address, data, analytics]);
 
   const handleRescan = async () => {
     if (!address) return;
@@ -308,14 +308,46 @@ export function GuardianUX2Pure() {
     }
   };
 
+  const handleManualScan = () => {
+    if (manualAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      setIsScanning(true);
+      setShowResults(false);
+      analytics.scanStarted(manualAddress, 'ethereum', false);
+      setTimeout(() => {
+        rescan();
+        setTimeout(() => {
+          setIsScanning(false);
+          setTimeout(() => setShowResults(true), 100);
+        }, 3000);
+      }, 500);
+    }
+  };
+
+  const handleDemoMode = () => {
+    // Load demo wallet with pre-scanned data (Vitalik's wallet)
+    const demoAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
+    setManualAddress(demoAddress);
+    setShowManualInput(false);
+    setIsScanning(true);
+    setShowResults(false);
+    analytics.track('guardian_demo_mode_activated' as any, { demo_address: demoAddress });
+    setTimeout(() => {
+      rescan();
+      setTimeout(() => {
+        setIsScanning(false);
+        setTimeout(() => setShowResults(true), 100);
+      }, 3000);
+    }, 500);
+  };
+
   const trustScore = data?.trustScorePercent || 87;
   const flags = data?.flags?.length || 2;
   
   // Theme-aware colors for inline use
   const themeColors = isDark ? themes.dark : themes.light;
 
-  // Welcome screen
-  if (!isConnected) {
+  // Welcome screen (show if not connected AND no manual address scanned)
+  if (!isConnected && !isManualMode) {
     return (
       <div style={styles.screen}>
         <style>{`
@@ -381,23 +413,163 @@ export function GuardianUX2Pure() {
             <p style={styles.subtitle}>
               Let's make sure your wallet stays in perfect health.
               <br />
-              Connect to begin your 30-second security check.
+              Choose how you'd like to begin your 30-second security check.
             </p>
 
+            {/* Primary CTA: Connect Wallet */}
             <button 
               className="button-glow"
               style={styles.buttonGlow} 
               onClick={() => {
-                analytics.track('guardian_wallet_connected' as any, {});
-                connect();
+                analytics.track('guardian_wallet_connect_clicked' as any, {});
+                openConnectModal?.();
               }}
             >
-              Connect Wallet
+              🦊 Connect Wallet
             </button>
 
-            <p style={styles.privacyNote}>
-              No private keys will be accessed
+            <p style={{
+              ...styles.privacyNote,
+              marginTop: '8px',
+              marginBottom: '24px',
+            }}>
+              Full features • Sign transactions • Secure
             </p>
+
+            {/* Divider */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              width: '100%',
+              maxWidth: '400px',
+              margin: '0 auto 24px',
+            }}>
+              <div style={{
+                flex: 1,
+                height: '1px',
+                background: isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+              }} />
+              <span style={{
+                ...styles.privacyNote,
+                margin: 0,
+                whiteSpace: 'nowrap',
+              }}>or</span>
+              <div style={{
+                flex: 1,
+                height: '1px',
+                background: isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)',
+              }} />
+            </div>
+
+            {/* Manual Input Toggle */}
+            {!showManualInput ? (
+              <>
+                <button 
+                  className="button-outline"
+                  style={{
+                    ...styles.buttonOutline,
+                    marginBottom: '12px',
+                  }} 
+                  onClick={() => {
+                    setShowManualInput(true);
+                    analytics.track('guardian_manual_input_opened' as any, {});
+                  }}
+                >
+                  🔍 Scan Any Address
+                </button>
+
+                <button 
+                  className="button-outline"
+                  style={styles.buttonOutline} 
+                  onClick={handleDemoMode}
+                >
+                  ✨ Try Demo Mode
+                </button>
+
+                <p style={{
+                  ...styles.privacyNote,
+                  marginTop: '12px',
+                }}>
+                  Read-only scan • No wallet required
+                </p>
+              </>
+            ) : (
+              <div style={{
+                width: '100%',
+                maxWidth: '400px',
+                margin: '0 auto',
+              }}>
+                <p style={{
+                  ...styles.privacyNote,
+                  textAlign: 'left',
+                  marginBottom: '12px',
+                }}>
+                  Enter any Ethereum address to scan:
+                </p>
+                <input
+                  type="text"
+                  placeholder="0x..."
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    border: `2px solid ${isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)'}`,
+                    background: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+                    color: isDark ? '#f1f5f9' : '#1e293b',
+                    fontSize: clamp(14, 16),
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    outline: 'none',
+                    transition: 'all 0.3s ease',
+                    marginBottom: '12px',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = themeColors.primary;
+                    e.target.style.boxShadow = isDark 
+                      ? `0 0 0 3px ${themeColors.primary}20` 
+                      : `0 0 0 3px ${themeColors.primary}30`;
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                }}>
+                  <button 
+                    className="button-glow"
+                    style={{
+                      ...styles.buttonGlow,
+                      flex: 1,
+                      opacity: manualAddress.match(/^0x[a-fA-F0-9]{40}$/) ? 1 : 0.5,
+                      cursor: manualAddress.match(/^0x[a-fA-F0-9]{40}$/) ? 'pointer' : 'not-allowed',
+                    }} 
+                    onClick={handleManualScan}
+                    disabled={!manualAddress.match(/^0x[a-fA-F0-9]{40}$/)}
+                  >
+                    Scan Address
+                  </button>
+                  <button 
+                    className="button-outline"
+                    style={{
+                      ...styles.buttonOutline,
+                      flex: '0 0 auto',
+                      padding: '0 20px',
+                    }} 
+                    onClick={() => {
+                      setShowManualInput(false);
+                      setManualAddress('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -605,6 +777,43 @@ export function GuardianUX2Pure() {
       />
       
       <div style={styles.container} className="fade-in">
+        {/* Mode Badge */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '16px',
+        }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            background: isConnected 
+              ? (isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)')
+              : (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)'),
+            border: `1px solid ${isConnected 
+              ? (isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.4)')
+              : (isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.4)')}`,
+            color: isConnected 
+              ? (isDark ? '#10b981' : '#059669')
+              : (isDark ? '#60a5fa' : '#3b82f6'),
+            fontSize: clamp(12, 14),
+            fontWeight: 600,
+          }}>
+            {isConnected ? (
+              <>
+                <span style={{ fontSize: '16px' }}>🔒</span>
+                Wallet Connected
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '16px' }}>👁️</span>
+                Read-Only Scan
+              </>
+            )}
+          </span>
+        </div>
+
         {/* Trust Score */}
         <div style={styles.gauge}>
           <svg style={{ width: '100%', height: '100%' }} viewBox="0 0 200 200">
@@ -676,16 +885,24 @@ export function GuardianUX2Pure() {
             <span style={{ verticalAlign: 'middle' }}>Scan Again</span>
           </button>
           
-          <button 
-            className="button-glow" 
-            style={{
-              ...styles.buttonGlow,
-              width: window.innerWidth < 640 ? '100%' : 'auto',
-            }}
-          >
-            <Wrench size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-            <span style={{ verticalAlign: 'middle' }}>Fix Risks</span>
-          </button>
+          <div style={{ position: 'relative', width: window.innerWidth < 640 ? '100%' : 'auto' }}>
+            <button 
+              className="button-glow" 
+              style={{
+                ...styles.buttonGlow,
+                width: window.innerWidth < 640 ? '100%' : 'auto',
+                opacity: isManualMode ? 0.5 : 1,
+                cursor: isManualMode ? 'not-allowed' : 'pointer',
+              }}
+              disabled={isManualMode}
+              title={isManualMode ? 'Connect wallet to fix risks' : undefined}
+            >
+              <Wrench size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+              <span style={{ verticalAlign: 'middle' }}>
+                {isManualMode ? 'Fix Risks (Connect Wallet)' : 'Fix Risks'}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Risk Cards */}
