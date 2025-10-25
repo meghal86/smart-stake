@@ -74,7 +74,12 @@ import PatternModalDemo from "./pages/PatternModalDemo";
 import { MyROI } from "./pages/insights/MyROI";
 import Hub2Plus from "./pages/Hub2Plus";
 import Guardian from "./pages/Guardian";
+import GuardianEnhanced from "./pages/GuardianEnhanced";
 import Hunter from "./pages/Hunter";
+import AnomalyDetection from "./pages/AnomalyDetection";
+import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
+import { UserModeProvider } from "./contexts/UserModeContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -113,6 +118,25 @@ const App = () => {
   useEffect(() => {
     // Suppress extension errors globally
     suppressExtensionErrors();
+
+    // Fix RainbowKit modal clickability - ULTRA AGGRESSIVE
+    let cleanupFn: (() => void) | undefined;
+    import('@/utils/fixRainbowKit').then(({ fixRainbowKitModals, forceFixRainbowKit }) => {
+      cleanupFn = fixRainbowKitModals();
+      
+      // Also run aggressive fixes every 200ms
+      const aggressiveInterval = setInterval(() => {
+        const rkElements = document.querySelectorAll('[data-rk]');
+        if (rkElements.length > 0) {
+          forceFixRainbowKit();
+        }
+      }, 200);
+      
+      return () => {
+        cleanupFn?.();
+        clearInterval(aggressiveInterval);
+      };
+    });
 
     const handleError = (event: ErrorEvent) => {
       if (!event.filename?.includes('chrome-extension://')) {
@@ -153,10 +177,12 @@ const App = () => {
               <CompactViewProvider>
                 <AuthProvider>
                   <SubscriptionProvider>
-                  <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <DevInfo />
+                    <UserModeProvider>
+                      <NotificationProvider>
+                        <TooltipProvider>
+                          <Toaster />
+                          <Sonner />
+                          <DevInfo />
                   {showSplash && (
                     <SplashScreen onComplete={handleSplashComplete} duration={5000} />
                   )}
@@ -177,13 +203,16 @@ const App = () => {
                   <Route path="/analysis" element={<WalletAnalysis />} />
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
                   <Route path="/guardian" element={<Guardian />} />
+                  <Route path="/guardian-enhanced" element={<GuardianEnhanced />} />
                   <Route path="/hunter" element={<Hunter />} />
+                  <Route path="/anomaly-detection" element={<AnomalyDetection />} />
                   <Route path="/premium-test" element={<PremiumTest />} />
                   <Route path="/subscription-test" element={<SubscriptionTest />} />
                   <Route path="/predictions-scenarios" element={<PredictionsScenarios />} />
                   <Route path="/admin/bi" element={<AdminBI />} />
                   <Route path="/admin/ops" element={<AdminOps />} />
                   <Route path="/admin/ops/health" element={<HealthEndpoint />} />
+                  <Route path="/admin/onboarding" element={<OnboardingAnalytics />} />
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="/portfolio-enhanced" element={<PortfolioOverview />} />
                   <Route path="/portfolio-intelligence" element={<PortfolioIntelligence />} />
@@ -229,10 +258,12 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
-              </TooltipProvider>
-              </SubscriptionProvider>
-            </AuthProvider>
-          </CompactViewProvider>
+                        </TooltipProvider>
+                      </NotificationProvider>
+                    </UserModeProvider>
+                  </SubscriptionProvider>
+                </AuthProvider>
+              </CompactViewProvider>
             </RainbowKitThemeWrapper>
           </ThemeProvider>
         </QueryClientProvider>

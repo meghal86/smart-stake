@@ -1,5 +1,6 @@
 /**
- * Guardian Trust & Safety Page
- * UX 2.0: Pure CSS Version (no Tailwind/Framer Motion)
+ * Guardian - World-Class UX Edition
+ * Complete wallet trust & safety scanning with enhanced UX
+ * All premium features integrated into the main Guardian route
  */
-export { GuardianUX2Pure as default } from './GuardianUX2Pure';
+export { GuardianEnhanced as default } from './GuardianEnhanced';

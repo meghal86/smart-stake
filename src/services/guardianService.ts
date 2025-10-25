@@ -1,7 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
+import { generateRequestId, Logger } from '@/lib/guardian/observability';
+import { generateIdempotencyKey, isKeyRecentlyUsed, markKeyAsUsed } from '@/lib/guardian/idempotency';
 
 export type GuardianSeverity = 'low' | 'medium' | 'high';
 export type GuardianRiskLevel = 'Low' | 'Medium' | 'High';
+
+// Create logger instance
+const logger = new Logger({ service: 'guardian-service' });
 
 export interface GuardianFlag {
   id: string;
@@ -226,6 +231,15 @@ function resolveNetwork(network: string) {
 async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanResult> {
   const resolvedNetwork = resolveNetwork(request.network);
   
+  // Generate request ID for tracing
+  const requestId = generateRequestId();
+  
+  logger.info('Starting Guardian scan', {
+    requestId,
+    walletAddress: request.walletAddress,
+    network: resolvedNetwork.code,
+  });
+  
   // Use Supabase Edge Function instead of /api route (Vite doesn't have /api directory)
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -244,24 +258,23 @@ async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanR
     },
     body: JSON.stringify({
       wallet_address: request.walletAddress,
-      network: resolvedNetwork.code
+      network: resolvedNetwork.code,
+      request_id: requestId,
     })
   });
 
   // Capture response headers for debugging
-  const requestId = response.headers.get('x-request-id');
-  console.log('🛡️ Guardian Scan Request:', {
-    wallet: request.walletAddress,
-    network: resolvedNetwork.code,
-    requestId,
+  const serverRequestId = response.headers.get('x-request-id') || requestId;
+  logger.info('Guardian scan response received', {
+    requestId: serverRequestId,
     status: response.status,
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('🚨 Guardian Scan Error:', {
+    logger.error('Guardian scan failed', {
+      requestId: serverRequestId,
       status: response.status,
-      requestId,
       error: errorText,
     });
     throw new Error(`Guardian API responded with status ${response.status}: ${errorText}`);
@@ -269,14 +282,11 @@ async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanR
 
   const data = (await response.json()) as GuardianScanApiResponse;
   
-  // Log the full response for debugging
-  console.log('✅ Guardian Scan Response:', {
-    requestId,
+  logger.info('Guardian scan completed', {
+    requestId: serverRequestId,
     trustScore: data.trust_score,
     riskLevel: data.risk_level,
-    flags: data.flags?.length || 0,
-    network: data.network,
-    fullResponse: data,
+    flagCount: data.flags?.length || 0,
   });
 
   return normalizeGuardianScan(data);

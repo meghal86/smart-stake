@@ -3,10 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Header from "../shell/Header";
 import SearchCommand from "../shell/SearchCommand";
-import MobileBottomNav from "../shell/MobileBottomNav";
-import Hub2BottomNav from "./Hub2BottomNav";
-import Hub2FloatingNav from "./Hub2FloatingNav";
-import Hub2MobileNav from "./Hub2MobileNav";
+import Hub2Footer from "./Hub2Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,22 +40,17 @@ export default function Hub2Layout({
         transition={{ duration: 0.4, ease: "easeOut" }}
         className={cn(
           "min-h-screen",
-          showBottomNav ? "pb-20 md:pb-4" : "pb-4",
+          showBottomNav ? "pb-32 md:pb-4" : "pb-4", // Extra space for Hub2Footer
           className
         )}
       >
         {children}
       </motion.main>
       
-      {/* Mobile bottom navigation - only on mobile */}
+      {/* Hub2 Footer - consistent across all Hub2 pages */}
       {showBottomNav && (
-        <MobileBottomNav />
+        <Hub2Footer />
       )}
-
-      {/* Legacy navigation components (kept for compatibility) */}
-      <Hub2BottomNav />
-      <Hub2MobileNav />
-      <Hub2FloatingNav />
     </div>
   );
 }

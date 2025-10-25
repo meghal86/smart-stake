@@ -1,0 +1,327 @@
+/* Hunter Premium Theme - Glassmorphic Design System */
+
+/* Glass Morphism Tokens */
+:root {
+  /* Glass backgrounds */
+  --hunter-glass-primary: rgba(255, 255, 255, 0.07);
+  --hunter-glass-secondary: rgba(255, 255, 255, 0.05);
+  --hunter-glass-hover: rgba(255, 255, 255, 0.1);
+  
+  /* Borders */
+  --hunter-border-primary: rgba(255, 255, 255, 0.1);
+  --hunter-border-secondary: rgba(255, 255, 255, 0.05);
+  
+  /* Emerald theme */
+  --hunter-emerald-50: #ecfdf5;
+  --hunter-emerald-400: #10b981;
+  --hunter-emerald-500: #059669;
+  --hunter-emerald-600: #047857;
+  
+  /* Cyan theme */
+  --hunter-cyan-400: #06b6d4;
+  --hunter-cyan-500: #0891b2;
+  --hunter-cyan-600: #0e7490;
+  
+  /* Shadows */
+  --hunter-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --hunter-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --hunter-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --hunter-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.25);
+  
+  /* Glow effects */
+  --hunter-glow-emerald: 0 0 24px rgba(16, 185, 129, 0.2);
+  --hunter-glow-cyan: 0 0 24px rgba(6, 182, 212, 0.2);
+}
+
+/* Dark mode adjustments */
+.dark {
+  --hunter-glass-primary: rgba(255, 255, 255, 0.06);
+  --hunter-glass-secondary: rgba(255, 255, 255, 0.03);
+  --hunter-glass-hover: rgba(255, 255, 255, 0.08);
+}
+
+/* Scrollbar Styling */
+.hunter-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.hunter-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 4px;
+}
+
+.hunter-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.hunter-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
+}
+
+/* Hide scrollbar for horizontal scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glass card base */
+.hunter-glass-card {
+  background: var(--hunter-glass-primary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--hunter-border-primary);
+  box-shadow: var(--hunter-shadow-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hunter-glass-card:hover {
+  background: var(--hunter-glass-hover);
+  box-shadow: var(--hunter-shadow-xl);
+  transform: translateY(-2px);
+}
+
+/* Glass button */
+.hunter-glass-button {
+  background: var(--hunter-glass-secondary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--hunter-border-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hunter-glass-button:hover {
+  background: var(--hunter-glass-hover);
+  border-color: var(--hunter-border-primary);
+  transform: scale(1.02);
+}
+
+.hunter-glass-button:active {
+  transform: scale(0.98);
+}
+
+/* Gradient backgrounds */
+.hunter-gradient-emerald {
+  background: linear-gradient(135deg, var(--hunter-emerald-500) 0%, var(--hunter-cyan-500) 100%);
+}
+
+.hunter-gradient-emerald-subtle {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+}
+
+/* Text gradients */
+.hunter-text-gradient {
+  background: linear-gradient(135deg, var(--hunter-emerald-400) 0%, var(--hunter-cyan-400) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects */
+.hunter-glow-emerald {
+  box-shadow: var(--hunter-glow-emerald);
+}
+
+.hunter-glow-cyan {
+  box-shadow: var(--hunter-glow-cyan);
+}
+
+/* Particle animation */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) translateX(20px);
+    opacity: 0;
+  }
+}
+
+.hunter-particle {
+  animation: float-particle 3s ease-in-out infinite;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.hunter-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Pulse glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.hunter-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Gradient border animation */
+@keyframes gradient-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.hunter-gradient-border {
+  position: relative;
+  border: none;
+}
+
+.hunter-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--hunter-emerald-400),
+    var(--hunter-cyan-400),
+    var(--hunter-emerald-400)
+  );
+  background-size: 200% 100%;
+  animation: gradient-border 3s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Mobile touch feedback */
+@media (hover: none) {
+  .hunter-glass-card:active,
+  .hunter-glass-button:active {
+    transform: scale(0.98);
+    transition-duration: 0.1s;
+  }
+}
+
+/* Loading skeleton */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.hunter-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+/* Typography enhancements */
+.hunter-heading {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.hunter-body {
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.6;
+}
+
+/* Smooth scrolling */
+.hunter-smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Pull to refresh indicator (mobile) */
+.hunter-pull-to-refresh {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  background: var(--hunter-glass-primary);
+  backdrop-filter: blur(16px);
+  border-radius: 0 0 12px 12px;
+  border: 1px solid var(--hunter-border-primary);
+  border-top: none;
+  z-index: 50;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Card stack effect */
+.hunter-card-stack > * + * {
+  margin-top: -8px;
+}
+
+/* Responsive grid */
+.hunter-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+@media (min-width: 768px) {
+  .hunter-grid {
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hunter-grid {
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+}
+
+/* Backdrop blur fallback */
+@supports not (backdrop-filter: blur(16px)) {
+  .hunter-glass-card,
+  .hunter-glass-button {
+    background: rgba(15, 23, 42, 0.9);
+  }
+}
+

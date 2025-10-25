@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
-import Hub2BottomNav from '@/components/hub2/Hub2BottomNav';
+import { Hub2Footer } from '@/components/hub2/Hub2Footer';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
 import '@/styles/guardian-theme.css';
 
@@ -144,7 +144,7 @@ export function GuardianMobile() {
           </div>
         </div>
 
-        <Hub2BottomNav />
+        <Hub2Footer />
       </div>
     );
   }
@@ -185,7 +185,7 @@ export function GuardianMobile() {
           </div>
         </div>
 
-        <Hub2BottomNav />
+        <Hub2Footer />
       </div>
     );
   }
@@ -389,7 +389,7 @@ export function GuardianMobile() {
         <div className="guardian-bottom-glow" />
       </main>
 
-      <Hub2BottomNav />
+      <Hub2Footer />
     </div>
   );
 }

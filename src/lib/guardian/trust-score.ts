@@ -1,10 +1,11 @@
 /**
- * Trust Score calculation engine
+ * Trust Score calculation engine with confidence tracking
  */
 import type { ApprovalRisk } from './approvals';
 import type { HoneypotResult } from './honeypot';
 import type { MixerProximityResult } from './mixer';
 import type { ReputationResult } from './reputation';
+import type { Evidence } from '@/types/guardian';
 
 export interface RiskFactor {
   category:
@@ -20,12 +21,14 @@ export interface RiskFactor {
   impact: number; // Negative points deducted
   severity: 'low' | 'medium' | 'high';
   description: string;
+  evidence?: Evidence;
   meta?: Record<string, any>;
 }
 
 export interface TrustScoreResult {
   score: number; // 0..100
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  confidence: number; // 0..1 (data quality/freshness)
   factors: RiskFactor[];
   totals: {
     flags: number;
@@ -224,12 +227,69 @@ export function calculateTrustScore(
       .length,
   };
 
+  // Calculate confidence based on evidence quality
+  const confidence = calculateConfidence(factors);
+
   return {
     score,
     grade,
+    confidence,
     factors,
     totals,
   };
+}
+
+/**
+ * Calculate confidence score (0-1) based on evidence quality
+ */
+export function calculateConfidence(factors: RiskFactor[]): number {
+  if (factors.length === 0) {
+    // No data = low confidence
+    return 0.3;
+  }
+
+  let totalWeight = 0;
+  let weightedConfidence = 0;
+  const now = Date.now();
+
+  for (const factor of factors) {
+    const weight = Math.abs(factor.impact);
+    totalWeight += weight;
+
+    if (!factor.evidence) {
+      // No evidence = medium confidence (heuristic)
+      weightedConfidence += weight * 0.5;
+      continue;
+    }
+
+    const evidence = factor.evidence;
+    let evidenceConfidence = 1.0;
+
+    // Source quality
+    const sourceConfidence: Record<string, number> = {
+      'alchemy': 0.95,
+      'etherscan': 0.95,
+      'honeypot-api': 0.85,
+      'cache': 0.80,
+      'heuristic': 0.50,
+    };
+    evidenceConfidence *= sourceConfidence[evidence.source] || 0.7;
+
+    // Data freshness (decay over TTL)
+    const ageMs = now - evidence.observedAt;
+    const ttlMs = evidence.ttl * 1000;
+    const freshnessRatio = Math.max(0, Math.min(1, 1 - (ageMs / ttlMs)));
+    evidenceConfidence *= 0.7 + (0.3 * freshnessRatio); // Range: 0.7 to 1.0
+
+    // Cached data slightly less confident
+    if (evidence.cached) {
+      evidenceConfidence *= 0.95;
+    }
+
+    weightedConfidence += weight * evidenceConfidence;
+  }
+
+  return totalWeight > 0 ? weightedConfidence / totalWeight : 0.5;
 }
 
 /**

@@ -1,49 +1,21 @@
 /**
- * Wagmi/RainbowKit Wallet Provider
- * Real wallet integration for Guardian
+ * Wallet Provider for Guardian
+ * Wraps the app with RainbowKit and Wagmi
  */
-import '@rainbow-me/rainbowkit/styles.css';
 import { ReactNode } from 'react';
-import {
-  RainbowKitProvider,
-  getDefaultWallets,
-  connectorsForWallets,
-  darkTheme,
-} from '@rainbow-me/rainbowkit';
-import { configureChains, createConfig, WagmiConfig } from 'wagmi';
-import { mainnet, base, arbitrum, polygon } from 'wagmi/chains';
-import { publicProvider } from 'wagmi/providers/public';
-import { alchemyProvider } from 'wagmi/providers/alchemy';
+import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
+import { WagmiProvider } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { wagmiConfig } from '@/config/wagmi';
+import '@rainbow-me/rainbowkit/styles.css';
 
-const PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo';
-const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY || '';
-
-// Configure chains
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet, base, arbitrum, polygon],
-  [
-    alchemyProvider({ apiKey: ALCHEMY_KEY }),
-    publicProvider(),
-  ]
-);
-
-// Configure wallets
-const { wallets } = getDefaultWallets({
-  appName: 'AlphaWhale Guardian',
-  projectId: PROJECT_ID,
-  chains,
-});
-
-const connectors = connectorsForWallets([
-  ...wallets,
-]);
-
-// Create wagmi config
-const wagmiConfig = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-  webSocketPublicClient,
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      refetchOnWindowFocus: false,
+    },
+  },
 });
 
 interface WalletProviderProps {
@@ -52,21 +24,18 @@ interface WalletProviderProps {
 
 export function WalletProvider({ children }: WalletProviderProps) {
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider
-        chains={chains}
-        theme={darkTheme({
-          accentColor: '#14b8a6',
-          accentColorForeground: 'white',
-          borderRadius: 'medium',
-          fontStack: 'system',
-        })}
-      >
-        {children}
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: '#14b8a6', // Teal accent
+            accentColorForeground: 'white',
+            borderRadius: 'medium',
+          })}
+        >
+          {children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
-
-export { chains };
-

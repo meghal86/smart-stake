@@ -4,10 +4,142 @@
 @import './styles/cinematic-theme.css';
 @import './styles/hunter-theme.css';
 @import './styles/guardian-theme.css';
+@import './styles/guardian-design-system.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* RainbowKit Modal Fixes - ULTRA AGGRESSIVE */
+/* Main RainbowKit portal container */
+div[data-rk],
+div[data-rk] *,
+[data-rk],
+[data-rk] * {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+/* RainbowKit backdrop/overlay - make it clickable */
+div[data-rk] > div:first-child {
+  z-index: 999998 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+/* RainbowKit modal dialog */
+div[role="dialog"][data-rk],
+div[data-rk] div[role="dialog"],
+div[data-rk] [role="dialog"] {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+}
+
+/* ALL buttons inside RainbowKit - ULTRA AGGRESSIVE */
+div[data-rk] button,
+div[data-rk] button *,
+div[data-rk] button > *,
+div[data-rk] a,
+div[data-rk] a *,
+[data-rk] button,
+[data-rk] button *,
+[data-rk] a,
+[data-rk] a * {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Wallet option buttons and containers */
+div[data-rk] [role="button"],
+div[data-rk] [data-testid*="rk"],
+div[data-rk] [data-testid*="wallet"],
+[data-rk] [role="button"],
+[data-rk] [data-testid*="rk"],
+[data-rk] [data-testid*="wallet"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 999999 !important;
+}
+
+/* Images and SVGs inside buttons */
+div[data-rk] button img,
+div[data-rk] button svg,
+div[data-rk] button span,
+div[data-rk] button div,
+[data-rk] button img,
+[data-rk] button svg,
+[data-rk] button span,
+[data-rk] button div {
+  pointer-events: none !important;
+}
+
+/* Close button */
+div[data-rk] button[aria-label*="Close"],
+div[data-rk] button[aria-label*="close"],
+[data-rk] button[aria-label*="Close"],
+[data-rk] button[aria-label*="close"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 1000000 !important;
+}
+
+/* Remove any transform that might block clicks */
+div[data-rk],
+div[data-rk] *,
+[data-rk],
+[data-rk] * {
+  transform: none !important;
+}
+
+/* Fix for wallet option buttons - make them super clickable */
+button[data-testid^="rk-wallet-option"],
+[data-testid^="rk-wallet-option"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+button[data-testid^="rk-wallet-option"] *,
+[data-testid^="rk-wallet-option"] * {
+  pointer-events: none !important;
+}
+
+/* Make sure nothing blocks the modal */
+body > div:not([data-rk]) {
+  z-index: auto !important;
+}
+
+/* Force RainbowKit to be on top of everything */
+body > div[data-rk] {
+  z-index: 2147483647 !important;
+}
+
+/* Style RainbowKit Connect Button to match Guardian theme */
+button[data-rk] {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  padding: 14px 32px !important;
+  font-size: 16px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3) !important;
+}
+
+button[data-rk]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.5) !important;
+}
 
 /* World-class animations */
 @media (prefers-reduced-motion: no-preference) {

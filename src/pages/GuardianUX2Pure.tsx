@@ -6,12 +6,17 @@
  */
 import { useState, useEffect, CSSProperties } from 'react';
 import { Shield, RefreshCw, Wrench, Sparkles, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
-import { useAccount } from 'wagmi';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useAccount, useDisconnect } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
 import { useTheme } from '@/contexts/ThemeContext';
-import Hub2BottomNav from '@/components/hub2/Hub2BottomNav';
+import { Hub2Footer } from '@/components/hub2/Hub2Footer';
+
+// Utility function for responsive sizing
+const clamp = (min: number, max: number) => {
+  return Math.min(max, Math.max(min, (min + max) / 2));
+};
 
 // Theme-aware color palettes
 const themes = {
@@ -146,6 +151,9 @@ const getStyles = (isDark: boolean) => {
       height: 'min(320px, 80vw)',
       margin: '0 auto clamp(24px, 6vw, 40px)',
       maxWidth: '320px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     gaugeScore: {
       position: 'absolute' as const,
@@ -153,6 +161,8 @@ const getStyles = (isDark: boolean) => {
       left: '50%',
       transform: 'translate(-50%, -50%)',
       textAlign: 'center' as const,
+      zIndex: 10,
+      pointerEvents: 'none' as const,
     },
     scoreNumber: {
       fontSize: 'clamp(48px, 12vw, 72px)',
@@ -255,15 +265,101 @@ export function GuardianUX2Pure() {
   
   // Real wallet connection via Wagmi
   const { address: connectedAddress, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { disconnect } = useDisconnect();
   
-  // Manual address input state
-  const [manualAddress, setManualAddress] = useState('');
-  const [showManualInput, setShowManualInput] = useState(false);
+  // Multi-wallet management
+  interface SavedWallet {
+    address: string;
+    label?: string;
+    addedAt: number;
+  }
   
-  // Determine which address to use (connected wallet or manual input)
-  const address = connectedAddress || (manualAddress.match(/^0x[a-fA-F0-9]{40}$/) ? manualAddress : null);
-  const isManualMode = !isConnected && !!manualAddress.match(/^0x[a-fA-F0-9]{40}$/);
+  const [savedWallets, setSavedWallets] = useState<SavedWallet[]>(() => {
+    const saved = localStorage.getItem('guardian_saved_wallets');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [selectedWalletAddress, setSelectedWalletAddress] = useState<string | null>(null);
+  const [showWalletManager, setShowWalletManager] = useState(false);
+  const [showAddWalletOptions, setShowAddWalletOptions] = useState(false);
+  const [addWalletMode, setAddWalletMode] = useState<'choose' | 'manual' | 'connect'>('choose');
+  const [newWalletAddress, setNewWalletAddress] = useState('');
+  const [newWalletLabel, setNewWalletLabel] = useState('');
+  
+  // Save wallets to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('guardian_saved_wallets', JSON.stringify(savedWallets));
+  }, [savedWallets]);
+  
+  // Auto-add connected wallet to saved list when it connects
+  useEffect(() => {
+    if (connectedAddress && isConnected) {
+      console.log('Wallet connected:', connectedAddress);
+      
+      // Use a functional update to avoid dependency on savedWallets
+      setSavedWallets(prevWallets => {
+        const alreadySaved = prevWallets.some(
+          w => w.address.toLowerCase() === connectedAddress.toLowerCase()
+        );
+        
+        if (!alreadySaved) {
+          console.log('Auto-saving connected wallet to list');
+          const newWallet: SavedWallet = {
+            address: connectedAddress,
+            label: 'Connected Wallet',
+            addedAt: Date.now(),
+          };
+          return [...prevWallets, newWallet];
+        }
+        
+        return prevWallets;
+      });
+      
+      // Select this wallet
+      setSelectedWalletAddress(connectedAddress);
+      
+      // Close the add wallet modal if open
+      setShowAddWalletOptions(false);
+    }
+  }, [connectedAddress, isConnected]);
+  
+  // Add a new wallet
+  const addWallet = () => {
+    if (!newWalletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      alert('Invalid wallet address format');
+      return;
+    }
+    
+    if (savedWallets.some(w => w.address.toLowerCase() === newWalletAddress.toLowerCase())) {
+      alert('This wallet is already saved');
+      return;
+    }
+    
+    const newWallet: SavedWallet = {
+      address: newWalletAddress,
+      label: newWalletLabel.trim() || undefined,
+      addedAt: Date.now(),
+    };
+    
+    setSavedWallets([...savedWallets, newWallet]);
+    setNewWalletAddress('');
+    setNewWalletLabel('');
+    setSelectedWalletAddress(newWallet.address);
+  };
+  
+  // Remove a wallet
+  const removeWallet = (address: string) => {
+    setSavedWallets(savedWallets.filter(w => w.address !== address));
+    if (selectedWalletAddress === address) {
+      setSelectedWalletAddress(null);
+    }
+  };
+  
+  // Determine which address to use (priority: selected > connected > first saved)
+  const address = selectedWalletAddress || connectedAddress || savedWallets[0]?.address || null;
+  
+  // Check if we're in read-only mode (viewing a saved wallet without connection)
+  const isReadOnlyMode = !isConnected && !!address;
   
   const [isScanning, setIsScanning] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -272,11 +368,11 @@ export function GuardianUX2Pure() {
   const { data, isLoading, rescan, isRescanning } = useGuardianScan({
     walletAddress: address || undefined,
     network: 'ethereum',
-    enabled: !!(isConnected || isManualMode) && !!address,
+    enabled: !!address,
   });
 
   useEffect(() => {
-    if ((isConnected || isManualMode) && address && !data) {
+    if (address && !data) {
       setIsScanning(true);
       setShowResults(false);
       analytics.scanStarted(address, 'ethereum', isConnected);
@@ -288,7 +384,7 @@ export function GuardianUX2Pure() {
     } else if (data) {
       setShowResults(true);
     }
-  }, [isConnected, isManualMode, address, data, analytics]);
+  }, [address, data, analytics, isConnected]);
 
   const handleRescan = async () => {
     if (!address) return;
@@ -308,36 +404,30 @@ export function GuardianUX2Pure() {
     }
   };
 
-  const handleManualScan = () => {
-    if (manualAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-      setIsScanning(true);
-      setShowResults(false);
-      analytics.scanStarted(manualAddress, 'ethereum', false);
-      setTimeout(() => {
-        rescan();
-        setTimeout(() => {
-          setIsScanning(false);
-          setTimeout(() => setShowResults(true), 100);
-        }, 3000);
-      }, 500);
-    }
-  };
+  // Manual scan is now handled by the addWallet function
 
   const handleDemoMode = () => {
     // Load demo wallet with pre-scanned data (Vitalik's wallet)
     const demoAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
-    setManualAddress(demoAddress);
-    setShowManualInput(false);
-    setIsScanning(true);
-    setShowResults(false);
+    
+    // Add to saved wallets if not already there
+    const alreadySaved = savedWallets.some(
+      w => w.address.toLowerCase() === demoAddress.toLowerCase()
+    );
+    
+    if (!alreadySaved) {
+      const demoWallet: SavedWallet = {
+        address: demoAddress,
+        label: 'Demo - Vitalik.eth',
+        addedAt: Date.now(),
+      };
+      setSavedWallets([...savedWallets, demoWallet]);
+    }
+    
+    // Select this wallet
+    setSelectedWalletAddress(demoAddress);
+    
     analytics.track('guardian_demo_mode_activated' as any, { demo_address: demoAddress });
-    setTimeout(() => {
-      rescan();
-      setTimeout(() => {
-        setIsScanning(false);
-        setTimeout(() => setShowResults(true), 100);
-      }, 3000);
-    }, 500);
   };
 
   const trustScore = data?.trustScorePercent || 87;
@@ -346,8 +436,8 @@ export function GuardianUX2Pure() {
   // Theme-aware colors for inline use
   const themeColors = isDark ? themes.dark : themes.light;
 
-  // Welcome screen (show if not connected AND no manual address scanned)
-  if (!isConnected && !isManualMode) {
+  // Welcome screen (show if not connected AND no saved wallets)
+  if (!isConnected && !address && savedWallets.length === 0) {
     return (
       <div style={styles.screen}>
         <style>{`
@@ -417,16 +507,23 @@ export function GuardianUX2Pure() {
             </p>
 
             {/* Primary CTA: Connect Wallet */}
-            <button 
-              className="button-glow"
-              style={styles.buttonGlow} 
+            <div 
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                width: '100%',
+              }}
               onClick={() => {
+                console.log('Wrapper clicked');
                 analytics.track('guardian_wallet_connect_clicked' as any, {});
-                openConnectModal?.();
               }}
             >
-              🦊 Connect Wallet
-            </button>
+              <ConnectButton 
+                label="🦊 Connect Wallet"
+                showBalance={false}
+                chainStatus="none"
+              />
+            </div>
 
             <p style={{
               ...styles.privacyNote,
@@ -462,118 +559,192 @@ export function GuardianUX2Pure() {
               }} />
             </div>
 
-            {/* Manual Input Toggle */}
-            {!showManualInput ? (
-              <>
-                <button 
-                  className="button-outline"
-                  style={{
-                    ...styles.buttonOutline,
-                    marginBottom: '12px',
-                  }} 
-                  onClick={() => {
-                    setShowManualInput(true);
-                    analytics.track('guardian_manual_input_opened' as any, {});
-                  }}
-                >
-                  🔍 Scan Any Address
-                </button>
+            {/* Alternative Options */}
+            <button 
+              className="button-outline"
+              style={{
+                ...styles.buttonOutline,
+                marginBottom: '12px',
+              }} 
+              onClick={() => {
+                setShowAddWalletOptions(true);
+                setAddWalletMode('manual');
+                analytics.track('guardian_manual_input_opened' as any, {});
+              }}
+            >
+              🔍 Scan Any Address
+            </button>
 
-                <button 
-                  className="button-outline"
-                  style={styles.buttonOutline} 
-                  onClick={handleDemoMode}
-                >
-                  ✨ Try Demo Mode
-                </button>
+            <button 
+              className="button-outline"
+              style={styles.buttonOutline} 
+              onClick={handleDemoMode}
+            >
+              ✨ Try Demo Mode
+            </button>
 
-                <p style={{
-                  ...styles.privacyNote,
-                  marginTop: '12px',
-                }}>
-                  Read-only scan • No wallet required
-                </p>
-              </>
-            ) : (
-              <div style={{
-                width: '100%',
-                maxWidth: '400px',
-                margin: '0 auto',
-              }}>
-                <p style={{
-                  ...styles.privacyNote,
-                  textAlign: 'left',
-                  marginBottom: '12px',
-                }}>
-                  Enter any Ethereum address to scan:
-                </p>
-                <input
-                  type="text"
-                  placeholder="0x..."
-                  value={manualAddress}
-                  onChange={(e) => setManualAddress(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    border: `2px solid ${isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)'}`,
-                    background: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)',
-                    color: isDark ? '#f1f5f9' : '#1e293b',
-                    fontSize: clamp(14, 16),
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                    outline: 'none',
-                    transition: 'all 0.3s ease',
-                    marginBottom: '12px',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = themeColors.primary;
-                    e.target.style.boxShadow = isDark 
-                      ? `0 0 0 3px ${themeColors.primary}20` 
-                      : `0 0 0 3px ${themeColors.primary}30`;
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-                <div style={{
+            <p style={{
+              ...styles.privacyNote,
+              marginTop: '12px',
+            }}>
+              Read-only scan • No wallet required
+            </p>
+
+            {/* Add Wallet Modal for Welcome Screen */}
+            {showAddWalletOptions && addWalletMode === 'manual' && (
+              <div 
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(0, 0, 0, 0.5)',
                   display: 'flex',
-                  gap: '12px',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 100,
+                  padding: '20px',
+                }}
+                onClick={(e) => {
+                  // Close if clicking outside the modal
+                  if (e.target === e.currentTarget) {
+                    setShowAddWalletOptions(false);
+                    setNewWalletAddress('');
+                    setNewWalletLabel('');
+                  }
+                }}
+              >
+                <div style={{
+                  background: isDark ? 'rgba(30, 41, 59, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+                  border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(226, 232, 240, 0.9)'}`,
+                  borderRadius: '16px',
+                  padding: '24px',
+                  maxWidth: '400px',
+                  width: '100%',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                 }}>
-                  <button 
-                    className="button-glow"
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                  }}>
+                    <h3 style={{
+                      fontSize: clamp(16, 18),
+                      fontWeight: 600,
+                      color: themeColors.text,
+                      margin: 0,
+                    }}>
+                      Enter Wallet Address
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowAddWalletOptions(false);
+                        setNewWalletAddress('');
+                        setNewWalletLabel('');
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        fontSize: '24px',
+                        cursor: 'pointer',
+                        color: themeColors.textSecondary,
+                        padding: '4px',
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Label (optional)"
+                    value={newWalletLabel}
+                    onChange={(e) => setNewWalletLabel(e.target.value)}
                     style={{
-                      ...styles.buttonGlow,
-                      flex: 1,
-                      opacity: manualAddress.match(/^0x[a-fA-F0-9]{40}$/) ? 1 : 0.5,
-                      cursor: manualAddress.match(/^0x[a-fA-F0-9]{40}$/) ? 'pointer' : 'not-allowed',
-                    }} 
-                    onClick={handleManualScan}
-                    disabled={!manualAddress.match(/^0x[a-fA-F0-9]{40}$/)}
-                  >
-                    Scan Address
-                  </button>
-                  <button 
-                    className="button-outline"
-                    style={{
-                      ...styles.buttonOutline,
-                      flex: '0 0 auto',
-                      padding: '0 20px',
-                    }} 
-                    onClick={() => {
-                      setShowManualInput(false);
-                      setManualAddress('');
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: clamp(13, 14),
+                      background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                      border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(226, 232, 240, 0.9)'}`,
+                      borderRadius: '8px',
+                      color: themeColors.text,
+                      outline: 'none',
+                      marginBottom: '12px',
                     }}
-                  >
-                    Cancel
-                  </button>
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="0x... wallet address"
+                    value={newWalletAddress}
+                    onChange={(e) => setNewWalletAddress(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: clamp(13, 14),
+                      fontFamily: 'ui-monospace, monospace',
+                      background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                      border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(226, 232, 240, 0.9)'}`,
+                      borderRadius: '8px',
+                      color: themeColors.text,
+                      outline: 'none',
+                      marginBottom: '16px',
+                    }}
+                  />
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                  }}>
+                    <button
+                      onClick={() => {
+                        addWallet();
+                        setShowAddWalletOptions(false);
+                      }}
+                      style={{
+                        flex: '1',
+                        padding: '12px',
+                        fontSize: clamp(13, 14),
+                        fontWeight: 600,
+                        color: 'white',
+                        background: themeColors.primary,
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Scan Wallet
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddWalletOptions(false);
+                        setNewWalletAddress('');
+                        setNewWalletLabel('');
+                      }}
+                      style={{
+                        padding: '12px 20px',
+                        fontSize: clamp(13, 14),
+                        fontWeight: 600,
+                        color: themeColors.textSecondary,
+                        background: 'transparent',
+                        border: `1px solid ${themeColors.textSecondary}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <Hub2BottomNav />
+        <Hub2Footer />
       </div>
     );
   }
@@ -742,7 +913,7 @@ export function GuardianUX2Pure() {
             </div>
           </div>
         </div>
-        <Hub2BottomNav />
+        <Hub2Footer />
       </div>
     );
   }
@@ -777,11 +948,15 @@ export function GuardianUX2Pure() {
       />
       
       <div style={styles.container} className="fade-in">
-        {/* Mode Badge */}
+        {/* Mode Badge & Wallet Info */}
         <div style={{
-          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '12px',
           marginBottom: '16px',
         }}>
+          {/* Connection Badge */}
           <span style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -808,15 +983,550 @@ export function GuardianUX2Pure() {
             ) : (
               <>
                 <span style={{ fontSize: '16px' }}>👁️</span>
-                Read-Only Scan
+                Demo Mode
               </>
             )}
           </span>
+
+          {/* Multi-Wallet Selector */}
+          {(address || savedWallets.length > 0) && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '14px 20px',
+              background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(226, 232, 240, 0.9)'}`,
+              borderRadius: '16px',
+              backdropFilter: 'blur(10px)',
+              boxShadow: isDark 
+                ? '0 4px 16px rgba(0, 0, 0, 0.3)' 
+                : '0 4px 16px rgba(0, 0, 0, 0.08)',
+              minWidth: '320px',
+              maxWidth: '90vw',
+            }}>
+              {/* Currently Selected Wallet */}
+              {address && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '6px',
+                  width: '100%',
+                }}>
+                  <div style={{
+                    fontSize: clamp(9, 10),
+                    color: themeColors.textSecondary,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                  }}>
+                    Active Wallet {savedWallets.find(w => w.address === address)?.label && `• ${savedWallets.find(w => w.address === address)?.label}`}
+                  </div>
+                  <div style={{
+                    fontFamily: 'ui-monospace, SF Mono, Menlo, Monaco, Consolas, monospace',
+                    fontSize: clamp(14, 16),
+                    color: themeColors.text,
+                    fontWeight: 700,
+                    letterSpacing: '0.5px',
+                    padding: '8px 16px',
+                    background: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)',
+                    borderRadius: '8px',
+                    border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
+                  }}>
+                    {address.slice(0, 6)}...{address.slice(-4)}
+                  </div>
+                </div>
+              )}
+
+              {/* Wallet List */}
+              {savedWallets.length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  width: '100%',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                }}>
+                  <div style={{
+                    fontSize: clamp(9, 10),
+                    color: themeColors.textSecondary,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    padding: '4px 0',
+                  }}>
+                    Saved Wallets ({savedWallets.length})
+                  </div>
+                  {savedWallets.map((wallet) => (
+                    <div
+                      key={wallet.address}
+                      onClick={() => setSelectedWalletAddress(wallet.address)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        background: wallet.address === address
+                          ? `${themeColors.primary}20`
+                          : (isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)'),
+                        border: wallet.address === address
+                          ? `2px solid ${themeColors.primary}`
+                          : `1px solid ${isDark ? 'rgba(71, 85, 105, 0.3)' : 'rgba(226, 232, 240, 0.6)'}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (wallet.address !== address) {
+                          e.currentTarget.style.background = `${themeColors.primary}10`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (wallet.address !== address) {
+                          e.currentTarget.style.background = isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)';
+                        }
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
+                        flex: 1,
+                      }}>
+                        {wallet.label && (
+                          <div style={{
+                            fontSize: clamp(10, 11),
+                            color: themeColors.text,
+                            fontWeight: 600,
+                          }}>
+                            {wallet.label}
+                          </div>
+                        )}
+                        <div style={{
+                          fontFamily: 'ui-monospace, monospace',
+                          fontSize: clamp(11, 12),
+                          color: themeColors.textSecondary,
+                        }}>
+                          {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeWallet(wallet.address);
+                        }}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: clamp(10, 11),
+                          color: isDark ? '#ef4444' : '#dc2626',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          opacity: 0.6,
+                          transition: 'opacity 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.opacity = '1';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.opacity = '0.6';
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                width: '100%',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+              }}>
+                {/* Add Wallet Button */}
+                <button
+                  onClick={() => {
+                    setShowAddWalletOptions(!showAddWalletOptions);
+                    setAddWalletMode('choose');
+                  }}
+                  style={{
+                    flex: '1',
+                    minWidth: isConnected ? '100px' : '140px',
+                    padding: '8px 14px',
+                    fontSize: clamp(11, 12),
+                    fontWeight: 600,
+                    color: themeColors.primary,
+                    background: 'transparent',
+                    border: `2px solid ${themeColors.primary}`,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `${themeColors.primary}20`;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${themeColors.primary}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  ➕ Add Wallet
+                </button>
+
+                {/* Disconnect Button */}
+                {isConnected && (
+                  <button
+                    onClick={() => disconnect()}
+                    style={{
+                      flex: '1',
+                      minWidth: '100px',
+                      padding: '8px 14px',
+                      fontSize: clamp(11, 12),
+                      fontWeight: 600,
+                      color: isDark ? '#ef4444' : '#dc2626',
+                      background: 'transparent',
+                      border: `2px solid ${isDark ? '#ef4444' : '#dc2626'}`,
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(220, 38, 38, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = isDark 
+                        ? '0 4px 12px rgba(239, 68, 68, 0.3)' 
+                        : '0 4px 12px rgba(220, 38, 38, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    ✕ Disconnect
+                  </button>
+                )}
+              </div>
+
+              {/* Add Wallet Options Modal */}
+              {showAddWalletOptions && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '16px',
+                  background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.05)',
+                  borderRadius: '12px',
+                  border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.4)' : 'rgba(226, 232, 240, 0.7)'}`,
+                }}>
+                  {addWalletMode === 'choose' && (
+                    <>
+                      <div style={{
+                        fontSize: clamp(12, 13),
+                        color: themeColors.text,
+                        fontWeight: 600,
+                        textAlign: 'center',
+                      }}>
+                        Choose How to Add Wallet
+                      </div>
+                      
+                      {/* Connect Wallet Option */}
+                      <ConnectButton.Custom>
+                        {({ openConnectModal, connectModalOpen }) => {
+                          const handleConnectClick = async () => {
+                            console.log('🔗 Opening wallet selection modal...');
+                            
+                            // Close our modal first
+                            setShowAddWalletOptions(false);
+                            
+                            // Force disconnect temporarily to show wallet selection
+                            if (isConnected) {
+                              console.log('🔌 Temporarily disconnecting to show wallet selection...');
+                              disconnect();
+                              
+                              // Wait for disconnect, then open connect modal
+                              setTimeout(() => {
+                                if (openConnectModal) {
+                                  openConnectModal();
+                                  console.log('✅ Wallet selection modal opened');
+                                }
+                              }, 200);
+                            } else {
+                              // No wallet connected, open directly
+                              if (openConnectModal) {
+                                openConnectModal();
+                                console.log('✅ Wallet selection modal opened');
+                              }
+                            }
+                          };
+                          
+                          return (
+                            <button
+                              onClick={handleConnectClick}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '16px',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                border: '2px solid rgba(16, 185, 129, 0.4)',
+                                borderRadius: '10px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                width: '100%',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)';
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                            >
+                              <div style={{ fontSize: '32px' }}>🔗</div>
+                              <div style={{
+                                fontSize: clamp(12, 13),
+                                fontWeight: 700,
+                                color: '#10b981',
+                              }}>
+                                Connect Another Wallet
+                              </div>
+                              <div style={{
+                                fontSize: clamp(10, 11),
+                                color: themeColors.textSecondary,
+                                textAlign: 'center',
+                              }}>
+                                MetaMask, WalletConnect, and more
+                              </div>
+                            </button>
+                          );
+                        }}
+                      </ConnectButton.Custom>
+
+                      {/* Manual Entry Option */}
+                      <button
+                        onClick={() => setAddWalletMode('manual')}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '16px',
+                          background: `${themeColors.primary}10`,
+                          border: `2px solid ${themeColors.primary}40`,
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = `${themeColors.primary}20`;
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = `0 4px 12px ${themeColors.primary}40`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = `${themeColors.primary}10`;
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div style={{ fontSize: '32px' }}>✍️</div>
+                        <div style={{
+                          fontSize: clamp(12, 13),
+                          fontWeight: 700,
+                          color: themeColors.primary,
+                        }}>
+                          Enter Address Manually
+                        </div>
+                        <div style={{
+                          fontSize: clamp(10, 11),
+                          color: themeColors.textSecondary,
+                          textAlign: 'center',
+                        }}>
+                          Monitor any wallet (read-only)
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowAddWalletOptions(false);
+                          setAddWalletMode('choose');
+                        }}
+                        style={{
+                          padding: '8px',
+                          fontSize: clamp(10, 11),
+                          fontWeight: 600,
+                          color: themeColors.textSecondary,
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
+
+                  {addWalletMode === 'manual' && (
+                    <>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                        <button
+                          onClick={() => setAddWalletMode('choose')}
+                          style={{
+                            padding: '4px',
+                            fontSize: clamp(12, 14),
+                            color: themeColors.textSecondary,
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ← Back
+                        </button>
+                        <div style={{
+                          fontSize: clamp(11, 12),
+                          color: themeColors.text,
+                          fontWeight: 600,
+                        }}>
+                          Add Wallet Manually
+                        </div>
+                        <div style={{ width: '40px' }}></div>
+                      </div>
+                      
+                      <input
+                        type="text"
+                        placeholder="Label (optional)"
+                        value={newWalletLabel}
+                        onChange={(e) => setNewWalletLabel(e.target.value)}
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: clamp(11, 12),
+                          background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                          border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(226, 232, 240, 0.9)'}`,
+                          borderRadius: '8px',
+                          color: themeColors.text,
+                          outline: 'none',
+                        }}
+                      />
+                      
+                      <input
+                        type="text"
+                        placeholder="0x... wallet address"
+                        value={newWalletAddress}
+                        onChange={(e) => setNewWalletAddress(e.target.value)}
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: clamp(11, 12),
+                          fontFamily: 'ui-monospace, monospace',
+                          background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                          border: `1px solid ${isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(226, 232, 240, 0.9)'}`,
+                          borderRadius: '8px',
+                          color: themeColors.text,
+                          outline: 'none',
+                        }}
+                      />
+                      
+                      <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                      }}>
+                        <button
+                          onClick={() => {
+                            addWallet();
+                            setShowAddWalletOptions(false);
+                            setAddWalletMode('choose');
+                          }}
+                          style={{
+                            flex: '1',
+                            padding: '10px 14px',
+                            fontSize: clamp(11, 12),
+                            fontWeight: 600,
+                            color: 'white',
+                            background: themeColors.primary,
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '0.9';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          Save Wallet
+                        </button>
+                        <button
+                          onClick={() => {
+                            setNewWalletAddress('');
+                            setNewWalletLabel('');
+                            setAddWalletMode('choose');
+                          }}
+                          style={{
+                            padding: '10px 14px',
+                            fontSize: clamp(11, 12),
+                            fontWeight: 600,
+                            color: themeColors.textSecondary,
+                            background: 'transparent',
+                            border: `1px solid ${themeColors.textSecondary}`,
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '0.8';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Trust Score */}
         <div style={styles.gauge}>
-          <svg style={{ width: '100%', height: '100%' }} viewBox="0 0 200 200">
+          <svg 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }} 
+            viewBox="0 0 200 200"
+          >
             {/* Subtle outer ring for depth */}
             <circle
               cx="100"
@@ -891,15 +1601,15 @@ export function GuardianUX2Pure() {
               style={{
                 ...styles.buttonGlow,
                 width: window.innerWidth < 640 ? '100%' : 'auto',
-                opacity: isManualMode ? 0.5 : 1,
-                cursor: isManualMode ? 'not-allowed' : 'pointer',
+                opacity: isReadOnlyMode ? 0.5 : 1,
+                cursor: isReadOnlyMode ? 'not-allowed' : 'pointer',
               }}
-              disabled={isManualMode}
-              title={isManualMode ? 'Connect wallet to fix risks' : undefined}
+              disabled={isReadOnlyMode}
+              title={isReadOnlyMode ? 'Connect wallet to fix risks' : undefined}
             >
               <Wrench size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
               <span style={{ verticalAlign: 'middle' }}>
-                {isManualMode ? 'Fix Risks (Connect Wallet)' : 'Fix Risks'}
+                {isReadOnlyMode ? 'Fix Risks (Connect Wallet)' : 'Fix Risks'}
               </span>
             </button>
           </div>
@@ -952,7 +1662,7 @@ export function GuardianUX2Pure() {
         </p>
       </div>
 
-      <Hub2BottomNav />
+      <Hub2Footer />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { TrustGauge } from '@/components/guardian/TrustGauge';
 import { GlowButton } from '@/components/ui/button-glow';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
-import Hub2BottomNav from '@/components/hub2/Hub2BottomNav';
+import { Hub2Footer } from '@/components/hub2/Hub2Footer';
 
 // Mock wallet hook - replace with real wagmi
 const useMockWallet = () => {
@@ -190,7 +190,7 @@ export function GuardianUX2() {
           </motion.div>
         </div>
 
-        <Hub2BottomNav />
+        <Hub2Footer />
       </div>
     );
   }
@@ -366,10 +366,8 @@ export function GuardianUX2() {
         </motion.div>
       </div>
 
-      {/* Bottom Nav with translucency */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-t border-slate-800/50">
-        <Hub2BottomNav />
-      </div>
+      {/* Hub2 Footer - Same footer across all pages */}
+      <Hub2Footer />
     </div>
   );
 }

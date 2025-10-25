@@ -1,40 +1,36 @@
 /**
- * Wagmi Configuration for Guardian Wallet Connection
- * Supports: Ethereum, Base, Polygon, Arbitrum
+ * Wagmi Configuration for Guardian Wallet Integration
  */
-import { createConfig, http } from 'wagmi';
-import { mainnet, base, polygon, arbitrum } from 'wagmi/chains';
-import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors';
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { mainnet, polygon, arbitrum, base, optimism } from 'wagmi/chains';
 
-// Get WalletConnect project ID from env (fallback to a working demo)
-const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '7c6009e2b008c2f2b05de06fab2bb13f';
+// Get environment variables
+const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'f13ce31c7183dda28756902c7195ab5e';
+const appName = 'AlphaWhale Guardian';
 
-console.log('🔗 Wallet connectors initializing...');
-
-export const config = createConfig({
-  chains: [mainnet, base, polygon, arbitrum],
-  connectors: [
-    injected({
-      shimDisconnect: true,
-    }),
-    walletConnect({ 
-      projectId: walletConnectProjectId,
-      showQrModal: true,
-    }),
-    coinbaseWallet({
-      appName: 'AlphaWhale Guardian',
-      appLogoUrl: 'https://alphawhale.io/logo.png',
-    }),
-  ],
-  transports: {
-    [mainnet.id]: http(),
-    [base.id]: http(),
-    [polygon.id]: http(),
-    [arbitrum.id]: http(),
-  },
-  ssr: false,
+// Export as 'config' to match App.tsx import
+export const config = getDefaultConfig({
+  appName,
+  projectId,
+  chains: [mainnet, polygon, arbitrum, base, optimism],
+  ssr: false, // Vite doesn't use SSR
 });
 
-// Export chains for RainbowKit
-export { mainnet, base, polygon, arbitrum };
+// Also export as wagmiConfig for backward compatibility
+export const wagmiConfig = config;
 
+export const supportedChains = {
+  ethereum: mainnet.id,
+  polygon: polygon.id,
+  arbitrum: arbitrum.id,
+  base: base.id,
+  optimism: optimism.id,
+};
+
+export const chainIdToName: Record<number, string> = {
+  [mainnet.id]: 'ethereum',
+  [polygon.id]: 'polygon',
+  [arbitrum.id]: 'arbitrum',
+  [base.id]: 'base',
+  [optimism.id]: 'optimism',
+};

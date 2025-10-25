@@ -78,25 +78,39 @@ export function ScanDialog({ open, onOpenChange }: ScanDialogProps) {
         <div className="space-y-6 py-4">
           {/* Progress Bar */}
           <div className="space-y-2">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-center text-muted-foreground">
+            <Progress value={progress} className="h-2" aria-label="Scan progress" />
+            <p 
+              className="text-sm text-center text-muted-foreground"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {Math.round(progress)}% complete
             </p>
           </div>
 
           {/* Steps */}
-          <div className="space-y-3">
+          <div className="space-y-3" role="status" aria-live="polite" aria-atomic="false">
             {SCAN_STEPS.map((step, index) => (
               <div
                 key={step.label}
                 className="flex items-center gap-3 text-sm"
+                aria-label={`Step ${index + 1}: ${step.label}`}
               >
                 {index < currentStep ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 
+                    className="w-5 h-5 text-green-500 flex-shrink-0" 
+                    aria-label="Completed"
+                  />
                 ) : index === currentStep ? (
-                  <Loader2 className="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" />
+                  <Loader2 
+                    className="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" 
+                    aria-label="In progress"
+                  />
                 ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0" />
+                  <div 
+                    className="w-5 h-5 rounded-full border-2 border-muted flex-shrink-0" 
+                    aria-label="Pending"
+                  />
                 )}
                 <span
                   className={
@@ -109,6 +123,15 @@ export function ScanDialog({ open, onOpenChange }: ScanDialogProps) {
                 </span>
               </div>
             ))}
+          </div>
+
+          {/* Screen reader announcement */}
+          <div className="sr-only" aria-live="assertive" aria-atomic="true">
+            {currentStep < SCAN_STEPS.length ? (
+              `Currently ${SCAN_STEPS[currentStep]?.label}. ${Math.round(progress)}% complete.`
+            ) : (
+              'Scan complete'
+            )}
           </div>
         </div>
       </DialogContent>
