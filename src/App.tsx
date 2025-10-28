@@ -75,6 +75,8 @@ import { MyROI } from "./pages/insights/MyROI";
 import Hub2Plus from "./pages/Hub2Plus";
 // import Guardian from "./pages/Guardian"; // File removed
 import GuardianEnhanced from "./pages/GuardianEnhanced";
+import GuardianUX2 from "./pages/GuardianUX2";
+import GuardianLearn from "./pages/GuardianLearn";
 import Hunter from "./pages/Hunter";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
@@ -206,6 +208,8 @@ const App = () => {
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
                   <Route path="/guardian" element={<GuardianEnhanced />} />
                   <Route path="/guardian-enhanced" element={<GuardianEnhanced />} />
+                  <Route path="/guardian-ux2" element={<GuardianUX2 />} />
+                  <Route path="/guardian/learn" element={<GuardianLearn />} />
                   <Route path="/hunter" element={<Hunter />} />
                   <Route path="/anomaly-detection" element={<AnomalyDetection />} />
                   <Route path="/premium-test" element={<PremiumTest />} />

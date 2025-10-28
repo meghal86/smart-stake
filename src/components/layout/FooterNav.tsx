@@ -10,7 +10,7 @@ import {
 
 export function FooterNav() {
   return (
-    <footer className="fixed bottom-0 w-full h-[72px] z-50">
+    <footer className="fixed bottom-0 w-full h-[72px] z-40">
       <div className="backdrop-blur-md bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(16,18,30,0.8)] border-t border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.1)]" style={{ boxShadow: '0 -4px 20px rgba(0,0,0,0.1)' }}>
         <nav className="flex justify-around items-center h-full px-4 text-gray-500 dark:text-gray-300 max-w-screen-xl mx-auto">
         <a href="/hub" className="flex items-center justify-center hover:text-white transition-all duration-200 flex-1 py-3">

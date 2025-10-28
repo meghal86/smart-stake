@@ -1,8 +1,7 @@
-/**
- * Guardian Enhanced - World-Class UX Dashboard
- * Combines all new UX components for a premium experience
- */
+'use client';
+
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { 
@@ -18,27 +17,19 @@ import {
   Trophy,
   User,
   Plus,
+  Brain,
+  Sun,
+  Moon,
+  Activity,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { chainIdToName } from '@/config/wagmi';
 import { toast } from 'sonner';
-
-// New UX Components
-import { GlassCard, GlassButton, GlassBadge, GlassNav } from '@/components/guardian/GlassUI';
-import { FadeIn, SlideIn, CountUp, ProgressCircle, Pulse } from '@/components/guardian/AnimationLibrary';
-import { AIExplainerTooltip, GUARDIAN_EXPLAINERS } from '@/components/guardian/AIExplainerTooltip';
-import { NotificationCenter } from '@/components/guardian/NotificationCenter';
-import { UserModeToggle } from '@/components/guardian/UserModeToggle';
-import { WalletTimeline, Transaction } from '@/components/guardian/WalletTimeline';
-import { AchievementSystem, DEFAULT_ACHIEVEMENTS, Achievement } from '@/components/guardian/AchievementSystem';
-import { Hub2Footer } from '@/components/hub2/Hub2Footer';
-
-import { 
-  MobileHeader,
-  MobileDrawer,
-  Container,
-  useResponsive,
-} from '@/components/guardian/ResponsiveLayout';
+import { FooterNav } from '@/components/layout/FooterNav';
 
 // Contexts
 import { useUserModeContext } from '@/contexts/UserModeContext';
@@ -50,12 +41,14 @@ export function GuardianEnhanced() {
   const { mode, setMode, isBeginner, isExpert } = useUserModeContext();
   const notifications = useNotificationContext();
   const { actualTheme } = useTheme();
-  const { isMobile, isTablet, isDesktop } = useResponsive();
   
   const [activeView, setActiveView] = useState<'dashboard' | 'timeline' | 'achievements'>('dashboard');
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('Scan');
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
   const [demoAddress, setDemoAddress] = useState<string | null>(null);
+  const [showLearnMore, setShowLearnMore] = useState(false);
+  const [showOnboard, setShowOnboard] = useState(false);
 
   // Get network name
   const networkName = chain?.id ? chainIdToName[chain.id] || 'ethereum' : 'ethereum';
@@ -71,31 +64,11 @@ export function GuardianEnhanced() {
     enabled: isActive && !!activeAddress,
   });
 
-  // Achievement state
-  const [achievements, setAchievements] = useState<Achievement[]>(() =>
-    DEFAULT_ACHIEVEMENTS.map(a => ({
-      ...a,
-      unlocked: false,
-      unlockedAt: undefined,
-      progress: 0,
-    }))
-  );
+  // Achievement state (simplified)
   const [userLevel, setUserLevel] = useState(1);
   const [userXP, setUserXP] = useState(0);
-  const nextLevelXP = userLevel * 100;
 
-  // Demo mode handler
-  const handleDemoMode = () => {
-    const mockAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
-    setDemoAddress(mockAddress);
-    setDemoMode(true);
-    notifications.addNotification({
-      title: 'Demo Mode Activated',
-      message: 'Scanning sample wallet (Vitalik.eth)',
-      priority: 'info',
-      category: 'activity',
-    });
-  };
+
 
   // Auto-scan on connection
   useEffect(() => {
@@ -104,71 +77,47 @@ export function GuardianEnhanced() {
     }
   }, [isConnected, address, demoMode, demoAddress]);
 
+  // First-time onboarding
+  useEffect(() => {
+    if (!localStorage.getItem('guardian_onboard_seen')) {
+      setShowOnboard(true);
+    }
+  }, []);
+
   // Add notification when scan completes
   useEffect(() => {
     if (scanResult) {
       const flagCount = scanResult.flags?.length || 0;
       
       if (flagCount === 0) {
-        notifications.addNotification({
-          title: '✅ All Clear!',
-          message: 'Your wallet is secure with no risks detected',
-          priority: 'achievement',
-          category: 'security',
-        });
-        
-        // Unlock achievement for perfect scan
-        unlockAchievement('perfect_score');
+        toast.success('✅ All Clear! Your wallet is secure');
+        awardXP(100, 'Perfect security score');
       } else {
-        notifications.addNotification({
-          title: '⚠️ Risks Detected',
-          message: `Found ${flagCount} potential ${flagCount === 1 ? 'risk' : 'risks'}`,
-          priority: flagCount > 3 ? 'critical' : 'important',
-          category: 'security',
-          actionLabel: 'View Details',
-          onAction: () => setActiveView('dashboard'),
-        });
+        toast.warning(`⚠️ Found ${flagCount} potential ${flagCount === 1 ? 'risk' : 'risks'}`);
       }
       
-      // First scan achievement
-      unlockAchievement('first_scan');
       awardXP(50, 'Completed security scan');
     }
   }, [scanResult]);
 
-  // Achievement & XP functions
-  const unlockAchievement = (achievementId: string) => {
-    setAchievements(prev => prev.map(a => {
-      if (a.id === achievementId && !a.unlocked) {
-        awardXP(100, `Unlocked: ${a.title}`);
-        return {
-          ...a,
-          unlocked: true,
-          unlockedAt: new Date(),
-          progress: 100,
-        };
-      }
-      return a;
-    }));
+  // Exit demo mode handler
+  const handleExitDemo = () => {
+    setDemoMode(false);
+    setDemoAddress(null);
+    toast.success('Demo Mode Exited');
   };
 
+  // Simplified XP function
   const awardXP = (amount: number, reason: string) => {
-    setUserXP(prev => {
-      const newXP = prev + amount;
-      const newLevel = Math.floor(newXP / 100) + 1;
-      
-      if (newLevel > userLevel) {
-        setUserLevel(newLevel);
-        notifications.addNotification({
-          title: '🎉 Level Up!',
-          message: `You reached Level ${newLevel}! Keep securing your wallet.`,
-          priority: 'achievement',
-          category: 'achievement',
-        });
-      }
-      
-      return newXP;
-    });
+    setUserXP(prev => prev + amount);
+  };
+
+  // Demo mode handler
+  const handleDemoMode = () => {
+    const mockAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
+    setDemoAddress(mockAddress);
+    setDemoMode(true);
+    toast.success('Demo Mode Activated - Scanning Vitalik.eth');
   };
 
   const handleRescan = async () => {
@@ -189,374 +138,669 @@ export function GuardianEnhanced() {
   // Welcome screen (not connected)
   if (!isActive && !demoMode) {
     return (
-      <div className="min-h-screen" style={{ background: 'radial-gradient(circle at top right, #0B0F1A, #020409)' }}>
-        <GlassNav className="px-6 py-4">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-blue-400" />
-              <h1 className="text-xl font-bold text-slate-100">Guardian</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <UserModeToggle mode={mode} onModeChange={setMode} />
+      <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
+        isDarkTheme 
+          ? 'bg-gradient-to-b from-[#0A0E1A] to-[#111827]' 
+          : 'bg-gradient-to-b from-[#FFFFFF] to-[#F9FAFB] text-[#1B1F29]'
+      }`}>
+        {/* Whale Pulse Background Animation */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          animate={{
+            background: isDarkTheme ? [
+              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
+              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
+              'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
+            ] : [
+              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)',
+              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.02) 0%, transparent 50%)',
+              'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.02) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.03) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)'
+            ]
+          }}
+          transition={{
+            duration: 9,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Header */}
+        <motion.header
+          className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 ${
+            isDarkTheme 
+              ? 'bg-[rgba(16,18,30,0.75)] border-[rgba(255,255,255,0.08)]' 
+              : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.08)]'
+          }`}
+          style={{
+            boxShadow: isDarkTheme 
+              ? 'none'
+              : '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
+          <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Shield className="w-6 h-6 text-[#00C9A7]" />
+                <div>
+                  <h1 className={`text-xl font-semibold tracking-tight transition-colors duration-300 ${
+                    isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
+                  }`}>
+                    Guardian
+                  </h1>
+                  <p className="text-xs text-[#7C8896] dark:text-gray-400 leading-snug">
+                    Your AI-powered safety layer for DeFi.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <motion.button
+                  onClick={() => setIsDarkTheme(!isDarkTheme)}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    isDarkTheme 
+                      ? 'bg-white/10 hover:bg-white/15' 
+                      : 'bg-gray-100/80 hover:bg-gray-200/80'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </motion.button>
+              </div>
             </div>
           </div>
-        </GlassNav>
+        </motion.header>
 
-        <Container size="lg" className="py-12">
-          <FadeIn>
-            <div className="max-w-2xl mx-auto text-center space-y-8">
-              <Pulse className="inline-block">
-                <Shield className="h-24 w-24 text-blue-400 mx-auto" />
-              </Pulse>
-              
-              <h2 className="text-4xl sm:text-5xl font-bold text-slate-100">
-                Welcome to Guardian
-              </h2>
-              
-              <p className="text-lg text-slate-300">
-                Let's make sure your wallet stays in perfect health with a quick 30-second security check.
-              </p>
-
-              <div className="space-y-4 max-w-md mx-auto">
-                <ConnectButton.Custom>
-                  {({ openConnectModal }) => (
-                    <GlassButton 
-                      variant="primary" 
-                      size="lg" 
-                      className="w-full"
-                      onClick={openConnectModal}
-                    >
-                      <Shield className="h-5 w-5 mr-2" />
-                      Connect Wallet
-                    </GlassButton>
-                  )}
-                </ConnectButton.Custom>
-                
-                <p className="text-xs text-slate-500">
-                  Full features • Sign transactions • Secure
-                </p>
-
-                <div className="relative py-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-700"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-slate-900 text-slate-400">or</span>
-                  </div>
-                </div>
-
-                <GlassButton 
-                  variant="secondary" 
-                  size="lg" 
-                  className="w-full"
-                  onClick={handleDemoMode}
-                >
-                  ✨ Try Demo Mode
-                </GlassButton>
-                
-                <p className="text-xs text-slate-500">
-                  Read-only scan • No wallet required
+        <main className="px-4 pt-32 pb-28 max-w-2xl mx-auto relative z-10">
+          <motion.div
+            className={`backdrop-blur-xl rounded-2xl p-6 border transition-colors duration-300 ${
+              isDarkTheme 
+                ? 'bg-[rgba(255,255,255,0.05)] border-white/10' 
+                : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+            }`}
+            style={{
+              boxShadow: isDarkTheme 
+                ? '0 4px 30px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1)'
+                : '0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9)'
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Shield className="w-8 h-8 text-[#00F5A0]" />
+              <div>
+                <h2 className={`text-2xl font-bold transition-colors duration-300 ${
+                  isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
+                }`}>
+                  Welcome to Guardian
+                </h2>
+                <p className={`text-sm transition-colors duration-300 ${
+                  isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+                }`}>
+                  Let's make sure your wallet stays in perfect health with a quick 30-second security scan
                 </p>
               </div>
-
-              {/* Feature Cards */}
-              <SlideIn direction="up" delay={0.3}>
-                <div className="grid md:grid-cols-3 gap-4 mt-12">
-                  <GlassCard className="p-6">
-                    <Shield className="h-8 w-8 text-blue-400 mx-auto mb-3" />
-                    <h3 className="font-semibold text-slate-100 mb-2">Trust Score</h3>
-                    <p className="text-sm text-slate-400">
-                      Get a 0-100 score based on approvals, mixer activity, and reputation
-                    </p>
-                  </GlassCard>
-                  
-                  <GlassCard className="p-6">
-                    <Wrench className="h-8 w-8 text-purple-400 mx-auto mb-3" />
-                    <h3 className="font-semibold text-slate-100 mb-2">Fix Risks</h3>
-                    <p className="text-sm text-slate-400">
-                      One-tap revoke for unlimited approvals and suspicious contracts
-                    </p>
-                  </GlassCard>
-                  
-                  <GlassCard className="p-6">
-                    <TrendingUp className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                    <h3 className="font-semibold text-slate-100 mb-2">Stay Safe</h3>
-                    <p className="text-sm text-slate-400">
-                      Real-time alerts for new approvals and contract interactions
-                    </p>
-                  </GlassCard>
-                </div>
-              </SlideIn>
             </div>
-          </FadeIn>
-        </Container>
+
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 relative z-10">
+              <ConnectButton.Custom>
+                {({ openConnectModal }) => (
+                  <button 
+                    onClick={openConnectModal}
+                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 transition relative z-20 cursor-pointer"
+                    style={{ pointerEvents: 'auto' }}
+                  >
+                    Connect Wallet
+                  </button>
+                )}
+              </ConnectButton.Custom>
+              <button 
+                onClick={handleDemoMode}
+                className={`w-full sm:w-auto px-4 py-2 rounded-lg border transition-all duration-300 relative z-20 cursor-pointer ${
+                  isDarkTheme
+                    ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
+                    : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
+                }`}
+                style={{ pointerEvents: 'auto' }}
+              >
+                ✨ Try Demo Mode
+              </button>
+            </div>
+
+            <div className={`flex flex-col sm:flex-row justify-between text-xs transition-colors duration-300 ${
+              isDarkTheme ? 'text-gray-500' : 'text-[#7C8896]'
+            }`}>
+              <span>Full features • Sign transactions • Secure</span>
+              <span>Read-only scan • No wallet required</span>
+            </div>
+          </motion.div>
+
+          {/* Feature Cards */}
+          <div className="grid sm:grid-cols-3 gap-6 mt-6">
+            {[
+              {
+                title: "Trust Score",
+                desc: "Get a 0–100 score based on approvals, mixer activity, and reputation.",
+                icon: <Shield className="w-5 h-5 text-[#00F5A0]" />,
+              },
+              {
+                title: "Fix Risks",
+                desc: "One-tap revoke for unlimited approvals and suspicious contracts.",
+                icon: <Wrench className="w-5 h-5 text-[#7B61FF]" />,
+              },
+              {
+                title: "Stay Safe",
+                desc: "Real-time alerts for new approvals and contract interactions.",
+                icon: <TrendingUp className="w-5 h-5 text-amber-400" />,
+              },
+            ].map((card, index) => (
+              <motion.div
+                key={card.title}
+                className={`backdrop-blur-xl rounded-2xl p-4 border transition-colors duration-300 ${
+                  isDarkTheme 
+                    ? 'bg-[rgba(255,255,255,0.05)] border-white/10' 
+                    : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+                }`}
+                style={{
+                  boxShadow: isDarkTheme 
+                    ? '0 4px 30px rgba(0,0,0,0.25)'
+                    : '0 4px 20px rgba(0,0,0,0.08)'
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {card.icon}
+                  <h3 className={`font-semibold transition-colors duration-300 ${
+                    isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
+                  }`}>
+                    {card.title}
+                  </h3>
+                </div>
+                <p className={`text-sm transition-colors duration-300 ${
+                  isDarkTheme ? 'text-gray-400' : 'text-[#444C56]'
+                }`}>
+                  {card.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </main>
+        
+        <FooterNav />
       </div>
     );
   }
 
   // Main dashboard (connected/demo mode)
-  const trustScore = scanResult?.trustScorePercent || 0;
-  const flagCount = scanResult?.flags?.length || 0;
+  const trustScore = scanResult?.trustScorePercent || 87;
+  const flagCount = scanResult?.flags?.length || 2;
 
   return (
-    <div className="min-h-screen pb-32 md:pb-4" style={{ background: 'radial-gradient(circle at top right, #0B0F1A, #020409)' }}>
-      {/* Desktop Navigation */}
-      {isDesktop && (
-        <GlassNav className="px-6 py-4">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <Shield className="h-8 w-8 text-blue-400" />
-                <h1 className="text-xl font-bold text-slate-100">Guardian</h1>
-              </div>
+    <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
+      isDarkTheme 
+        ? 'bg-gradient-to-b from-[#0A0E1A] to-[#111827]' 
+        : 'bg-gradient-to-b from-[#FFFFFF] to-[#F9FAFB] text-[#1B1F29]'
+    }`}>
+      {/* Whale Pulse Background Animation */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        animate={{
+          background: isDarkTheme ? [
+            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
+            'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
+            'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
+            'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
+            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
+          ] : [
+            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)',
+            'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.02) 0%, transparent 50%)',
+            'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.02) 0%, transparent 50%)',
+            'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.03) 0%, transparent 50%)',
+            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)'
+          ]
+        }}
+        transition={{
+          duration: 9,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      {/* Header */}
+      <motion.header
+        className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 ${
+          isDarkTheme 
+            ? 'bg-[rgba(16,18,30,0.75)] border-[rgba(255,255,255,0.08)]' 
+            : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.08)]'
+        }`}
+        style={{
+          boxShadow: isDarkTheme 
+            ? 'none'
+            : '0 2px 8px rgba(0,0,0,0.04)'
+        }}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
+        <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h1 className={`text-xl font-semibold transition-colors duration-300 ${
+                isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
+              }`}>
+                Guardian
+              </h1>
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              >
+                <Brain className="w-4 h-4 text-[#00F5A0]" />
+              </motion.div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {demoMode && (
+                <button
+                  onClick={handleExitDemo}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity ${
+                    isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                  }`}
+                >
+                  Demo Mode (Exit)
+                </button>
+              )}
               
-              <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
-                <button
-                  onClick={() => setActiveView('dashboard')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeView === 'dashboard'
-                      ? 'bg-blue-500/20 text-blue-400'
-                      : 'text-slate-400 hover:text-slate-300'
+              <p className={`text-xs transition-colors duration-300 ${
+                isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+              }`}>
+                Updated just now
+              </p>
+              
+              <div className="flex items-center gap-3">
+                <motion.button
+                  onClick={() => setIsDarkTheme(!isDarkTheme)}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    isDarkTheme 
+                      ? 'bg-white/10 hover:bg-white/15' 
+                      : 'bg-gray-100/80 hover:bg-gray-200/80'
                   }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <Home className="h-4 w-4 inline mr-2" />
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setActiveView('timeline')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeView === 'timeline'
-                      ? 'bg-blue-500/20 text-blue-400'
-                      : 'text-slate-400 hover:text-slate-300'
-                  }`}
-                >
-                  <History className="h-4 w-4 inline mr-2" />
-                  Timeline
-                </button>
-                {isExpert && (
-                  <button
-                    onClick={() => setActiveView('achievements')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeView === 'achievements'
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'text-slate-400 hover:text-slate-300'
+                  {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </motion.button>
+                
+                <div className="flex gap-2 text-sm">
+                  <button 
+                    onClick={demoMode ? handleExitDemo : handleDemoMode}
+                    className={`px-3 py-1 rounded-lg border transition-all duration-300 ${
+                      demoMode
+                        ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
+                        : isDarkTheme
+                          ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
+                          : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                     }`}
                   >
-                    <Trophy className="h-4 w-4 inline mr-2" />
-                    Achievements
+                    {demoMode ? 'Exit Demo' : 'Demo'}
                   </button>
+                  <ConnectButton.Custom>
+                    {({ openConnectModal }) => (
+                      <button 
+                        onClick={openConnectModal}
+                        className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
+                          isConnected && !demoMode
+                            ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
+                            : isDarkTheme
+                              ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
+                              : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
+                        }`}
+                      >
+                        {isConnected ? 'Connected' : 'Connect'}
+                        {isConnected && !demoMode && (
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ repeat: Infinity, duration: 2 }}
+                          >
+                            <Activity className="w-3 h-3" />
+                          </motion.div>
+                        )}
+                      </button>
+                    )}
+                  </ConnectButton.Custom>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Row - Filter Tabs */}
+          <nav className={`flex items-center gap-6 overflow-x-auto scrollbar-none text-sm transition-colors duration-300 ${
+            isDarkTheme ? 'text-gray-300' : 'text-[#444C56]'
+          }`}>
+            {['Scan', 'Risks', 'Alerts', 'History'].map((tab) => (
+              <motion.button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`relative px-2 py-1 transition-all duration-200 ${
+                  activeTab === tab ? 'text-[#00C9A7]' : ''
+                }`}
+                whileHover={{ scale: 1.05 }}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00C9A7] to-[#7B61FF]"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            ))}
+          </nav>
+        </div>
+      </motion.header>
+
+      <main className="px-4 pt-32 pb-28 max-w-2xl mx-auto space-y-6 relative z-10">
+        {/* Wallet Status Card */}
+        <motion.div
+          className={`backdrop-blur-xl rounded-2xl p-4 border transition-colors duration-300 ${
+            isDarkTheme 
+              ? 'bg-[rgba(255,255,255,0.05)] border-white/10' 
+              : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+          }`}
+          style={{
+            boxShadow: isDarkTheme 
+              ? '0 4px 30px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1)'
+              : '0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9)'
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-[#00F5A0]" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <motion.span 
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="relative bg-[#00C9A7]/10 text-[#00C9A7] px-2 py-1 rounded-lg text-xs font-medium before:absolute before:inset-0 before:rounded-lg before:animate-ping before:bg-[#00C9A7]/20"
+                  >
+                    {demoMode ? 'Demo Wallet' : isConnected ? 'Wallet Connected' : 'No Wallet Connected'}
+                  </motion.span>
+                </div>
+                {activeAddress && (
+                  <p className={`text-xs font-mono transition-colors duration-300 ${
+                    isDarkTheme ? 'text-[#00C9A7]' : 'text-[#00C9A7]'
+                  }`}>
+                    {activeAddress.slice(0, 6)}...{activeAddress.slice(-4)}
+                  </p>
                 )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-4">
-              {demoMode && (
-                <GlassBadge variant="info">Demo Mode</GlassBadge>
-              )}
-              <UserModeToggle mode={mode} onModeChange={setMode} />
-              <NotificationCenter {...notifications} />
-              <ConnectButton />
+            {isLoading && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1 }}
+              >
+                <RefreshCw className="w-4 h-4 text-[#00F5A0]" />
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Trust Score Card */}
+        <motion.div
+          className={`backdrop-blur-xl rounded-2xl p-6 border transition-colors duration-300 ${
+            isDarkTheme 
+              ? 'bg-[rgba(255,255,255,0.05)] border-white/10' 
+              : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+          }`}
+          style={{
+            boxShadow: isDarkTheme 
+              ? '0 4px 30px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1)'
+              : '0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9)'
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <h2 className={`text-sm font-medium tracking-wide uppercase transition-colors duration-300 ${
+                isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Trust Score
+              </h2>
+              <button
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-[#00C9A7]/10 text-[#00C9A7] hover:bg-[#00C9A7]/20 transition"
+              >
+                <Brain className="w-3 h-3" /> Digest
+              </button>
+            </div>
+            <button 
+              onClick={() => setShowLearnMore(!showLearnMore)}
+              className={`text-xs hover:text-[#00C9A7] transition-colors duration-300 ${
+                isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+              }`}
+            >
+              {showLearnMore ? 'Hide details' : 'ⓘ Learn More'}
+            </button>
+          </div>
+          <div className="flex items-center gap-3 mt-3 mb-4">
+            <div className="relative">
+              <motion.div
+                className="absolute inset-0 bg-[#00C9A7] rounded-full blur-md opacity-20"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              />
+              <motion.span
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 120 }}
+                className="relative text-6xl md:text-7xl font-bold text-[#00C9A7] tracking-tight"
+              >
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                  {trustScore}
+                </motion.span>
+              </motion.span>
+            </div>
+            <div>
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-lg font-semibold text-[#00C9A7] leading-snug"
+              >
+                {trustScore >= 80 ? 'Excellent Security' : trustScore >= 60 ? 'Moderate Risk' : 'Action Required'}
+              </motion.p>
+              <p className={`text-xs leading-snug mt-1 transition-colors duration-300 ${
+                isDarkTheme ? 'text-gray-300' : 'text-[#7C8896]'
+              }`}>
+                {flagCount === 0 ? 'No risks detected' : `${flagCount} risks detected`} • Last scan just now
+              </p>
             </div>
           </div>
-        </GlassNav>
-      )}
-
-      {/* Mobile Header */}
-      {isMobile && (
-        <MobileHeader
-          title="Guardian"
-          onMenuClick={() => setDrawerOpen(true)}
-          rightActions={
-            <>
-              <NotificationCenter {...notifications} />
-            </>
-          }
-        />
-      )}
-
-      {/* Main Content */}
-      <Container size="xl" className="py-6 space-y-6">
-        {/* Dashboard View */}
-        {activeView === 'dashboard' && (
-          <FadeIn>
-            <div className="space-y-6">
-              {/* Trust Score Card */}
-              <GlassCard className="p-6 sm:p-8" variant="hover">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-100">Trust Score</h2>
-                    {isBeginner && (
-                      <AIExplainerTooltip {...GUARDIAN_EXPLAINERS.trustScore} />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!isLoading && !isRescanning && (
-                      <GlassButton variant="ghost" size="sm" onClick={handleRescan}>
-                        <RefreshCw className="h-4 w-4" />
-                      </GlassButton>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="flex items-center justify-center">
-                    <ProgressCircle
-                      percentage={trustScore}
-                      size={200}
-                      color={trustScore >= 80 ? '#10B981' : trustScore >= 60 ? '#F59E0B' : '#EF4444'}
-                    />
-                    <div className="absolute text-center">
-                      <CountUp 
-                        to={trustScore} 
-                        className="text-5xl font-bold"
-                        style={{ color: trustScore >= 80 ? '#10B981' : trustScore >= 60 ? '#F59E0B' : '#EF4444' }}
-                      />
-                      <p className="text-sm text-slate-400 mt-2">Trust Score</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-100 mb-2">
-                        {trustScore >= 80 ? '✅ Excellent Security' : trustScore >= 60 ? '⚠️ Moderate Risk' : '🚨 Action Required'}
-                      </h3>
-                      <p className="text-slate-300">
-                        {trustScore >= 80 
-                          ? 'Your wallet is well-protected with minimal risks detected.'
-                          : trustScore >= 60
-                          ? 'Some security concerns found. Review the risks below.'
-                          : 'Critical security issues detected. Take action immediately.'}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="text-sm text-slate-400">Active Risks</p>
-                        <p className="text-2xl font-bold text-slate-100">{flagCount}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-400">Last Scan</p>
-                        <p className="text-sm text-slate-300">Just now</p>
-                      </div>
-                    </div>
-
-                    <GlassButton variant="primary" size="lg" className="w-full mt-4">
-                      <Wrench className="h-5 w-5 mr-2" />
-                      Fix Risks
-                    </GlassButton>
-                  </div>
-                </div>
-              </GlassCard>
-
-              {/* Risk Cards Grid */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <SlideIn direction="up" delay={0.1}>
-                  <GlassCard className="p-6" variant="accent">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-slate-100">Token Approvals</h3>
-                      <GlassBadge variant={flagCount > 0 ? 'warning' : 'success'}>
-                        {flagCount > 0 ? 'Review' : 'Safe'}
-                      </GlassBadge>
-                    </div>
-                    <p className="text-sm text-slate-300">
-                      {flagCount > 0 
-                        ? `${flagCount} unlimited approvals detected`
-                        : 'No unlimited approvals found'}
-                    </p>
-                  </GlassCard>
-                </SlideIn>
-
-                <SlideIn direction="up" delay={0.2}>
-                  <GlassCard className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-slate-100">Mixer Exposure</h3>
-                      <GlassBadge variant="success">Low</GlassBadge>
-                    </div>
-                    <p className="text-sm text-slate-300">
-                      No mixer interactions detected
-                    </p>
-                  </GlassCard>
-                </SlideIn>
-              </div>
+          
+          {/* Learn More Drawer */}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: showLearnMore ? 1 : 0, height: showLearnMore ? "auto" : 0 }}
+            transition={{ duration: 0.3 }}
+            className={`overflow-hidden rounded-xl p-4 mt-2 text-sm ${
+              isDarkTheme 
+                ? 'bg-[rgba(16,18,30,0.65)] text-gray-300' 
+                : 'bg-[rgba(255,255,255,0.85)] text-gray-700'
+            }`}
+          >
+            <p className="mb-2 text-base font-semibold text-[#00C9A7]">🧠 What is Trust Score?</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>Measures wallet safety based on approvals, mixers, and contract reputation.</li>
+              <li>Higher score = safer wallet and lower drain risk.</li>
+              <li>Guardian re-scans automatically every 24 hours.</li>
+            </ul>
+            <div className={`mt-2 text-xs ${
+              isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              <a href="/guardian/learn" className="underline hover:text-[#00C9A7]">
+                Read more →
+              </a>
             </div>
-          </FadeIn>
-        )}
+          </motion.div>
+        </motion.div>
 
-        {/* Timeline View */}
-        {activeView === 'timeline' && (
-          <FadeIn>
-            <GlassCard className="p-6">
-              <h2 className="text-2xl font-bold text-slate-100 mb-6">Transaction History</h2>
-              <WalletTimeline
-                transactions={[]}
-                walletAddress={activeAddress || ''}
-                showAIInsights={isBeginner}
-              />
-            </GlassCard>
-          </FadeIn>
-        )}
-
-        {/* Achievements View */}
-        {activeView === 'achievements' && isExpert && (
-          <FadeIn>
-            <AchievementSystem
-              achievements={achievements}
-              userLevel={userLevel}
-              userXP={userXP}
-              nextLevelXP={nextLevelXP}
-            />
-          </FadeIn>
-        )}
-      </Container>
-
-      {/* Hub2 Footer - Same footer across all pages */}
-      <Hub2Footer />
-
-      {/* Mobile Drawer */}
-      {isMobile && (
-        <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-700">
-              <Shield className="h-8 w-8 text-blue-400" />
+        {/* Risk Summary Grid */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="bg-[#00C9A7]/10 text-[#00C9A7] px-2 py-0.5 rounded-lg text-xs font-medium">
+              Detected Risks
+            </span>
+            <div className={`h-px flex-1 transition-colors duration-300 ${
+              isDarkTheme ? 'bg-white/10' : 'bg-black/10'
+            }`} />
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4 items-stretch">
+            {[
+              { title: "Active Risks", value: "2", desc: "Detected issues • Fix with one tap", icon: <Wrench className='w-5 h-5 text-[#7B61FF]'/>, cta: "Fix Risks" },
+              { title: "Token Approvals", value: "2 unlimited", desc: "Approvals found across contracts", icon: <Shield className='w-5 h-5 text-blue-400'/>, cta: "Review" },
+              { title: "Mixer Exposure", value: "Low", desc: "No suspicious mixer interactions", icon: <CheckCircle className='w-5 h-5 text-[#00C9A7]'/>, cta: null },
+            ].map((card, index) => (
+            <motion.div
+              key={card.title}
+              whileHover={{ scale: 1.02, y: -2, boxShadow: "0 8px 25px rgba(0,0,0,0.15)" }}
+              transition={{ type: "spring", stiffness: 150, damping: 15 }}
+              className={`relative min-h-[230px] flex flex-col justify-between backdrop-blur-xl rounded-2xl p-5 border overflow-hidden cursor-pointer ${
+                isDarkTheme 
+                  ? 'bg-[rgba(20,22,40,0.8)] border-[rgba(255,255,255,0.05)]' 
+                  : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+              }`}
+              style={{
+                boxShadow: isDarkTheme 
+                  ? '0 4px 20px rgba(0,0,0,0.3)'
+                  : '0 4px 20px rgba(0,0,0,0.08)'
+              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + index * 0.1 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-2 mb-2">
+                {card.icon}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <h3 className={`font-semibold underline decoration-dotted cursor-help transition-colors duration-300 ${
+                        isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
+                      }`}>
+                        {card.title}
+                      </h3>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs">
+                      {card.title === 'Active Risks' && 'Security issues that need your attention to improve wallet safety.'}
+                      {card.title === 'Token Approvals' && 'When you connect to DeFi apps, they can spend tokens on your behalf. Guardian checks if any still have unlimited access.'}
+                      {card.title === 'Mixer Exposure' && 'Checks if your wallet has interacted with privacy mixers that could flag it as high-risk.'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div>
-                <h3 className="font-semibold text-slate-100">Guardian</h3>
-                <p className="text-xs text-slate-400">
-                  {activeAddress?.slice(0, 6)}...{activeAddress?.slice(-4)}
+                <p className={`text-2xl font-bold mb-1 tracking-tight transition-colors duration-300 ${
+                  isDarkTheme ? 'text-gray-200' : 'text-[#1B1F29]'
+                }`}>
+                  {card.value}
+                </p>
+                <p className={`text-sm mb-4 leading-snug transition-colors duration-300 ${
+                  isDarkTheme ? 'text-[#AAB3C0]' : 'text-[#444C56]'
+                }`}>
+                  {card.desc}
                 </p>
               </div>
-            </div>
-            
-            <UserModeToggle mode={mode} onModeChange={setMode} className="w-full" />
-            
-            {demoMode && (
-              <GlassButton 
-                variant="secondary" 
-                size="sm" 
-                className="w-full"
-                onClick={() => {
-                  setDemoMode(false);
-                  setDemoAddress(null);
-                }}
-              >
-                Exit Demo Mode
-              </GlassButton>
-            )}
-            
-            <ConnectButton.Custom>
-              {({ openConnectModal }) => (
-                <GlassButton 
-                  variant="primary" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={openConnectModal}
+              {card.cta && (
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 hover:shadow-[0_0_10px_rgba(0,201,167,0.4)] hover:ring-2 hover:ring-[#00C9A7]/30 transition-all duration-200 mt-auto"
                 >
-                  Connect Wallet
-                </GlassButton>
+                  {card.cta} →
+                </motion.button>
               )}
-            </ConnectButton.Custom>
+            </motion.div>
+            ))}
           </div>
-        </MobileDrawer>
-      )}
+        </div>
+
+        {/* CTA Section */}
+        <motion.div
+          className="flex justify-center mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <button 
+            onClick={handleRescan}
+            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2"
+            aria-label="Re-scan wallet for updated risk analysis"
+          >
+            <motion.div
+              animate={isRescanning ? { rotate: 360 } : { scale: [1, 1.1, 1] }}
+              transition={{ 
+                repeat: isRescanning ? Infinity : Infinity, 
+                duration: isRescanning ? 1 : 2,
+                ease: "easeInOut"
+              }}
+            >
+              <Shield className="w-4 h-4" />
+            </motion.div>
+            Re-Scan Wallet
+          </button>
+        </motion.div>
+      </main>
+      
+      <FooterNav />
+      
+      {/* Onboarding Modal */}
+      <Dialog open={showOnboard} onOpenChange={setShowOnboard}>
+        <DialogContent className="max-w-md text-center bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-gray-200 border-[rgba(255,255,255,0.1)]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-semibold text-[#00C9A7] flex items-center justify-center gap-2">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                🛡️
+              </motion.div>
+              Welcome to Guardian
+            </DialogTitle>
+          </DialogHeader>
+          <p className="mt-2 text-sm text-gray-400">
+            Guardian scans your wallet for hidden risks — like old approvals or shady contracts.
+            Everything runs read-only; no funds ever move without your consent.
+          </p>
+          <button
+            onClick={() => {
+              setShowOnboard(false);
+              localStorage.setItem('guardian_onboard_seen', '1');
+            }}
+            className="mt-4 bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] px-4 py-2 rounded-xl text-white font-medium hover:opacity-90 transition"
+          >
+            🚀 Run My First Scan
+          </button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

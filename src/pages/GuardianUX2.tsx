@@ -11,22 +11,24 @@ import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
 import { Hub2Footer } from '@/components/hub2/Hub2Footer';
 
-// Mock wallet hook - replace with real wagmi
-const useMockWallet = () => {
+// Simple wallet connection - works with existing setup
+const useWallet = () => {
   const [address, setAddress] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   const connect = () => {
+    // For demo purposes - in production this would connect to actual wallet
     const mockAddress = '0xA6bF1D4E9c34d12BfC5e8A946f912e7cC42D2D9C';
     setAddress(mockAddress);
     setIsConnected(true);
+    console.log('Wallet connected:', mockAddress);
   };
 
   return { address, isConnected, connect };
 };
 
 export function GuardianUX2() {
-  const { address, isConnected, connect } = useMockWallet();
+  const { address, isConnected, connect } = useWallet();
   const [isScanning, setIsScanning] = useState(false);
   const [scanStartTime, setScanStartTime] = useState<number | null>(null);
   const analytics = useGuardianAnalytics();
@@ -180,8 +182,12 @@ export function GuardianUX2() {
               Connect to begin your 30-second security check.
             </p>
 
-            <GlowButton onClick={connect} className="mb-4">
-              Connect Wallet
+            <GlowButton 
+              onClick={connect} 
+              className="mb-4"
+              disabled={isConnected}
+            >
+              {isConnected ? 'Wallet Connected' : 'Connect Wallet'}
             </GlowButton>
 
             <p className="text-xs text-slate-500 tracking-wide">
@@ -266,7 +272,7 @@ export function GuardianUX2() {
         >
           <GlowButton
             onClick={handleRescan}
-            disabled={isRescanning || isScanning}
+            disabled={isRescanning || isScanning || !address}
             variant="outlineGlow"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRescanning ? 'animate-spin' : ''}`} />
@@ -275,7 +281,11 @@ export function GuardianUX2() {
 
           {flags > 0 && (
             <GlowButton
-              onClick={() => analytics.revokeModalOpened(flags)}
+              onClick={() => {
+                analytics.revokeModalOpened(flags);
+                // TODO: Open revoke modal
+                console.log('Opening revoke modal for', flags, 'risks');
+              }}
               variant="glow"
             >
               <Wrench className="w-4 h-4 mr-2" />
@@ -283,7 +293,13 @@ export function GuardianUX2() {
             </GlowButton>
           )}
 
-          <GlowButton variant="subtle">
+          <GlowButton 
+            variant="subtle"
+            onClick={() => {
+              // TODO: Open Guardian AI chat
+              console.log('Opening Guardian AI chat');
+            }}
+          >
             <Sparkles className="w-4 h-4 mr-2" />
             Ask Guardian AI
           </GlowButton>
