@@ -73,13 +73,14 @@ import WhaleSignalsPhaseD from "./pages/whale-signals/index";
 import PatternModalDemo from "./pages/PatternModalDemo";
 import { MyROI } from "./pages/insights/MyROI";
 import Hub2Plus from "./pages/Hub2Plus";
-import Guardian from "./pages/Guardian";
+// import Guardian from "./pages/Guardian"; // File removed
 import GuardianEnhanced from "./pages/GuardianEnhanced";
 import Hunter from "./pages/Hunter";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
 import { UserModeProvider } from "./contexts/UserModeContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { DemoModeProvider } from "./contexts/DemoModeContext";
 
 // POLISH: Enhanced React Query configuration with retry logic
 const queryClient = new QueryClient({
@@ -179,7 +180,8 @@ const App = () => {
                   <SubscriptionProvider>
                     <UserModeProvider>
                       <NotificationProvider>
-                        <TooltipProvider>
+                        <DemoModeProvider>
+                          <TooltipProvider>
                           <Toaster />
                           <Sonner />
                           <DevInfo />
@@ -202,7 +204,7 @@ const App = () => {
                   <Route path="/notifications" element={<NotificationSettings />} />
                   <Route path="/analysis" element={<WalletAnalysis />} />
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
-                  <Route path="/guardian" element={<Guardian />} />
+                  <Route path="/guardian" element={<GuardianEnhanced />} />
                   <Route path="/guardian-enhanced" element={<GuardianEnhanced />} />
                   <Route path="/hunter" element={<Hunter />} />
                   <Route path="/anomaly-detection" element={<AnomalyDetection />} />
@@ -258,7 +260,8 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
-                        </TooltipProvider>
+                          </TooltipProvider>
+                        </DemoModeProvider>
                       </NotificationProvider>
                     </UserModeProvider>
                   </SubscriptionProvider>

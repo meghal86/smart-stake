@@ -23,7 +23,7 @@ VITE_SENTRY_DSN=your-sentry-dsn
 **Get WalletConnect Project ID:**
 1. Go to https://cloud.walletconnect.com
 2. Create a new project
-3. Copy the Project ID
+3. Copy the Project ID - f13ce31c7183dda28756902c7195ab5e
 
 ### Step 2: Database Migration
 

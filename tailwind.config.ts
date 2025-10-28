@@ -18,7 +18,21 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				display: ['Space Grotesk', 'sans-serif'],
+				sans: ['Inter', 'sans-serif'],
+			},
+			backdropBlur: {
+				xs: '2px',
+			},
 			colors: {
+				// Trinity Glass UI Colors
+				glass: {
+					bg: 'rgba(255, 255, 255, 0.07)',
+					border: 'rgba(255, 255, 255, 0.1)',
+					hover: 'rgba(255, 255, 255, 0.12)',
+					active: 'rgba(255, 255, 255, 0.15)',
+				},
 				// Hunter Theme Colors
 				mint: '#00E0C2',
 				amber: '#ff8c42',
@@ -116,7 +130,9 @@ export default {
 				'card-dark': '0 0 0 1px rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.35)',
 				'card-glow-blue': '0 0 12px rgba(56,113,243,0.25)',
 				'card-glow-green': '0 0 12px rgba(59,255,174,0.25)',
-				'card-glow-amber': '0 0 12px rgba(255,216,77,0.25)'
+				'card-glow-amber': '0 0 12px rgba(255,216,77,0.25)',
+				'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
+				'glow': '0 0 20px rgba(16, 185, 129, 0.3)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -139,11 +155,24 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				particles: {
+					'0%': { transform: 'translateY(0px) rotate(0deg)', opacity: '0' },
+					'10%': { opacity: '1' },
+					'90%': { opacity: '1' },
+					'100%': { transform: 'translateY(-100vh) rotate(360deg)', opacity: '0' }
+				},
+				shimmer: {
+					'0%': { opacity: '0.5' },
+					'50%': { opacity: '1' },
+					'100%': { opacity: '0.5' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'particles': 'particles 20s linear infinite',
+				'shimmer': 'shimmer 2s ease-in-out infinite'
 			}
 		}
 	},

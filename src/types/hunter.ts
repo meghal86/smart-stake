@@ -8,7 +8,7 @@ export interface Quest {
   steps: number;
   estimatedTime: string;
   imageUrl?: string;
-  category: 'Airdrop' | 'Staking' | 'Farming' | 'Quest';
+  category: 'Airdrop' | 'Staking' | 'NFT' | 'Quest';
   isNew?: boolean;
   completionPercent?: number;
 }

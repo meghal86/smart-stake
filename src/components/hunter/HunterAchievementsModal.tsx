@@ -5,7 +5,9 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogPortal,
+  DialogOverlay
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useHunterXP } from '@/hooks/useHunterXP';
@@ -101,14 +103,16 @@ export default function HunterAchievementsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className={cn(
-          "max-w-3xl p-0 overflow-hidden max-h-[80vh]",
-          "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl",
-          "border border-white/10 dark:border-slate-800/50",
-          "shadow-2xl"
-        )}
-      >
+      <DialogPortal>
+        <DialogOverlay className="fixed inset-0 z-[9998] bg-black/80" />
+        <DialogContent
+          className={cn(
+            "max-w-3xl p-0 overflow-hidden max-h-[80vh] fixed left-[50%] top-[50%] z-[9999] translate-x-[-50%] translate-y-[-50%] grid w-full gap-4 shadow-lg duration-200",
+            "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl",
+            "border border-white/10 dark:border-slate-800/50",
+            "shadow-2xl"
+          )}
+        >
         {/* Animated background */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-cyan-500/5 pointer-events-none"
@@ -300,7 +304,8 @@ export default function HunterAchievementsModal({
             )}
           </div>
         </div>
-      </DialogContent>
+        </DialogContent>
+      </DialogPortal>
     </Dialog>
   );
 }

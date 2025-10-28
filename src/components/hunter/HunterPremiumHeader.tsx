@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import HunterNotificationBell from './HunterNotificationBell';
 import HunterXPProgressBar from './HunterXPProgressBar';
+import HunterDemoToggle from './HunterDemoToggle';
 import { useHunterXP } from '@/hooks/useHunterXP';
+import { useDemoMode } from '@/contexts/DemoModeContext';
 import { useState } from 'react';
 
 interface HunterPremiumHeaderProps {
@@ -20,6 +22,7 @@ export default function HunterPremiumHeader({
   className
 }: HunterPremiumHeaderProps) {
   const { xpData, isLoading } = useHunterXP();
+  const { isDemoMode } = useDemoMode();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -104,14 +107,19 @@ export default function HunterPremiumHeader({
             {/* Notifications */}
             <HunterNotificationBell />
 
-            {/* Wallet Status Chip (Desktop) */}
+            {/* Demo/Live Toggle */}
+            <HunterDemoToggle className="hidden md:flex" />
+
+            {/* Status Indicator (Mobile) */}
             <motion.div
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/30 border border-slate-700/50"
+              className="md:hidden flex items-center gap-2 px-2 py-1 rounded-lg bg-slate-800/30 border border-slate-700/50"
               whileHover={{ scale: 1.02 }}
             >
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                isDemoMode ? 'bg-emerald-400' : 'bg-cyan-400'
+              }`} />
               <span className="text-xs font-medium text-slate-300">
-                Demo Mode
+                {isDemoMode ? 'Demo' : 'Live'}
               </span>
             </motion.div>
 
@@ -120,7 +128,7 @@ export default function HunterPremiumHeader({
               variant="ghost"
               size="icon"
               onClick={onMenuClick}
-              className="md:hidden h-9 w-9 rounded-lg hover:bg-slate-800/50"
+              className="h-9 w-9 rounded-lg hover:bg-slate-800/50"
             >
               <Menu className="w-4 h-4" />
             </Button>
