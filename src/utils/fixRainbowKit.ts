@@ -7,9 +7,13 @@ export function fixRainbowKitModals() {
   // Run immediately
   applyFixes();
 
+  // Throttle the fixes to prevent excessive calls
+  let timeout: NodeJS.Timeout | null = null;
+  
   // Watch for new modals
   const observer = new MutationObserver(() => {
-    applyFixes();
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(applyFixes, 100); // Only run every 100ms max
   });
 
   observer.observe(document.body, {
@@ -17,7 +21,10 @@ export function fixRainbowKitModals() {
     subtree: true,
   });
 
-  return () => observer.disconnect();
+  return () => {
+    observer.disconnect();
+    if (timeout) clearTimeout(timeout);
+  };
 }
 
 function applyFixes() {
@@ -39,28 +46,16 @@ function applyFixes() {
       });
     }
 
-    // Fix all buttons - ULTRA AGGRESSIVE
+    // Fix all buttons - ULTRA AGGRESSIVE (but exclude Guardian buttons)
     const buttons = element.querySelectorAll('button, a, [role="button"]');
     buttons.forEach((button) => {
-      if (button instanceof HTMLElement) {
+      if (button instanceof HTMLElement && !button.hasAttribute('data-guardian-button')) {
         button.style.setProperty('pointer-events', 'auto', 'important');
         button.style.setProperty('cursor', 'pointer', 'important');
         button.style.setProperty('z-index', '999999', 'important');
         button.removeAttribute('disabled');
         button.style.setProperty('user-select', 'none', 'important');
         button.style.setProperty('-webkit-user-select', 'none', 'important');
-        
-        // Add debug click listener
-        if (!button.dataset.clickDebugAdded) {
-          button.addEventListener('click', (e) => {
-            console.log('🎯 Button clicked!', {
-              text: button.textContent?.trim().substring(0, 50),
-              testId: button.getAttribute('data-testid'),
-              ariaLabel: button.getAttribute('aria-label'),
-            });
-          }, { capture: true });
-          button.dataset.clickDebugAdded = 'true';
-        }
         
         // Make child elements pass-through (don't intercept clicks)
         const children = button.querySelectorAll('*');
@@ -124,30 +119,10 @@ function applyFixes() {
 
 // Export a function to manually fix modals
 export function forceFixRainbowKit() {
-  console.log('Forcing RainbowKit modal fix...');
-  
-  // Check if RainbowKit modal exists
+  // Only run if RainbowKit elements exist
   const rkElements = document.querySelectorAll('[data-rk]');
-  console.log('Found RainbowKit elements:', rkElements.length);
-  
-  if (rkElements.length === 0) {
-    console.warn('No RainbowKit elements found in DOM!');
-  } else {
-    rkElements.forEach((el, index) => {
-      console.log(`Element ${index}:`, {
-        tagName: el.tagName,
-        role: el.getAttribute('role'),
-        style: (el as HTMLElement).style.cssText,
-        display: window.getComputedStyle(el as HTMLElement).display,
-        visibility: window.getComputedStyle(el as HTMLElement).visibility,
-      });
-    });
+  if (rkElements.length > 0) {
+    applyFixes();
   }
-  
-  applyFixes();
-  
-  // Try again after a short delay
-  setTimeout(applyFixes, 100);
-  setTimeout(applyFixes, 500);
 }
 

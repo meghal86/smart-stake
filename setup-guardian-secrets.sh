@@ -54,3 +54,5 @@ echo ""
 echo "To unset a secret:"
 echo "  supabase secrets unset SECRET_NAME"
 
+
+

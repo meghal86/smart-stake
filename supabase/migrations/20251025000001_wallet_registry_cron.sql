@@ -89,3 +89,5 @@ GRANT EXECUTE ON FUNCTION trigger_user_wallet_scan TO authenticated;
 
 COMMENT ON FUNCTION trigger_user_wallet_scan IS 'Triggers an immediate scan of all wallets for a specific user. Returns scan status.';
 
+
+

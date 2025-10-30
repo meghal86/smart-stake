@@ -203,3 +203,5 @@ function mapAlertFromDB(record: any): HunterAlert {
   };
 }
 
+
+

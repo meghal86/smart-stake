@@ -246,3 +246,5 @@ COMMENT ON COLUMN user_wallets.trust_score IS 'Latest Guardian trust score (0-10
 COMMENT ON COLUMN user_wallets.risk_flags IS 'Array of risk indicators from latest scan';
 COMMENT ON COLUMN user_wallets.metadata IS 'Additional data (ENS name, labels, tags, etc.)';
 
+
+

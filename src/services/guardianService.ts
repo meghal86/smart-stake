@@ -280,7 +280,40 @@ async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanR
     throw new Error(`Guardian API responded with status ${response.status}: ${errorText}`);
   }
 
-  const data = (await response.json()) as GuardianScanApiResponse;
+  // Handle SSE response
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let data: GuardianScanApiResponse | null = null;
+
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const eventData = JSON.parse(line.slice(6));
+            if (eventData.step === 'complete' && eventData.data) {
+              data = eventData.data as GuardianScanApiResponse;
+              break;
+            }
+          } catch (e) {
+            // Ignore parsing errors for progress events
+          }
+        }
+      }
+      
+      if (data) break;
+    }
+  }
+
+  if (!data) {
+    throw new Error('No complete data received from Guardian scan');
+  }
   
   logger.info('Guardian scan completed', {
     requestId: serverRequestId,
@@ -321,12 +354,15 @@ async function fetchFromSupabase(request: GuardianScanRequest): Promise<Guardian
 
 export async function requestGuardianScan(request: GuardianScanRequest): Promise<GuardianScanResult> {
   try {
-    return await fetchFromApi(request);
+    const result = await fetchFromApi(request);
+    console.log('🟢 Guardian: Using LIVE API data', { trustScore: result.trustScorePercent, source: 'API' });
+    return result;
   } catch (apiError) {
     console.warn('Guardian API primary fetch failed, attempting Supabase fallback:', apiError);
 
     const supabaseResult = await fetchFromSupabase(request);
     if (supabaseResult) {
+      console.log('🟡 Guardian: Using SUPABASE fallback data', { trustScore: supabaseResult.trustScorePercent, source: 'Supabase' });
       return supabaseResult;
     }
 
@@ -337,6 +373,7 @@ export async function requestGuardianScan(request: GuardianScanRequest): Promise
       last_scan: FALLBACK_SCAN.last_scan
     });
 
+    console.log('🔴 Guardian: Using MOCK fallback data', { trustScore: finalResult.trustScorePercent, source: 'Mock' });
     return finalResult;
   }
 }

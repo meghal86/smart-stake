@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RisksTab } from '@/components/guardian/RisksTab';
+import { AlertsTab } from '@/components/guardian/AlertsTab';
+import { HistoryTab } from '@/components/guardian/HistoryTab';
+import { FixRiskModal } from '@/components/guardian/FixRiskModal';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { chainIdToName } from '@/config/wagmi';
 import { toast } from 'sonner';
@@ -49,6 +53,7 @@ export function GuardianEnhanced() {
   const [demoAddress, setDemoAddress] = useState<string | null>(null);
   const [showLearnMore, setShowLearnMore] = useState(false);
   const [showOnboard, setShowOnboard] = useState(false);
+  const [showFixModal, setShowFixModal] = useState(false);
 
   // Get network name
   const networkName = chain?.id ? chainIdToName[chain.id] || 'ethereum' : 'ethereum';
@@ -510,6 +515,14 @@ export function GuardianEnhanced() {
       </motion.header>
 
       <main className="px-4 pt-32 pb-28 max-w-2xl mx-auto space-y-6 relative z-10">
+        {/* Tab Content */}
+        {activeTab === 'Risks' && <RisksTab walletAddress={activeAddress || undefined} />}
+        {activeTab === 'Alerts' && <AlertsTab walletAddress={activeAddress || undefined} />}
+        {activeTab === 'History' && <HistoryTab walletAddress={activeAddress || undefined} />}
+        
+        {/* Scan Tab Content */}
+        {activeTab === 'Scan' && (
+        <>
         {/* Wallet Status Card */}
         <motion.div
           className={`backdrop-blur-xl rounded-2xl p-4 border transition-colors duration-300 ${
@@ -632,6 +645,11 @@ export function GuardianEnhanced() {
                 isDarkTheme ? 'text-gray-300' : 'text-[#7C8896]'
               }`}>
                 {flagCount === 0 ? 'No risks detected' : `${flagCount} risks detected`} • Last scan just now
+                {!scanResult && (
+                  <span className="ml-2 px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">
+                    DEMO
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -674,72 +692,105 @@ export function GuardianEnhanced() {
             }`} />
           </div>
           <div className="grid sm:grid-cols-3 gap-4 items-stretch">
-            {[
-              { title: "Active Risks", value: "2", desc: "Detected issues • Fix with one tap", icon: <Wrench className='w-5 h-5 text-[#7B61FF]'/>, cta: "Fix Risks" },
-              { title: "Token Approvals", value: "2 unlimited", desc: "Approvals found across contracts", icon: <Shield className='w-5 h-5 text-blue-400'/>, cta: "Review" },
-              { title: "Mixer Exposure", value: "Low", desc: "No suspicious mixer interactions", icon: <CheckCircle className='w-5 h-5 text-[#00C9A7]'/>, cta: null },
-            ].map((card, index) => (
-            <motion.div
-              key={card.title}
-              whileHover={{ scale: 1.02, y: -2, boxShadow: "0 8px 25px rgba(0,0,0,0.15)" }}
-              transition={{ type: "spring", stiffness: 150, damping: 15 }}
-              className={`relative min-h-[230px] flex flex-col justify-between backdrop-blur-xl rounded-2xl p-5 border overflow-hidden cursor-pointer ${
-                isDarkTheme 
-                  ? 'bg-[rgba(20,22,40,0.8)] border-[rgba(255,255,255,0.05)]' 
-                  : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
-              }`}
-              style={{
-                boxShadow: isDarkTheme 
-                  ? '0 4px 20px rgba(0,0,0,0.3)'
-                  : '0 4px 20px rgba(0,0,0,0.08)'
-              }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + index * 0.1 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-              <div className="flex items-center gap-2 mb-2">
-                {card.icon}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <h3 className={`font-semibold underline decoration-dotted cursor-help transition-colors duration-300 ${
-                        isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
-                      }`}>
-                        {card.title}
-                      </h3>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs">
-                      {card.title === 'Active Risks' && 'Security issues that need your attention to improve wallet safety.'}
-                      {card.title === 'Token Approvals' && 'When you connect to DeFi apps, they can spend tokens on your behalf. Guardian checks if any still have unlimited access.'}
-                      {card.title === 'Mixer Exposure' && 'Checks if your wallet has interacted with privacy mixers that could flag it as high-risk.'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div>
-                <p className={`text-2xl font-bold mb-1 tracking-tight transition-colors duration-300 ${
-                  isDarkTheme ? 'text-gray-200' : 'text-[#1B1F29]'
-                }`}>
-                  {card.value}
-                </p>
-                <p className={`text-sm mb-4 leading-snug transition-colors duration-300 ${
-                  isDarkTheme ? 'text-[#AAB3C0]' : 'text-[#444C56]'
-                }`}>
-                  {card.desc}
-                </p>
-              </div>
-              {card.cta && (
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 hover:shadow-[0_0_10px_rgba(0,201,167,0.4)] hover:ring-2 hover:ring-[#00C9A7]/30 transition-all duration-200 mt-auto"
+            {(() => {
+              const activeRisks = scanResult?.flags || [];
+              const approvalRisks = activeRisks.filter(flag => flag.type.toLowerCase().includes('approval'));
+              const mixerRisks = activeRisks.filter(flag => flag.type.toLowerCase().includes('mixer'));
+              
+              const cards = [
+                { 
+                  title: "Active Risks", 
+                  value: activeRisks.length.toString(), 
+                  desc: activeRisks.length === 0 ? "No issues detected" : `${activeRisks.length} ${activeRisks.length === 1 ? 'issue' : 'issues'} detected • Fix with one tap`, 
+                  icon: <Wrench className='w-5 h-5 text-[#7B61FF]'/>, 
+                  cta: activeRisks.length > 0 ? "Fix Risks" : null 
+                },
+                { 
+                  title: "Token Approvals", 
+                  value: approvalRisks.length > 0 ? `${approvalRisks.length} unlimited` : "None", 
+                  desc: approvalRisks.length > 0 ? "Approvals found across contracts" : "No unlimited approvals found", 
+                  icon: <Shield className='w-5 h-5 text-blue-400'/>, 
+                  cta: approvalRisks.length > 0 ? "Review" : null 
+                },
+                { 
+                  title: "Mixer Exposure", 
+                  value: mixerRisks.length > 0 ? "High" : "Low", 
+                  desc: mixerRisks.length > 0 ? "Suspicious mixer interactions detected" : "No suspicious mixer interactions", 
+                  icon: mixerRisks.length > 0 ? <AlertTriangle className='w-5 h-5 text-red-400'/> : <CheckCircle className='w-5 h-5 text-[#00C9A7]'/>, 
+                  cta: null 
+                },
+              ];
+              
+              return cards.map((card, index) => (
+                <motion.div
+                  key={card.title}
+                  whileHover={{ scale: 1.02, y: -2, boxShadow: "0 8px 25px rgba(0,0,0,0.15)" }}
+                  transition={{ type: "spring", stiffness: 150, damping: 15 }}
+                  className={`relative min-h-[230px] flex flex-col justify-between backdrop-blur-xl rounded-2xl p-5 border overflow-hidden ${
+                    isDarkTheme 
+                      ? 'bg-[rgba(20,22,40,0.8)] border-[rgba(255,255,255,0.05)]' 
+                      : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+                  }`}
+                  style={{
+                    boxShadow: isDarkTheme 
+                      ? '0 4px 20px rgba(0,0,0,0.3)'
+                      : '0 4px 20px rgba(0,0,0,0.08)'
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
                 >
-                  {card.cta} →
-                </motion.button>
-              )}
-            </motion.div>
-            ))}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                  <div className="flex items-center gap-2 mb-2">
+                    {card.icon}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <h3 className={`font-semibold underline decoration-dotted cursor-help transition-colors duration-300 ${
+                            isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
+                          }`}>
+                            {card.title}
+                          </h3>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs text-xs">
+                          {card.title === 'Active Risks' && 'Security issues that need your attention to improve wallet safety.'}
+                          {card.title === 'Token Approvals' && 'When you connect to DeFi apps, they can spend tokens on your behalf. Guardian checks if any still have unlimited access.'}
+                          {card.title === 'Mixer Exposure' && 'Checks if your wallet has interacted with privacy mixers that could flag it as high-risk.'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold mb-1 tracking-tight transition-colors duration-300 ${
+                      isDarkTheme ? 'text-gray-200' : 'text-[#1B1F29]'
+                    }`}>
+                      {card.value}
+                    </p>
+                    <p className={`text-sm mb-4 leading-snug transition-colors duration-300 ${
+                      isDarkTheme ? 'text-[#AAB3C0]' : 'text-[#444C56]'
+                    }`}>
+                      {card.desc}
+                    </p>
+                  </div>
+                  {card.cta && (
+                    <button 
+                      data-guardian-button="true"
+                      onClick={() => {
+                        if (card.cta === 'Fix Risks') {
+                          setShowFixModal(true);
+                        } else {
+                          setActiveTab('Risks');
+                        }
+                      }}
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto"
+                      style={{ pointerEvents: 'auto', zIndex: 1000000 }}
+                    >
+                      {card.cta} →
+                    </button>
+                  )}
+                </motion.div>
+              ));
+            })()}
           </div>
         </div>
 
@@ -768,7 +819,121 @@ export function GuardianEnhanced() {
             Re-Scan Wallet
           </button>
         </motion.div>
+        </>
+        )}
       </main>
+      
+      {/* Fix Risk Modal */}
+      {showFixModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-gray-200 border border-[rgba(255,255,255,0.1)] rounded-2xl p-6 max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-[#00C9A7] flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Fix Detected Risks
+              </h2>
+              <button
+                onClick={() => setShowFixModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {(scanResult?.flags || []).map((flag) => (
+                <div
+                  key={flag.id}
+                  className="bg-[rgba(20,22,40,0.8)] rounded-xl p-4 border border-[rgba(255,255,255,0.08)]"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-white">{flag.type}</h3>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          flag.severity === 'high' ? 'text-red-400 bg-red-500/20' :
+                          flag.severity === 'medium' ? 'text-yellow-400 bg-yellow-500/20' :
+                          'text-green-400 bg-green-500/20'
+                        }`}>
+                          {flag.severity}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        {flag.details || 'Security risk detected'}
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={async () => {
+                        try {
+                          // Show loading state
+                          console.log('Initiating revoke for:', flag.type);
+                          
+                          // In a real implementation, this would:
+                          // 1. Get the token contract address from the flag
+                          // 2. Call the token's approve() function with 0 amount
+                          // 3. Wait for transaction confirmation
+                          // 4. Update the UI
+                          
+                          // For now, simulate the process
+                          alert(`This would revoke the ${flag.type} approval.\n\nIn production, this would:\n1. Open your wallet\n2. Ask you to sign a transaction\n3. Pay gas fees to revoke the approval\n4. Update your trust score`);
+                          
+                          // Simulate success
+                          console.log('Revoke completed for:', flag.id);
+                          
+                        } catch (error) {
+                          console.error('Revoke failed:', error);
+                          alert('Revoke failed. Please try again.');
+                        }
+                      }}
+                      className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white text-sm font-medium hover:opacity-90 transition"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center pt-4 border-t border-gray-700/40">
+              <p className="text-sm text-gray-400">
+                {(scanResult?.flags || []).length} risk{(scanResult?.flags || []).length !== 1 ? 's' : ''} detected
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFixModal(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700/50 transition"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const riskCount = (scanResult?.flags || []).length;
+                      
+                      if (confirm(`Are you sure you want to revoke all ${riskCount} approvals?\n\nThis will:\n- Open ${riskCount} wallet transactions\n- Cost gas fees for each transaction\n- Improve your wallet security`)) {
+                        
+                        // In production, this would batch revoke all approvals
+                        alert(`This would revoke all ${riskCount} approvals.\n\nEach revoke requires:\n1. Wallet signature\n2. Gas fees\n3. Blockchain confirmation`);
+                        
+                        // Close modal and rescan
+                        setShowFixModal(false);
+                        handleRescan();
+                      }
+                    } catch (error) {
+                      console.error('Bulk revoke failed:', error);
+                      alert('Bulk revoke failed. Please try again.');
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white font-medium hover:opacity-90 transition"
+                >
+                  Revoke All
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <FooterNav />
       

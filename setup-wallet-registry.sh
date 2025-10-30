@@ -84,3 +84,5 @@ echo ""
 echo "Documentation: ./MULTI_WALLET_REGISTRY_GUIDE.md"
 echo ""
 
+
+

@@ -96,3 +96,5 @@ export interface WalletScanJob {
   failedWallets: number
 }
 
+
+

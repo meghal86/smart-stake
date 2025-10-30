@@ -7,6 +7,7 @@ A comprehensive whale intelligence platform built with Next.js 14, Supabase, and
 - **Whale Intelligence**: Real-time tracking of large whale movements
 - **Token Unlock Calendar**: Upcoming token unlocks and vesting schedules
 - **Market Intelligence**: Comprehensive market analysis powered by whale behavior
+- **Guardian Smart Automation**: Gasless, automated token approval revocations
 - **Responsive Design**: Mobile-first design with desktop sidebar navigation
 - **Authentication**: Supabase Auth with email and Google OAuth
 - **Plan-based Features**: Lite, Pro, and Enterprise tiers with feature gating
@@ -27,6 +28,8 @@ A comprehensive whale intelligence platform built with Next.js 14, Supabase, and
 - Node.js 18+
 - npm or yarn
 - Supabase account
+- Upstash Redis (for Guardian automation)
+- Ethereum RPC endpoint (for Guardian automation)
 
 ### Installation
 
@@ -77,7 +80,21 @@ npm run db:seed
 npm run dev
 ```
 
+6. (Optional) Set up Guardian Smart Automation:
+```bash
+# Copy Guardian automation environment template
+cp .env.guardian-automation .env.local
+
+# Fill in Guardian-specific variables
+# Then run the deployment script
+./scripts/deploy-guardian-automation.sh
+```
+
 Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+### Guardian Smart Automation
+
+For detailed Guardian automation setup, see [Guardian Automation Quick Start](docs/GUARDIAN_AUTOMATION_QUICKSTART.md).
 
 ## Project Structure
 

@@ -204,3 +204,5 @@ COMMENT ON FUNCTION update_hunter_xp IS 'Updates user XP and quest completion co
 COMMENT ON FUNCTION unlock_hunter_badge IS 'Unlocks achievement badges for users';
 COMMENT ON FUNCTION reset_weekly_hunter_xp IS 'Resets weekly XP counters (run via cron)';
 
+
+
