@@ -1,21 +1,8 @@
 import { useState, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from 'wagmi';
-import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
-import '@rainbow-me/rainbowkit/styles.css';
-import { config } from '@/config/wagmi';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
-import { CompactViewProvider } from "@/contexts/CompactViewContext";
-import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
-import { DevInfo } from "@/components/DevInfo";
 import "@/theme/ocean.css";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -80,35 +67,7 @@ import GuardianLearn from "./pages/GuardianLearn";
 import Hunter from "./pages/Hunter";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
-import { UserModeProvider } from "./contexts/UserModeContext";
-import { NotificationProvider } from "./contexts/NotificationContext";
-import { DemoModeProvider } from "./contexts/DemoModeContext";
-
-// POLISH: Enhanced React Query configuration with retry logic
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 15000),
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-// RainbowKit theme wrapper that respects app theme
-const RainbowKitThemeWrapper = ({ children }: { children: React.ReactNode }) => {
-  const { actualTheme } = useTheme();
-  
-  return (
-    <RainbowKitProvider
-      theme={actualTheme === 'dark' ? darkTheme() : lightTheme()}
-      modalSize="compact"
-    >
-      {children}
-    </RainbowKitProvider>
-  );
-};
+import { ClientProviders } from "@/providers/ClientProviders";
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -173,25 +132,12 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <RainbowKitThemeWrapper>
-              <CompactViewProvider>
-                <AuthProvider>
-                  <SubscriptionProvider>
-                    <UserModeProvider>
-                      <NotificationProvider>
-                        <DemoModeProvider>
-                          <TooltipProvider>
-                          <Toaster />
-                          <Sonner />
-                          <DevInfo />
-                  {showSplash && (
-                    <SplashScreen onComplete={handleSplashComplete} duration={5000} />
-                  )}
-                  <BrowserRouter>
-                <Routes>
+      <ClientProviders>
+        {showSplash && (
+          <SplashScreen onComplete={handleSplashComplete} duration={5000} />
+        )}
+        <BrowserRouter>
+          <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup-old" element={<Signup />} />
@@ -261,20 +207,10 @@ const App = () => {
                   <Route path="/whales" element={<SignalsPage />} />
                   <Route path="/whale-alerts" element={<SignalsPage />} />
                   <Route path="/pro-signals" element={<SignalsPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-                          </TooltipProvider>
-                        </DemoModeProvider>
-                      </NotificationProvider>
-                    </UserModeProvider>
-                  </SubscriptionProvider>
-                </AuthProvider>
-              </CompactViewProvider>
-            </RainbowKitThemeWrapper>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ClientProviders>
     </ErrorBoundary>
   );
 };

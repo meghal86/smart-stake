@@ -229,6 +229,30 @@ function resolveNetwork(network: string) {
 }
 
 async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanResult> {
+  try {
+    const response = await fetch('/api/guardian/scan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        address: request.walletAddress,
+      }),
+    });
+
+    if (response.ok) {
+      const payload = await response.json();
+      if (payload?.result) {
+        return normalizeGuardianScan(payload.result as GuardianScanApiResponse);
+      }
+    } else {
+      const errorText = await response.text();
+      console.warn('Guardian scan API route failed', response.status, errorText);
+    }
+  } catch (error) {
+    console.warn('Guardian scan API route unavailable, falling back to Supabase function', error);
+  }
+
   const resolvedNetwork = resolveNetwork(request.network);
   
   // Generate request ID for tracing

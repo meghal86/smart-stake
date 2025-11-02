@@ -1,0 +1,102 @@
+/* Portfolio Theme Variables */
+:root {
+  /* Light Theme */
+  --portfolio-bg-primary: #ffffff;
+  --portfolio-bg-secondary: #f8fafc;
+  --portfolio-bg-glass: rgba(255, 255, 255, 0.8);
+  --portfolio-border: rgba(0, 0, 0, 0.08);
+  --portfolio-text-primary: #1e293b;
+  --portfolio-text-secondary: #64748b;
+  --portfolio-text-muted: #94a3b8;
+  
+  /* Accent Colors */
+  --portfolio-mint: #00C9A7;
+  --portfolio-violet: #7B61FF;
+  --portfolio-amber: #FFD166;
+  --portfolio-red: #EF476F;
+  
+  /* Gradients */
+  --portfolio-gradient-mint: linear-gradient(135deg, #00C9A7, #7B61FF);
+  --portfolio-shadow-mint: 0 0 20px rgba(0, 201, 167, 0.4);
+}
+
+.dark {
+  /* Dark Theme */
+  --portfolio-bg-primary: #080B14;
+  --portfolio-bg-secondary: #101524;
+  --portfolio-bg-glass: rgba(255, 255, 255, 0.05);
+  --portfolio-border: rgba(255, 255, 255, 0.1);
+  --portfolio-text-primary: #ffffff;
+  --portfolio-text-secondary: #e2e8f0;
+  --portfolio-text-muted: #94a3b8;
+}
+
+.pro {
+  /* Pro Theme Enhancements */
+  --portfolio-bg-glass: rgba(255, 255, 255, 0.03);
+  --portfolio-border: rgba(255, 255, 255, 0.08);
+  --portfolio-shadow-mint: 0 0 30px rgba(0, 201, 167, 0.6);
+}
+
+/* Portfolio Specific Classes */
+.portfolio-glass {
+  background: var(--portfolio-bg-glass);
+  border: 1px solid var(--portfolio-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.portfolio-text-primary {
+  color: var(--portfolio-text-primary);
+}
+
+.portfolio-text-secondary {
+  color: var(--portfolio-text-secondary);
+}
+
+.portfolio-text-muted {
+  color: var(--portfolio-text-muted);
+}
+
+.portfolio-gradient-mint {
+  background: var(--portfolio-gradient-mint);
+}
+
+.portfolio-shadow-mint {
+  box-shadow: var(--portfolio-shadow-mint);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .portfolio-glass {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Animation Classes */
+.portfolio-fade-up {
+  animation: portfolioFadeUp 0.4s ease-out forwards;
+}
+
+@keyframes portfolioFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portfolio-scale-hover:hover {
+  transform: scale(1.02) translateY(-2px);
+  transition: transform 0.2s ease-out;
+}
+
+/* Tabular Numbers for Consistent Alignment */
+.portfolio-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

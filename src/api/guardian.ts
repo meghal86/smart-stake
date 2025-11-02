@@ -87,3 +87,87 @@ export async function checkHealth(): Promise<{
   return response.json();
 }
 
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function addWallet(params: {
+  address: string;
+  alias?: string;
+  wallet_type: 'browser' | 'mobile' | 'hardware' | 'exchange' | 'smart' | 'social' | 'readonly';
+  ens_name?: string;
+  user_id: string;
+}) {
+  const { address, alias, wallet_type, ens_name, user_id } = params;
+
+  // Check for existing wallet
+  const { data: existing } = await supabase
+    .from('guardian_wallets')
+    .select('id')
+    .eq('address', address.toLowerCase())
+    .eq('user_id', user_id)
+    .single();
+
+  if (existing) {
+    throw new Error('Wallet already added');
+  }
+
+  // Insert new wallet
+  const { data: wallet, error } = await supabase
+    .from('guardian_wallets')
+    .insert({
+      user_id,
+      address: address.toLowerCase(),
+      alias: alias || null,
+      wallet_type,
+      ens_name: ens_name || null,
+      status: wallet_type === 'browser' ? 'connected' : 'readonly',
+      added_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  // Log the action
+  await supabase.from('guardian_logs').insert({
+    user_id,
+    event_type: 'wallet_add',
+    metadata: {
+      address: address.toLowerCase(),
+      wallet_type,
+      alias,
+      ens_name,
+    },
+  });
+
+  return wallet;
+}
+
+export async function scanWallet(address: string, user_id: string) {
+  // Trigger scan via edge function
+  const { data, error } = await supabase.functions.invoke('guardian-scan-v2', {
+    body: { address: address.toLowerCase(), user_id }
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function resolveENS(input: string) {
+  if (!input.endsWith('.eth')) {
+    return { address: input, ens_name: null };
+  }
+
+  // In production, use Viem to resolve ENS
+  // For now, return placeholder
+  return { address: input, ens_name: input };
+}

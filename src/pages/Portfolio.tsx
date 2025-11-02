@@ -154,17 +154,17 @@ export default function Portfolio() {
 
   return (
     <TooltipProvider>
-      <div className="flex-1 bg-gradient-to-br from-background to-background/80 pb-20">
-      <div className="p-4 space-y-6">
-        {/* Header */}
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 pb-20">
+      <div className="p-6 space-y-6">
+        {/* Hunter-style Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-xl">
-              <Briefcase className="h-6 w-6 text-primary" />
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl backdrop-blur-xl border border-blue-500/30">
+              <Briefcase className="h-8 w-8 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Portfolio Monitor</h1>
-              <p className="text-sm text-muted-foreground">Track your addresses & whale interactions</p>
+              <h1 className="text-3xl font-bold text-white">Portfolio Monitor</h1>
+              <p className="text-gray-400">Track your addresses & whale interactions</p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -172,30 +172,59 @@ export default function Portfolio() {
               variant="outline" 
               onClick={refetch} 
               disabled={dataLoading}
-              className="hover:bg-[#14B8A6]/10 flex-shrink-0"
+              className="bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 flex-shrink-0"
               size="sm"
             >
               <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
             </Button>
             {addresses.length > 0 && (
-              <Button variant="outline" onClick={exportToCSV} size="sm" className="flex-shrink-0">
+              <Button variant="outline" onClick={exportToCSV} size="sm" className="bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 flex-shrink-0">
                 <Download className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Export</span>
               </Button>
             )}
-            <Button onClick={() => setShowAddModal(true)} className="bg-[#14B8A6] hover:bg-[#0F9488] flex-shrink-0" size="sm">
+            <Button onClick={() => setShowAddModal(true)} className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white flex-shrink-0" size="sm">
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Add Address</span>
             </Button>
           </div>
         </div>
 
-        {/* Portfolio Summary */}
-        <PortfolioSummary 
-          totalValue={totalPortfolioValue}
-          avgPnL={avgPnL}
-          addressCount={addresses.length}
-        />
+        {/* Hunter-style Portfolio Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-3 mb-4">
+              <TrendingUp className="w-6 h-6 text-emerald-400" />
+              <h3 className="text-lg font-semibold text-white">Total Value</h3>
+            </div>
+            <div className="text-3xl font-bold text-emerald-400">
+              ${totalPortfolioValue.toLocaleString()}
+            </div>
+            <p className="text-sm text-gray-400 mt-2">Portfolio value</p>
+          </div>
+          
+          <div className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-3 mb-4">
+              {avgPnL >= 0 ? <TrendingUp className="w-6 h-6 text-emerald-400" /> : <TrendingDown className="w-6 h-6 text-red-400" />}
+              <h3 className="text-lg font-semibold text-white">Avg P&L</h3>
+            </div>
+            <div className={`text-3xl font-bold ${avgPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {avgPnL >= 0 ? '+' : ''}{avgPnL.toFixed(2)}%
+            </div>
+            <p className="text-sm text-gray-400 mt-2">Average performance</p>
+          </div>
+          
+          <div className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-3 mb-4">
+              <Eye className="w-6 h-6 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">Addresses</h3>
+            </div>
+            <div className="text-3xl font-bold text-blue-400">
+              {addresses.length}
+            </div>
+            <p className="text-sm text-gray-400 mt-2">Monitored wallets</p>
+          </div>
+        </div>
 
         {/* API Error Alert */}
         {apiError && (

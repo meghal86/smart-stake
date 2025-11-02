@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -22,7 +22,10 @@ import {
   Moon,
   Activity,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Wallet,
+  ChevronDown,
+  Sparkles
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,6 +33,7 @@ import { RisksTab } from '@/components/guardian/RisksTab';
 import { AlertsTab } from '@/components/guardian/AlertsTab';
 import { HistoryTab } from '@/components/guardian/HistoryTab';
 import { FixRiskModal } from '@/components/guardian/FixRiskModal';
+import AddWalletModal from '@/components/guardian/AddWalletModal';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { chainIdToName } from '@/config/wagmi';
 import { toast } from 'sonner';
@@ -39,6 +43,9 @@ import { FooterNav } from '@/components/layout/FooterNav';
 import { useUserModeContext } from '@/contexts/UserModeContext';
 import { useNotificationContext } from '@/contexts/NotificationContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useWalletContext } from '@/contexts/WalletContext';
+import type { GuardianWallet } from '@/contexts/WalletContext';
+
 
 export function GuardianEnhanced() {
   const { address, isConnected, chain } = useAccount();
@@ -54,14 +61,66 @@ export function GuardianEnhanced() {
   const [showLearnMore, setShowLearnMore] = useState(false);
   const [showOnboard, setShowOnboard] = useState(false);
   const [showFixModal, setShowFixModal] = useState(false);
+  const [showAddWalletModal, setShowAddWalletModal] = useState(false);
+  const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [activeWalletIndex, setActiveWalletIndex] = useState(0);
+  const { wallets: guardianWallets, updateWallet, refreshWallets } = useWalletContext();
+  const wallets = useMemo(() => guardianWallets.map(wallet => ({
+    address: wallet.address,
+    label: wallet.alias || wallet.ens_name || wallet.short,
+    trustScore: wallet.trust_score ?? undefined,
+    riskCount: wallet.risk_count ?? undefined,
+    lastScan: wallet.last_scan ?? undefined,
+  })), [guardianWallets]);
 
   // Get network name
   const networkName = chain?.id ? chainIdToName[chain.id] || 'ethereum' : 'ethereum';
   
-  // Use demo address if in demo mode
-  const activeAddress = demoMode ? demoAddress : address;
-  const isActive = demoMode ? !!demoAddress : isConnected;
-  
+  // Get active wallet safely
+  const activeWallet = wallets.length > 0 ? wallets[activeWalletIndex] : null;
+  const activeAddress = demoMode ? demoAddress : (activeWallet?.address || address);
+  const isActive = demoMode ? !!demoAddress : (!!activeWallet || isConnected);
+
+  // Switch wallet handler
+  const handleSwitchWallet = (index: number) => {
+    setActiveWalletIndex(index);
+    setShowWalletDropdown(false);
+  };
+
+  // Enhanced wallet handler with API integration
+  const handleWalletAdded = useCallback((wallet: GuardianWallet) => {
+    const normalized = wallet.address.toLowerCase();
+    const index = guardianWallets.findIndex(w => w.address.toLowerCase() === normalized);
+    if (index >= 0) {
+      setActiveWalletIndex(index);
+    } else if (guardianWallets.length > 0) {
+      setActiveWalletIndex(guardianWallets.length - 1);
+    }
+  }, [guardianWallets]);
+
+  const updateWalletData = useCallback((address: string, data: { trustScore?: number; riskCount?: number }) => {
+    updateWallet(address.toLowerCase(), {
+      trust_score: data.trustScore,
+      risk_count: data.riskCount,
+      last_scan: new Date().toISOString(),
+    });
+  }, [updateWallet]);
+
+  useEffect(() => {
+    if (guardianWallets.length === 0) {
+      setActiveWalletIndex(0);
+      return;
+    }
+
+    if (activeWalletIndex >= guardianWallets.length) {
+      const nextIndex = Math.max(guardianWallets.length - 1, 0);
+      if (nextIndex !== activeWalletIndex) {
+        setActiveWalletIndex(nextIndex);
+      }
+    }
+  }, [guardianWallets.length, activeWalletIndex]);
+
+  // Update wallet data after scan
   // Guardian scan hook
   const { data: scanResult, isLoading, refetch, rescan, isRescanning } = useGuardianScan({
     walletAddress: activeAddress || undefined,
@@ -89,10 +148,16 @@ export function GuardianEnhanced() {
     }
   }, []);
 
-  // Add notification when scan completes
+  // Add notification when scan completes and update wallet data
   useEffect(() => {
-    if (scanResult) {
+    if (scanResult && activeAddress) {
       const flagCount = scanResult.flags?.length || 0;
+      
+      // Update wallet data
+      updateWalletData(activeAddress, {
+        trustScore: scanResult.trustScorePercent,
+        riskCount: flagCount
+      });
       
       if (flagCount === 0) {
         toast.success('✅ All Clear! Your wallet is secure');
@@ -103,7 +168,7 @@ export function GuardianEnhanced() {
       
       awardXP(50, 'Completed security scan');
     }
-  }, [scanResult]);
+  }, [scanResult, activeAddress]);
 
   // Exit demo mode handler
   const handleExitDemo = () => {
@@ -111,6 +176,11 @@ export function GuardianEnhanced() {
     setDemoAddress(null);
     toast.success('Demo Mode Exited');
   };
+
+  // Debug modal state
+  useEffect(() => {
+    console.log('showAddWalletModal changed to:', showAddWalletModal);
+  }, [showAddWalletModal]);
 
   // Simplified XP function
   const awardXP = (amount: number, reason: string) => {
@@ -129,6 +199,7 @@ export function GuardianEnhanced() {
     if (!activeAddress) return;
     try {
       await rescan();
+      await refreshWallets();
       toast.success('Rescan complete!');
       awardXP(25, 'Rescanned wallet');
     } catch (error) {
@@ -399,18 +470,131 @@ export function GuardianEnhanced() {
       >
         <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h1 className={`text-xl font-semibold transition-colors duration-300 ${
-                isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
-              }`}>
-                Guardian
-              </h1>
-              <motion.div
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              >
-                <Brain className="w-4 h-4 text-[#00F5A0]" />
-              </motion.div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <h1 className={`text-xl font-semibold transition-colors duration-300 ${
+                  isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
+                }`}>
+                  Guardian
+                </h1>
+                <motion.div
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                >
+                  <Brain className="w-4 h-4 text-[#00F5A0]" />
+                </motion.div>
+              </div>
+              
+              {/* Multi-Wallet Dropdown */}
+              {(wallets.length > 0 || activeAddress) && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowWalletDropdown(!showWalletDropdown)}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-lg border transition-all duration-300 ${
+                      isDarkTheme
+                        ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
+                        : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
+                    }`}
+                  >
+                    <Wallet className="w-3 h-3" />
+                    <span className="text-xs font-mono">
+                      {activeAddress ? `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}` : 'No Wallet'}
+                    </span>
+                    {activeWallet?.trustScore && (
+                      <span className={`w-2 h-2 rounded-full ${
+                        activeWallet.trustScore >= 80 ? 'bg-[#00C9A7]' :
+                        activeWallet.trustScore >= 60 ? 'bg-yellow-400' : 'bg-red-400'
+                      }`} />
+                    )}
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  
+                  {/* Wallet Dropdown */}
+                  {showWalletDropdown && (
+                    <div className={`absolute top-full left-0 mt-2 w-80 rounded-xl border shadow-lg z-50 ${
+                      isDarkTheme
+                        ? 'bg-[rgba(16,18,30,0.95)] border-[rgba(255,255,255,0.1)]'
+                        : 'bg-white border-[rgba(0,0,0,0.08)]'
+                    }`}>
+                      <div className="p-3">
+                        <h3 className={`text-sm font-semibold mb-3 ${
+                          isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
+                        }`}>
+                          My Wallets
+                        </h3>
+                        
+                        {wallets.map((wallet, index) => (
+                          <button
+                            key={wallet.address}
+                            onClick={() => handleSwitchWallet(index)}
+                            className={`w-full flex items-center justify-between p-2 rounded-lg mb-2 transition-all ${
+                              index === activeWalletIndex
+                                ? 'bg-[#00C9A7]/10 border border-[#00C9A7]/30'
+                                : isDarkTheme
+                                  ? 'hover:bg-white/5'
+                                  : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                wallet.trustScore ? (
+                                  wallet.trustScore >= 80 ? 'bg-[#00C9A7]' :
+                                  wallet.trustScore >= 60 ? 'bg-yellow-400' : 'bg-red-400'
+                                ) : 'bg-gray-400'
+                              }`} />
+                              <div className="text-left">
+                                <p className={`text-xs font-mono ${
+                                  isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                                }`}>
+                                  {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                                </p>
+                                <p className={`text-xs ${
+                                  isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  {wallet.label}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {wallet.trustScore && (
+                                <p className={`text-xs font-semibold ${
+                                  wallet.trustScore >= 80 ? 'text-[#00C9A7]' :
+                                  wallet.trustScore >= 60 ? 'text-yellow-400' : 'text-red-400'
+                                }`}>
+                                  {wallet.trustScore}
+                                </p>
+                              )}
+                              {wallet.riskCount !== undefined && (
+                                <p className={`text-xs ${
+                                  isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
+                                  {wallet.riskCount} risks
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                        
+                        <button
+                          onClick={() => {
+                            console.log('Add Wallet dropdown button clicked');
+                            setShowWalletDropdown(false);
+                            setShowAddWalletModal(true);
+                          }}
+                          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed transition-all ${
+                            isDarkTheme
+                              ? 'border-gray-600 text-gray-400 hover:border-[#00C9A7] hover:text-[#00C9A7]'
+                              : 'border-gray-300 text-gray-500 hover:border-[#00C9A7] hover:text-[#00C9A7]'
+                          }`}
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span className="text-sm">Add Wallet</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-3">
@@ -446,6 +630,21 @@ export function GuardianEnhanced() {
                 </motion.button>
                 
                 <div className="flex gap-2 text-sm">
+                  <button 
+                    onClick={() => {
+                      console.log('Add Wallet button clicked, current state:', showAddWalletModal);
+                      setShowAddWalletModal(true);
+                      console.log('Set showAddWalletModal to true');
+                    }}
+                    className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
+                      isDarkTheme
+                        ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
+                        : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
+                    }`}
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Wallet
+                  </button>
                   <button 
                     onClick={demoMode ? handleExitDemo : handleDemoMode}
                     className={`px-3 py-1 rounded-lg border transition-all duration-300 ${
@@ -572,6 +771,158 @@ export function GuardianEnhanced() {
           </div>
         </motion.div>
 
+        {/* Multi-Wallet Portfolio Overview */}
+        {wallets.length > 1 && (
+          <motion.div
+            className={`backdrop-blur-xl rounded-2xl p-4 border transition-colors duration-300 ${
+              isDarkTheme 
+                ? 'bg-[rgba(255,255,255,0.05)] border-white/10' 
+                : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
+            }`}
+            style={{
+              boxShadow: isDarkTheme 
+                ? '0 4px 30px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1)'
+                : '0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9)'
+            }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className={`text-sm font-semibold transition-colors duration-300 ${
+                  isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
+                }`}>
+                  🧭 Your Wallets at a Glance
+                </h3>
+                <p className={`text-xs transition-colors duration-300 ${
+                  isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+                }`}>
+                  {wallets.length} wallets • Avg: {Math.round(wallets.filter(w => w.trustScore).reduce((acc, w) => acc + (w.trustScore || 0), 0) / wallets.filter(w => w.trustScore).length) || '--'}% trust
+                </p>
+              </div>
+              <div className="text-right">
+                <div className={`text-lg font-bold transition-colors duration-300 ${
+                  isDarkTheme ? 'text-[#00C9A7]' : 'text-[#00C9A7]'
+                }`}>
+                  {wallets.reduce((acc, w) => acc + (w.riskCount || 0), 0)}
+                </div>
+                <div className={`text-xs transition-colors duration-300 ${
+                  isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+                }`}>
+                  Total Risks
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {wallets.map((wallet, index) => (
+                <div
+                  key={wallet.address}
+                  className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                    index === activeWalletIndex
+                      ? 'bg-[#00C9A7]/10 border border-[#00C9A7]/30'
+                      : isDarkTheme
+                        ? 'bg-white/5 hover:bg-white/10'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      wallet.trustScore ? (
+                        wallet.trustScore >= 80 ? 'bg-[#00C9A7]' :
+                        wallet.trustScore >= 60 ? 'bg-yellow-400' : 'bg-red-400'
+                      ) : 'bg-gray-400'
+                    }`} />
+                    <div>
+                      <p className={`text-sm font-mono transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                      </p>
+                      <p className={`text-xs transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        {wallet.label}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className={`text-sm font-semibold ${
+                        wallet.trustScore ? (
+                          wallet.trustScore >= 80 ? 'text-[#00C9A7]' :
+                          wallet.trustScore >= 60 ? 'text-yellow-400' : 'text-red-400'
+                        ) : 'text-gray-400'
+                      }`}>
+                        {wallet.trustScore || '--'}
+                      </p>
+                      <p className={`text-xs transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        Trust
+                      </p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <p className={`text-sm font-semibold transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {wallet.riskCount ?? '--'}
+                      </p>
+                      <p className={`text-xs transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        Risks
+                      </p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <p className={`text-xs transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        {wallet.lastScan ? new Date(wallet.lastScan).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Never'}
+                      </p>
+                      <p className={`text-xs transition-colors duration-300 ${
+                        isDarkTheme ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        Last Scan
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setActiveWalletIndex(index);
+                        handleRescan();
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                        isDarkTheme
+                          ? 'bg-[#00C9A7]/20 text-[#00C9A7] hover:bg-[#00C9A7]/30'
+                          : 'bg-[#00C9A7]/10 text-[#00C9A7] hover:bg-[#00C9A7]/20'
+                      }`}
+                    >
+                      Scan →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {wallets.length > 1 && (
+              <button
+                onClick={() => {
+                  // Scan all wallets
+                  toast.success(`Scanning ${wallets.length} wallets...`);
+                }}
+                className="w-full mt-4 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white font-medium hover:opacity-90 transition-all duration-200"
+              >
+                Scan All Wallets
+              </button>
+            )}
+          </motion.div>
+        )}
+
         {/* Trust Score Card */}
         <motion.div
           className={`backdrop-blur-xl rounded-2xl p-6 border transition-colors duration-300 ${
@@ -648,6 +999,13 @@ export function GuardianEnhanced() {
                 {!scanResult && (
                   <span className="ml-2 px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">
                     DEMO
+                  </span>
+                )}
+                {wallets.length > 1 && (
+                  <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
+                    isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                  }`}>
+                    Portfolio Avg: {Math.round(wallets.filter(w => w.trustScore).reduce((acc, w) => acc + (w.trustScore || 0), 0) / wallets.filter(w => w.trustScore).length) || '--'}
                   </span>
                 )}
               </p>
@@ -785,7 +1143,7 @@ export function GuardianEnhanced() {
                       className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto"
                       style={{ pointerEvents: 'auto', zIndex: 1000000 }}
                     >
-                      {card.cta} →
+                      {card.cta === 'Fix Risks' && wallets.length > 1 ? 'Fix Risks in Selected Wallet' : card.cta} →
                     </button>
                   )}
                 </motion.div>
@@ -804,7 +1162,7 @@ export function GuardianEnhanced() {
           <button 
             onClick={handleRescan}
             className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2"
-            aria-label="Re-scan wallet for updated risk analysis"
+            aria-label="Re-scan active wallet for updated risk analysis"
           >
             <motion.div
               animate={isRescanning ? { rotate: 360 } : { scale: [1, 1.1, 1] }}
@@ -816,7 +1174,7 @@ export function GuardianEnhanced() {
             >
               <Shield className="w-4 h-4" />
             </motion.div>
-            Re-Scan Wallet
+            {wallets.length > 1 ? 'Re-Scan This Wallet' : 'Re-Scan Wallet'}
           </button>
         </motion.div>
         </>
@@ -966,9 +1324,18 @@ export function GuardianEnhanced() {
           </button>
         </DialogContent>
       </Dialog>
+      
+      {/* Add Wallet Modal */}
+      <AddWalletModal
+        isOpen={showAddWalletModal}
+        onClose={() => {
+          console.log('Closing AddWalletModal');
+          setShowAddWalletModal(false);
+        }}
+        onWalletAdded={handleWalletAdded}
+      />
     </div>
   );
 }
 
 export default GuardianEnhanced;
-

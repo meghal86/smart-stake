@@ -45,12 +45,12 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
 
   return (
     <TooltipProvider>
-      <Card className="p-4 hover:shadow-lg transition-all duration-200">
+      <Card className="p-6 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl hover:scale-[1.01] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold">{address.label}</h3>
+              <h3 className="font-semibold text-white text-lg">{address.label}</h3>
               {address.group && (
                 <Badge variant="secondary" className="text-xs">
                   <Tag className="h-3 w-3 mr-1" />
@@ -59,10 +59,10 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground font-mono">{formatAddress(address.address)}</p>
+              <p className="text-sm text-gray-400 font-mono">{formatAddress(address.address)}</p>
               <button
                 onClick={() => window.open(`https://etherscan.io/address/${address.address}`, '_blank')}
-                className="text-xs text-[#14B8A6] hover:underline flex items-center gap-1"
+                className="text-xs text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1"
               >
                 <ExternalLink className="h-3 w-3" />
                 Explorer
@@ -86,29 +86,29 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
               </p>
             </TooltipContent>
           </Tooltip>
-          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
+          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-white hover:bg-gray-700/50">
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onRemove(address.id)}>
-            <Trash2 className="h-4 w-4 text-red-500" />
+          <Button variant="ghost" size="sm" onClick={() => onRemove(address.id)} className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         <div>
-          <p className="text-muted-foreground">Total Value</p>
-          <p className="font-medium">{formatValue(address.totalValue)}</p>
+          <p className="text-gray-400 text-sm">Total Value</p>
+          <p className="font-bold text-white text-lg">{formatValue(address.totalValue)}</p>
         </div>
         <div>
-          <p className="text-muted-foreground">P&L</p>
+          <p className="text-gray-400 text-sm">P&L</p>
           <div className="flex items-center gap-1">
-            <p className={`font-medium ${address.pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p className={`font-bold text-lg ${address.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {address.pnl >= 0 ? '+' : ''}{address.pnl.toFixed(1)}%
             </p>
             {address.pnl >= 0 ? 
-              <TrendingUp className="h-3 w-3 text-green-500" /> : 
-              <TrendingDown className="h-3 w-3 text-red-500" />
+              <TrendingUp className="h-4 w-4 text-emerald-400" /> : 
+              <TrendingDown className="h-4 w-4 text-red-400" />
             }
           </div>
         </div>
@@ -116,11 +116,11 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="cursor-help">
-                <p className="text-muted-foreground flex items-center gap-1">
+                <p className="text-gray-400 text-sm flex items-center gap-1">
                   Whale Interactions
                   <HelpCircle className="h-3 w-3" />
                 </p>
-                <p className="font-medium">{address.whaleInteractions}</p>
+                <p className="font-bold text-white text-lg">{address.whaleInteractions}</p>
               </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -132,24 +132,24 @@ export function AddressCard({ address, onRemove }: AddressCardProps) {
           </Tooltip>
         </div>
         <div>
-          <p className="text-muted-foreground">Last Activity</p>
-          <p className="font-medium">{Math.floor((Date.now() - new Date(address.lastActivity).getTime()) / (1000 * 60 * 60))}h ago</p>
+          <p className="text-gray-400 text-sm">Last Activity</p>
+          <p className="font-bold text-white text-lg">{Math.floor((Date.now() - new Date(address.lastActivity).getTime()) / (1000 * 60 * 60))}h ago</p>
         </div>
       </div>
 
       {expanded && (
-        <div className="mt-4 pt-4 border-t">
-          <h4 className="font-medium mb-3">Holdings Breakdown</h4>
+        <div className="mt-6 pt-4 border-t border-gray-700/50">
+          <h4 className="font-semibold text-white mb-4">Holdings Breakdown</h4>
           <div className="space-y-2">
             {address.holdings.map((holding, index) => (
-              <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-800/30 border border-gray-700/30 rounded-xl">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{holding.token}</span>
-                  <span className="text-sm text-muted-foreground">{holding.amount.toLocaleString()}</span>
+                  <span className="font-semibold text-white">{holding.token}</span>
+                  <span className="text-sm text-gray-400">{holding.amount.toLocaleString()}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{formatValue(holding.value)}</p>
-                  <p className={`text-xs ${holding.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  <p className="font-semibold text-white">{formatValue(holding.value)}</p>
+                  <p className={`text-sm font-medium ${holding.change24h >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {holding.change24h >= 0 ? '+' : ''}{holding.change24h.toFixed(1)}%
                   </p>
                 </div>

@@ -8,6 +8,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Metric } from './ui/Metric';
 import { HolographicWhale } from './HolographicWhale';
+import { WorkingAddWalletButton } from './guardian/WorkingAddWalletButton';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -310,6 +311,25 @@ export const MarketHub: React.FC<MarketHubProps> = ({ persona = 'pro' }) => {
             <ActionChip variant="primary" size="sm" style={{ marginTop: '1rem' }}>
               📈 Compare
             </ActionChip>
+          </Card.Content>
+        </GlassPod>
+
+        <GlassPod>
+          <Card.Header>
+            <Card.Title variant="accent">Guardian Wallet</Card.Title>
+            <span>🛡️</span>
+          </Card.Header>
+          <Card.Content>
+            <p style={{ color: cinematicColors.textSecondary, marginBottom: '1rem' }}>
+              Secure your wallets with Guardian's advanced security scanning
+            </p>
+            <div style={{ marginTop: '1rem' }}>
+              <WorkingAddWalletButton 
+                size="sm"
+                className="bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] hover:opacity-90 text-white border-0"
+                onWalletAdded={(wallet) => console.log('Wallet added from MarketHub:', wallet)}
+              />
+            </div>
           </Card.Content>
         </GlassPod>
       </PodGrid>

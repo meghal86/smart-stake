@@ -45,7 +45,7 @@ export function FooterNav() {
                     : 'hover:bg-white/10'
                 }`} 
                 style={active ? { boxShadow: '0 0 20px rgba(0, 201, 167, 0.4)' } : {}}>
-                  <Icon className={`w-6 h-6 ${active ? 'stroke-white' : ''}`} />
+                  <Icon className={`w-6 h-6 ${active ? 'stroke-white stroke-2' : ''} ${path === '/portfolio' && active ? 'stroke-[#00C9A7]' : ''}`} />
                 </div>
               </a>
             );
