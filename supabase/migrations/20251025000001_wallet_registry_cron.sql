@@ -91,3 +91,4 @@ COMMENT ON FUNCTION trigger_user_wallet_scan IS 'Triggers an immediate scan of a
 
 
 
+

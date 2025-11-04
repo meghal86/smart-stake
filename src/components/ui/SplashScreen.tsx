@@ -27,7 +27,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         <img 
           src="/hero_logo_1024.png"
           alt="AlphaWhale Logo"
-          className="h-48 w-48 mb-6 drop-shadow-lg object-contain"
+          className="h-64 w-64 mb-6 drop-shadow-lg object-contain"
         />
         <h1 className="text-5xl font-bold text-white mb-3">AlphaWhale</h1>
         <p className="text-xl text-gray-300">Master the DeFi Waves</p>
@@ -41,7 +41,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         <img 
           src="/hero_logo_1024.png"
           alt="AlphaWhale Logo"
-          className="h-48 w-48 mb-6 drop-shadow-lg object-contain"
+          className="h-64 w-64 mb-6 drop-shadow-lg object-contain"
         />
         <h1 className="text-5xl font-bold text-white mb-3">AlphaWhale</h1>
         <p className="text-xl text-gray-300">Master the DeFi Waves</p>

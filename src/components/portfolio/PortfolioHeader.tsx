@@ -85,6 +85,7 @@ export function PortfolioHeader({
           <div className="flex items-center justify-between">
             {/* Left: Title & Wallet Switcher */}
             <div className="flex items-center gap-4">
+              <img src="/header.png" alt="Logo" className="w-8 h-8" />
               <div>
                 <h1 className="text-xl font-semibold text-white flex items-center gap-2">
                   {title}

@@ -248,3 +248,4 @@ COMMENT ON COLUMN user_wallets.metadata IS 'Additional data (ENS name, labels, t
 
 
 
+

@@ -263,6 +263,7 @@ export function GuardianEnhanced() {
           <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <img src="/header.png" alt="Logo" className="w-8 h-8" />
                 <Shield className="w-6 h-6 text-[#00C9A7]" />
                 <div>
                   <h1 className={`text-xl font-semibold tracking-tight transition-colors duration-300 ${
@@ -471,6 +472,7 @@ export function GuardianEnhanced() {
         <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              <img src="/header.png" alt="Logo" className="w-8 h-8" />
               <div className="flex items-center gap-2">
                 <h1 className={`text-xl font-semibold transition-colors duration-300 ${
                   isDarkTheme ? 'text-white' : 'text-[#1B1F29]'

@@ -48,6 +48,7 @@ export function Header({
         {/* Top Row */}
         <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <img src="/header.png" alt="Logo" className="w-8 h-8" />
           <h1 className={`text-xl font-semibold transition-colors duration-300 ${
             isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
           }`}>

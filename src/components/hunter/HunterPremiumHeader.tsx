@@ -55,6 +55,7 @@ export default function HunterPremiumHeader({
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
+            <img src="/header.png" alt="Logo" className="w-8 h-8" />
             <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-lg shadow-emerald-500/25">
               <span className="text-xl md:text-2xl">🎯</span>
             </div>
@@ -156,6 +157,7 @@ export default function HunterPremiumHeader({
     </motion.header>
   );
 }
+
 
 
 
