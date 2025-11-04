@@ -112,24 +112,50 @@ export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWa
   );
 
   const handleManualSubmit = useCallback(async () => {
+    console.log('Manual submit clicked with address:', addressInput);
     await handleAddWallet(addressInput, 'readonly');
   }, [handleAddWallet, addressInput]);
 
   const handleWalletTypeClick = useCallback(async (walletType: WalletType) => {
+    console.log('Wallet type clicked:', walletType);
     if (walletType === 'exchange') {
       toast({ title: 'Coming Soon', description: 'Exchange wallet integration is coming soon.' });
       return;
     }
-    if (walletType === 'browser' && isConnected && address) {
-      await handleAddWallet(address, 'browser');
+    if (walletType === 'browser') {
+      // Always open connection dialog for browser wallets to allow switching
+      toast({ title: 'Opening wallet connection...', description: 'Connect or switch to a different wallet.' });
+      // This will be handled by the Connect Wallet button logic
+      return;
     } else {
-      toast({ title: walletType === 'browser' ? 'Connect your wallet first' : 'Feature coming soon' });
+      toast({ title: 'Feature coming soon', description: `${walletTypes.find(t => t.type === walletType)?.title || advancedTypes.find(t => t.type === walletType)?.title} integration is coming soon.` });
     }
-  }, [handleAddWallet, isConnected, address, toast]);
+  }, [toast]);
 
   useEffect(() => {
     if (!isOpen) resetState();
   }, [isOpen, resetState]);
+
+  // Auto-add wallet when user connects via RainbowKit
+  useEffect(() => {
+    if (isOpen && isConnected && address && flowState === 'main') {
+      const handleConnectedWallet = async () => {
+        try {
+          await handleAddWallet(address, 'browser');
+        } catch (error) {
+          // If wallet already exists, just show a message
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          if (message.toLowerCase().includes('already')) {
+            toast({ title: 'Wallet already added', description: 'This wallet is already in your Guardian list.' });
+          }
+        }
+      };
+      
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(handleConnectedWallet, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isConnected, address, flowState, handleAddWallet, toast]);
 
 
 
@@ -218,30 +244,54 @@ export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWa
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-gray-300">Connect new wallet</Label>
                 <ConnectButton.Custom>
-                  {({ openConnectModal }) => (
-                    <button
-                      onClick={() => {
-                        if (!openConnectModal || isSubmitting) return;
-
-                        toast({
-                          title: 'Connecting securely…',
-                        });
+                  {({ openConnectModal, connectModalOpen }) => {
+                    const handleClick = async (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Connect wallet button clicked', { openConnectModal, isSubmitting, isConnected, address });
+                      
+                      if (isSubmitting) return;
+                      
+                      // Always open connection dialog to allow wallet switching
+                      // Users can connect a different wallet or confirm current one
+                      
+                      // If not connected, open connection modal
+                      if (!openConnectModal) {
+                        console.log('Cannot open modal: openConnectModal not available');
+                        return;
+                      }
+                      
+                      toast({ title: 'Connecting securely…' });
+                      
+                      // Close this modal first to avoid z-index conflicts
+                      handleClose();
+                      
+                      // Small delay to ensure modal is closed before opening RainbowKit
+                      setTimeout(() => {
                         openConnectModal();
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] px-4 py-4 text-left text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                      disabled={isSubmitting}
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
-                        <Wallet className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold">Connect Wallet</div>
-                        <div className="text-xs opacity-90">RainbowKit • MetaMask • Coinbase • Ledger</div>
-                        <div className="mt-1 text-xs opacity-70">Auto-start scan once connected</div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 opacity-80" />
-                    </button>
-                  )}
+                      }, 100);
+                    };
+                    
+                    return (
+                      <button
+                        type="button"
+                        onClick={handleClick}
+                        className="flex w-full items-center gap-3 rounded-xl bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] px-4 py-4 text-left text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                        disabled={isSubmitting}
+                        style={{ pointerEvents: 'auto' }}
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
+                          <Wallet className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-semibold">Connect Wallet</div>
+                          <div className="text-xs opacity-90">RainbowKit • MetaMask • Coinbase • Ledger</div>
+                          <div className="mt-1 text-xs opacity-70">Auto-start scan once connected</div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 opacity-80" />
+                      </button>
+                    );
+                  }}
                 </ConnectButton.Custom>
               </div>
 
@@ -259,20 +309,53 @@ export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWa
                   </button>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {walletTypes.map((item) => (
-                    <button
-                      key={item.type}
-                      onClick={() => handleWalletTypeClick(item.type)}
-                      disabled={isSubmitting}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
-                    >
-                      <item.icon className="h-5 w-5 text-[#00C9A7]" />
-                      <div className="text-left">
-                        <div className="text-sm font-medium text-white">{item.title}</div>
-                        <div className="text-xs text-gray-400">{item.description}</div>
-                      </div>
-                    </button>
-                  ))}
+                  {walletTypes.map((item) => {
+                    if (item.type === 'browser') {
+                      return (
+                        <ConnectButton.Custom key={item.type}>
+                          {({ openConnectModal }) => (
+                            <button
+                              onClick={async () => {
+                                console.log('Browser wallet clicked, opening connection modal');
+                                if (!openConnectModal || isSubmitting) return;
+                                
+                                // Close this modal first
+                                handleClose();
+                                
+                                // Open RainbowKit modal
+                                setTimeout(() => {
+                                  openConnectModal();
+                                }, 100);
+                              }}
+                              disabled={isSubmitting}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+                            >
+                              <item.icon className="h-5 w-5 text-[#00C9A7]" />
+                              <div className="text-left">
+                                <div className="text-sm font-medium text-white">{item.title}</div>
+                                <div className="text-xs text-gray-400">{item.description}</div>
+                              </div>
+                            </button>
+                          )}
+                        </ConnectButton.Custom>
+                      );
+                    }
+                    
+                    return (
+                      <button
+                        key={item.type}
+                        onClick={() => handleWalletTypeClick(item.type)}
+                        disabled={isSubmitting}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+                      >
+                        <item.icon className="h-5 w-5 text-[#00C9A7]" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-white">{item.title}</div>
+                          <div className="text-xs text-gray-400">{item.description}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
                 {showAdvanced && (
                   <motion.div

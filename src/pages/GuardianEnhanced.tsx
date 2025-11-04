@@ -576,7 +576,9 @@ export function GuardianEnhanced() {
                         ))}
                         
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log('Add Wallet dropdown button clicked');
                             setShowWalletDropdown(false);
                             setShowAddWalletModal(true);
@@ -631,16 +633,20 @@ export function GuardianEnhanced() {
                 
                 <div className="flex gap-2 text-sm">
                   <button 
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       console.log('Add Wallet button clicked, current state:', showAddWalletModal);
                       setShowAddWalletModal(true);
                       console.log('Set showAddWalletModal to true');
+                      alert('Add Wallet button clicked! Check console.');
                     }}
-                    className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
+                    className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 cursor-pointer z-10 relative ${
                       isDarkTheme
                         ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                         : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                     }`}
+                    style={{ pointerEvents: 'auto' }}
                   >
                     <Plus className="w-3 h-3" />
                     Add Wallet
@@ -1133,15 +1139,18 @@ export function GuardianEnhanced() {
                   {card.cta && (
                     <button 
                       data-guardian-button="true"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Fix risks button clicked:', card.cta);
                         if (card.cta === 'Fix Risks') {
                           setShowFixModal(true);
                         } else {
                           setActiveTab('Risks');
                         }
                       }}
-                      className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto"
-                      style={{ pointerEvents: 'auto', zIndex: 1000000 }}
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto cursor-pointer relative z-10"
+                      style={{ pointerEvents: 'auto' }}
                     >
                       {card.cta === 'Fix Risks' && wallets.length > 1 ? 'Fix Risks in Selected Wallet' : card.cta} →
                     </button>
@@ -1160,8 +1169,14 @@ export function GuardianEnhanced() {
           transition={{ delay: 0.6 }}
         >
           <button 
-            onClick={handleRescan}
-            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Rescan button clicked');
+              handleRescan();
+            }}
+            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2 cursor-pointer relative z-10"
+            style={{ pointerEvents: 'auto' }}
             aria-label="Re-scan active wallet for updated risk analysis"
           >
             <motion.div
