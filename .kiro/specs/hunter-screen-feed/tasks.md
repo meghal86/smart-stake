@@ -394,7 +394,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - _Requirements: 2.9, 8.13_
   - _See: .kiro/specs/hunter-screen-feed/GUARDIAN_AUDIT.md_
 
-- [ ] 29. Implement feature flags
+- [-] 29. Implement feature flags
   - Set up feature flag service (Vercel Edge Config or LaunchDarkly)
   - Create flags for ranking model, eligibility preview, sponsored placement
   - Implement gradual rollout percentages

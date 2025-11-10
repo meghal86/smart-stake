@@ -10,7 +10,7 @@
  * {
  *   "crons": [{
  *     "path": "/api/cron/refresh-ranking",
- *     "schedule": "*/3 * * * *"
+ *     "schedule": "* /3 * * * *" (remove space)
  *   }]
  * }
  */

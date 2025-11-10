@@ -74,4 +74,24 @@ export const portfolioStrings = {
     updated: 'Updated',
     ago: 'ago'
   }
-};\n\n// Helper function to get localized string\nexport function t(key: string, locale: string = 'en'): string {\n  const keys = key.split('.');\n  let value: any = portfolioStrings[locale as keyof typeof portfolioStrings];\n  \n  for (const k of keys) {\n    value = value?.[k];\n  }\n  \n  return value || key;\n}\n\n// Hook for using translations\nexport function usePortfolioTranslation(locale: string = 'en') {\n  return {\n    t: (key: string) => t(key, locale),\n    strings: portfolioStrings[locale as keyof typeof portfolioStrings]\n  };\n}
+};
+
+// Helper function to get localized string
+export function t(key: string, locale: string = 'en'): string {
+  const keys = key.split('.');
+  let value: any = portfolioStrings[locale as keyof typeof portfolioStrings];
+  
+  for (const k of keys) {
+    value = value?.[k];
+  }
+  
+  return value || key;
+}
+
+// Hook for using translations
+export function usePortfolioTranslation(locale: string = 'en') {
+  return {
+    t: (key: string) => t(key, locale),
+    strings: portfolioStrings[locale as keyof typeof portfolioStrings]
+  };
+}

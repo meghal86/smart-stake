@@ -46,7 +46,7 @@ async function findCategoryFlips(windowMinutes: number = 5): Promise<Array<{ slu
 
   // Query opportunities that have had trust level changes
   // We'll look for opportunities where the current trust_level differs from the previous scan
-  const { data: opportunities, error } = await supabase
+  const { data: opportunities, error } = await (supabase as any)
     .from('opportunities')
     .select(`
       id,
@@ -127,13 +127,13 @@ async function purgeCDNCache(slugs: string[]): Promise<number> {
 
   // For now, we'll invalidate the Guardian cache for these opportunities
   // This will force fresh data on next request
-  const { data: opportunities } = await supabase
+  const { data: opportunities } = await (supabase as any)
     .from('opportunities')
     .select('id')
     .in('slug', slugs);
 
   if (opportunities && opportunities.length > 0) {
-    const opportunityIds = opportunities.map(o => o.id);
+    const opportunityIds = opportunities.map((o: any) => o.id);
     await invalidateGuardianCache(opportunityIds);
   }
 
