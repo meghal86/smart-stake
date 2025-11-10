@@ -48,16 +48,42 @@ export default function Hunter() {
     return () => clearInterval(interval);
   }, []);
   
-  const { opportunities, isLoading, lastUpdated, refetch } = useHunterFeed({
+  const { 
+    opportunities, 
+    isLoading, 
+    lastUpdated, 
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useHunterFeed({
     filter: activeFilter,
     isDemo,
     copilotEnabled,
-    realTimeEnabled
+    realTimeEnabled,
+    sort: 'recommended', // Use ranking by default
   });
 
   const filteredOpportunities = opportunities.filter(opp => 
     activeFilter === 'All' || opp.type === activeFilter
   );
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!hasNextPage || isFetchingNextPage) return;
+      
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.documentElement.scrollHeight * 0.7; // 70% scroll
+      
+      if (scrollPosition >= threshold) {
+        fetchNextPage();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleJoinQuest = (opportunity: Opportunity) => {
     setSelectedOpportunity(opportunity);
@@ -170,6 +196,31 @@ export default function Hunter() {
                   />
                 </motion.div>
               ))}
+              
+              {/* Infinite scroll loading indicator */}
+              {isFetchingNextPage && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-8 text-center"
+                >
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-400">
+                    <div className="w-4 h-4 border-2 border-[#00F5A0] border-t-transparent rounded-full animate-spin" />
+                    Loading more opportunities...
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* End of results indicator */}
+              {!hasNextPage && filteredOpportunities.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-8 text-center text-sm text-gray-500"
+                >
+                  You've reached the end of the feed
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
