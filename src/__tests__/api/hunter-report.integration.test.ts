@@ -1,364 +1,298 @@
 /**
- * Integration tests for Hunter Report API endpoint
- * Tests idempotency with real database interactions
+ * Integration tests for Hunter Report API
+ * 
+ * Tests report functionality with flood control and auto-quarantine.
+ * 
+ * Requirements:
+ * - 11.9: Report submission with idempotency
+ * - 11.10: Auto-quarantine (≥5 unique reporters in 1h)
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-describe('Hunter Report API - Integration Tests', () => {
+describe('Hunter Report API Integration', () => {
   let supabase: ReturnType<typeof createClient>;
+  let testUserIds: string[] = [];
   let testOpportunityId: string;
+  let authTokens: string[] = [];
 
   beforeAll(async () => {
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.warn('Skipping integration tests: Supabase credentials not configured');
-      return;
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Create 6 test users for auto-quarantine testing
+    for (let i = 0; i < 6; i++) {
+      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+        email: `test-report-${Date.now()}-${i}@example.com`,
+        password: 'test-password-123',
+        email_confirm: true,
+      });
+
+      if (userError || !userData.user) {
+        throw new Error(`Failed to create test user ${i}`);
+      }
+
+      testUserIds.push(userData.user.id);
+
+      // Sign in to get auth token
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: userData.user.email!,
+        password: 'test-password-123',
+      });
+
+      if (signInError || !signInData.session) {
+        throw new Error(`Failed to sign in test user ${i}`);
+      }
+
+      authTokens.push(signInData.session.access_token);
     }
 
-    supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Create a test opportunity
-    const { data: opportunity, error } = await supabase
+    // Create test opportunity
+    const { data: oppData, error: oppError } = await supabase
       .from('opportunities')
       .insert({
-        slug: 'test-opportunity-report',
-        title: 'Test Opportunity for Reports',
+        slug: `test-report-opp-${Date.now()}`,
+        title: 'Test Report Opportunity',
         protocol_name: 'Test Protocol',
         type: 'airdrop',
         chains: ['ethereum'],
-        dedupe_key: 'test:airdrop:report:ethereum',
+        dedupe_key: `test-report-${Date.now()}`,
         source: 'internal',
         status: 'published',
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Failed to create test opportunity:', error);
-      throw error;
+    if (oppError || !oppData) {
+      throw new Error('Failed to create test opportunity');
     }
 
-    testOpportunityId = opportunity.id;
+    testOpportunityId = oppData.id;
   });
 
   afterAll(async () => {
-    if (!supabase || !testOpportunityId) return;
-
-    // Clean up test data
-    await supabase
-      .from('report_events')
-      .delete()
-      .eq('opportunity_id', testOpportunityId);
-
-    await supabase
-      .from('opportunities')
-      .delete()
-      .eq('id', testOpportunityId);
+    // Cleanup: Delete test data
+    if (testOpportunityId) {
+      await supabase.from('opportunities').delete().eq('id', testOpportunityId);
+    }
+    for (const userId of testUserIds) {
+      await supabase.auth.admin.deleteUser(userId);
+    }
   });
 
   beforeEach(async () => {
-    if (!supabase || !testOpportunityId) return;
-
-    // Clean up reports before each test
+    // Clear report events before each test
     await supabase
       .from('report_events')
       .delete()
       .eq('opportunity_id', testOpportunityId);
+
+    // Reset opportunity status
+    await supabase
+      .from('opportunities')
+      .update({ status: 'published' })
+      .eq('id', testOpportunityId);
   });
 
-  it('should prevent duplicate reports with same idempotency key', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
-    }
+  it('should submit report successfully', async () => {
+    const idempotencyKey = `test-report-${Date.now()}`;
 
-    const idempotencyKey = `test-idempotency-${Date.now()}`;
-
-    // First submission
-    const { data: report1, error: error1 } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: idempotencyKey,
+    const response = await fetch(`http://localhost:3000/api/hunter/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokens[0]}`,
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify({
         opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
         category: 'phishing',
-        description: 'First submission',
-      })
-      .select()
-      .single();
+        description: 'This looks like a phishing attempt',
+      }),
+    });
 
-    expect(error1).toBeNull();
-    expect(report1).toBeDefined();
-    expect(report1.idempotency_key).toBe(idempotencyKey);
+    expect(response.ok).toBe(true);
 
-    // Second submission with same idempotency key should fail
-    const { data: report2, error: error2 } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: idempotencyKey,
-        opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
-        category: 'scam',
-        description: 'Second submission (should fail)',
-      })
-      .select()
-      .single();
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
-    expect(error2).toBeDefined();
-    expect(error2?.code).toBe('23505'); // Unique constraint violation
-    expect(report2).toBeNull();
-
-    // Verify only one report exists
-    const { data: reports, error: fetchError } = await supabase
-      .from('report_events')
-      .select('*')
-      .eq('idempotency_key', idempotencyKey);
-
-    expect(fetchError).toBeNull();
-    expect(reports).toHaveLength(1);
-    expect(reports![0].description).toBe('First submission');
-  });
-
-  it('should allow different reports with different idempotency keys', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
-    }
-
-    const key1 = `test-key-1-${Date.now()}`;
-    const key2 = `test-key-2-${Date.now()}`;
-
-    // First report
-    const { data: report1, error: error1 } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: key1,
-        opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
-        category: 'phishing',
-      })
-      .select()
-      .single();
-
-    expect(error1).toBeNull();
-    expect(report1).toBeDefined();
-
-    // Second report with different key
-    const { data: report2, error: error2 } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: key2,
-        opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
-        category: 'scam',
-      })
-      .select()
-      .single();
-
-    expect(error2).toBeNull();
-    expect(report2).toBeDefined();
-
-    // Verify both reports exist
-    const { data: reports, error: fetchError } = await supabase
-      .from('report_events')
-      .select('*')
-      .eq('opportunity_id', testOpportunityId);
-
-    expect(fetchError).toBeNull();
-    expect(reports).toHaveLength(2);
-  });
-
-  it('should retrieve existing report by idempotency key', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
-    }
-
-    const idempotencyKey = `test-retrieve-${Date.now()}`;
-
-    // Create report
-    const { data: createdReport, error: createError } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: idempotencyKey,
-        opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
-        category: 'reward_not_paid',
-        description: 'Test description',
-      })
-      .select()
-      .single();
-
-    expect(createError).toBeNull();
-    expect(createdReport).toBeDefined();
-
-    // Retrieve by idempotency key
-    const { data: retrievedReport, error: retrieveError } = await supabase
+    // Verify in database
+    const { data: report, error } = await supabase
       .from('report_events')
       .select('*')
       .eq('idempotency_key', idempotencyKey)
       .single();
 
-    expect(retrieveError).toBeNull();
-    expect(retrievedReport).toBeDefined();
-    expect(retrievedReport.id).toBe(createdReport.id);
-    expect(retrievedReport.category).toBe('reward_not_paid');
-    expect(retrievedReport.description).toBe('Test description');
+    expect(error).toBeNull();
+    expect(report).toBeTruthy();
+    expect(report.category).toBe('phishing');
   });
 
-  it('should trigger auto-quarantine after 5 unique reports', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
-    }
+  it('should enforce idempotency', async () => {
+    const idempotencyKey = `test-report-idempotent-${Date.now()}`;
 
-    // Submit 5 reports from different IPs
-    for (let i = 1; i <= 5; i++) {
-      const { error } = await supabase
-        .from('report_events')
-        .insert({
-          idempotency_key: `auto-quarantine-${i}-${Date.now()}`,
+    // Submit same report twice with same idempotency key
+    const response1 = await fetch(`http://localhost:3000/api/hunter/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokens[0]}`,
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify({
+        opportunity_id: testOpportunityId,
+        category: 'phishing',
+      }),
+    });
+
+    const response2 = await fetch(`http://localhost:3000/api/hunter/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokens[0]}`,
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify({
+        opportunity_id: testOpportunityId,
+        category: 'phishing',
+      }),
+    });
+
+    expect(response1.ok).toBe(true);
+    expect(response2.ok).toBe(true);
+
+    // Verify only one entry in database
+    const { data: reports, error } = await supabase
+      .from('report_events')
+      .select('*')
+      .eq('idempotency_key', idempotencyKey);
+
+    expect(error).toBeNull();
+    expect(reports).toHaveLength(1);
+  });
+
+  it('should enforce per-opportunity rate limiting', async () => {
+    // Make 4 rapid reports from same user
+    const requests = Array.from({ length: 4 }, (_, i) =>
+      fetch(`http://localhost:3000/api/hunter/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authTokens[0]}`,
+          'Idempotency-Key': `test-report-rate-${Date.now()}-${i}`,
+        },
+        body: JSON.stringify({
           opportunity_id: testOpportunityId,
-          user_ip: `192.168.1.${i}`,
           category: 'phishing',
-        });
+        }),
+      })
+    );
 
-      expect(error).toBeNull();
+    const responses = await Promise.all(requests);
+    const rateLimited = responses.filter(r => r.status === 429);
+
+    // Should have at least one rate limited response (3/min limit)
+    expect(rateLimited.length).toBeGreaterThan(0);
+  });
+
+  it('should auto-quarantine opportunity after 5 unique reports', async () => {
+    // Submit reports from 5 different users
+    for (let i = 0; i < 5; i++) {
+      const response = await fetch(`http://localhost:3000/api/hunter/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authTokens[i]}`,
+          'Idempotency-Key': `test-report-quarantine-${Date.now()}-${i}`,
+        },
+        body: JSON.stringify({
+          opportunity_id: testOpportunityId,
+          category: 'phishing',
+        }),
+      });
+
+      expect(response.ok).toBe(true);
     }
 
-    // Check if opportunity was quarantined
-    const { data: opportunity, error: oppError } = await supabase
+    // Wait for trigger to execute
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Verify opportunity is quarantined
+    const { data: opportunity, error } = await supabase
       .from('opportunities')
       .select('status')
       .eq('id', testOpportunityId)
       .single();
 
-    expect(oppError).toBeNull();
+    expect(error).toBeNull();
     expect(opportunity?.status).toBe('quarantined');
   });
 
-  it('should store metadata correctly', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
+  it('should not auto-quarantine with reports from same user', async () => {
+    // Submit 5 reports from same user (should be rate limited)
+    for (let i = 0; i < 5; i++) {
+      await fetch(`http://localhost:3000/api/hunter/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authTokens[0]}`,
+          'Idempotency-Key': `test-report-same-user-${Date.now()}-${i}`,
+        },
+        body: JSON.stringify({
+          opportunity_id: testOpportunityId,
+          category: 'phishing',
+        }),
+      });
+
+      // Wait to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    const metadata = {
-      user_agent: 'Mozilla/5.0',
-      referrer: 'https://example.com',
-      screen_resolution: '1920x1080',
-    };
-
-    const { data: report, error } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: `test-metadata-${Date.now()}`,
-        opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
-        category: 'other',
-        metadata,
-      })
-      .select()
+    // Verify opportunity is NOT quarantined
+    const { data: opportunity, error } = await supabase
+      .from('opportunities')
+      .select('status')
+      .eq('id', testOpportunityId)
       .single();
 
     expect(error).toBeNull();
-    expect(report).toBeDefined();
-    expect(report.metadata).toEqual(metadata);
+    expect(opportunity?.status).toBe('published');
   });
 
-  it('should handle concurrent submissions with same idempotency key', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
-    }
-
-    const idempotencyKey = `test-concurrent-${Date.now()}`;
-
-    // Simulate concurrent submissions
-    const promises = Array.from({ length: 5 }, (_, i) =>
-      supabase
-        .from('report_events')
-        .insert({
-          idempotency_key: idempotencyKey,
-          opportunity_id: testOpportunityId,
-          user_ip: '192.168.1.1',
-          category: 'phishing',
-          description: `Concurrent submission ${i}`,
-        })
-        .select()
-        .single()
-    );
-
-    const results = await Promise.allSettled(promises);
-
-    // Only one should succeed
-    const successful = results.filter(r => r.status === 'fulfilled');
-    const failed = results.filter(r => r.status === 'rejected');
-
-    expect(successful).toHaveLength(1);
-    expect(failed).toHaveLength(4);
-
-    // Verify only one report exists
-    const { data: reports, error: fetchError } = await supabase
-      .from('report_events')
-      .select('*')
-      .eq('idempotency_key', idempotencyKey);
-
-    expect(fetchError).toBeNull();
-    expect(reports).toHaveLength(1);
-  });
-
-  it('should allow reports from authenticated and anonymous users', async () => {
-    if (!supabase || !testOpportunityId) {
-      console.warn('Skipping test: Supabase not configured');
-      return;
-    }
-
-    // Anonymous report (no user_id)
-    const { data: anonReport, error: anonError } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: `test-anon-${Date.now()}`,
+  it('should enforce per-account cooldown', async () => {
+    // Submit first report
+    const response1 = await fetch(`http://localhost:3000/api/hunter/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokens[0]}`,
+        'Idempotency-Key': `test-report-cooldown-1-${Date.now()}`,
+      },
+      body: JSON.stringify({
         opportunity_id: testOpportunityId,
-        user_ip: '192.168.1.1',
         category: 'phishing',
-      })
-      .select()
-      .single();
+      }),
+    });
 
-    expect(anonError).toBeNull();
-    expect(anonReport).toBeDefined();
-    expect(anonReport.user_id).toBeNull();
+    expect(response1.ok).toBe(true);
 
-    // Authenticated report (with user_id)
-    // Note: In real scenario, this would be a valid user ID
-    const mockUserId = '123e4567-e89b-12d3-a456-426614174000';
-    
-    const { data: authReport, error: authError } = await supabase
-      .from('report_events')
-      .insert({
-        idempotency_key: `test-auth-${Date.now()}`,
+    // Immediately submit second report (should be rate limited)
+    const response2 = await fetch(`http://localhost:3000/api/hunter/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authTokens[0]}`,
+        'Idempotency-Key': `test-report-cooldown-2-${Date.now()}`,
+      },
+      body: JSON.stringify({
         opportunity_id: testOpportunityId,
-        user_id: mockUserId,
-        user_ip: '192.168.1.2',
         category: 'scam',
-      })
-      .select()
-      .single();
+      }),
+    });
 
-    // This might fail due to foreign key constraint if user doesn't exist
-    // That's expected behavior
-    if (authError?.code === '23503') {
-      // Foreign key violation - expected if user doesn't exist
-      expect(authError.code).toBe('23503');
-    } else {
-      expect(authError).toBeNull();
-      expect(authReport).toBeDefined();
-      expect(authReport.user_id).toBe(mockUserId);
-    }
+    expect(response2.status).toBe(429);
   });
 });

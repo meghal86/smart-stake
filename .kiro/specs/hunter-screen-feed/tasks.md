@@ -369,7 +369,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test wallet addresses are never logged in plain text
   - _Requirements: 10.1-10.14_
 
-- [ ] 27. Implement save/share/report functionality
+- [x] 27. Implement save/share/report functionality
   - Create save opportunity mutation
   - Implement share functionality with copy link
   - Create report modal with categories (phishing, impersonation, reward not paid)
@@ -382,7 +382,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test report flood control prevents abuse
   - _Requirements: 5.8, 11.4, 11.9, 11.10_
 
-- [ ] 28. Create Guardian staleness cron job
+- [x] 28. Create Guardian staleness cron job
   - Note: Guardian service and API already exist
   - Set up Edge Cron job (Vercel Cron or similar)
   - Implement listStaleOpportunities() (>24h) using existing Guardian service
@@ -403,50 +403,123 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - _Requirements: 16.1-16.5_
 
 - [ ] 30. Create test fixtures endpoint
-  - Implement ?mode=fixtures query parameter
+  - Implement ?mode=fixtures query parameter in /api/hunter/opportunities
   - Return deterministic dataset with all opportunity types
   - Include edge cases (Red trust, geo-gated, expired, zero-reward, sponsored, duplicates)
   - Test fixtures are consistent across calls
   - _Requirements: 15.1-15.4_
 
-- [ ] 31. Write unit tests
-  - Test cursor encoding/decoding
-  - Test eligibility scoring algorithm
-  - Test content sanitization
-  - Test rate limiting logic
-  - Test filter state management
-  - Achieve >80% code coverage
+- [ ] 30a. Refactor OpportunityCard to match spec requirements
+  - Update OpportunityCard to use Opportunity type from src/types/hunter.ts
+  - Add GuardianTrustChip component with color-coded display (green/amber/red)
+  - Add RewardDisplay component with min-max and confidence
+  - Add EligibilityPreview component for wallet-connected users
+  - Add ActionButtons component (save, share, report) using OpportunityActions
+  - Add proper badges (featured, sponsored, season_bonus, retroactive)
+  - Add logo fallback with initials avatar
+  - Use Intl.NumberFormat for amount formatting
+  - Add proper aria-labels for accessibility
+  - Test all card states render correctly
+  - _Requirements: 5.1-5.21, 9.1-9.12_
+
+- [ ] 30b. Create comprehensive FilterDrawer component
+  - Create FilterDrawer component with drawer layout
+  - Add TypeFilter with multi-select for all opportunity types
+  - Add ChainFilter with multi-select for supported chains
+  - Add TrustLevelFilter with Green/Amber/Red options
+  - Add RewardRangeFilter with min/max sliders
+  - Add UrgencyFilter (Ending Soon, New, Hot)
+  - Add EligibilityToggle for "Likely Eligible" filter
+  - Add DifficultyFilter (Easy, Medium, Advanced)
+  - Add SortSelector with all sort options
+  - Add Red consent modal when Red trust is enabled
+  - Integrate with useHunterFeed hook
+  - Test all filters work correctly
+  - _Requirements: 4.1-4.19_
+
+- [ ] 30c. Create SearchBar component with debouncing
+  - Create SearchBar component with search input
+  - Implement 300ms debouncing
+  - Add search suggestions
+  - Add clear search functionality
+  - Integrate with useHunterFeed hook
+  - Test search works correctly
+  - _Requirements: 4.2_
+
+- [ ] 30d. Update HunterTabs to match spec
+  - Update tab navigation to include all required tabs (All/Airdrops/Quests/Yield/Points/Featured)
+  - Ensure tabs update filters when changed
+  - Persist active tab in URL query parameters
+  - Test tab navigation works correctly
+  - _Requirements: 7.1_
+
+- [ ] 30e. Create StickySubFilters component
+  - Create StickySubFilters component with sticky behavior on scroll
+  - Add quick filters (Chain, Trust, Reward, Time Left)
+  - Update main filters when quick filters change
+  - Test sticky behavior works correctly
+  - _Requirements: 7.2_
+
+- [ ] 30f. Create RightRail component for desktop
+  - Create RightRail component (hidden on mobile/tablet <1280px)
+  - Add PersonalPicks module
+  - Add SavedItems list using useSavedOpportunities hook
+  - Add SeasonProgress widget
+  - Test responsive behavior
+  - _Requirements: 7.5_
+
+- [ ] 30g. Update Hunter page layout to match spec
+  - Add SearchBar to header
+  - Add FilterDrawer integration
+  - Add StickySubFilters below tabs
+  - Add RightRail for desktop layout
+  - Update responsive layout (mobile/tablet/desktop)
+  - Add Footer with legal links
+  - Test all layouts work correctly
+  - _Requirements: 7.3-7.5_
+
+- [ ] 31. Write additional unit tests for UI components
+  - Test OpportunityCard component rendering and interactions
+  - Test FilterDrawer component state management
+  - Test SearchBar debouncing
+  - Test HunterTabs navigation
+  - Test StickySubFilters behavior
+  - Test RightRail component
+  - Achieve >80% code coverage for new components
   - _Requirements: All_
 
-- [ ] 32. Write integration tests
-  - Test API endpoints return correct data
-  - Test database queries with real data
-  - Test Guardian integration
-  - Test eligibility preview service
-  - Test caching behavior
+- [ ] 32. Write integration tests for UI flow
+  - Test complete filter flow from UI to API
+  - Test search integration with feed query
+  - Test save/share/report actions from cards
+  - Test infinite scroll with cursor pagination
+  - Test responsive layout changes
   - _Requirements: All_
 
 - [ ] 33. Write E2E tests with Playwright
   - Test feed loading and pagination
   - Test filter application and persistence
-  - Test sponsored cap per fold
+  - Test sponsored cap per fold (already exists, verify coverage)
   - Test Red consent gate
   - Test no duplicates across pages
   - Test card interactions (save, share, report)
   - Test accessibility compliance (keyboard nav, screen readers, aria-labels)
   - Test mobile responsive behavior
+  - Test search functionality
+  - Test tab navigation
   - _Requirements: All_
 
 - [ ] 34. Performance optimization
-  - Implement code splitting for heavy components
-  - Add image optimization with Next.js Image
-  - Implement React.memo for expensive components
-  - Add virtual scrolling if needed
-  - Optimize database queries
-  - Set up CDN caching rules
+  - Implement code splitting for heavy components (FilterDrawer, RightRail)
+  - Add image optimization for protocol logos
+  - Implement React.memo for OpportunityCard and other expensive components
+  - Add virtual scrolling if needed (react-window or react-virtuoso)
+  - Review and optimize database queries (already optimized, verify)
+  - Set up CDN caching rules in vercel.json
+  - Run Lighthouse CI tests
   - Test FCP < 1.0s on warm cache
   - Test FCP < 1.6s on cold cache
-  - Test API P95 < 200ms
+  - Test API P95 < 200ms (already tested, verify)
   - Test interaction < 150ms
   - _Requirements: 1.1-1.6_
 
@@ -458,11 +531,12 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - _Requirements: 14.1-14.6_
 
 - [ ] 35. Set up monitoring and alerting
-  - Configure performance monitoring (Vercel Analytics or similar)
-  - Set up error tracking (Sentry)
+  - Configure Vercel Analytics for performance monitoring
+  - Set up Sentry for error tracking
   - Create dashboards for golden signals (latency, traffic, errors, saturation)
   - Configure alerts for SLO breaches (API p95 >200ms, error rate >1%, FE TTI >2s)
   - Set up auto-incident creation on alert
+  - Document monitoring setup in docs/
   - Test alerts fire correctly
   - _Requirements: 14.1-14.6_
 
@@ -483,16 +557,17 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - _Requirements: 14.1-14.6_
 
 - [ ] 36. Accessibility audit and fixes
-  - Run axe-core accessibility tests
+  - Install and run axe-core accessibility tests
   - Verify AA contrast standards for green/amber/red chips on light and dark backgrounds
-  - Test keyboard navigation flow
+  - Test keyboard navigation flow through all components
   - Verify all interactive elements have aria-labels
-  - Test with screen reader (NVDA or JAWS)
+  - Test with screen reader (NVDA, JAWS, or VoiceOver)
   - Ensure tooltips are keyboard accessible
-  - Test ESC key dismisses modals/tooltips
-  - Verify focus management
+  - Test ESC key dismisses modals/tooltips/drawers
+  - Verify focus management in FilterDrawer and modals
   - Add Playwright test: open Red-consent modal, tab through, ensure focus returns to trigger
-  - Respect prefers-reduced-motion for countdowns/badges
+  - Respect prefers-reduced-motion for animations
+  - Add data-test attributes for theme testing
   - _Requirements: 9.1-9.12_
 
 - [ ] 37. Security audit
@@ -529,12 +604,13 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - _Requirements: 5.19, 11.1_
 
 - [ ] 38. Documentation
-  - Write API documentation
-  - Create component documentation with Storybook
-  - Document database schema
-  - Write deployment guide
-  - Create troubleshooting guide
-  - Document feature flags
+  - Write API documentation for all Hunter endpoints
+  - Set up Storybook and create stories for all UI components
+  - Document database schema (already documented, verify completeness)
+  - Write deployment guide for Hunter Screen
+  - Create troubleshooting guide for common issues
+  - Document feature flags usage
+  - Create user guide for Hunter Screen features
   - _Requirements: All_
 
 - [ ] 38a. Define data retention policy
@@ -564,52 +640,108 @@ This document outlines the implementation tasks for building the Hunter Screen f
 
 - [ ] 39. Deployment preparation
   - Run all tests (unit, integration, E2E)
-  - Check Lighthouse scores
-  - Verify database migrations
-  - Test feature flags
-  - Review security headers
-  - Check rate limiting configuration
-  - Verify CDN cache configuration
+  - Check Lighthouse scores (target: FCP < 1.0s warm, < 1.6s cold)
+  - Verify database migrations are applied
+  - Test feature flags work correctly
+  - Review security headers (already implemented, verify)
+  - Check rate limiting configuration (already implemented, verify)
+  - Verify CDN cache configuration in vercel.json
   - Test error handling and fallbacks
-  - Validate analytics events
+  - Validate analytics events fire correctly
   - Review monitoring dashboards
-  - Require X-Client-Version in prod only (allow in staging)
+  - Verify X-Client-Version enforcement in prod
+  - Create deployment checklist
   - _Requirements: All_
 
 - [ ] 40. Production deployment
-  - Deploy database migrations
-  - Deploy API endpoints
-  - Deploy frontend application
-  - Configure CDN
-  - Set up cron jobs
-  - Enable monitoring
-  - Test production environment
-  - Monitor for errors
+  - Deploy database migrations (already deployed, verify)
+  - Deploy API endpoints (already deployed, verify)
+  - Deploy frontend application with new UI components
+  - Configure CDN caching rules
+  - Verify cron jobs are running (already set up, verify)
+  - Enable monitoring and alerting
+  - Test production environment end-to-end
+  - Monitor for errors in first 24 hours
+  - Create rollback plan
   - _Requirements: All_
 
 ---
 
-**Total Tasks:** 56 (40 original + 16 enhancements)  
-**Estimated Timeline:** 8-10 weeks (2 developers)  
+**Total Tasks:** 63 (40 original + 16 enhancements + 7 UI implementation tasks)  
+**Completed:** 28 tasks (Backend, API, and infrastructure complete)  
+**Remaining:** 35 tasks (Primarily UI components, testing, and deployment)  
+**Estimated Timeline:** 3-4 weeks (2 developers) for remaining work  
 **Priority:** High (Core feature)
+
+## Implementation Status Summary
+
+**Current State:** The Hunter Screen has a working demo UI with basic OpportunityCard, Header, and infinite scroll. However, the UI components need to be refactored to match the spec requirements for Guardian trust integration, comprehensive filtering, eligibility preview, and proper data structure alignment.
+
+### ✅ Completed (28 tasks)
+- Database schema and migrations (Tasks 1-2)
+- TypeScript types and schemas (Task 3)
+- Cursor pagination with snapshot watermark (Tasks 4, 4a)
+- Eligibility scoring algorithm (Task 5)
+- Redis caching utilities (Task 6)
+- Rate limiting middleware (Task 7)
+- Content sanitization (Task 8)
+- Feed query service with ranking (Tasks 9, 9a, 9b, 9c, 16a)
+- Guardian integration (Task 10)
+- Eligibility preview service (Tasks 11, 11a, 11b)
+- API endpoints (Tasks 12, 12a, 12b, 12c, 13, 14)
+- Security headers and CSP (Tasks 15, 15a)
+- Analytics tracking (Task 26)
+- Save/share/report functionality (Task 27)
+- Guardian staleness cron job (Task 28)
+
+### 🚧 In Progress / Remaining (35 tasks)
+- Feature flags (Task 29)
+- Test fixtures endpoint (Task 30)
+- **UI Components (Tasks 30a-30g)** - NEW
+  - OpportunityCard refactor with GuardianTrustChip
+  - FilterDrawer with all filters
+  - SearchBar with debouncing
+  - HunterTabs update
+  - StickySubFilters
+  - RightRail for desktop
+  - Hunter page layout update
+- Unit tests for UI (Task 31)
+- Integration tests for UI flow (Task 32)
+- E2E tests (Task 33)
+- Performance optimization (Task 34)
+- Monitoring setup (Tasks 34a, 35, 35a, 35b)
+- Accessibility audit (Task 36)
+- Security audit (Tasks 37, 37a, 37b, 37c)
+- Documentation (Tasks 38, 38a, 38b, 38c)
+- Deployment (Tasks 39, 40)
+
+---
 
 ## Critical Path & Milestones
 
-### Milestone M0: API Skeleton (Days 1-3)
-**Tasks:** 1, 2, 3, 7, 8, 12 (fixtures mode only), 15, 15a, 30  
-**Outcome:** API skeleton with security headers and deterministic fixtures
+### ✅ Milestone M0: API Skeleton (COMPLETED)
+**Tasks:** 1, 2, 3, 7, 8, 12, 15, 15a  
+**Outcome:** API skeleton with security headers ✅
 
-### Milestone M1: Anonymous Feed (Days 4-7)
-**Tasks:** 4, 4a, 9, 9a, 9b, 22 (grid with fixtures), 16 (card basics), 18 (filters basics), 20 (tabs), 34 (basic perf checks)  
-**Outcome:** Anonymous feed works with fixtures, stable scroll & sponsored cap, sub-1.6s FCP cold
+### ✅ Milestone M1: Anonymous Feed Backend (COMPLETED)
+**Tasks:** 4, 4a, 9, 9a, 9b, 16a  
+**Outcome:** Anonymous feed API works with ranking, stable scroll & sponsored cap ✅
 
-### Milestone M2: Live Data Integration (Days 8-12)
-**Tasks:** 10, 11, 11a, 12 (real data), 12a, 12b, 28, 26 (analytics with consent), 35, 35a  
-**Outcome:** Live trust + eligibility; monitoring/alerts on
+### ✅ Milestone M2: Live Data Integration (COMPLETED)
+**Tasks:** 10, 11, 11a, 11b, 12a, 12b, 12c, 13, 14, 26, 27, 28  
+**Outcome:** Live trust + eligibility; analytics; save/share/report ✅
 
-### Milestone M3: Production Ready (Days 13-14)
-**Tasks:** 33 (E2E), 36 (A11y AA), 37, 37a, 37b, 38, 38a, 38b, 39  
-**Outcome:** Ship-ready v1
+### 🚧 Milestone M3: UI Implementation (IN PROGRESS - Week 1-2)
+**Tasks:** 29, 30, 30a, 30b, 30c, 30d, 30e, 30f, 30g, 31, 32  
+**Outcome:** Complete UI with all filters, search, Guardian trust chips, eligibility preview
+
+### 🔜 Milestone M4: Testing & Polish (Week 3)
+**Tasks:** 33, 34, 34a, 35, 35a, 35b, 36  
+**Outcome:** E2E tests pass, performance optimized, monitoring active, accessibility AA compliant
+
+### 🔜 Milestone M5: Production Ready (Week 4)
+**Tasks:** 37, 37a, 37b, 37c, 38, 38a, 38b, 38c, 39, 40  
+**Outcome:** Security audited, documented, deployed to production
 
 ## Key Risks & Mitigations
 

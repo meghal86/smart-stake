@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/refresh-ranking",
       "schedule": "*/3 * * * *"
+    },
+    {
+      "path": "/api/cron/guardian-rescan",
+      "schedule": "*/30 * * * *"
     }
   ]
 }
