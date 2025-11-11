@@ -328,3 +328,47 @@ The Hunter Screen is the primary discovery surface for the Verified DeFi Opportu
 - 100% of cards show Guardian trust chip
 - Filter state persists across navigation
 - All accessibility criteria met (AA compliance)
+
+###
+ Requirement 17: Wallet Connection & Management
+
+**User Story:** As a DeFi user, I want to connect my wallet to see personalized opportunities and eligibility so that I can find opportunities relevant to my portfolio.
+
+#### Acceptance Criteria
+
+1. WHEN the Hunter Screen loads AND no wallet is connected THEN a "Connect Wallet" button SHALL be displayed in the header
+2. WHEN the "Connect Wallet" button is clicked THEN a wallet connection modal SHALL open with supported providers (MetaMask, WalletConnect, Coinbase Wallet)
+3. WHEN a wallet is successfully connected THEN the wallet address SHALL be stored in the session
+4. WHEN a wallet is connected THEN the feed SHALL refresh with personalized ranking based on wallet history
+5. WHEN a wallet is connected THEN eligibility previews SHALL be displayed on opportunity cards
+6. WHEN a wallet is disconnected THEN the feed SHALL revert to default (non-personalized) view
+7. WHEN a wallet connection fails THEN an error message SHALL be displayed with retry option
+8. WHEN a wallet is connected THEN the connection status SHALL persist across page refreshes
+9. WHEN multiple wallets are available THEN the user SHALL be able to select which wallet to use
+
+### Requirement 18: Multi-Wallet Selection & Switching
+
+**User Story:** As a DeFi user with multiple wallets, I want to select which wallet to use for Hunter Screen so that I see personalized opportunities and eligibility for the correct wallet.
+
+#### Acceptance Criteria
+
+1. WHEN the Hunter Screen loads AND user has connected wallets THEN a wallet selector SHALL be displayed in the header
+2. WHEN the wallet selector is clicked THEN a dropdown SHALL show all connected wallets with labels and truncated addresses (0x1234...5678)
+3. WHEN a wallet is selected from the dropdown THEN it SHALL become the active wallet for the session
+4. WHEN the active wallet changes THEN the feed SHALL refresh with personalized ranking for that wallet
+5. WHEN the active wallet changes THEN eligibility previews SHALL update to show eligibility for the new wallet
+6. WHEN no wallet is selected THEN the feed SHALL show default (non-personalized) opportunities
+7. WHEN a wallet is selected THEN the selection SHALL persist in localStorage across sessions
+8. WHEN the page reloads THEN the last selected wallet SHALL be restored if still connected
+9. WHEN the wallet selector is displayed THEN it SHALL show: wallet label (if set), truncated address, and chain icon
+10. WHEN hovering over a wallet in the dropdown THEN the full address SHALL be shown in a tooltip
+11. WHEN a wallet is disconnected THEN it SHALL be removed from the selector and selection SHALL fall back to first available wallet
+12. WHEN the active wallet is displayed in the dropdown THEN it SHALL have a visual indicator (checkmark or highlight)
+13. WHEN switching wallets THEN a loading state SHALL be shown while the feed refreshes
+14. WHEN the wallet selector is on mobile THEN it SHALL be responsive and touch-friendly with minimum 44px touch targets
+15. WHEN a user has no connected wallets THEN a "Connect Wallet" button SHALL be shown instead of the selector
+16. WHEN the wallet selector dropdown is open THEN clicking outside SHALL close the dropdown
+17. WHEN the wallet selector is displayed THEN it SHALL support keyboard navigation (Tab, Enter, Escape)
+18. WHEN a wallet label is set in user preferences THEN it SHALL be displayed in the selector instead of "Wallet 1", "Wallet 2"
+19. WHEN the active wallet is shown THEN its ENS name SHALL be displayed if available, falling back to label or truncated address
+20. WHEN switching between wallets THEN the transition SHALL be smooth with no flickering or layout shifts

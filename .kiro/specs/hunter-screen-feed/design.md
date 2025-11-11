@@ -1145,3 +1145,521 @@ test('accessibility compliance', async ({ page }) => {
 **Document Version:** 1.0  
 **Last Updated:** November 2025  
 **Next Review:** After v1 launch
+
+## 
+18. Multi-Wallet Selection Component
+
+### Overview
+
+The Multi-Wallet Selection component allows users with multiple connected wallets to switch between them, providing personalized feed ranking and eligibility checks for the selected wallet.
+
+### Component Structure
+
+```
+WalletSelector
+├── WalletButton (Trigger)
+│   ├── WalletIcon
+│   ├── WalletLabel/Address
+│   └── ChevronDown
+└── WalletDropdown (Popover)
+    ├── WalletOption[] (Connected wallets)
+    │   ├── CheckIcon (if active)
+    │   ├── WalletIcon
+    │   ├── Label
+    │   └── Address
+    └── ConnectButton
+```
+
+### Data Model
+
+```typescript
+interface ConnectedWallet {
+  address: string;           // Ethereum address
+  label?: string;            // User-defined label
+  ens?: string;              // ENS name if available
+  chain: string;             // Primary chain (ethereum, polygon, etc.)
+  balance?: string;          // Optional balance display
+  lastUsed?: Date;           // Last time this wallet was active
+}
+
+interface WalletSelectorState {
+  connectedWallets: ConnectedWallet[];
+  activeWallet: string | null;
+  isOpen: boolean;
+  isLoading: boolean;
+}
+```
+
+### Context Provider
+
+```typescript
+// src/contexts/WalletContext.tsx
+
+interface WalletContextValue {
+  connectedWallets: ConnectedWallet[];
+  activeWallet: string | null;
+  setActiveWallet: (address: string) => void;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: (address: string) => Promise<void>;
+  isLoading: boolean;
+}
+
+export const WalletProvider: React.FC = ({ children }) => {
+  const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>([]);
+  const [activeWallet, setActiveWallet] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedWallet = localStorage.getItem('activeWallet');
+    const savedWallets = localStorage.getItem('connectedWallets');
+    
+    if (savedWallets) {
+      const wallets = JSON.parse(savedWallets);
+      setConnectedWallets(wallets);
+      
+      if (savedWallet && wallets.some(w => w.address === savedWallet)) {
+        setActiveWallet(savedWallet);
+      } else if (wallets.length > 0) {
+        setActiveWallet(wallets[0].address);
+      }
+    }
+  }, []);
+
+  // Save to localStorage on change
+  useEffect(() => {
+    if (activeWallet) {
+      localStorage.setItem('activeWallet', activeWallet);
+    }
+    if (connectedWallets.length > 0) {
+      localStorage.setItem('connectedWallets', JSON.stringify(connectedWallets));
+    }
+  }, [activeWallet, connectedWallets]);
+
+  const handleSetActiveWallet = useCallback((address: string) => {
+    setIsLoading(true);
+    setActiveWallet(address);
+    
+    // Update lastUsed timestamp
+    setConnectedWallets(prev => 
+      prev.map(w => 
+        w.address === address 
+          ? { ...w, lastUsed: new Date() }
+          : w
+      )
+    );
+    
+    // Trigger feed refresh
+    queryClient.invalidateQueries(['hunter-feed']);
+    
+    setTimeout(() => setIsLoading(false), 500);
+  }, []);
+
+  return (
+    <WalletContext.Provider value={{
+      connectedWallets,
+      activeWallet,
+      setActiveWallet: handleSetActiveWallet,
+      connectWallet,
+      disconnectWallet,
+      isLoading,
+    }}>
+      {children}
+    </WalletContext.Provider>
+  );
+};
+```
+
+### Component Implementation
+
+```typescript
+// src/components/hunter/WalletSelector.tsx
+
+export function WalletSelector() {
+  const { 
+    connectedWallets, 
+    activeWallet, 
+    setActiveWallet, 
+    connectWallet,
+    isLoading 
+  } = useWallet();
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
+  const handleWalletChange = (address: string) => {
+    setActiveWallet(address);
+    setIsOpen(false);
+  };
+
+  // No wallets connected - show connect button
+  if (connectedWallets.length === 0) {
+    return (
+      <button 
+        onClick={connectWallet}
+        className="connect-wallet-btn"
+        aria-label="Connect wallet"
+      >
+        <Wallet className="w-4 h-4" />
+        <span>Connect Wallet</span>
+      </button>
+    );
+  }
+
+  const active = connectedWallets.find(w => w.address === activeWallet);
+  const displayName = active?.ens || active?.label || truncateAddress(active?.address);
+
+  return (
+    <div className="wallet-selector" ref={dropdownRef} onKeyDown={handleKeyDown}>
+      {/* Trigger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="wallet-selector-trigger"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        disabled={isLoading}
+      >
+        <WalletIcon chain={active?.chain} className="w-5 h-5" />
+        <div className="wallet-info">
+          <span className="wallet-name">{displayName}</span>
+          <span className="wallet-address">{truncateAddress(active?.address)}</span>
+        </div>
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        )}
+      </button>
+
+      {/* Dropdown */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="wallet-dropdown"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Connected Wallets */}
+            {connectedWallets.map((wallet) => {
+              const isActive = wallet.address === activeWallet;
+              const displayName = wallet.ens || wallet.label || 'Wallet';
+              
+              return (
+                <button
+                  key={wallet.address}
+                  onClick={() => handleWalletChange(wallet.address)}
+                  className={`wallet-option ${isActive ? 'active' : ''}`}
+                  title={wallet.address}
+                  aria-label={`Select ${displayName}`}
+                >
+                  {isActive && <Check className="w-4 h-4 text-green-500" />}
+                  <WalletIcon chain={wallet.chain} className="w-5 h-5" />
+                  <div className="wallet-details">
+                    <span className="wallet-label">{displayName}</span>
+                    <span className="wallet-address">{truncateAddress(wallet.address)}</span>
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Divider */}
+            <div className="wallet-dropdown-divider" />
+
+            {/* Connect New Wallet */}
+            <button
+              onClick={() => {
+                connectWallet();
+                setIsOpen(false);
+              }}
+              className="wallet-option connect-new"
+              aria-label="Connect new wallet"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Connect New Wallet</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Utility function
+function truncateAddress(address?: string): string {
+  if (!address) return '';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+```
+
+### Styling
+
+```css
+/* Light Theme */
+.wallet-selector {
+  position: relative;
+}
+
+.wallet-selector-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.wallet-selector-trigger:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(20, 184, 166, 0.3);
+}
+
+.wallet-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.wallet-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.wallet-address {
+  font-size: 12px;
+  color: #64748B;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.wallet-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 280px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  z-index: 50;
+}
+
+.wallet-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.wallet-option:hover {
+  background: rgba(20, 184, 166, 0.08);
+}
+
+.wallet-option.active {
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.wallet-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.wallet-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.wallet-dropdown-divider {
+  height: 1px;
+  background: rgba(229, 231, 235, 0.5);
+  margin: 8px 0;
+}
+
+.connect-new {
+  color: #14B8A6;
+  font-weight: 600;
+}
+
+/* Dark Theme */
+.dark .wallet-selector-trigger {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark .wallet-name {
+  color: #E4E8F3;
+}
+
+.dark .wallet-address {
+  color: #94A3B8;
+}
+
+.dark .wallet-dropdown {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.dark .wallet-label {
+  color: #E4E8F3;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .wallet-selector-trigger {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .wallet-info {
+    display: none; /* Hide on mobile, show only icon */
+  }
+
+  .wallet-dropdown {
+    right: -8px;
+    min-width: 260px;
+  }
+}
+```
+
+### Integration with Feed
+
+```typescript
+// src/hooks/useHunterFeed.ts
+
+export function useHunterFeed(props: UseHunterFeedProps) {
+  const { activeWallet } = useWallet();
+
+  // Include active wallet in query key for automatic refetch
+  const queryKey = ['hunter-feed', queryParams, useRealAPI, activeWallet];
+
+  const queryFn = async ({ pageParam }) => {
+    const result = await getFeedPage({
+      ...queryParams,
+      cursor: pageParam as string | undefined,
+      walletAddress: activeWallet || undefined, // Pass active wallet
+    });
+
+    return result;
+  };
+
+  // ... rest of implementation
+}
+```
+
+### Integration with Eligibility
+
+```typescript
+// src/components/hunter/OpportunityCard.tsx
+
+export function OpportunityCard({ opportunity }: OpportunityCardProps) {
+  const { activeWallet } = useWallet();
+
+  // Fetch eligibility for active wallet
+  const { data: eligibility, isLoading } = useQuery({
+    queryKey: ['eligibility', opportunity.id, activeWallet],
+    queryFn: () => 
+      getEligibilityPreview(
+        activeWallet!, 
+        opportunity.id, 
+        opportunity.chains[0]
+      ),
+    enabled: !!activeWallet,
+    staleTime: 60 * 60 * 1000, // 60 minutes
+  });
+
+  return (
+    <div className="opportunity-card">
+      {/* ... card content */}
+      
+      {activeWallet && (
+        <div className="eligibility-section">
+          {isLoading ? (
+            <Skeleton className="h-6 w-32" />
+          ) : eligibility ? (
+            <EligibilityBadge 
+              status={eligibility.status}
+              reasons={eligibility.reasons}
+            />
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Accessibility
+
+- Keyboard navigation support (Tab, Enter, Escape)
+- ARIA labels and roles
+- Focus management
+- Screen reader announcements
+- Minimum 44px touch targets on mobile
+- High contrast mode support
+- Reduced motion support
+
+### Performance Considerations
+
+- Lazy load wallet icons
+- Debounce wallet switching
+- Cache wallet metadata
+- Optimize re-renders with React.memo
+- Use virtual scrolling for many wallets (>10)
+
+### Error Handling
+
+- Handle wallet disconnection gracefully
+- Show error states for failed connections
+- Provide retry mechanisms
+- Log errors for debugging
+- Show user-friendly error messages
+
+### Testing Strategy
+
+- Unit tests for WalletSelector component
+- Integration tests for wallet switching
+- E2E tests for complete flow
+- Accessibility tests
+- Performance tests
+- Cross-browser tests

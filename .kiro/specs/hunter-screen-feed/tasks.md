@@ -797,3 +797,206 @@ This document outlines the implementation tasks for building the Hunter Screen f
 - All tasks should include tests before being marked complete
 - Performance and security should be validated throughout development
 - Regular code reviews recommended after milestones M0, M1, M2, and M3
+
+- [ ] 41. Implement Multi-Wallet Selection Feature
+  - Create WalletContext provider for managing connected wallets
+  - Implement wallet storage in localStorage with persistence
+  - Create useWallet hook for accessing wallet state
+  - Add wallet connection/disconnection logic
+  - Emit walletConnected custom event for inter-module reactivity (Guardian/Action Engine)
+  - Test wallet state management
+  - _Requirements: 17.1-17.9, 18.1-18.20_
+
+- [ ] 42. Create WalletSelector UI Component
+  - Design WalletSelector component with trigger button and dropdown
+  - Implement wallet icon display with chain indicators
+  - Add wallet label and address truncation (0x1234...5678)
+  - Create dropdown with all connected wallets
+  - Add active wallet indicator (checkmark)
+  - Implement "Connect New Wallet" button
+  - Add hover states and tooltips for full addresses
+  - Animate wallet icon entry (fade + slide) for polish
+  - Ensure z-index above sticky header to prevent dropdown clipping
+  - Style for light and dark themes
+  - Make responsive for mobile (hide labels, show icon only)
+  - Test component rendering and interactions
+  - _Requirements: 18.1-18.3, 18.9-18.11, 18.14, 18.18-18.20_
+
+- [ ] 43. Implement Wallet Switching Logic
+  - Add wallet selection handler in WalletSelector
+  - Implement loading state during wallet switch
+  - Use React 18 useTransition for smoother re-render during feed refresh
+  - Trigger feed refresh when wallet changes
+  - Update eligibility checks for new wallet
+  - Add smooth transitions without flickering
+  - Persist selected wallet to localStorage
+  - Restore last selected wallet on page load
+  - Handle wallet disconnection gracefully
+  - Test wallet switching flow
+  - _Requirements: 18.4-18.8, 18.12-18.13, 18.15-18.16, 18.20_
+
+- [ ] 44. Integrate WalletSelector with Hunter Header
+  - Add WalletSelector to Hunter Screen header
+  - Position between SearchBar and ThemeToggle inside sticky flex container
+  - Ensure proper spacing and alignment
+  - Verify z-index layering prevents header regression
+  - Test header layout on desktop and mobile
+  - Verify responsive behavior
+  - Test no layout shift or clipping occurs
+  - _Requirements: 18.1, 18.14_
+
+- [ ] 45. Update Feed Query to Use Active Wallet
+  - Modify useHunterFeed to include activeWallet in query key
+  - Pass activeWallet to getFeedPage API
+  - Append hashed wallet_id in telemetry payload for analytics correlation
+  - Implement automatic refetch when wallet changes
+  - Add loading states during wallet switch
+  - Test feed refresh on wallet change
+  - _Requirements: 18.4_
+
+- [ ] 46. Implement Personalized Ranking with Wallet
+  - Update getFeedPage to accept walletAddress parameter
+  - Fetch wallet history (chains, completions, saves) when wallet provided
+  - Adjust relevance scoring based on wallet activity
+  - Implement wallet-specific ranking weights
+  - Add fallback to cached anonymous ranking if personalization fetch fails (HTTP 429/timeout)
+  - Cache wallet history for performance
+  - Test personalized ranking vs default ranking
+  - Test fallback behavior under API pressure
+  - _Requirements: 17.4, 18.4_
+
+- [ ] 47. Update Eligibility Checks for Active Wallet
+  - Modify OpportunityCard to use activeWallet from context
+  - Update eligibility query key to include activeWallet
+  - Implement automatic eligibility refresh on wallet change
+  - Add small "Recalculate" button with spinner (throttled to 1 per 5s)
+  - Add loading states for eligibility checks
+  - Cache eligibility per wallet + opportunity pair
+  - Test eligibility updates when switching wallets
+  - Test throttling prevents API abuse
+  - _Requirements: 17.5, 18.5_
+
+- [ ] 48. Add Keyboard Navigation to WalletSelector
+  - Implement Tab navigation through dropdown items
+  - Add Enter key to select wallet
+  - Add Escape key to close dropdown (consistent with click-outside)
+  - Implement arrow key navigation (up/down)
+  - Add focus management and focus trap
+  - Test keyboard-only navigation
+  - _Requirements: 18.17_
+
+- [ ] 49. Add Accessibility Features to WalletSelector
+  - Add ARIA labels and roles to all interactive elements
+  - Implement aria-expanded for dropdown state
+  - Add aria-haspopup for trigger button
+  - Add aria-describedby for wallet address + ENS combo for better screen-reader clarity
+  - Ensure minimum 44px touch targets on mobile
+  - Test with screen readers (NVDA, JAWS, VoiceOver)
+  - Verify keyboard navigation works
+  - Test high contrast mode
+  - Add reduced motion support
+  - _Requirements: 18.14, 18.17_
+
+- [ ] 50. Implement ENS Name Resolution
+  - Add ENS name lookup for connected wallets
+  - Add Lens Protocol and Unstoppable Domains lookup as fallback (if ENS missing)
+  - Cache ENS/Lens/UD names in wallet metadata
+  - Display resolved name in selector if available
+  - Fall back to label or truncated address
+  - Test ENS resolution and display
+  - Test fallback name resolution services
+  - _Requirements: 18.19_
+
+- [ ] 51. Add Wallet Labels Management
+  - Create wallet label setting in user preferences
+  - Store labels in user_preferences table → JSONB column (key = wallet address)
+  - Allow users to set custom labels for wallets
+  - Display labels in WalletSelector
+  - Persist labels to user profile with RLS enforcement
+  - Test label creation and display
+  - Test RLS prevents cross-user label access
+  - _Requirements: 18.18_
+
+- [ ] 52. Implement Click Outside to Close Dropdown
+  - Add event listener for clicks outside dropdown
+  - Close dropdown when clicking outside
+  - Include ESC-key fallback to close dropdown (keyboard consistency)
+  - Prevent closing when clicking inside
+  - Clean up event listeners on unmount
+  - Test click outside behavior
+  - Test ESC key closes dropdown
+  - _Requirements: 18.16_
+
+- [ ] 53. Add Loading States for Wallet Operations
+  - Show loading spinner during wallet connection
+  - Show loading state during wallet switch
+  - Disable interactions during loading
+  - Add skeleton shimmer on card grid while refetching feed (matches Hunter Feed pattern)
+  - Test loading states
+  - Test skeleton shimmer appears during feed refresh
+  - _Requirements: 18.13_
+
+- [ ] 54. Write Unit Tests for Multi-Wallet Feature
+  - Test WalletContext provider state management
+  - Test useWallet hook functionality
+  - Test WalletSelector component rendering
+  - Test wallet selection and switching
+  - Test localStorage persistence
+  - Test wallet restoration on mount
+  - Test restoring ENS name and label combination (prevents caching regression)
+  - Test dropdown open/close behavior
+  - Test keyboard navigation
+  - Achieve >80% code coverage
+  - _Requirements: All_
+
+- [ ] 55. Write Integration Tests for Wallet Switching
+  - Test complete wallet switching flow
+  - Test feed refresh on wallet change
+  - Test eligibility update on wallet change
+  - Test personalized ranking with different wallets
+  - Test wallet persistence across page reloads
+  - Test wallet disconnection handling
+  - Test ENS + label combination restoration
+  - _Requirements: All_
+
+- [ ] 56. Write E2E Tests for Multi-Wallet Flow
+  - Test connecting multiple wallets
+  - Test switching between wallets
+  - Test feed personalization for each wallet
+  - Test eligibility updates for each wallet
+  - Test wallet selector on mobile
+  - Test keyboard navigation
+  - Test accessibility with screen readers
+  - Test ENS + label display and restoration
+  - _Requirements: All_
+
+- [ ] 57. Add Analytics for Wallet Switching
+  - Track wallet_connected event
+  - Track wallet_switched event
+  - Track wallet_disconnected event
+  - Track feed_personalized event
+  - Add timing metric wallet_switch_duration_ms for latency benchmarking
+  - Include wallet count in analytics
+  - Hash wallet addresses for privacy
+  - Test analytics events fire correctly
+  - Test timing metrics capture switch duration
+  - _Requirements: 10.1-10.14_
+
+- [ ] 58. Update Documentation for Multi-Wallet Feature
+  - Write user guide for connecting multiple wallets
+  - Document wallet switching process
+  - Add screenshots of WalletSelector
+  - Document wallet label management
+  - Include "Security & Privacy" note (addresses hashed, labels local-only)
+  - Create troubleshooting guide
+  - Update API documentation
+  - _Requirements: All_
+
+---
+
+**Multi-Wallet Feature Summary:**
+- **New Tasks**: 18 tasks (41-58)
+- **Estimated Effort**: 2-3 weeks (1 developer)
+- **Priority**: HIGH
+- **Dependencies**: Existing wallet connection infrastructure
+- **Impact**: Significantly improves UX for multi-wallet users
