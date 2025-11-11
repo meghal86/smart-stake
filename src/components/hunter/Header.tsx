@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Brain, Activity, Sun, Moon } from 'lucide-react';
+import { HunterTabs, TabType } from './HunterTabs';
 
 interface HeaderProps {
   isDemo: boolean;
@@ -10,8 +11,8 @@ interface HeaderProps {
   onRefresh: () => void;
   isDarkTheme: boolean;
   setIsDarkTheme: (value: boolean) => void;
-  activeFilter: string;
-  setActiveFilter: (filter: string) => void;
+  activeFilter: TabType;
+  setActiveFilter: (filter: TabType) => void;
 }
 
 export function Header({
@@ -26,8 +27,6 @@ export function Header({
   activeFilter,
   setActiveFilter
 }: HeaderProps) {
-  const filterOptions = ['All', 'Staking', 'NFT', 'Airdrops', 'Quests'];
-
   return (
     <motion.header
       className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 ${
@@ -133,23 +132,11 @@ export function Header({
       </div>
 
         {/* Bottom Row - Filter Tabs */}
-        <nav className={`flex items-center gap-6 overflow-x-auto scrollbar-none text-sm transition-colors duration-300 ${
-          isDarkTheme ? 'text-gray-300' : 'text-[#444C56]'
-        }`}>
-        {filterOptions.map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setActiveFilter(filter)}
-            className={`relative px-2 py-1 transition-all duration-200 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:transition-all after:duration-200 ${
-              activeFilter === filter
-                ? 'after:bg-gradient-to-r after:from-[#00F5A0] after:to-[#7B61FF]'
-                : 'after:bg-transparent hover:after:bg-gradient-to-r hover:after:from-[#00F5A0] hover:after:to-[#7B61FF] hover:after:opacity-50'
-            }`}
-          >
-            {filter}
-          </button>
-        ))}
-      </nav>
+        <HunterTabs
+          activeTab={activeFilter}
+          onTabChange={setActiveFilter}
+          isDarkTheme={isDarkTheme}
+        />
       </div>
     </motion.header>
   );

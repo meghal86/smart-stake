@@ -394,7 +394,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - _Requirements: 2.9, 8.13_
   - _See: .kiro/specs/hunter-screen-feed/GUARDIAN_AUDIT.md_
 
-- [-] 29. Implement feature flags
+- [x] 29. Implement feature flags
   - Set up feature flag service (Vercel Edge Config or LaunchDarkly)
   - Create flags for ranking model, eligibility preview, sponsored placement
   - Implement gradual rollout percentages
@@ -402,14 +402,14 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test rollout percentages work correctly
   - _Requirements: 16.1-16.5_
 
-- [ ] 30. Create test fixtures endpoint
+- [x] 30. Create test fixtures endpoint
   - Implement ?mode=fixtures query parameter in /api/hunter/opportunities
   - Return deterministic dataset with all opportunity types
   - Include edge cases (Red trust, geo-gated, expired, zero-reward, sponsored, duplicates)
   - Test fixtures are consistent across calls
   - _Requirements: 15.1-15.4_
 
-- [ ] 30a. Refactor OpportunityCard to match spec requirements
+- [x] 30a. Refactor OpportunityCard to match spec requirements
   - Update OpportunityCard to use Opportunity type from src/types/hunter.ts
   - Add GuardianTrustChip component with color-coded display (green/amber/red)
   - Add RewardDisplay component with min-max and confidence
@@ -422,7 +422,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test all card states render correctly
   - _Requirements: 5.1-5.21, 9.1-9.12_
 
-- [ ] 30b. Create comprehensive FilterDrawer component
+- [x] 30b. Create comprehensive FilterDrawer component
   - Create FilterDrawer component with drawer layout
   - Add TypeFilter with multi-select for all opportunity types
   - Add ChainFilter with multi-select for supported chains
@@ -437,7 +437,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test all filters work correctly
   - _Requirements: 4.1-4.19_
 
-- [ ] 30c. Create SearchBar component with debouncing
+- [x] 30c. Create SearchBar component with debouncing
   - Create SearchBar component with search input
   - Implement 300ms debouncing
   - Add search suggestions
@@ -446,21 +446,21 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test search works correctly
   - _Requirements: 4.2_
 
-- [ ] 30d. Update HunterTabs to match spec
+- [x] 30d. Update HunterTabs to match spec
   - Update tab navigation to include all required tabs (All/Airdrops/Quests/Yield/Points/Featured)
   - Ensure tabs update filters when changed
   - Persist active tab in URL query parameters
   - Test tab navigation works correctly
   - _Requirements: 7.1_
 
-- [ ] 30e. Create StickySubFilters component
+- [x] 30e. Create StickySubFilters component
   - Create StickySubFilters component with sticky behavior on scroll
   - Add quick filters (Chain, Trust, Reward, Time Left)
   - Update main filters when quick filters change
   - Test sticky behavior works correctly
   - _Requirements: 7.2_
 
-- [ ] 30f. Create RightRail component for desktop
+- [x] 30f. Create RightRail component for desktop
   - Create RightRail component (hidden on mobile/tablet <1280px)
   - Add PersonalPicks module
   - Add SavedItems list using useSavedOpportunities hook
@@ -468,7 +468,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test responsive behavior
   - _Requirements: 7.5_
 
-- [ ] 30g. Update Hunter page layout to match spec
+- [x] 30g. Update Hunter page layout to match spec
   - Add SearchBar to header
   - Add FilterDrawer integration
   - Add StickySubFilters below tabs
@@ -478,7 +478,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test all layouts work correctly
   - _Requirements: 7.3-7.5_
 
-- [ ] 31. Write additional unit tests for UI components
+- [x] 31. Write additional unit tests for UI components
   - Test OpportunityCard component rendering and interactions
   - Test FilterDrawer component state management
   - Test SearchBar debouncing
@@ -488,7 +488,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Achieve >80% code coverage for new components
   - _Requirements: All_
 
-- [ ] 32. Write integration tests for UI flow
+- [x] 32. Write integration tests for UI flow
   - Test complete filter flow from UI to API
   - Test search integration with feed query
   - Test save/share/report actions from cards
@@ -496,7 +496,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test responsive layout changes
   - _Requirements: All_
 
-- [ ] 33. Write E2E tests with Playwright
+- [x] 33. Write E2E tests with Playwright
   - Test feed loading and pagination
   - Test filter application and persistence
   - Test sponsored cap per fold (already exists, verify coverage)
@@ -509,7 +509,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test tab navigation
   - _Requirements: All_
 
-- [ ] 34. Performance optimization
+- [x] 34. Performance optimization
   - Implement code splitting for heavy components (FilterDrawer, RightRail)
   - Add image optimization for protocol logos
   - Implement React.memo for OpportunityCard and other expensive components
@@ -523,7 +523,7 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test interaction < 150ms
   - _Requirements: 1.1-1.6_
 
-- [ ] 34a. Set up synthetic smoke tests
+- [x] 34a. Set up synthetic smoke tests
   - Create uptime check hitting /api/hunter/opportunities?mode=fixtures
   - Deploy from 3 regions (US, EU, APAC)
   - Alert on failures or latency spikes

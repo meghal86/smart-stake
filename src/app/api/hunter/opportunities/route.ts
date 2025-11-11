@@ -149,6 +149,26 @@ export async function GET(req: NextRequest) {
 
     const params = parsed.data;
 
+    // Handle fixtures mode for E2E testing
+    // Requirement 15.1-15.4: Deterministic test data
+    if (params.mode === 'fixtures') {
+      const { getFixtureOpportunities } = await import('@/lib/fixtures/hunter-opportunities');
+      const fixtures = getFixtureOpportunities();
+      
+      const responseBody = {
+        items: fixtures,
+        cursor: null,
+        ts: new Date().toISOString(),
+      };
+
+      const response = NextResponse.json(responseBody, { status: 200 });
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      response.headers.set('X-API-Version', apiVersion);
+      response.headers.set('Content-Type', 'application/json');
+      
+      return response;
+    }
+
     // Fetch feed data
     const feedResult = await getFeedPage({
       search: params.q,

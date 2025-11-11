@@ -1,0 +1,86 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3000/hunter",
+        "http://localhost:3000/hunter?mode=fixtures"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "throttling": {
+          "rttMs": 40,
+          "throughputKbps": 10240,
+          "cpuSlowdownMultiplier": 1
+        }
+      }
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "first-contentful-paint": [
+          "error",
+          {
+            "maxNumericValue": 1000,
+            "aggregationMethod": "optimistic"
+          }
+        ],
+        "first-contentful-paint-3g": [
+          "warn",
+          {
+            "maxNumericValue": 1600,
+            "aggregationMethod": "optimistic"
+          }
+        ],
+        "interactive": [
+          "error",
+          {
+            "maxNumericValue": 2000,
+            "aggregationMethod": "optimistic"
+          }
+        ],
+        "speed-index": [
+          "error",
+          {
+            "maxNumericValue": 1500
+          }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          {
+            "maxNumericValue": 0.1
+          }
+        ],
+        "total-blocking-time": [
+          "warn",
+          {
+            "maxNumericValue": 300
+          }
+        ],
+        "max-potential-fid": [
+          "warn",
+          {
+            "maxNumericValue": 150
+          }
+        ],
+        "uses-responsive-images": "warn",
+        "offscreen-images": "warn",
+        "uses-optimized-images": "warn",
+        "modern-image-formats": "warn",
+        "uses-text-compression": "error",
+        "uses-rel-preconnect": "warn",
+        "font-display": "warn",
+        "unminified-css": "error",
+        "unminified-javascript": "error",
+        "unused-css-rules": "warn",
+        "unused-javascript": "warn",
+        "efficient-animated-content": "warn",
+        "duplicated-javascript": "warn",
+        "legacy-javascript": "warn"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

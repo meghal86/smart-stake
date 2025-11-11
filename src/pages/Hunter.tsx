@@ -7,6 +7,7 @@ import { OpportunityCard } from '@/components/hunter/OpportunityCard';
 import { EmptyState } from '@/components/hunter/EmptyState';
 import { ExecuteQuestModal } from '@/components/hunter/ExecuteQuestModal';
 import { CopilotPanel } from '@/components/hunter/CopilotPanel';
+import { RightRail } from '@/components/hunter/RightRail';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useHunterFeed } from '@/hooks/useHunterFeed';
 
@@ -91,12 +92,12 @@ export default function Hunter() {
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
+    <div className={`min-h-screen relative overflow-hidden transition-all duration-700 ${
       isDarkTheme 
         ? 'bg-gradient-to-br from-[#0A0E1A] to-[#111827]' 
-        : 'bg-gradient-to-b from-[#FFFFFF] to-[#F9FAFB] text-[#1B1F29]'
+        : 'bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]'
     }`}>
-      {/* Whale Pulse Background Animation */}
+      {/* Serene Light Theme Background - Top Glow */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         animate={{
@@ -107,25 +108,47 @@ export default function Hunter() {
             'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
             'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
           ] : [
-            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)',
-            'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.02) 0%, transparent 50%)',
-            'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.02) 0%, transparent 50%)',
-            'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.03) 0%, transparent 50%)',
-            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)'
+            'radial-gradient(ellipse at 50% 0%, rgba(224,242,254,0.4) 0%, transparent 70%)',
+            'radial-gradient(ellipse at 30% 20%, rgba(251,191,36,0.08) 0%, transparent 60%)',
+            'radial-gradient(ellipse at 70% 30%, rgba(20,184,166,0.06) 0%, transparent 65%)',
+            'radial-gradient(ellipse at 50% 0%, rgba(224,242,254,0.35) 0%, transparent 70%)',
+            'radial-gradient(ellipse at 50% 0%, rgba(224,242,254,0.4) 0%, transparent 70%)'
           ]
         }}
         transition={{
-          duration: 9,
+          duration: 15,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: [0.25, 1, 0.5, 1]
         }}
       />
-      {/* Background Texture */}
-      <div className={`absolute inset-0 pointer-events-none ${
-        isDarkTheme 
-          ? 'bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,160,0.03),transparent_50%)]'
-          : 'bg-[radial-gradient(circle_at_50%_50%,rgba(0,245,160,0.01),transparent_50%)]'
-      }`}></div>
+      {/* Subtle Ambient Particles */}
+      {!isDarkTheme && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 rounded-full"
+              style={{
+                background: i % 2 === 0 ? 'rgba(251,191,36,0.15)' : 'rgba(20,184,166,0.12)',
+                left: `${15 + i * 12}%`,
+                top: `${10 + (i % 3) * 25}%`
+              }}
+              animate={{
+                y: [0, -80, 0],
+                x: [0, Math.sin(i) * 30, 0],
+                opacity: [0.2, 0.5, 0.2],
+                scale: [1, 1.3, 1]
+              }}
+              transition={{
+                duration: 12 + i * 2,
+                repeat: Infinity,
+                ease: [0.25, 1, 0.5, 1],
+                delay: i * 1.5
+              }}
+            />
+          ))}
+        </div>
+      )}
       <Header
         isDemo={isDemo}
         setIsDemo={setIsDemo}
@@ -139,9 +162,12 @@ export default function Hunter() {
         setActiveFilter={setActiveFilter}
       />
 
-      <main className="px-4 pt-32 pb-28 max-w-2xl mx-auto">
-        {/* Content */}
-        <AnimatePresence mode="wait">
+      {/* Main Content with RightRail - Three-Column "Alpha Sidecar" Layout */}
+      <div className="flex flex-1 w-full max-w-7xl mx-auto gap-6 px-4 md:px-6 pt-32 pb-28">
+        {/* Main Feed - Center Column */}
+        <main className="flex-1 min-w-0">
+          {/* Content */}
+          <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
               key="loading"
@@ -151,17 +177,34 @@ export default function Hunter() {
               className="space-y-4"
             >
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 animate-pulse">
+                <div 
+                  key={i} 
+                  className={`backdrop-blur-lg rounded-[20px] p-6 animate-pulse ${
+                    isDarkTheme 
+                      ? 'bg-white/5' 
+                      : 'bg-white/90 shadow-[0_4px_12px_rgba(0,0,0,0.05)]'
+                  }`}
+                >
                   <div className="flex justify-between items-start">
                     <div className="space-y-3 flex-1">
-                      <div className="h-4 bg-gray-700 rounded w-1/3"></div>
-                      <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                      <div className={`h-4 rounded w-1/3 ${
+                        isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
+                      }`}></div>
+                      <div className={`h-3 rounded w-2/3 ${
+                        isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
+                      }`}></div>
                       <div className="flex gap-2">
-                        <div className="h-6 bg-gray-700 rounded w-16"></div>
-                        <div className="h-6 bg-gray-700 rounded w-20"></div>
+                        <div className={`h-6 rounded w-16 ${
+                          isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
+                        }`}></div>
+                        <div className={`h-6 rounded w-20 ${
+                          isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
+                        }`}></div>
                       </div>
                     </div>
-                    <div className="h-10 bg-gray-700 rounded-lg w-24"></div>
+                    <div className={`h-10 rounded-lg w-24 ${
+                      isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}></div>
                   </div>
                 </div>
               ))}
@@ -204,8 +247,12 @@ export default function Hunter() {
                   animate={{ opacity: 1 }}
                   className="py-8 text-center"
                 >
-                  <div className="inline-flex items-center gap-2 text-sm text-gray-400">
-                    <div className="w-4 h-4 border-2 border-[#00F5A0] border-t-transparent rounded-full animate-spin" />
+                  <div className={`inline-flex items-center gap-2 text-sm ${
+                    isDarkTheme ? 'text-gray-400' : 'text-[#475569]'
+                  }`}>
+                    <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${
+                      isDarkTheme ? 'border-[#00F5A0]' : 'border-[#14B8A6]'
+                    }`} />
                     Loading more opportunities...
                   </div>
                 </motion.div>
@@ -216,7 +263,9 @@ export default function Hunter() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="py-8 text-center text-sm text-gray-500"
+                  className={`py-8 text-center text-sm ${
+                    isDarkTheme ? 'text-gray-500' : 'text-[#64748B]'
+                  }`}
                 >
                   You've reached the end of the feed
                 </motion.div>
@@ -225,6 +274,10 @@ export default function Hunter() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Right Rail - "Alpha Sidecar" with Rewards & Progress */}
+      <RightRail />
+    </div>
 
       <FooterNav />
 

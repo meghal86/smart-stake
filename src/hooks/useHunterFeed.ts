@@ -102,15 +102,20 @@ const mockOpportunities: LegacyOpportunity[] = [
 ];
 
 /**
- * Map legacy filter to OpportunityType
+ * Map tab filter to OpportunityType
+ * Requirements: 7.1 - Support All / Airdrops / Quests / Yield / Points / Featured tabs
  */
 function mapFilterToType(filter: string): OpportunityType[] | undefined {
   const filterMap: Record<string, OpportunityType[]> = {
     'All': [],
-    'Staking': ['staking', 'yield'],
-    'NFT': ['quest'], // NFT quests
     'Airdrops': ['airdrop'],
-    'Quests': ['quest'],
+    'Quests': ['quest', 'testnet'],
+    'Yield': ['staking', 'yield'],
+    'Points': ['points', 'loyalty'],
+    'Featured': [], // Featured is handled by featured flag, not type filter
+    // Legacy support
+    'Staking': ['staking', 'yield'],
+    'NFT': ['quest'],
   };
   
   const types = filterMap[filter];
@@ -229,6 +234,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     search: props.search,
     trustMin: props.trustMin ?? 80,
     showRisky: props.showRisky ?? false,
+    featured: props.filter === 'Featured' ? true : undefined, // Filter by featured flag for Featured tab
     limit: 12, // 12 items per page (one fold)
   };
 
