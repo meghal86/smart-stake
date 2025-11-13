@@ -13,7 +13,11 @@ export type AnalyticsEventType =
   | 'save'
   | 'report'
   | 'cta_click'
-  | 'scroll_depth';
+  | 'scroll_depth'
+  | 'wallet_connected'
+  | 'wallet_switched'
+  | 'wallet_disconnected'
+  | 'feed_personalized';
 
 export interface BaseEventPayload {
   timestamp: string;
@@ -99,6 +103,42 @@ export interface ScrollDepthEvent extends BaseEventPayload {
   };
 }
 
+export interface WalletConnectedEvent extends BaseEventPayload {
+  event: 'wallet_connected';
+  properties: {
+    wallet_count: number;
+    is_first_wallet: boolean;
+    chain: string;
+  };
+}
+
+export interface WalletSwitchedEvent extends BaseEventPayload {
+  event: 'wallet_switched';
+  properties: {
+    wallet_count: number;
+    wallet_switch_duration_ms: number;
+    from_wallet_hash?: string;
+    to_wallet_hash: string;
+  };
+}
+
+export interface WalletDisconnectedEvent extends BaseEventPayload {
+  event: 'wallet_disconnected';
+  properties: {
+    wallet_count: number;
+    had_active_wallet: boolean;
+  };
+}
+
+export interface FeedPersonalizedEvent extends BaseEventPayload {
+  event: 'feed_personalized';
+  properties: {
+    wallet_count: number;
+    personalization_duration_ms: number;
+    has_wallet_history: boolean;
+  };
+}
+
 export type AnalyticsEvent =
   | FeedViewEvent
   | FilterChangeEvent
@@ -107,7 +147,11 @@ export type AnalyticsEvent =
   | SaveEvent
   | ReportEvent
   | CTAClickEvent
-  | ScrollDepthEvent;
+  | ScrollDepthEvent
+  | WalletConnectedEvent
+  | WalletSwitchedEvent
+  | WalletDisconnectedEvent
+  | FeedPersonalizedEvent;
 
 export interface AnalyticsConfig {
   enabled: boolean;

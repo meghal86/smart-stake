@@ -1041,7 +1041,7 @@ The Hunter Screen implementation is **95% complete**. To reach production readin
   - Test ENS + label display and restoration
   - _Requirements: All_
 
-- [ ] 57. Add Analytics for Wallet Switching
+- [x] 57. Add Analytics for Wallet Switching
   - Track wallet_connected event
   - Track wallet_switched event
   - Track wallet_disconnected event

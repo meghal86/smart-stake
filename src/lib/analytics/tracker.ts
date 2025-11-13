@@ -16,6 +16,10 @@ import type {
   ReportEvent,
   CTAClickEvent,
   ScrollDepthEvent,
+  WalletConnectedEvent,
+  WalletSwitchedEvent,
+  WalletDisconnectedEvent,
+  FeedPersonalizedEvent,
 } from './types';
 
 /**
@@ -282,6 +286,116 @@ export async function trackScrollDepth(params: {
       page_height: params.pageHeight,
       viewport_height: params.viewportHeight,
       wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
+    },
+  };
+
+  await analytics.track(event);
+}
+
+/**
+ * Track wallet connected event
+ * Requirement: 10.1-10.14, Task 57
+ */
+export async function trackWalletConnected(params: {
+  walletAddress: string;
+  walletCount: number;
+  isFirstWallet: boolean;
+  chain: string;
+}): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
+  const event: WalletConnectedEvent = {
+    event: 'wallet_connected',
+    timestamp: new Date().toISOString(),
+    session_id: getSessionId(),
+    user_id_hash: walletIdHash,
+    properties: {
+      wallet_count: params.walletCount,
+      is_first_wallet: params.isFirstWallet,
+      chain: params.chain,
+    },
+  };
+
+  await analytics.track(event);
+}
+
+/**
+ * Track wallet switched event
+ * Requirement: 10.1-10.14, Task 57
+ */
+export async function trackWalletSwitched(params: {
+  fromWalletAddress?: string;
+  toWalletAddress: string;
+  walletCount: number;
+  switchDurationMs: number;
+}): Promise<void> {
+  const fromWalletHash = params.fromWalletAddress 
+    ? await getUserIdHash(params.fromWalletAddress)
+    : undefined;
+  const toWalletHash = await getUserIdHash(params.toWalletAddress);
+  
+  const event: WalletSwitchedEvent = {
+    event: 'wallet_switched',
+    timestamp: new Date().toISOString(),
+    session_id: getSessionId(),
+    user_id_hash: toWalletHash,
+    properties: {
+      wallet_count: params.walletCount,
+      wallet_switch_duration_ms: params.switchDurationMs,
+      from_wallet_hash: fromWalletHash,
+      to_wallet_hash: toWalletHash!,
+    },
+  };
+
+  await analytics.track(event);
+}
+
+/**
+ * Track wallet disconnected event
+ * Requirement: 10.1-10.14, Task 57
+ */
+export async function trackWalletDisconnected(params: {
+  walletAddress: string;
+  walletCount: number;
+  hadActiveWallet: boolean;
+}): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
+  const event: WalletDisconnectedEvent = {
+    event: 'wallet_disconnected',
+    timestamp: new Date().toISOString(),
+    session_id: getSessionId(),
+    user_id_hash: walletIdHash,
+    properties: {
+      wallet_count: params.walletCount,
+      had_active_wallet: params.hadActiveWallet,
+    },
+  };
+
+  await analytics.track(event);
+}
+
+/**
+ * Track feed personalized event
+ * Requirement: 10.1-10.14, Task 57
+ */
+export async function trackFeedPersonalized(params: {
+  walletAddress: string;
+  walletCount: number;
+  personalizationDurationMs: number;
+  hasWalletHistory: boolean;
+}): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
+  const event: FeedPersonalizedEvent = {
+    event: 'feed_personalized',
+    timestamp: new Date().toISOString(),
+    session_id: getSessionId(),
+    user_id_hash: walletIdHash,
+    properties: {
+      wallet_count: params.walletCount,
+      personalization_duration_ms: params.personalizationDurationMs,
+      has_wallet_history: params.hasWalletHistory,
     },
   };
 

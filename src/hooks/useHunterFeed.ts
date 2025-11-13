@@ -256,6 +256,8 @@ export function useHunterFeed(props: UseHunterFeedProps) {
   } = useInfiniteQuery({
     queryKey: ['hunter-feed', queryParams, useRealAPI, activeWallet],
     queryFn: async ({ pageParam }) => {
+      const personalizationStartTime = performance.now();
+      
       if (!useRealAPI) {
         // Demo mode - return mock data
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -274,6 +276,30 @@ export function useHunterFeed(props: UseHunterFeedProps) {
         cursor: pageParam as string | undefined,
         walletAddress: activeWallet ?? undefined,
       });
+      
+      // Track feed personalization analytics when wallet is connected
+      if (activeWallet && !pageParam) { // Only track on first page load
+        const personalizationDurationMs = Math.round(performance.now() - personalizationStartTime);
+        
+        // Import dynamically to avoid circular dependencies
+        import('@/lib/analytics/tracker').then(({ trackFeedPersonalized }) => {
+          // Check if wallet has history (has saved or completed opportunities)
+          const hasWalletHistory = result.items.some(item => 
+            item.eligibility_preview?.status === 'likely'
+          );
+          
+          trackFeedPersonalized({
+            walletAddress: activeWallet,
+            walletCount: 1, // Will be updated by WalletContext
+            personalizationDurationMs,
+            hasWalletHistory,
+          }).catch(err => {
+            console.debug('Failed to track feed personalization:', err);
+          });
+        }).catch(err => {
+          console.debug('Failed to load analytics tracker:', err);
+        });
+      }
       
       return {
         items: result.items,

@@ -142,6 +142,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       return;
     }
 
+    // Track wallet switch start time for duration metric
+    const switchStartTime = performance.now();
+    const previousWallet = activeWallet;
+
     // Use React 18 useTransition for smooth re-render during feed refresh
     // This prevents UI from blocking during the wallet switch
     startTransition(() => {
@@ -168,8 +172,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
       queryClient.invalidateQueries({ queryKey: ['eligibility'] });
       queryClient.invalidateQueries({ queryKey: ['saved-opportunities'] });
+
+      // Track wallet switch analytics (after state updates)
+      const switchDurationMs = Math.round(performance.now() - switchStartTime);
+      
+      // Import dynamically to avoid circular dependencies
+      import('@/lib/analytics/tracker').then(({ trackWalletSwitched }) => {
+        trackWalletSwitched({
+          fromWalletAddress: previousWallet || undefined,
+          toWalletAddress: address,
+          walletCount: connectedWallets.length,
+          switchDurationMs,
+        }).catch(err => {
+          console.debug('Failed to track wallet switch:', err);
+        });
+      }).catch(err => {
+        console.debug('Failed to load analytics tracker:', err);
+      });
     });
-  }, [connectedWallets, queryClient, startTransition]);
+  }, [connectedWallets, activeWallet, queryClient, startTransition]);
 
   // ============================================================================
   // Connect Wallet
@@ -229,6 +250,23 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Resolve ENS/Lens/UD name in background (non-blocking)
       resolveWalletName(address).catch(err => {
         console.debug('Failed to resolve wallet name:', err);
+      });
+
+      // Track wallet connection analytics
+      const isFirstWallet = connectedWallets.length === 0;
+      const newWalletCount = connectedWallets.length + 1;
+      
+      import('@/lib/analytics/tracker').then(({ trackWalletConnected }) => {
+        trackWalletConnected({
+          walletAddress: address,
+          walletCount: newWalletCount,
+          isFirstWallet,
+          chain: chainName,
+        }).catch(err => {
+          console.debug('Failed to track wallet connection:', err);
+        });
+      }).catch(err => {
+        console.debug('Failed to load analytics tracker:', err);
       });
 
     } catch (error) {
@@ -291,6 +329,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
+      const hadActiveWallet = activeWallet === address;
+      const remainingCount = connectedWallets.filter(w => w.address !== address).length;
+      
       // Remove wallet from connected wallets
       setConnectedWallets(prev => prev.filter(w => w.address !== address));
       
@@ -304,6 +345,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           localStorage.removeItem('activeWallet');
         }
       }
+
+      // Track wallet disconnection analytics
+      import('@/lib/analytics/tracker').then(({ trackWalletDisconnected }) => {
+        trackWalletDisconnected({
+          walletAddress: address,
+          walletCount: remainingCount,
+          hadActiveWallet,
+        }).catch(err => {
+          console.debug('Failed to track wallet disconnection:', err);
+        });
+      }).catch(err => {
+        console.debug('Failed to load analytics tracker:', err);
+      });
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
       throw error;
