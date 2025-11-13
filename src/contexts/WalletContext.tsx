@@ -1,297 +1,392 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { normalizeAddress } from '@/lib/guardian/address';
+/**
+ * WalletContext - Multi-Wallet Management
+ * 
+ * Provides context for managing multiple connected wallets and switching between them.
+ * Persists wallet selection to localStorage and emits events for inter-module reactivity.
+ * 
+ * @see .kiro/specs/hunter-screen-feed/requirements.md - Requirement 18
+ * @see .kiro/specs/hunter-screen-feed/design.md - Section 18
+ */
 
-const isNextRuntime = () => typeof window !== 'undefined' && Boolean((window as any).__NEXT_DATA__);
+import React, { createContext, useContext, useState, useEffect, useCallback, useTransition, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { resolveName, type ResolvedName } from '@/lib/name-resolution';
+import { useWalletLabels } from '@/hooks/useWalletLabels';
 
-type GuardianWalletStatus = 'connected' | 'linked' | 'readonly';
-type GuardianWalletType = 'browser' | 'mobile' | 'hardware' | 'exchange' | 'smart' | 'social' | 'readonly';
+// ============================================================================
+// Types
+// ============================================================================
 
-export interface GuardianWallet {
-  id: string;
-  address: string;
-  alias?: string | null;
-  trust_score?: number | null;
-  risk_count?: number | null;
-  last_scan?: string | null;
-  status: GuardianWalletStatus;
-  wallet_type: GuardianWalletType;
-  ens_name?: string | null;
-  added_at?: string | null;
-  short: string;
+export interface ConnectedWallet {
+  address: string;           // Ethereum address
+  label?: string;            // User-defined label (from user_preferences.wallet_labels)
+  ens?: string;              // ENS name if available
+  lens?: string;             // Lens Protocol handle if available
+  unstoppable?: string;      // Unstoppable Domains name if available
+  resolvedName?: ResolvedName; // Full resolved name data
+  chain: string;             // Primary chain (ethereum, polygon, arbitrum, etc.)
+  balance?: string;          // Optional balance display
+  lastUsed?: Date;           // Last time this wallet was active
 }
 
-interface WalletContextType {
-  wallets: GuardianWallet[];
-  activeWallet: GuardianWallet | null;
+export interface WalletContextValue {
+  connectedWallets: ConnectedWallet[];
+  activeWallet: string | null;
   setActiveWallet: (address: string) => void;
-  addWallet: (params: { input: string; alias?: string; walletType?: GuardianWalletType }) => Promise<GuardianWallet>;
-  removeWallet: (address: string) => Promise<void>;
-  updateWallet: (address: string, updates: Partial<GuardianWallet>) => void;
-  updateWalletAlias: (address: string, alias: string | null) => Promise<void>;
-  refreshWallets: () => Promise<void>;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: (address: string) => Promise<void>;
   isLoading: boolean;
+  isSwitching: boolean;      // Indicates wallet switch in progress
 }
 
-const WalletContext = createContext<WalletContextType | null>(null);
+// ============================================================================
+// Context
+// ============================================================================
 
-export function WalletProvider({ children }: { children: ReactNode }) {
-  const [wallets, setWallets] = useState<GuardianWallet[]>([]);
-  const [activeWallet, setActiveWalletState] = useState<GuardianWallet | null>(null);
+const WalletContext = createContext<WalletContextValue | undefined>(undefined);
+
+// ============================================================================
+// Provider
+// ============================================================================
+
+interface WalletProviderProps {
+  children: ReactNode;
+}
+
+export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
+  const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>([]);
+  const [activeWallet, setActiveWalletState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const [isSwitching, startTransition] = useTransition();
+  const queryClient = useQueryClient();
+  const { labels: walletLabels, getLabel } = useWalletLabels();
 
-  const formatAddress = (address: string): string => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
+  // ============================================================================
+  // Load from localStorage on mount
+  // ============================================================================
 
-  const refreshWallets = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
+  useEffect(() => {
     try {
-      const { data, error } = await supabase
-        .from('guardian_wallets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        if ((error as any)?.code === 'PGRST205') {
-          console.warn('guardian_wallets table not found; ensure migration 20241027000000_guardian_multi_wallet.sql is applied.');
-          setWallets([]);
-          return;
-        }
-        throw error;
-      }
-
-      const formattedWallets = (data || []).map(wallet => ({
-        ...wallet,
-        status: (wallet.status ?? 'readonly') as GuardianWalletStatus,
-        wallet_type: (wallet.wallet_type ?? 'readonly') as GuardianWalletType,
-        short: formatAddress(wallet.address),
-      }));
-
-      setWallets(formattedWallets);
+      const savedWallet = localStorage.getItem('activeWallet');
+      const savedWallets = localStorage.getItem('connectedWallets');
       
-      // Set first wallet as active if none selected
-      if (formattedWallets.length > 0 && !activeWallet) {
-        setActiveWalletState(formattedWallets[0]);
+      if (savedWallets) {
+        const wallets: ConnectedWallet[] = JSON.parse(savedWallets);
+        
+        // Convert lastUsed strings back to Date objects
+        const walletsWithDates = wallets.map(w => ({
+          ...w,
+          lastUsed: w.lastUsed ? new Date(w.lastUsed) : undefined,
+        }));
+        
+        setConnectedWallets(walletsWithDates);
+        
+        // Restore active wallet if it's still in the list
+        if (savedWallet && walletsWithDates.some(w => w.address === savedWallet)) {
+          setActiveWalletState(savedWallet);
+        } else if (walletsWithDates.length > 0) {
+          // Default to first wallet if saved wallet is not found
+          setActiveWalletState(walletsWithDates[0].address);
+        }
+
+        // Resolve names for all wallets in background
+        walletsWithDates.forEach(wallet => {
+          // Only resolve if we don't have a cached name
+          if (!wallet.ens && !wallet.lens && !wallet.unstoppable) {
+            resolveWalletName(wallet.address).catch(err => {
+              console.debug('Failed to resolve wallet name:', err);
+            });
+          }
+        });
       }
     } catch (error) {
-      console.error('Error fetching wallets:', error);
+      console.error('Failed to load wallet state from localStorage:', error);
+      // Clear corrupted data
+      localStorage.removeItem('activeWallet');
+      localStorage.removeItem('connectedWallets');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ============================================================================
+  // Save to localStorage on change
+  // ============================================================================
+
+  useEffect(() => {
+    try {
+      if (activeWallet) {
+        localStorage.setItem('activeWallet', activeWallet);
+      } else {
+        localStorage.removeItem('activeWallet');
+      }
+      
+      if (connectedWallets.length > 0) {
+        localStorage.setItem('connectedWallets', JSON.stringify(connectedWallets));
+      } else {
+        localStorage.removeItem('connectedWallets');
+      }
+    } catch (error) {
+      console.error('Failed to save wallet state to localStorage:', error);
+    }
+  }, [activeWallet, connectedWallets]);
+
+  // ============================================================================
+  // Set Active Wallet
+  // ============================================================================
+
+  const setActiveWallet = useCallback((address: string) => {
+    // Validate wallet exists
+    const walletExists = connectedWallets.some(w => w.address === address);
+    if (!walletExists) {
+      console.error(`Wallet ${address} not found in connected wallets`);
+      return;
+    }
+
+    // Use React 18 useTransition for smooth re-render during feed refresh
+    // This prevents UI from blocking during the wallet switch
+    startTransition(() => {
+      // Update active wallet state
+      setActiveWalletState(address);
+      
+      // Update lastUsed timestamp
+      setConnectedWallets(prev => 
+        prev.map(w => 
+          w.address === address 
+            ? { ...w, lastUsed: new Date() }
+            : w
+        )
+      );
+      
+      // Emit custom event for inter-module reactivity (Guardian, Action Engine, etc.)
+      const event = new CustomEvent('walletConnected', {
+        detail: { address, timestamp: new Date().toISOString() }
+      });
+      window.dispatchEvent(event);
+      
+      // Invalidate feed queries to trigger refresh with new wallet
+      // This will cause useHunterFeed to refetch with the new wallet context
+      queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['eligibility'] });
+      queryClient.invalidateQueries({ queryKey: ['saved-opportunities'] });
+    });
+  }, [connectedWallets, queryClient, startTransition]);
+
+  // ============================================================================
+  // Connect Wallet
+  // ============================================================================
+
+  const connectWallet = useCallback(async () => {
+    setIsLoading(true);
+    
+    try {
+      // Check if window.ethereum is available
+      if (typeof window.ethereum === 'undefined') {
+        throw new Error('No Ethereum wallet detected. Please install MetaMask or another Web3 wallet.');
+      }
+
+      // Request account access
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+      
+      if (accounts.length === 0) {
+        throw new Error('No accounts found');
+      }
+
+      const address = accounts[0];
+      
+      // Check if wallet is already connected
+      if (connectedWallets.some(w => w.address.toLowerCase() === address.toLowerCase())) {
+        // Just set it as active
+        setActiveWallet(address);
+        return;
+      }
+
+      // Get chain ID
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const chainName = getChainName(chainId);
+
+      // Create new wallet entry with label from user preferences
+      const newWallet: ConnectedWallet = {
+        address,
+        chain: chainName,
+        lastUsed: new Date(),
+        label: getLabel(address), // Get label from user preferences
+      };
+
+      // Add to connected wallets
+      setConnectedWallets(prev => [...prev, newWallet]);
+      
+      // Set as active wallet directly (bypass validation since we just added it)
+      setActiveWalletState(address);
+
+      // Emit connection event
+      const event = new CustomEvent('walletConnected', {
+        detail: { address, timestamp: new Date().toISOString() }
+      });
+      window.dispatchEvent(event);
+
+      // Resolve ENS/Lens/UD name in background (non-blocking)
+      resolveWalletName(address).catch(err => {
+        console.debug('Failed to resolve wallet name:', err);
+      });
+
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [connectedWallets, setActiveWallet]);
 
-  const setActiveWallet = (address: string) => {
-    const wallet = wallets.find(w => w.address === address);
-    if (wallet) {
-      setActiveWalletState(wallet);
-    }
-  };
-
-  const addWallet = async ({
-    input,
-    alias,
-    walletType = 'readonly',
-  }: {
-    input: string;
-    alias?: string;
-    walletType?: GuardianWalletType;
-  }) => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    let wallet: GuardianWallet | null = null;
-
-    if (isNextRuntime()) {
-      try {
-        const response = await fetch('/api/guardian/add-wallet', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            input,
-            alias,
-            walletType,
-          }),
-        });
-
-        if (response.ok) {
-          const payload = await response.json();
-          wallet = payload.wallet as GuardianWallet;
-        } else if (response.status === 409) {
-          throw new Error('Wallet already added.');
-        } else if (response.status !== 404) {
-          const errorBody = await response.json().catch(() => ({}));
-          throw new Error(errorBody?.error || 'Failed to add wallet');
-        }
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('Failed to add wallet')) {
-          throw error;
-        }
-        // fall through to Supabase fallback
-      }
-    }
-
-    const normalizedAddress = normalizeAddress(wallet ? wallet.address : input);
-    const resolvedAlias = alias?.trim() || null;
-
-    if (!wallet) {
-      const existing = wallets.find((w) => w.address === normalizedAddress);
-      if (existing) {
-        const label = existing.alias || existing.ens_name || existing.short;
-        throw new Error(`Wallet already added (${label})`);
-      }
-
-      const { data, error } = await supabase
-        .from('guardian_wallets')
-        .insert({
-          user_id: user.id,
-          address: normalizedAddress,
-          alias: resolvedAlias,
-          wallet_type: walletType,
-          status: walletType === 'browser' ? 'connected' : walletType === 'readonly' ? 'readonly' : 'linked',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        const code = (error as any)?.code;
-        if (code === '23505') {
-          throw new Error('Wallet already added.');
-        }
-        throw error;
-      }
-
-      wallet = {
-        ...data,
-        status: (data.status ?? 'readonly') as GuardianWalletStatus,
-        wallet_type: (data.wallet_type ?? walletType) as GuardianWalletType,
-        short: formatAddress(data.address),
-      } as GuardianWallet;
-
-      await supabase.from('guardian_logs').insert({
-        user_id: user.id,
-        event_type: 'wallet_add',
-        metadata: {
-          address: normalizedAddress,
-          wallet_type: wallet.wallet_type,
-          alias: resolvedAlias,
-        },
-      });
-
-      await supabase.functions.invoke('guardian-scan-v2', {
-        body: {
-          wallet_address: normalizedAddress,
-          user_id: user.id,
-          trigger: 'add-wallet-fallback',
-        },
-      });
-    }
-
-    await refreshWallets();
-
-    const nextWallet: GuardianWallet = {
-      ...wallet,
-      address: normalizedAddress,
-      status: (wallet.status ?? 'readonly') as GuardianWalletStatus,
-      wallet_type: (wallet.wallet_type ?? walletType) as GuardianWalletType,
-      short: formatAddress(normalizedAddress),
-    };
-
-    setActiveWalletState(nextWallet);
-    return nextWallet;
-  };
-
-  const removeWallet = async (address: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('guardian_wallets')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('address', address.toLowerCase());
-
-      if (error) throw error;
-
-      setWallets(prev => prev.filter(w => w.address !== address));
-      
-      // If removing active wallet, set new active
-      if (activeWallet?.address === address) {
-        const remaining = wallets.filter(w => w.address !== address);
-        setActiveWalletState(remaining[0] || null);
-      }
-    } catch (error) {
-      console.error('Error removing wallet:', error);
-      throw error;
-    }
-  };
-
-  const updateWallet = (address: string, updates: Partial<GuardianWallet>) => {
-    setWallets(prev => prev.map(w => 
-      w.address === address ? { ...w, ...updates } : w
-    ));
-    
-    if (activeWallet?.address === address) {
-      setActiveWalletState(prev => prev ? { ...prev, ...updates } : null);
-    }
-  };
-
-  const updateWalletAlias = async (address: string, alias: string | null) => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    const { error } = await supabase
-      .from('guardian_wallets')
-      .update({ alias })
-      .eq('user_id', user.id)
-      .eq('address', address.toLowerCase());
-
-    if (error) {
-      throw error;
-    }
-
-    updateWallet(address.toLowerCase(), { alias });
-  };
+  // ============================================================================
+  // Sync wallet labels from user preferences
+  // ============================================================================
 
   useEffect(() => {
-    if (user) {
-      refreshWallets();
-    } else {
-      setWallets([]);
-      setActiveWalletState(null);
+    // Update wallet labels when they change in user preferences
+    setConnectedWallets(prev => 
+      prev.map(w => ({
+        ...w,
+        label: getLabel(w.address),
+      }))
+    );
+  }, [walletLabels, getLabel]);
+
+  // ============================================================================
+  // Resolve Wallet Name
+  // ============================================================================
+
+  const resolveWalletName = useCallback(async (address: string) => {
+    try {
+      const resolved = await resolveName(address);
+      
+      if (resolved && resolved.name) {
+        // Update wallet with resolved name
+        setConnectedWallets(prev => 
+          prev.map(w => 
+            w.address.toLowerCase() === address.toLowerCase()
+              ? {
+                  ...w,
+                  resolvedName: resolved,
+                  // Set specific fields based on provider
+                  ens: resolved.provider === 'ens' ? resolved.name : w.ens,
+                  lens: resolved.provider === 'lens' ? resolved.name : w.lens,
+                  unstoppable: resolved.provider === 'unstoppable' ? resolved.name : w.unstoppable,
+                }
+              : w
+          )
+        );
+      }
+    } catch (error) {
+      console.debug('Failed to resolve wallet name:', error);
     }
-  }, [user]);
+  }, []);
+
+  // ============================================================================
+  // Disconnect Wallet
+  // ============================================================================
+
+  const disconnectWallet = useCallback(async (address: string) => {
+    setIsLoading(true);
+    
+    try {
+      // Remove wallet from connected wallets
+      setConnectedWallets(prev => prev.filter(w => w.address !== address));
+      
+      // If disconnecting active wallet, switch to another or null
+      if (activeWallet === address) {
+        const remaining = connectedWallets.filter(w => w.address !== address);
+        if (remaining.length > 0) {
+          setActiveWallet(remaining[0].address);
+        } else {
+          setActiveWalletState(null);
+          localStorage.removeItem('activeWallet');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeWallet, connectedWallets, setActiveWallet]);
+
+  // ============================================================================
+  // Context Value
+  // ============================================================================
+
+  const value: WalletContextValue = {
+    connectedWallets,
+    activeWallet,
+    setActiveWallet,
+    connectWallet,
+    disconnectWallet,
+    isLoading,
+    isSwitching,
+  };
 
   return (
-    <WalletContext.Provider value={{
-      wallets,
-      activeWallet,
-      setActiveWallet,
-      addWallet,
-      removeWallet,
-      updateWallet,
-      updateWalletAlias,
-      refreshWallets,
-      isLoading
-    }}>
+    <WalletContext.Provider value={value}>
       {children}
     </WalletContext.Provider>
   );
-}
+};
 
-export function useWalletContext() {
+// ============================================================================
+// Hook
+// ============================================================================
+
+export const useWallet = (): WalletContextValue => {
   const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error('useWalletContext must be used within WalletProvider');
+  if (context === undefined) {
+    throw new Error('useWallet must be used within a WalletProvider');
   }
   return context;
+};
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+/**
+ * Get human-readable chain name from chain ID
+ */
+function getChainName(chainId: string): string {
+  const chainMap: Record<string, string> = {
+    '0x1': 'ethereum',
+    '0x89': 'polygon',
+    '0xa4b1': 'arbitrum',
+    '0xa': 'optimism',
+    '0x38': 'bsc',
+    '0xa86a': 'avalanche',
+    '0xfa': 'fantom',
+    '0x2105': 'base',
+  };
+  
+  return chainMap[chainId] || 'ethereum';
+}
+
+/**
+ * Truncate Ethereum address for display
+ * @example truncateAddress('0x1234567890abcdef') => '0x1234...cdef'
+ */
+export function truncateAddress(address: string | undefined, chars = 4): string {
+  if (!address) return '';
+  if (address.length <= chars * 2 + 2) return address;
+  return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
+}
+
+// ============================================================================
+// Type Augmentation for window.ethereum
+// ============================================================================
+
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<any>;
+      on: (event: string, callback: (...args: any[]) => void) => void;
+      removeListener: (event: string, callback: (...args: any[]) => void) => void;
+    };
+  }
 }

@@ -23,7 +23,7 @@ vi.mock('wagmi', () => ({
 }));
 
 vi.mock('@/contexts/WalletContext', () => ({
-  useWalletContext: () => ({
+  useWallet: () => ({
     addWallet: addWalletMock,
     updateWalletAlias: updateWalletAliasMock,
   }),

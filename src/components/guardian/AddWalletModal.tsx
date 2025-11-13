@@ -24,7 +24,7 @@ import type { GuardianWallet } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWalletRegistry } from '@/hooks/useWalletRegistry';
 import { useToast } from '@/hooks/use-toast';
 import { resolveEns } from '@/lib/guardian/ens';
 import { normalizeAddress, shortAddress } from '@/lib/guardian/address';
@@ -52,7 +52,7 @@ const advancedTypes = [
 ];
 
 export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWalletModalProps) {
-  const { addWallet } = useWalletContext();
+  const { addWallet } = useWalletRegistry();
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
 

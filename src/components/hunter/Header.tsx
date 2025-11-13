@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Brain, Activity, Sun, Moon } from 'lucide-react';
 import { HunterTabs, TabType } from './HunterTabs';
+import { WalletSelector } from './WalletSelector';
 
 interface HeaderProps {
   isDemo: boolean;
@@ -71,6 +72,13 @@ export function Header({
           )}
           
           <div className="flex items-center gap-3">
+            {/* WalletSelector - positioned between controls and theme toggle */}
+            <WalletSelector 
+              showLabel={true}
+              variant="default"
+              className="hidden sm:flex"
+            />
+            
             <motion.button
               onClick={() => setIsDarkTheme(!isDarkTheme)}
               className={`p-2 rounded-lg transition-all duration-200 ${

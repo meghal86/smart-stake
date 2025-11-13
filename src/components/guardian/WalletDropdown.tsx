@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet as useWalletContext } from '@/contexts/WalletContext';
 import { cn } from '@/lib/utils';
 
 interface WalletDropdownProps {

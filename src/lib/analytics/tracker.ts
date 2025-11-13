@@ -51,7 +51,7 @@ async function getUserIdHash(walletAddress?: string): Promise<string | undefined
 
 /**
  * Track feed view event
- * Requirement: 10.1
+ * Requirement: 10.1, 18.4 (wallet correlation)
  */
 export async function trackFeedView(params: {
   tab?: string;
@@ -59,15 +59,18 @@ export async function trackFeedView(params: {
   filterCount: number;
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: FeedViewEvent = {
     event: 'feed_view',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       tab: params.tab,
       has_wallet: params.hasWallet,
       filter_count: params.filterCount,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -76,7 +79,7 @@ export async function trackFeedView(params: {
 
 /**
  * Track filter change event
- * Requirement: 10.2
+ * Requirement: 10.2, 18.4 (wallet correlation)
  */
 export async function trackFilterChange(params: {
   filterType: string;
@@ -84,15 +87,18 @@ export async function trackFilterChange(params: {
   activeFilters: Record<string, any>;
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: FilterChangeEvent = {
     event: 'filter_change',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       filter_type: params.filterType,
       filter_value: params.filterValue,
       active_filters: params.activeFilters,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -101,7 +107,7 @@ export async function trackFilterChange(params: {
 
 /**
  * Track card impression event (with 0.1% sampling)
- * Requirement: 10.3
+ * Requirement: 10.3, 18.4 (wallet correlation)
  */
 export async function trackCardImpression(params: {
   opportunityId: string;
@@ -115,11 +121,13 @@ export async function trackCardImpression(params: {
   // Apply 0.1% sampling
   if (Math.random() > 0.001) return;
 
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: CardImpressionEvent = {
     event: 'card_impression',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       opportunity_id: params.opportunityId,
       opportunity_type: params.opportunityType,
@@ -127,6 +135,7 @@ export async function trackCardImpression(params: {
       position: params.position,
       is_sponsored: params.isSponsored,
       is_featured: params.isFeatured,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -135,7 +144,7 @@ export async function trackCardImpression(params: {
 
 /**
  * Track card click event (100% sampling)
- * Requirement: 10.4
+ * Requirement: 10.4, 18.4 (wallet correlation)
  */
 export async function trackCardClick(params: {
   opportunityId: string;
@@ -146,11 +155,13 @@ export async function trackCardClick(params: {
   isFeatured: boolean;
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: CardClickEvent = {
     event: 'card_click',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       opportunity_id: params.opportunityId,
       opportunity_type: params.opportunityType,
@@ -158,6 +169,7 @@ export async function trackCardClick(params: {
       position: params.position,
       is_sponsored: params.isSponsored,
       is_featured: params.isFeatured,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -166,7 +178,7 @@ export async function trackCardClick(params: {
 
 /**
  * Track save event
- * Requirement: 10.5
+ * Requirement: 10.5, 18.4 (wallet correlation)
  */
 export async function trackSave(params: {
   opportunityId: string;
@@ -174,15 +186,18 @@ export async function trackSave(params: {
   action: 'save' | 'unsave';
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: SaveEvent = {
     event: 'save',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       opportunity_id: params.opportunityId,
       opportunity_type: params.opportunityType,
       action: params.action,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -191,21 +206,24 @@ export async function trackSave(params: {
 
 /**
  * Track report event
- * Requirement: 10.6
+ * Requirement: 10.6, 18.4 (wallet correlation)
  */
 export async function trackReport(params: {
   opportunityId: string;
   reportCategory: string;
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: ReportEvent = {
     event: 'report',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       opportunity_id: params.opportunityId,
       report_category: params.reportCategory,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -214,7 +232,7 @@ export async function trackReport(params: {
 
 /**
  * Track CTA click event
- * Requirement: 10.7
+ * Requirement: 10.7, 18.4 (wallet correlation)
  */
 export async function trackCTAClick(params: {
   opportunityId: string;
@@ -223,16 +241,19 @@ export async function trackCTAClick(params: {
   trustLevel: string;
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: CTAClickEvent = {
     event: 'cta_click',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       opportunity_id: params.opportunityId,
       opportunity_type: params.opportunityType,
       cta_action: params.ctaAction,
       trust_level: params.trustLevel,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 
@@ -241,7 +262,7 @@ export async function trackCTAClick(params: {
 
 /**
  * Track scroll depth event
- * Requirement: 10.8
+ * Requirement: 10.8, 18.4 (wallet correlation)
  */
 export async function trackScrollDepth(params: {
   depthPercent: number;
@@ -249,15 +270,18 @@ export async function trackScrollDepth(params: {
   viewportHeight: number;
   walletAddress?: string;
 }): Promise<void> {
+  const walletIdHash = await getUserIdHash(params.walletAddress);
+  
   const event: ScrollDepthEvent = {
     event: 'scroll_depth',
     timestamp: new Date().toISOString(),
     session_id: getSessionId(),
-    user_id_hash: await getUserIdHash(params.walletAddress),
+    user_id_hash: walletIdHash,
     properties: {
       depth_percent: params.depthPercent,
       page_height: params.pageHeight,
       viewport_height: params.viewportHeight,
+      wallet_id_hash: walletIdHash, // Include hashed wallet_id for analytics correlation
     },
   };
 

@@ -1030,7 +1030,7 @@ The Hunter Screen implementation is **95% complete**. To reach production readin
   - Test ENS + label combination restoration
   - _Requirements: All_
 
-- [-] 56. Write E2E Tests for Multi-Wallet Flow
+- [x] 56. Write E2E Tests for Multi-Wallet Flow
   - Test connecting multiple wallets
   - Test switching between wallets4
   - Test feed personalization for each wallet

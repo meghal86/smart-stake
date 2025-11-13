@@ -1,36 +1,28 @@
 import { z } from 'zod'
 
+// Environment variables for Vite
 const envSchema = z.object({
-  // Public environment variables
   NEXT_PUBLIC_SITE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-
-  // Server-only environment variables
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-
-  // Optional API keys
-  ETHERSCAN_API_KEY: z.string().optional(),
-  COINGECKO_API_KEY: z.string().optional(),
-  TOKEN_UNLOCKS_API_KEY: z.string().optional(),
-
-  // Hunter feature: external providers
-  ALCHEMY_API_KEY: z.string().optional(),
-
-  // Upstash Redis (server-side only)
-  UPSTASH_REDIS_REST_URL: z.string().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-
-  // Cron security (server-side only)
-  CRON_SECRET: z.string().optional(),
-
-  // Feature flags
-  ENABLE_DEFI_LLAMA: z.string().optional(),
-  DEFI_LLAMA_BASE: z.string().optional(),
-  ENABLE_GALXE: z.string().optional(),
-  ENABLE_LAYER3: z.string().optional(),
 })
 
-export const env = envSchema.parse(process.env)
+export const env = envSchema.parse({
+  NEXT_PUBLIC_SITE_URL: import.meta.env.VITE_NEXT_PUBLIC_SITE_URL || 'http://localhost:8080',
+  NEXT_PUBLIC_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://rebeznxivaxgserswhbn.supabase.co',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYmV6bnhpdmF4Z3NlcnN3aGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MDc0NDIsImV4cCI6MjA3MDk4MzQ0Mn0.u2t2SEmm3rTpseRRdgym3jnaOq7lRLHW531PxPmu6xo',
+})
+
+// Server-only environment variables
+export const serverEnv = {
+  SUPABASE_SERVICE_ROLE_KEY: import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
+  ETHERSCAN_API_KEY: import.meta.env.ETHERSCAN_API_KEY,
+  COINGECKO_API_KEY: import.meta.env.COINGECKO_API_KEY,
+  TOKEN_UNLOCKS_API_KEY: import.meta.env.TOKEN_UNLOCKS_API_KEY,
+  ALCHEMY_API_KEY: import.meta.env.ALCHEMY_API_KEY,
+  UPSTASH_REDIS_REST_URL: import.meta.env.UPSTASH_REDIS_REST_URL,
+  UPSTASH_REDIS_REST_TOKEN: import.meta.env.UPSTASH_REDIS_REST_TOKEN,
+  CRON_SECRET: import.meta.env.CRON_SECRET,
+}
 
 export type Env = z.infer<typeof envSchema>

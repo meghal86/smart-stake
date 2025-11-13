@@ -43,7 +43,7 @@ import { FooterNav } from '@/components/layout/FooterNav';
 import { useUserModeContext } from '@/contexts/UserModeContext';
 import { useNotificationContext } from '@/contexts/NotificationContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet as useWalletContext } from '@/contexts/WalletContext';
 import type { GuardianWallet } from '@/contexts/WalletContext';
 
 

@@ -5,7 +5,7 @@ import { Shield, Scan, Plus } from 'lucide-react';
 import { SimpleAddWalletButton } from '@/components/guardian/SimpleAddWalletButton';
 import { WorkingAddWalletButton } from '@/components/guardian/WorkingAddWalletButton';
 import MultiWalletDashboard from '@/components/guardian/MultiWalletDashboard';
-import { WalletProvider, useWalletContext } from '@/contexts/WalletContext';
+import { WalletProvider, useWallet as useWalletContext } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
 
 function GuardianContent() {

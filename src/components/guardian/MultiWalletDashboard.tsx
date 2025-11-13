@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Scan, RefreshCw, Trash2, Eye, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useWallet as useWalletContext } from '@/contexts/WalletContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import dayjs from 'dayjs';

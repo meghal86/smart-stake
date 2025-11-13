@@ -89,6 +89,14 @@ export const RedisKeys = {
    */
   session: (sessionId: string, key: string): string => 
     `session:${sessionId}:${key}`,
+
+  /**
+   * Wallet history cache key
+   * @param walletAddress - Wallet address
+   * @returns Redis key for wallet history
+   */
+  walletHistory: (walletAddress: string): string => 
+    `wallet:history:${walletAddress}`,
 } as const;
 
 /**
@@ -104,6 +112,7 @@ export const RedisKeyPatterns = {
   allRateLimits: 'ratelimit:*',
   allLocks: 'lock:*',
   allSessions: 'session:*',
+  allWalletHistory: 'wallet:history:*',
 } as const;
 
 /**
@@ -118,4 +127,5 @@ export const RedisTTL = {
   feedPage: 300, // 5 minutes
   opportunityDetail: 600, // 10 minutes
   session: 86400, // 24 hours
+  walletHistory: 300, // 5 minutes
 } as const;

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/hunter/Header';
 import { OpportunityCard } from '@/components/hunter/OpportunityCard';
+import { OpportunityGridSkeleton } from '@/components/hunter/OpportunityCardSkeleton';
 import { EmptyState } from '@/components/hunter/EmptyState';
 import { ExecuteQuestModal } from '@/components/hunter/ExecuteQuestModal';
 import { CopilotPanel } from '@/components/hunter/CopilotPanel';
@@ -174,40 +175,11 @@ export default function Hunter() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-4"
             >
-              {[...Array(3)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`backdrop-blur-lg rounded-[20px] p-6 animate-pulse ${
-                    isDarkTheme 
-                      ? 'bg-white/5' 
-                      : 'bg-white/90 shadow-[0_4px_12px_rgba(0,0,0,0.05)]'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-3 flex-1">
-                      <div className={`h-4 rounded w-1/3 ${
-                        isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
-                      }`}></div>
-                      <div className={`h-3 rounded w-2/3 ${
-                        isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
-                      }`}></div>
-                      <div className="flex gap-2">
-                        <div className={`h-6 rounded w-16 ${
-                          isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
-                        }`}></div>
-                        <div className={`h-6 rounded w-20 ${
-                          isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
-                        }`}></div>
-                      </div>
-                    </div>
-                    <div className={`h-10 rounded-lg w-24 ${
-                      isDarkTheme ? 'bg-gray-700' : 'bg-gray-200'
-                    }`}></div>
-                  </div>
-                </div>
-              ))}
+              <OpportunityGridSkeleton 
+                count={3} 
+                isDarkTheme={isDarkTheme}
+              />
             </motion.div>
           ) : filteredOpportunities.length === 0 ? (
             <EmptyState filter={activeFilter} />

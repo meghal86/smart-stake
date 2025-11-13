@@ -35,7 +35,8 @@ export interface FeedQueryParams {
   showRisky?: boolean;
   cursor?: string;
   limit?: number;
-  walletAddress?: string; // For eligibility filtering
+  walletAddress?: string; // For personalized ranking and eligibility filtering
+  userId?: string; // For user preferences lookup
 }
 
 /**
@@ -65,15 +66,35 @@ const MAX_SPONSORED_PER_FOLD = 2;
  * @returns Feed page with items and next cursor
  * 
  * Requirements:
+ * - 3.1-3.6: Personalized ranking with wallet history
  * - 3.7: Cursor-based pagination with stable ordering
  * - 4.1-4.12: Comprehensive filtering
  * - 4.16: Sponsored item capping (≤2 per fold)
  * - 4.19: Deterministic sponsored placement
  * - 7.9: Deduplication across pages
+ * - 17.4: Personalized ranking based on wallet
+ * - 18.4: Feed refresh with personalized ranking on wallet change
  */
 export async function getFeedPage(params: FeedQueryParams): Promise<FeedPageResult> {
   const supabase = createServiceClient();
   const limit = params.limit ?? DEFAULT_PAGE_SIZE;
+  
+  // Fetch wallet history for personalized ranking if wallet provided
+  let walletHistory: any = null;
+  let usePersonalizedRanking = false;
+  
+  if (params.walletAddress && params.sort === 'recommended') {
+    try {
+      const { getWalletHistory } = await import('@/lib/wallet-history');
+      walletHistory = await getWalletHistory(params.walletAddress, params.userId);
+      usePersonalizedRanking = true;
+    } catch (error) {
+      // Fallback to cached anonymous ranking if personalization fetch fails
+      // This handles HTTP 429, timeouts, and other errors gracefully
+      console.warn('Failed to fetch wallet history for personalization, falling back to default ranking:', error);
+      usePersonalizedRanking = false;
+    }
+  }
   
   // Decode cursor or create new snapshot
   let cursorTuple: CursorTuple | null = null;
@@ -230,6 +251,12 @@ export async function getFeedPage(params: FeedQueryParams): Promise<FeedPageResu
 
   // Transform database rows to Opportunity objects
   let opportunities = data.map(row => transformRowToOpportunity(row));
+
+  // Apply personalized ranking if wallet history is available
+  if (usePersonalizedRanking && walletHistory) {
+    const { applyPersonalizedRanking } = await import('@/lib/feed/personalized-ranking');
+    opportunities = applyPersonalizedRanking(opportunities, walletHistory);
+  }
 
   // Apply sponsored item capping (≤2 per fold)
   opportunities = applySponsoredCapping(opportunities, limit);

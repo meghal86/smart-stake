@@ -108,3 +108,76 @@ body {
     -webkit-backdrop-filter: blur(15px);
   }
 }
+
+/* Accessibility: High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --text-secondary: #ffffff;
+    --text-muted: #e5e7eb;
+  }
+  
+  /* Increase border contrast for interactive elements */
+  button,
+  [role="button"],
+  [role="menuitem"],
+  [role="menuitemradio"] {
+    border-width: 2px !important;
+  }
+  
+  /* Ensure focus indicators are highly visible */
+  *:focus-visible {
+    outline: 3px solid #00F5A0 !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Accessibility: Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Disable framer-motion animations */
+  [data-framer-motion] {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Accessibility: Screen Reader Only Content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Accessibility: Focus Visible (for keyboard navigation) */
+.focus-visible:focus-visible {
+  outline: 2px solid #00F5A0;
+  outline-offset: 2px;
+}
+
+/* Accessibility: Touch Target Minimum Size */
+@media (pointer: coarse) {
+  /* Ensure all interactive elements meet 44x44px minimum on touch devices */
+  button,
+  [role="button"],
+  [role="menuitem"],
+  [role="menuitemradio"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

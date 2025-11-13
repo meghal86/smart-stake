@@ -169,7 +169,11 @@ export async function GET(req: NextRequest) {
       return response;
     }
 
-    // Fetch feed data
+    // Extract wallet address and user ID from headers for personalization
+    const walletAddress = req.headers.get('x-wallet-address') || undefined;
+    const userId = req.headers.get('x-user-id') || undefined;
+
+    // Fetch feed data with personalized ranking if wallet provided
     const feedResult = await getFeedPage({
       search: params.q,
       types: params.type,
@@ -182,6 +186,8 @@ export async function GET(req: NextRequest) {
       difficulty: params.difficulty,
       sort: params.sort,
       cursor: params.cursor ?? undefined,
+      walletAddress,
+      userId,
     });
 
     // Build response body

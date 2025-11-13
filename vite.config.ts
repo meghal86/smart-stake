@@ -8,8 +8,6 @@ export default defineConfig({
     react(),
   ],
   define: {
-    'process.env': {},
-    'process': { env: {} },
     '__HMR_CONFIG_NAME__': '"default"'
   },
   resolve: {

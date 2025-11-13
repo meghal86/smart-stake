@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getFeedPage, FeedQueryParams } from '@/lib/feed/query';
 import { Opportunity as NewOpportunity, OpportunityType, SortOption } from '@/types/hunter';
+import { useWallet } from '@/contexts/WalletContext';
+import { hashWalletAddress } from '@/lib/analytics/hash';
 
 // Legacy opportunity interface for backward compatibility with existing UI
 interface LegacyOpportunity {
@@ -218,11 +220,13 @@ function formatDuration(opp: NewOpportunity): string {
  * - Infinite scroll support
  * - Filter and sort options
  * - Real-time updates
+ * - Wallet-aware personalization
  * 
- * Requirements: 3.1-3.7, 7.3-7.10
+ * Requirements: 3.1-3.7, 7.3-7.10, 18.4-18.8
  */
 export function useHunterFeed(props: UseHunterFeedProps) {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const { activeWallet, isSwitching } = useWallet();
 
   // Use demo mode or real API
   const useRealAPI = !props.isDemo;
@@ -236,9 +240,11 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     showRisky: props.showRisky ?? false,
     featured: props.filter === 'Featured' ? true : undefined, // Filter by featured flag for Featured tab
     limit: 12, // 12 items per page (one fold)
+    walletAddress: activeWallet ?? undefined, // Include active wallet for personalization
   };
 
   // Use infinite query for cursor-based pagination with ranking
+  // Include activeWallet in query key to trigger refetch on wallet change (Requirement 18.4)
   const {
     data,
     isLoading,
@@ -248,7 +254,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     isFetchingNextPage,
     refetch: queryRefetch,
   } = useInfiniteQuery({
-    queryKey: ['hunter-feed', queryParams, useRealAPI],
+    queryKey: ['hunter-feed', queryParams, useRealAPI, activeWallet],
     queryFn: async ({ pageParam }) => {
       if (!useRealAPI) {
         // Demo mode - return mock data
@@ -262,9 +268,11 @@ export function useHunterFeed(props: UseHunterFeedProps) {
       
       // Real API call with ranking from materialized view
       // This uses the mv_opportunity_rank view which includes rank_score
+      // Pass wallet address in query params for personalized ranking
       const result = await getFeedPage({
         ...queryParams,
         cursor: pageParam as string | undefined,
+        walletAddress: activeWallet ?? undefined,
       });
       
       return {
@@ -301,7 +309,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
 
   return {
     opportunities,
-    isLoading,
+    isLoading: isLoading || isSwitching, // Show loading during wallet switch (Requirement 18.13)
     error,
     lastUpdated,
     refetch,

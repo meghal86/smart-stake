@@ -1,100 +1,202 @@
 /**
- * Eligibility Preview Component
+ * EligibilityPreview Component
  * 
- * Shows eligibility status and reasons for wallet-connected users.
+ * Displays eligibility status for an opportunity with:
+ * - Active wallet integration
+ * - Automatic refresh on wallet change
+ * - Manual recalculation button with throttling
+ * - Loading states
+ * - Color-coded status indicators
  * 
- * Requirements:
- * - 6.1-6.8: Eligibility preview
- * - 5.6: Display eligibility with reasons
+ * Requirements: 5.6, 6.1-6.8, 17.5, 18.5
+ * Task: 47
  */
 
 import React from 'react';
-import { CheckCircle, AlertCircle, HelpCircle, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CheckCircle, AlertCircle, XCircle, HelpCircle, RefreshCw } from 'lucide-react';
+import { useEligibilityCheck } from '@/hooks/useEligibilityCheck';
 import { cn } from '@/lib/utils';
-import type { EligibilityStatus } from '@/types/hunter';
 
 interface EligibilityPreviewProps {
-  status: EligibilityStatus;
-  reasons: string[];
+  opportunityId: string;
+  chain: string;
   className?: string;
+  isDarkTheme?: boolean;
 }
 
-export function EligibilityPreview({
-  status,
-  reasons,
-  className,
-}: EligibilityPreviewProps) {
-  // Status styling
-  const statusConfig = {
-    likely: {
-      icon: CheckCircle,
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      text: 'text-emerald-700 dark:text-emerald-400',
-      label: 'Likely Eligible',
-    },
-    maybe: {
-      icon: AlertCircle,
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
-      border: 'border-amber-200 dark:border-amber-800',
-      text: 'text-amber-700 dark:text-amber-400',
-      label: 'Maybe Eligible',
-    },
-    unlikely: {
-      icon: XCircle,
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      border: 'border-red-200 dark:border-red-800',
-      text: 'text-red-700 dark:text-red-400',
-      label: 'Unlikely Eligible',
-    },
-    unknown: {
-      icon: HelpCircle,
-      bg: 'bg-slate-50 dark:bg-slate-800/50',
-      border: 'border-slate-200 dark:border-slate-700',
-      text: 'text-slate-700 dark:text-slate-400',
-      label: 'Unknown',
-    },
-  };
+/**
+ * Status icon mapping
+ */
+const statusIcons = {
+  likely: CheckCircle,
+  maybe: AlertCircle,
+  unlikely: XCircle,
+  unknown: HelpCircle,
+};
 
-  const config = statusConfig[status];
-  const Icon = config.icon;
+/**
+ * Status color mapping (dark theme)
+ */
+const statusColorsDark = {
+  likely: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+  maybe: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  unlikely: 'text-red-400 bg-red-400/10 border-red-400/20',
+  unknown: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
+};
+
+/**
+ * Status color mapping (light theme)
+ */
+const statusColorsLight = {
+  likely: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+  maybe: 'text-amber-600 bg-amber-50 border-amber-200',
+  unlikely: 'text-red-600 bg-red-50 border-red-200',
+  unknown: 'text-gray-600 bg-gray-50 border-gray-200',
+};
+
+/**
+ * Status label mapping
+ */
+const statusLabels = {
+  likely: 'Likely Eligible',
+  maybe: 'Maybe Eligible',
+  unlikely: 'Unlikely Eligible',
+  unknown: 'Unknown',
+};
+
+/**
+ * EligibilityPreview Component
+ * 
+ * Displays eligibility status with reasons and recalculate button.
+ * Automatically updates when active wallet changes.
+ */
+export function EligibilityPreview({
+  opportunityId,
+  chain,
+  className,
+  isDarkTheme = true,
+}: EligibilityPreviewProps) {
+  const {
+    eligibility,
+    isLoading,
+    isRecalculating,
+    error,
+    recalculate,
+    hasWallet,
+  } = useEligibilityCheck({
+    opportunityId,
+    chain,
+    enabled: true,
+  });
+
+  // Don't render if no wallet is connected
+  if (!hasWallet) {
+    return null;
+  }
+
+  // Loading state
+  if (isLoading && !eligibility) {
+    return (
+      <div className={cn('flex items-center gap-2 text-sm', className)}>
+        <div className={cn(
+          'w-4 h-4 rounded-full border-2 border-t-transparent animate-spin',
+          isDarkTheme ? 'border-gray-400' : 'border-gray-600'
+        )} />
+        <span className={isDarkTheme ? 'text-gray-400' : 'text-gray-600'}>
+          Checking eligibility...
+        </span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className={cn(
+        'flex items-center gap-2 text-sm p-2 rounded-lg border',
+        isDarkTheme
+          ? 'text-red-400 bg-red-400/10 border-red-400/20'
+          : 'text-red-600 bg-red-50 border-red-200',
+        className
+      )}>
+        <XCircle className="w-4 h-4 flex-shrink-0" />
+        <span className="flex-1">Failed to check eligibility</span>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!eligibility) {
+    return null;
+  }
+
+  const status = eligibility.status;
+  const StatusIcon = statusIcons[status];
+  const statusColors = isDarkTheme ? statusColorsDark[status] : statusColorsLight[status];
+  const statusLabel = statusLabels[status];
 
   return (
-    <div
+    <motion.div
       className={cn(
-        'rounded-lg border p-3',
-        config.bg,
-        config.border,
+        'flex flex-col gap-2 p-3 rounded-lg border',
+        statusColors,
         className
       )}
-      role="status"
-      aria-label={`Eligibility: ${config.label}`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
     >
-      <div className="flex items-start gap-2">
-        <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', config.text)} aria-hidden="true" />
-        <div className="flex-1 min-w-0">
-          <div className={cn('text-sm font-semibold mb-1', config.text)}>
-            {config.label}
-          </div>
-          {reasons.length > 0 && (
-            <ul className="space-y-1">
-              {reasons.slice(0, 2).map((reason, idx) => (
-                <li
-                  key={idx}
-                  className={cn(
-                    'text-xs flex items-start gap-1',
-                    config.text,
-                    'opacity-90'
-                  )}
-                >
-                  <span className="mt-0.5">•</span>
-                  <span>{reason}</span>
-                </li>
-              ))}
-            </ul>
+      {/* Status Header */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <StatusIcon className="w-4 h-4 flex-shrink-0" />
+          <span className="font-semibold text-sm">
+            {statusLabel}
+          </span>
+          {eligibility.score > 0 && (
+            <span className={cn(
+              'text-xs px-1.5 py-0.5 rounded',
+              isDarkTheme ? 'bg-black/20' : 'bg-white/50'
+            )}>
+              {Math.round(eligibility.score * 100)}%
+            </span>
           )}
         </div>
+
+        {/* Recalculate Button */}
+        <button
+          onClick={recalculate}
+          disabled={isRecalculating}
+          className={cn(
+            'p-1 rounded transition-all',
+            isDarkTheme
+              ? 'hover:bg-white/10 active:bg-white/20'
+              : 'hover:bg-black/5 active:bg-black/10',
+            isRecalculating && 'opacity-50 cursor-not-allowed'
+          )}
+          title="Recalculate eligibility (throttled to 1 per 5s)"
+          aria-label="Recalculate eligibility"
+        >
+          <RefreshCw
+            className={cn(
+              'w-3.5 h-3.5',
+              isRecalculating && 'animate-spin'
+            )}
+          />
+        </button>
       </div>
-    </div>
+
+      {/* Reasons */}
+      {eligibility.reasons && eligibility.reasons.length > 0 && (
+        <ul className="text-xs space-y-1 pl-6">
+          {eligibility.reasons.slice(0, 2).map((reason, index) => (
+            <li key={index} className="list-disc">
+              {reason}
+            </li>
+          ))}
+        </ul>
+      )}
+    </motion.div>
   );
 }
