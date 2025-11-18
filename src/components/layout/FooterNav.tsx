@@ -5,7 +5,8 @@ import {
   Shield, 
   Briefcase,
   Waves,
-  User
+  User,
+  Leaf
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
@@ -20,6 +21,7 @@ export function FooterNav() {
     { href: '/hub2/pulse', icon: Activity, path: '/hub2/pulse' },
     { href: '/guardian', icon: Shield, path: '/guardian' },
     { href: '/hunter', icon: Compass, path: '/hunter' },
+    { href: '/harvestpro', icon: Leaf, path: '/harvestpro' },
     { href: '/whale-alert', icon: Waves, path: '/whale-alert' },
     { href: '/portfolio', icon: Briefcase, path: '/portfolio' },
     { href: '/settings', icon: User, path: '/settings' }

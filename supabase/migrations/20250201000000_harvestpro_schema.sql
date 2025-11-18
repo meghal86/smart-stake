@@ -1,0 +1,339 @@
+-- HarvestPro Tax-Loss Harvesting Module Schema
+-- Migration: 20250201000000_harvestpro_schema.sql
+-- Description: Creates all tables, indexes, and RLS policies for HarvestPro
+
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+-- ============================================================================
+-- HARVEST LOTS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS harvest_lots (
+  lot_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  wallet_or_cex TEXT NOT NULL,
+  acquired_at TIMESTAMPTZ NOT NULL,
+  acquired_qty NUMERIC NOT NULL CHECK (acquired_qty > 0),
+  acquired_price_usd NUMERIC NOT NULL CHECK (acquired_price_usd >= 0),
+  current_price_usd NUMERIC NOT NULL CHECK (current_price_usd >= 0),
+  unrealized_pnl NUMERIC NOT NULL,
+  holding_period_days INTEGER NOT NULL CHECK (holding_period_days >= 0),
+  long_term BOOLEAN NOT NULL,
+  risk_level TEXT NOT NULL CHECK (risk_level IN ('LOW', 'MEDIUM', 'HIGH')),
+  liquidity_score NUMERIC NOT NULL CHECK (liquidity_score >= 0 AND liquidity_score <= 100),
+  guardian_score NUMERIC NOT NULL CHECK (guardian_score >= 0 AND guardian_score <= 10),
+  eligible_for_harvest BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================================
+-- HARVEST OPPORTUNITIES TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS harvest_opportunities (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  lot_id UUID NOT NULL REFERENCES harvest_lots(lot_id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  token_logo_url TEXT,
+  risk_level TEXT NOT NULL CHECK (risk_level IN ('LOW', 'MEDIUM', 'HIGH')),
+  unrealized_loss NUMERIC NOT NULL CHECK (unrealized_loss > 0),
+  remaining_qty NUMERIC NOT NULL CHECK (remaining_qty > 0),
+  gas_estimate NUMERIC NOT NULL CHECK (gas_estimate >= 0),
+  slippage_estimate NUMERIC NOT NULL CHECK (slippage_estimate >= 0),
+  trading_fees NUMERIC NOT NULL CHECK (trading_fees >= 0),
+  net_tax_benefit NUMERIC NOT NULL,
+  guardian_score NUMERIC NOT NULL CHECK (guardian_score >= 0 AND guardian_score <= 10),
+  execution_time_estimate TEXT,
+  confidence NUMERIC NOT NULL CHECK (confidence >= 0 AND confidence <= 100),
+  recommendation_badge TEXT NOT NULL CHECK (recommendation_badge IN ('recommended', 'not-recommended', 'high-benefit', 'gas-heavy', 'guardian-flagged')),
+  metadata JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================================
+-- HARVEST SESSIONS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS harvest_sessions (
+  session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'executing', 'completed', 'failed', 'cancelled')),
+  opportunities_selected JSONB NOT NULL DEFAULT '[]',
+  realized_losses_total NUMERIC NOT NULL DEFAULT 0,
+  net_benefit_total NUMERIC NOT NULL DEFAULT 0,
+  execution_steps JSONB NOT NULL DEFAULT '[]',
+  export_url TEXT,
+  proof_hash TEXT
+);
+
+-- ============================================================================
+-- EXECUTION STEPS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS execution_steps (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID NOT NULL REFERENCES harvest_sessions(session_id) ON DELETE CASCADE,
+  step_number INTEGER NOT NULL CHECK (step_number > 0),
+  description TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('on-chain', 'cex-manual')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'executing', 'completed', 'failed')),
+  transaction_hash TEXT,
+  cex_platform TEXT,
+  error_message TEXT,
+  guardian_score NUMERIC CHECK (guardian_score >= 0 AND guardian_score <= 10),
+  timestamp TIMESTAMPTZ,
+  duration_ms INTEGER CHECK (duration_ms >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(session_id, step_number)
+);
+
+-- ============================================================================
+-- USER SETTINGS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS harvest_user_settings (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  tax_rate NUMERIC NOT NULL DEFAULT 0.24 CHECK (tax_rate >= 0 AND tax_rate <= 1),
+  notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  notification_threshold NUMERIC NOT NULL DEFAULT 100 CHECK (notification_threshold >= 0),
+  preferred_wallets TEXT[] NOT NULL DEFAULT '{}',
+  risk_tolerance TEXT NOT NULL DEFAULT 'moderate' CHECK (risk_tolerance IN ('conservative', 'moderate', 'aggressive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================================
+-- WALLET TRANSACTIONS TABLE (for FIFO calculation)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  wallet_address TEXT NOT NULL,
+  token TEXT NOT NULL,
+  transaction_hash TEXT NOT NULL,
+  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('buy', 'sell', 'transfer_in', 'transfer_out')),
+  quantity NUMERIC NOT NULL CHECK (quantity > 0),
+  price_usd NUMERIC NOT NULL CHECK (price_usd >= 0),
+  timestamp TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(transaction_hash, wallet_address)
+);
+
+-- ============================================================================
+-- CEX ACCOUNTS TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS cex_accounts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  exchange_name TEXT NOT NULL,
+  api_key_encrypted TEXT NOT NULL,
+  api_secret_encrypted TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  last_synced_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================================
+-- CEX TRADES TABLE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS cex_trades (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  cex_account_id UUID NOT NULL REFERENCES cex_accounts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  trade_type TEXT NOT NULL CHECK (trade_type IN ('buy', 'sell')),
+  quantity NUMERIC NOT NULL CHECK (quantity > 0),
+  price_usd NUMERIC NOT NULL CHECK (price_usd >= 0),
+  timestamp TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(cex_account_id, token, timestamp)
+);
+
+-- ============================================================================
+-- INDEXES FOR PERFORMANCE
+-- ============================================================================
+
+-- Harvest lots indexes
+CREATE INDEX IF NOT EXISTS idx_harvest_lots_user 
+  ON harvest_lots(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_harvest_lots_eligible 
+  ON harvest_lots(user_id, eligible_for_harvest) 
+  WHERE eligible_for_harvest = TRUE;
+
+CREATE INDEX IF NOT EXISTS idx_harvest_lots_token 
+  ON harvest_lots(user_id, token);
+
+-- Harvest opportunities indexes
+CREATE INDEX IF NOT EXISTS idx_harvest_opportunities_user 
+  ON harvest_opportunities(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_harvest_opportunities_benefit 
+  ON harvest_opportunities(user_id, net_tax_benefit DESC);
+
+CREATE INDEX IF NOT EXISTS idx_harvest_opportunities_lot 
+  ON harvest_opportunities(lot_id);
+
+-- Full-text search index for token search
+CREATE INDEX IF NOT EXISTS idx_harvest_opportunities_token_fts 
+  ON harvest_opportunities USING GIN (token gin_trgm_ops);
+
+-- Harvest sessions indexes
+CREATE INDEX IF NOT EXISTS idx_harvest_sessions_user 
+  ON harvest_sessions(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_harvest_sessions_status 
+  ON harvest_sessions(user_id, status);
+
+-- Execution steps indexes
+CREATE INDEX IF NOT EXISTS idx_execution_steps_session 
+  ON execution_steps(session_id, step_number);
+
+-- Wallet transactions indexes
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_token 
+  ON wallet_transactions(user_id, wallet_address, token, timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_hash 
+  ON wallet_transactions(transaction_hash);
+
+-- CEX trades indexes
+CREATE INDEX IF NOT EXISTS idx_cex_trades_user_token 
+  ON cex_trades(user_id, token, timestamp DESC);
+
+CREATE INDEX IF NOT EXISTS idx_cex_trades_account 
+  ON cex_trades(cex_account_id, timestamp DESC);
+
+-- CEX accounts indexes
+CREATE INDEX IF NOT EXISTS idx_cex_accounts_user 
+  ON cex_accounts(user_id, is_active) 
+  WHERE is_active = TRUE;
+
+-- ============================================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ============================================================================
+
+-- Enable RLS on all tables
+ALTER TABLE harvest_lots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE harvest_opportunities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE harvest_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE execution_steps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE harvest_user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wallet_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cex_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cex_trades ENABLE ROW LEVEL SECURITY;
+
+-- Harvest lots policies
+CREATE POLICY p_harvest_lots_user ON harvest_lots
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Harvest opportunities policies
+CREATE POLICY p_harvest_opportunities_user ON harvest_opportunities
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Harvest sessions policies
+CREATE POLICY p_harvest_sessions_user ON harvest_sessions
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Execution steps policies (access through session)
+CREATE POLICY p_execution_steps_user ON execution_steps
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM harvest_sessions 
+      WHERE harvest_sessions.session_id = execution_steps.session_id 
+      AND harvest_sessions.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM harvest_sessions 
+      WHERE harvest_sessions.session_id = execution_steps.session_id 
+      AND harvest_sessions.user_id = auth.uid()
+    )
+  );
+
+-- User settings policies
+CREATE POLICY p_harvest_settings_user ON harvest_user_settings
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Wallet transactions policies
+CREATE POLICY p_wallet_transactions_user ON wallet_transactions
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- CEX accounts policies
+CREATE POLICY p_cex_accounts_user ON cex_accounts
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- CEX trades policies
+CREATE POLICY p_cex_trades_user ON cex_trades
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- ============================================================================
+-- TRIGGERS FOR UPDATED_AT
+-- ============================================================================
+
+-- Function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply trigger to tables with updated_at
+CREATE TRIGGER update_harvest_lots_updated_at
+  BEFORE UPDATE ON harvest_lots
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_harvest_opportunities_updated_at
+  BEFORE UPDATE ON harvest_opportunities
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_harvest_sessions_updated_at
+  BEFORE UPDATE ON harvest_sessions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_harvest_user_settings_updated_at
+  BEFORE UPDATE ON harvest_user_settings
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_cex_accounts_updated_at
+  BEFORE UPDATE ON cex_accounts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- COMMENTS FOR DOCUMENTATION
+-- ============================================================================
+
+COMMENT ON TABLE harvest_lots IS 'Stores individual acquisition lots for FIFO cost basis calculation';
+COMMENT ON TABLE harvest_opportunities IS 'Eligible harvest opportunities with calculated net benefits';
+COMMENT ON TABLE harvest_sessions IS 'User harvest execution sessions with state tracking';
+COMMENT ON TABLE execution_steps IS 'Individual steps within a harvest session';
+COMMENT ON TABLE harvest_user_settings IS 'User-specific settings for tax calculations and notifications';
+COMMENT ON TABLE wallet_transactions IS 'Transaction history from connected wallets for FIFO calculation';
+COMMENT ON TABLE cex_accounts IS 'Linked centralized exchange accounts with encrypted credentials';
+COMMENT ON TABLE cex_trades IS 'Trade history from CEX accounts';

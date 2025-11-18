@@ -1,0 +1,315 @@
+/**
+ * HarvestPro Design Tokens
+ * Extracted from Hunter and Guardian themes for consistency
+ */
+
+:root {
+  /* ========================================================================
+   * COLOR TOKENS
+   * ======================================================================== */
+  
+  /* Primary Colors (from Hunter) */
+  --harvest-primary: #ed8f2d;
+  --harvest-primary-dark: #B8722E;
+  --harvest-primary-light: #FFC766;
+  --harvest-accent: #E6A532;
+  
+  /* Secondary Colors (from Guardian) */
+  --harvest-secondary: #14b8a6;
+  --harvest-secondary-dark: #0d9488;
+  --harvest-secondary-light: #06b6d4;
+  
+  /* Background Colors */
+  --harvest-bg-primary: #0A0F14;
+  --harvest-bg-secondary: #0E141B;
+  --harvest-bg-tertiary: #0a1628;
+  --harvest-bg-card: rgba(255, 255, 255, 0.06);
+  --harvest-bg-card-hover: rgba(255, 255, 255, 0.08);
+  
+  /* Text Colors */
+  --harvest-text-primary: #FFFFFF;
+  --harvest-text-secondary: rgba(255, 255, 255, 0.8);
+  --harvest-text-tertiary: rgba(255, 255, 255, 0.6);
+  --harvest-text-muted: rgba(255, 255, 255, 0.5);
+  --harvest-text-disabled: rgba(255, 255, 255, 0.3);
+  
+  /* Border Colors */
+  --harvest-border-primary: rgba(255, 255, 255, 0.12);
+  --harvest-border-secondary: rgba(255, 255, 255, 0.08);
+  --harvest-border-accent: rgba(255, 140, 60, 0.2);
+  --harvest-border-success: rgba(20, 184, 166, 0.3);
+  
+  /* Status Colors */
+  --harvest-success: #10b981;
+  --harvest-success-bg: rgba(16, 185, 129, 0.15);
+  --harvest-warning: #f59e0b;
+  --harvest-warning-bg: rgba(245, 158, 11, 0.15);
+  --harvest-error: #ef4444;
+  --harvest-error-bg: rgba(239, 68, 68, 0.15);
+  --harvest-info: #06b6d4;
+  --harvest-info-bg: rgba(6, 182, 212, 0.15);
+  
+  /* Risk Level Colors */
+  --harvest-risk-low: #10b981;
+  --harvest-risk-low-bg: rgba(16, 185, 129, 0.15);
+  --harvest-risk-medium: #f59e0b;
+  --harvest-risk-medium-bg: rgba(245, 158, 11, 0.15);
+  --harvest-risk-high: #ef4444;
+  --harvest-risk-high-bg: rgba(239, 68, 68, 0.15);
+  
+  /* ========================================================================
+   * SPACING TOKENS
+   * ======================================================================== */
+  
+  --harvest-space-xs: 4px;
+  --harvest-space-sm: 8px;
+  --harvest-space-md: 12px;
+  --harvest-space-lg: 16px;
+  --harvest-space-xl: 20px;
+  --harvest-space-2xl: 24px;
+  --harvest-space-3xl: 32px;
+  --harvest-space-4xl: 40px;
+  --harvest-space-5xl: 48px;
+  
+  /* ========================================================================
+   * BORDER RADIUS TOKENS
+   * ======================================================================== */
+  
+  --harvest-radius-sm: 6px;
+  --harvest-radius-md: 12px;
+  --harvest-radius-lg: 16px;
+  --harvest-radius-xl: 24px;
+  --harvest-radius-2xl: 28px;
+  --harvest-radius-full: 9999px;
+  
+  /* ========================================================================
+   * SHADOW TOKENS
+   * ======================================================================== */
+  
+  --harvest-shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --harvest-shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --harvest-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --harvest-shadow-glow-primary: 0 0 24px rgba(237, 143, 45, 0.4);
+  --harvest-shadow-glow-secondary: 0 0 24px rgba(20, 184, 166, 0.4);
+  
+  /* ========================================================================
+   * TYPOGRAPHY TOKENS
+   * ======================================================================== */
+  
+  /* Font Families */
+  --harvest-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Font Sizes */
+  --harvest-text-xs: 12px;
+  --harvest-text-sm: 13px;
+  --harvest-text-base: 14px;
+  --harvest-text-md: 16px;
+  --harvest-text-lg: 18px;
+  --harvest-text-xl: 20px;
+  --harvest-text-2xl: 24px;
+  --harvest-text-3xl: 28px;
+  --harvest-text-4xl: 32px;
+  --harvest-text-5xl: 48px;
+  
+  /* Font Weights */
+  --harvest-font-normal: 400;
+  --harvest-font-medium: 500;
+  --harvest-font-semibold: 600;
+  --harvest-font-bold: 700;
+  --harvest-font-extrabold: 800;
+  
+  /* Line Heights */
+  --harvest-leading-tight: 1.1;
+  --harvest-leading-normal: 1.4;
+  --harvest-leading-relaxed: 1.5;
+  --harvest-leading-loose: 1.6;
+  
+  /* Letter Spacing */
+  --harvest-tracking-tight: -0.02em;
+  --harvest-tracking-normal: 0;
+  --harvest-tracking-wide: 0.025em;
+  --harvest-tracking-wider: 0.05em;
+}
+
+/* ============================================================================
+ * COMPONENT TOKENS
+ * ========================================================================== */
+
+/* Chip Component (from Hunter filters) */
+:root {
+  --harvest-chip-height: 32px;
+  --harvest-chip-padding-x: 16px;
+  --harvest-chip-radius: var(--harvest-radius-lg);
+  --harvest-chip-bg: transparent;
+  --harvest-chip-bg-active: var(--harvest-primary);
+  --harvest-chip-border: var(--harvest-border-secondary);
+  --harvest-chip-border-active: var(--harvest-primary);
+  --harvest-chip-text: var(--harvest-text-tertiary);
+  --harvest-chip-text-active: var(--harvest-text-primary);
+  --harvest-chip-font-size: var(--harvest-text-base);
+  --harvest-chip-font-weight: var(--harvest-font-medium);
+}
+
+/* Card Component (from Hunter and Guardian) */
+:root {
+  --harvest-card-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --harvest-card-border: var(--harvest-border-secondary);
+  --harvest-card-radius: var(--harvest-radius-xl);
+  --harvest-card-padding: var(--harvest-space-2xl);
+  --harvest-card-shadow: var(--harvest-shadow-sm);
+  --harvest-card-shadow-hover: var(--harvest-shadow-md);
+  --harvest-card-backdrop-blur: blur(16px);
+}
+
+/* Summary Card Component (Guardian-style) */
+:root {
+  --harvest-summary-card-bg: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+  --harvest-summary-card-border: rgba(20, 184, 166, 0.2);
+  --harvest-summary-card-radius: var(--harvest-radius-lg);
+  --harvest-summary-card-padding: var(--harvest-space-xl);
+}
+
+/* Button Component */
+:root {
+  /* Primary Button (Hunter-style) */
+  --harvest-btn-primary-bg: linear-gradient(180deg, #ed8f2d 0%, #B8722E 100%);
+  --harvest-btn-primary-text: var(--harvest-text-primary);
+  --harvest-btn-primary-radius: var(--harvest-radius-xl);
+  --harvest-btn-primary-padding-y: 12px;
+  --harvest-btn-primary-padding-x: 24px;
+  --harvest-btn-primary-font-size: var(--harvest-text-md);
+  --harvest-btn-primary-font-weight: var(--harvest-font-semibold);
+  --harvest-btn-primary-shadow: var(--harvest-shadow-glow-primary);
+  
+  /* Secondary Button (Guardian-style) */
+  --harvest-btn-secondary-bg: rgba(20, 184, 166, 0.1);
+  --harvest-btn-secondary-border: rgba(20, 184, 166, 0.3);
+  --harvest-btn-secondary-text: var(--harvest-secondary);
+  --harvest-btn-secondary-radius: var(--harvest-radius-md);
+  --harvest-btn-secondary-padding-y: 12px;
+  --harvest-btn-secondary-padding-x: 16px;
+  
+  /* Tertiary Button */
+  --harvest-btn-tertiary-bg: transparent;
+  --harvest-btn-tertiary-border: var(--harvest-border-secondary);
+  --harvest-btn-tertiary-text: var(--harvest-text-tertiary);
+  --harvest-btn-tertiary-radius: var(--harvest-radius-md);
+}
+
+/* Badge Component */
+:root {
+  --harvest-badge-height: 24px;
+  --harvest-badge-padding-x: 10px;
+  --harvest-badge-radius: var(--harvest-radius-sm);
+  --harvest-badge-font-size: var(--harvest-text-xs);
+  --harvest-badge-font-weight: var(--harvest-font-semibold);
+  --harvest-badge-text-transform: uppercase;
+  --harvest-badge-letter-spacing: var(--harvest-tracking-wide);
+}
+
+/* Metric Strip Component (from Hunter cards) */
+:root {
+  --harvest-metric-gap: var(--harvest-space-md);
+  --harvest-metric-label-size: var(--harvest-text-xs);
+  --harvest-metric-label-color: var(--harvest-text-muted);
+  --harvest-metric-label-transform: uppercase;
+  --harvest-metric-value-size: var(--harvest-text-md);
+  --harvest-metric-value-color: var(--harvest-text-primary);
+  --harvest-metric-value-weight: var(--harvest-font-semibold);
+}
+
+/* Modal Component */
+:root {
+  --harvest-modal-bg: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.6) 100%);
+  --harvest-modal-border: var(--harvest-border-primary);
+  --harvest-modal-radius: var(--harvest-radius-xl);
+  --harvest-modal-backdrop-blur: blur(32px);
+  --harvest-modal-shadow: var(--harvest-shadow-lg);
+  --harvest-modal-padding: var(--harvest-space-3xl);
+  --harvest-modal-max-width-mobile: 100%;
+  --harvest-modal-max-width-desktop: 600px;
+}
+
+/* Warning Banner Component (Guardian-style) */
+:root {
+  --harvest-warning-banner-bg: rgba(245, 158, 11, 0.1);
+  --harvest-warning-banner-border: rgba(245, 158, 11, 0.3);
+  --harvest-warning-banner-text: var(--harvest-warning);
+  --harvest-warning-banner-radius: var(--harvest-radius-md);
+  --harvest-warning-banner-padding: var(--harvest-space-lg);
+}
+
+/* ============================================================================
+ * ANIMATION TOKENS
+ * ========================================================================== */
+
+:root {
+  --harvest-transition-fast: 0.15s ease;
+  --harvest-transition-base: 0.2s ease;
+  --harvest-transition-slow: 0.3s ease;
+  --harvest-transition-slower: 0.5s ease;
+  
+  --harvest-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --harvest-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --harvest-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+ * BREAKPOINT TOKENS
+ * ========================================================================== */
+
+:root {
+  --harvest-breakpoint-mobile: 768px;
+  --harvest-breakpoint-tablet: 1024px;
+  --harvest-breakpoint-desktop: 1280px;
+}
+
+/* ============================================================================
+ * Z-INDEX TOKENS
+ * ========================================================================== */
+
+:root {
+  --harvest-z-base: 0;
+  --harvest-z-dropdown: 10;
+  --harvest-z-sticky: 20;
+  --harvest-z-fixed: 30;
+  --harvest-z-modal-backdrop: 40;
+  --harvest-z-modal: 50;
+  --harvest-z-popover: 60;
+  --harvest-z-tooltip: 70;
+}
+
+/* ============================================================================
+ * UTILITY CLASSES
+ * ========================================================================== */
+
+.harvest-gradient-bg {
+  background: 
+    radial-gradient(ellipse 80% 50% at 80% 20%, rgba(255, 140, 60, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0, 224, 194, 0.06) 0%, transparent 70%),
+    linear-gradient(180deg, #0A0F14 0%, #0E141B 100%);
+}
+
+.harvest-card-glow {
+  box-shadow: 
+    var(--harvest-shadow-sm),
+    0 0 40px rgba(255, 140, 60, 0.08);
+}
+
+.harvest-card-glow-hover:hover {
+  box-shadow: 
+    var(--harvest-shadow-md),
+    0 0 50px rgba(255, 140, 60, 0.12);
+}
+
+.harvest-text-gradient {
+  background: linear-gradient(135deg, var(--harvest-primary) 0%, var(--harvest-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.harvest-backdrop-blur {
+  backdrop-filter: var(--harvest-card-backdrop-blur);
+  -webkit-backdrop-filter: var(--harvest-card-backdrop-blur);
+}

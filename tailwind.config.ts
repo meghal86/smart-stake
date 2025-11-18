@@ -33,6 +33,16 @@ export default {
 					hover: 'rgba(255, 255, 255, 0.12)',
 					active: 'rgba(255, 255, 255, 0.15)',
 				},
+				// HarvestPro Theme Colors
+				harvest: {
+					primary: '#ed8f2d',
+					'primary-dark': '#B8722E',
+					'primary-light': '#FFC766',
+					accent: '#E6A532',
+					secondary: '#14b8a6',
+					'secondary-dark': '#0d9488',
+					'secondary-light': '#06b6d4',
+				},
 				// Hunter Theme Colors
 				mint: '#00E0C2',
 				amber: '#ff8c42',

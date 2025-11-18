@@ -65,6 +65,7 @@ import GuardianEnhanced from "./pages/GuardianEnhanced";
 import GuardianUX2 from "./pages/GuardianUX2";
 import GuardianLearn from "./pages/GuardianLearn";
 import Hunter from "./pages/Hunter";
+import HarvestPro from "./pages/HarvestPro";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
 import { ClientProviders } from "@/providers/ClientProviders";
@@ -157,6 +158,7 @@ const App = () => {
                   <Route path="/guardian-ux2" element={<GuardianUX2 />} />
                   <Route path="/guardian/learn" element={<GuardianLearn />} />
                   <Route path="/hunter" element={<Hunter />} />
+                  <Route path="/harvestpro" element={<HarvestPro />} />
                   <Route path="/anomaly-detection" element={<AnomalyDetection />} />
                   <Route path="/premium-test" element={<PremiumTest />} />
                   <Route path="/subscription-test" element={<SubscriptionTest />} />
