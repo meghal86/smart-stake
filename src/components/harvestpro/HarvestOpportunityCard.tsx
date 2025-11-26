@@ -185,7 +185,7 @@ export function HarvestOpportunityCard({
   return (
     <motion.div
       className={cn(
-        'backdrop-blur-lg rounded-[20px] p-8 cursor-pointer group transition-all duration-700 border relative transform-gpu',
+        'backdrop-blur-lg rounded-[20px] py-10 px-8 cursor-pointer group transition-all duration-700 border relative transform-gpu',
         'bg-gradient-to-br from-slate-900/80 via-blue-950/60 to-slate-900/80 border-teal-400/20',
         className
       )}
@@ -193,17 +193,17 @@ export function HarvestOpportunityCard({
         boxShadow:
           '0 20px 60px -12px rgba(0,0,0,0.6), 0 8px 32px -8px rgba(237,143,45,0.1), 0 2px 0 0 rgba(255,255,255,0.08) inset, 0 -2px 0 0 rgba(237,143,45,0.1) inset',
       }}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        delay: index * 0.05,
-        duration: 0.6,
+        delay: index * 0.08,
+        duration: 0.7,
         ease: [0.25, 1, 0.5, 1],
       }}
       whileHover={{
-        scale: 1.01,
-        y: -2,
-        boxShadow: '0 25px 70px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(237,143,45,0.3)',
+        scale: 1.015,
+        y: -4,
+        boxShadow: '0 30px 80px -12px rgba(0,0,0,0.75), 0 0 0 1px rgba(237,143,45,0.35)',
       }}
       whileTap={{ scale: 0.99 }}
     >
@@ -234,11 +234,11 @@ export function HarvestOpportunityCard({
               <RecommendationBadge badge={opportunity.recommendationBadge} />
             </div>
 
-            <h3 className="text-xl font-bold font-display leading-tight mb-1 text-[#E4E8F3]">
+            <h3 className="text-xl font-bold font-display leading-tight mb-1 text-white">
               Harvest {opportunity.token} Loss
             </h3>
 
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-500">
               {opportunity.metadata.walletName || 'Wallet'} • {opportunity.metadata.venue || 'DEX'}
             </p>
           </div>
@@ -288,22 +288,22 @@ export function HarvestOpportunityCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm line-clamp-2 mb-6 leading-relaxed text-gray-300">
-          Harvest {formatCurrency(opportunity.unrealizedLoss)} in losses for{' '}
-          {formatCurrency(opportunity.netTaxBenefit)} net tax benefit after gas and fees.
+        <p className="text-sm line-clamp-2 mb-6 leading-relaxed text-gray-400">
+          Harvest <span className="text-white font-semibold">{formatCurrency(opportunity.unrealizedLoss)}</span> in losses for{' '}
+          <span className="text-green-400 font-semibold">{formatCurrency(opportunity.netTaxBenefit)}</span> net tax benefit after gas and fees.
           {opportunity.metadata.reasons && opportunity.metadata.reasons.length > 0 && (
-            <span className="text-gray-400"> {opportunity.metadata.reasons[0]}</span>
+            <span className="text-gray-500"> {opportunity.metadata.reasons[0]}</span>
           )}
         </p>
 
         {/* Divider */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6" />
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6" />
 
         {/* Metric Strip */}
         <MetricStrip opportunity={opportunity} />
 
         {/* Divider */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/15 to-transparent my-5" />
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/8 to-transparent my-6" />
 
         {/* CTA Button */}
         <motion.button

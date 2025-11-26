@@ -8,14 +8,15 @@
  * - Desktop (≥1280px): Single column with max-width constraint
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   HarvestProHeader,
   FilterChipRow,
-  FilterChipType,
   HarvestSummaryCard,
   HarvestOpportunityCard,
+  HarvestDetailModal,
+  HarvestSuccessScreen,
   SummaryCardSkeleton,
   OpportunityCardSkeletonGrid,
   NoWalletsConnected,
@@ -24,18 +25,36 @@ import {
   APIFailureFallback,
 } from '@/components/harvestpro';
 import { FooterNav } from '@/components/layout/FooterNav';
-import type { OpportunitiesSummary, HarvestOpportunity } from '@/types/harvestpro';
+import { useHarvestFilters } from '@/hooks/useHarvestFilters';
+import { useHarvestOpportunities } from '@/hooks/useHarvestOpportunities';
+import type { OpportunitiesSummary, HarvestOpportunity, HarvestSession } from '@/types/harvestpro';
 
 type ViewState = 'loading' | 'no-wallet' | 'no-opportunities' | 'all-harvested' | 'error' | 'normal';
 
 export default function HarvestPro() {
   const [isDemo, setIsDemo] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<FilterChipType>('All');
-  const [lastUpdated] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('normal');
+  
+  // Modal and flow state
+  const [selectedOpportunity, setSelectedOpportunity] = useState<HarvestOpportunity | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [completedSession, setCompletedSession] = useState<HarvestSession | null>(null);
+  const [showSuccessScreen, setShowSuccessScreen] = useState(false);
 
-  // Mock summary data
+  // Fetch real opportunities from API (disabled in demo mode)
+  const {
+    data: opportunitiesData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useHarvestOpportunities({
+    enabled: !isDemo, // Only fetch when not in demo mode
+  });
+
+  // Mock data for demo mode
   const mockSummary: OpportunitiesSummary = {
     totalHarvestableLoss: 12450,
     estimatedNetBenefit: 2988,
@@ -122,9 +141,162 @@ export default function HarvestPro() {
     },
   ];
 
+  // Use real data when not in demo mode, mock data otherwise
+  const opportunities = isDemo 
+    ? mockOpportunities 
+    : (opportunitiesData?.items || []);
+
+  const summary = isDemo
+    ? mockSummary
+    : (opportunitiesData?.summary || {
+        totalHarvestableLoss: 0,
+        estimatedNetBenefit: 0,
+        eligibleTokensCount: 0,
+        gasEfficiencyScore: 'C' as const,
+      });
+
+  // Use the filtering hook
+  const { filteredOpportunities, isFiltered, activeFilterCount } = useHarvestFilters(opportunities);
+
+  // Update view state based on API response
+  useEffect(() => {
+    if (isDemo) {
+      // In demo mode, always show normal view
+      setViewState('normal');
+    } else if (isLoading) {
+      setViewState('loading');
+    } else if (isError) {
+      setViewState('error');
+    } else if (opportunities.length === 0) {
+      setViewState('no-opportunities');
+    } else {
+      setViewState('normal');
+    }
+  }, [isDemo, isLoading, isError, opportunities.length]);
+
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    if (isDemo) {
+      // In demo mode, just simulate refresh
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setLastUpdated(new Date());
+      }, 1000);
+    } else {
+      // In real mode, refetch from API
+      refetch().finally(() => {
+        setIsRefreshing(false);
+        setLastUpdated(new Date());
+      });
+    }
+  };
+
+  // Handle opening detail modal
+  const handleStartHarvest = (opportunityId: string) => {
+    console.log('🚀 Start Harvest clicked! Opportunity ID:', opportunityId);
+    const opportunity = mockOpportunities.find(opp => opp.id === opportunityId);
+    console.log('📦 Found opportunity:', opportunity);
+    if (opportunity) {
+      setSelectedOpportunity(opportunity);
+      setIsModalOpen(true);
+      console.log('✅ Modal should open now');
+    } else {
+      console.error('❌ Opportunity not found!');
+    }
+  };
+
+  // Handle harvest execution
+  const handleExecute = (opportunityId: string) => {
+    console.log('Executing harvest for opportunity:', opportunityId);
+    
+    // Simulate execution and create a mock completed session
+    setTimeout(() => {
+      const mockSession: HarvestSession = {
+        sessionId: `session-${Date.now()}`,
+        userId: 'user-1',
+        createdAt: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+        updatedAt: new Date().toISOString(),
+        status: 'completed',
+        opportunitiesSelected: selectedOpportunity ? [selectedOpportunity] : [],
+        realizedLossesTotal: selectedOpportunity?.unrealizedLoss || 0,
+        netBenefitTotal: selectedOpportunity?.netTaxBenefit || 0,
+        executionSteps: [
+          {
+            id: 'step-1',
+            sessionId: `session-${Date.now()}`,
+            stepNumber: 1,
+            description: 'Approve token swap',
+            type: 'on-chain',
+            status: 'completed',
+            transactionHash: '0x1234...5678',
+            errorMessage: null,
+            guardianScore: selectedOpportunity?.guardianScore || 8,
+            timestamp: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+          },
+          {
+            id: 'step-2',
+            sessionId: `session-${Date.now()}`,
+            stepNumber: 2,
+            description: 'Execute swap',
+            type: 'on-chain',
+            status: 'completed',
+            transactionHash: '0xabcd...efgh',
+            errorMessage: null,
+            guardianScore: selectedOpportunity?.guardianScore || 8,
+            timestamp: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        exportUrl: null,
+        proofHash: null,
+      };
+      
+      setIsModalOpen(false);
+      setCompletedSession(mockSession);
+      setShowSuccessScreen(true);
+    }, 2000); // Simulate 2 second execution
+  };
+
+  // Handle CSV download - client-side generation
+  const handleDownloadCSV = (sessionId: string) => {
+    if (!completedSession) return;
+    
+    // Import the CSV generation function
+    import('@/lib/harvestpro/csv-export').then(({ generateForm8949CSV }) => {
+      const csv = generateForm8949CSV(completedSession);
+      
+      // Create blob and download
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `harvest-session-${sessionId}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      console.log('✅ CSV downloaded successfully');
+    }).catch(error => {
+      console.error('❌ Failed to generate CSV:', error);
+    });
+  };
+
+  // Handle view proof
+  const handleViewProof = (sessionId: string) => {
+    console.log('View proof for session:', sessionId);
+    // This will be implemented in Task 20
+  };
+
+  // Handle closing success screen
+  const handleCloseSuccess = () => {
+    setShowSuccessScreen(false);
+    setCompletedSession(null);
+    setSelectedOpportunity(null);
   };
 
   const renderContent = () => {
@@ -169,25 +341,34 @@ export default function HarvestPro() {
           <>
             {/* Summary Card */}
             <HarvestSummaryCard
-              summary={mockSummary}
+              summary={summary}
               hasHighRiskOpportunities={true}
               className="mb-6"
             />
 
             {/* Opportunities Feed */}
             <div className="space-y-4">
-              {mockOpportunities.map((opportunity, index) => (
-                <HarvestOpportunityCard
-                  key={opportunity.id}
-                  opportunity={opportunity}
-                  index={index}
-                  onStartHarvest={(id) => console.log('Start harvest:', id)}
-                  onSave={(id) => console.log('Save:', id)}
-                  onShare={(id) => console.log('Share:', id)}
-                  onReport={(id) => console.log('Report:', id)}
-                  isConnected={true}
-                />
-              ))}
+              {filteredOpportunities.length > 0 ? (
+                filteredOpportunities.map((opportunity, index) => (
+                  <HarvestOpportunityCard
+                    key={opportunity.id}
+                    opportunity={opportunity}
+                    index={index}
+                    onStartHarvest={handleStartHarvest}
+                    onSave={(id) => console.log('Save:', id)}
+                    onShare={(id) => console.log('Share:', id)}
+                    onReport={(id) => console.log('Report:', id)}
+                    isConnected={true}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12 text-gray-400">
+                  <p className="text-lg mb-2">No opportunities match your filters</p>
+                  <p className="text-sm">
+                    {isFiltered && `${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} active`}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Demo State Switcher */}
@@ -269,11 +450,7 @@ export default function HarvestPro() {
       {/* Main Content - Responsive Container */}
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28">
         {/* Filter Chips - Horizontally scrollable on mobile */}
-        <FilterChipRow
-          selectedFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          className="mb-6"
-        />
+        <FilterChipRow className="mb-6" />
 
         {/* Content Area */}
         <AnimatePresence mode="wait">
@@ -291,6 +468,35 @@ export default function HarvestPro() {
 
       {/* Footer Navigation */}
       <FooterNav />
+
+      {/* Detail Modal */}
+      {console.log('🔍 Pre-render check:', { 
+        hasOpportunity: !!selectedOpportunity, 
+        isModalOpen,
+        opportunityId: selectedOpportunity?.id 
+      })}
+      <HarvestDetailModal
+        opportunity={selectedOpportunity}
+        isOpen={isModalOpen}
+        onClose={() => {
+          console.log('🚪 Modal closing');
+          setIsModalOpen(false);
+          setSelectedOpportunity(null);
+        }}
+        onExecute={handleExecute}
+      />
+
+      {/* Success Screen */}
+      {completedSession && showSuccessScreen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
+          <HarvestSuccessScreen
+            session={completedSession}
+            onDownloadCSV={handleDownloadCSV}
+            onViewProof={handleViewProof}
+            onClose={handleCloseSuccess}
+          />
+        </div>
+      )}
     </div>
   );
 }

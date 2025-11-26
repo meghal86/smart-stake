@@ -1,8 +1,23 @@
 # Design Document: HarvestPro Tax-Loss Harvesting Module
 
+## Version History
+
+- **v1**: Core retail tax-loss harvesting (Requirements 1-20)
+- **v2**: Institutional-grade enhancements (Requirements 21-25)
+- **v3**: Enterprise features (Requirements 26-29)
+
 ## Overview
 
-HarvestPro is a comprehensive tax-loss harvesting module for AlphaWhale that enables users to identify, optimize, and execute cryptocurrency tax-loss harvesting opportunities across connected wallets and centralized exchange (CEX) accounts. The system detects unrealized losses, calculates net tax benefits after accounting for gas and slippage, executes harvesting transactions through the Action Engine, and generates compliance-ready export files with cryptographic proof of execution.
+HarvestPro is a comprehensive tax-loss harvesting module for AlphaWhale that enables users to identify, optimize, and execute cryptocurrency tax-loss harvesting opportunities across connected wallets and centralized exchange (CEX) accounts.
+
+**v1 Core Capabilities:**
+The system detects unrealized losses, calculates net tax benefits after accounting for gas and slippage, executes harvesting transactions through the Action Engine, and generates compliance-ready export files with cryptographic proof of execution.
+
+**v2 Institutional Enhancements:**
+Adds MEV-aware execution via private RPC routing, economic substance validation to avoid purely tax-motivated patterns, proxy asset selection for exposure maintenance, and institutional guardrails (max daily loss, position size limits, slippage caps).
+
+**v3 Enterprise Features:**
+Integrates with institutional custody providers (Fireblocks, Copper), implements maker/checker governance workflows for large transactions, adds pre-trade sanctions screening (OFAC/AML compliance), and provides intelligent order routing (TWAP/VWAP) for large positions.
 
 **Key Design Principles:**
 - **Hunter/Guardian UI Consistency**: Pixel-perfect adherence to existing design patterns
@@ -10,8 +25,57 @@ HarvestPro is a comprehensive tax-loss harvesting module for AlphaWhale that ena
 - **Security by Default**: No private keys stored, encrypted API credentials, Guardian integration
 - **Tax Compliance**: IRS Form 8949 compatible exports with audit trails
 - **Progressive Enhancement**: Works with wallets only, enhanced with CEX integration
+- **Institutional Grade**: MEV protection, economic substance checks, custody integration (v2/v3)
+- **Regulatory Compliance**: Sanctions screening, maker/checker workflows, audit trails (v3)
 
 ## Architecture
+
+### Execution Architecture: Next.js API vs Supabase Edge Functions
+
+**All business logic MUST run inside Supabase Edge Functions. The UI (Next.js) MUST remain 100% presentation-only.**
+
+This architecture keeps HarvestPro deterministic, secure, auditable, and aligned with tax-compliance requirements. It prevents logic duplication, reduces bugs, improves maintainability, and positions the system correctly for future OaaS (Opportunities-as-a-Service) model.
+
+| Feature / Flow | Layer | File Path (example) | Primary Responsibility |
+|---|---|---|---|
+| **Wallet sync (on-chain)** | Edge Function | `supabase/functions/harvest-sync-wallets/index.ts` | Fetch on-chain tx history (Alchemy/Infura), normalize into `wallet_transactions`, rebuild `harvest_lots` for affected user. Runs async, safe to be slower. |
+| **CEX sync (trades / balances)** | Edge Function | `supabase/functions/harvest-sync-cex/index.ts` | Call CEX APIs with encrypted credentials, upsert `cex_trades`, update `harvest_lots` for those accounts. Handles pagination, rate limits, retries. |
+| **Recompute harvest opportunities** | Edge Function | `supabase/functions/harvest-recompute-opportunities/index.ts` | Heavy optimization engine: read `harvest_lots` + prices + Guardian; compute unrealized PnL, eligibility, net benefit; write to `harvest_opportunities`. Triggered after sync or on demand. |
+| **Fetch harvest opportunities (UI feed)** | Next.js API Route | `app/api/harvest/opportunities/route.ts` | Thin read layer: filter/paginate `harvest_opportunities`, return summary + cursor. No heavy math here. |
+| **Harvest dashboard screen** | Next.js Page | `app/(app)/harvest/page.tsx` | Render HarvestPro UI (header, filters, summary, cards). Uses React Query to call `/api/harvest/*`. No business logic. |
+| **Create / update harvest session (draft)** | Next.js API Route | `app/api/harvest/sessions/route.ts` & `app/api/harvest/sessions/[id]/route.ts` | CRUD for `harvest_sessions`: create draft, update selected opportunities, read session. Enforces basic auth + RLS. |
+| **Execute harvest (kick-off)** | Next.js API Route | `app/api/harvest/sessions/[id]/execute/route.ts` | Orchestrator: for a session id, call Edge Functions (KYT, economic substance if needed), run guardrails, decide execution strategy (IMMEDIATE / TWAP / MANUAL), create initial `execution_steps`, fan-out to custody / Action Engine. |
+| **Proof-of-Harvest export (JSON)** | Next.js API Route | `app/api/harvest/sessions/[id]/proof/route.ts` | Assemble proof payload from `harvest_sessions`, `execution_steps`, sanctions logs; compute/verify `proof_hash`; power Proof UI. |
+| **Form 8949 CSV export** | Next.js API Route | `app/api/harvest/sessions/[id]/export/route.ts` | Light CPU: read harvested lots, format CSV (2-decimal money), stream file download. |
+| **KYT / sanctions screening** [v3] | Edge Function | `supabase/functions/harvest-kyt-screen/index.ts` | Call TRM/Chainalysis (or similar) for all pool/router addresses in proposed routes; write `sanctions_screening_logs`; return CLEAN / FLAGGED / BLOCKED. |
+| **Economic substance scoring** [v2] | Edge Function | `supabase/functions/harvest-economic-substance/index.ts` | Inspect user's historical `harvest_sessions`, detect patterns (immediate repurchase, frequency, round-trip), compute score + `economic_substance_status` (PASS/WARN/BLOCKED) and persist on session. |
+| **Institutional guardrails (limits)** [v2] | Next.js API Route (+ SQL) | enforced inside `app/api/harvest/sessions/[id]/execute/route.ts` using `harvest_user_settings` | Lightweight arithmetic: check `max_daily_loss_usd`, `max_single_trade_notional_usd`, `max_slippage_bps`; block or annotate session before execution. |
+| **Custody submission (Fireblocks/Copper)** [v3] | Next.js API Route + SDK | called from execute route via `lib/custody-integration.ts` | Build unsigned tx payloads and submit to custody API instead of broadcasting; store `custody_transaction_id` on `harvest_sessions`. No keys stored. |
+| **Custody webhooks (status updates)** [v3] | Edge Function | `supabase/functions/webhook-fireblocks/index.ts` (and similar for Copper) | Public webhook endpoint: verify signatures, map custody tx → `harvest_sessions`, update status (executing → completed/failed), append tx hash to `execution_steps`. |
+| **TWAP / slicing worker** [v3] | Edge Function (scheduled) | `supabase/functions/harvest-twap-worker/index.ts` | Runs on cron; for `execution_strategy = 'TWAP'` sessions: check price floor, dispatch next child order via Action Engine / Private RPC, update `execution_steps` and average price; pause/resume as needed. |
+| **Private RPC / MEV-safe send** [v2] | Library + Next.js API | `lib/mev-protection.ts` used by Action Engine / execute route | Encapsulate Flashbots / other bundle logic. Next.js route calls this lib for individual steps; heavy looping/cron remains in Edge worker (TWAP). |
+| **Notifications (email / push)** | Edge Function (scheduled) | `supabase/functions/harvest-notify/index.ts` | Scan `harvest_opportunities` vs `harvest_user_settings.notification_threshold`; send notifications for new high-benefit opps and year-end reminders; log sends. |
+| **User settings (tax, guardrails, custody flags)** | Next.js API Route | `app/api/harvest/settings/route.ts` | CRUD on `harvest_user_settings`: tax rate, notification threshold, guardrails, `custody_provider`, `require_private_rpc`, etc. |
+| **Approver dashboard (Maker/Checker)** [v3] | Next.js Page + API | Page: `app/(app)/harvest/approvals/page.tsx` API: `app/api/harvest/approvals/route.ts` & `/[id]/route.ts` | UI + APIs for CFO/Admin: list `approval_requests`, show risk context (Guardian, KYT, guardrails), approve/reject sessions, attach digital signature; API updates `approval_requests` + `harvest_sessions.status`. |
+
+**UI Responsibilities (Presentation Only):**
+The UI MUST ONLY:
+- Fetch data via API
+- Display cards, modals, and screens
+- Trigger harvest sessions
+- Sign transactions if needed
+- Handle user interactions and navigation
+- Manage local UI state (filters, modals, etc.)
+
+The UI MUST NEVER contain:
+- Tax logic
+- PnL logic
+- Guardian logic
+- Risk logic
+- Transaction logic
+- FIFO calculations
+- Eligibility filtering
+- Net benefit calculations
 
 ### High-Level Architecture
 
@@ -74,6 +138,12 @@ HarvestPro is a comprehensive tax-loss harvesting module for AlphaWhale that ena
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │ CEX APIs     │  │ RPC Nodes    │  │ Stripe       │      │
 │  │ (Binance,etc)│  │              │  │              │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ Private RPC  │  │ Custody APIs │  │ Sanctions DB │      │
+│  │ (Flashbots)  │  │(Fireblocks)  │  │ (OFAC/AML)   │      │
+│  │     [v2]     │  │     [v3]     │  │     [v3]     │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -285,19 +355,25 @@ HarvestSession status transitions follow this state machine:
 ```
 draft
   ↓ (execute)
-executing
-  ↓ (success)
-completed
-  ↳ (retry) → executing
-  ↓ (fail)
-failed
-  ↓ (cancel)
-cancelled
+  ├─→ executing (if no approval required)
+  └─→ awaiting_approval [v3] (if threshold exceeded)
+       ↓ (approve)
+     executing
+       ↓ (success)
+     completed
+       ↳ (retry) → executing
+       ↓ (fail)
+     failed
+       ↓ (cancel)
+     cancelled
 ```
 
 **Valid Transitions:**
-- `draft → executing`: User clicks "Execute Harvest"
+- `draft → executing`: User clicks "Execute Harvest" (no approval required)
+- `draft → awaiting_approval`: Session exceeds approval threshold [v3]
 - `draft → cancelled`: User cancels before execution
+- `awaiting_approval → executing`: Approver signs session [v3]
+- `awaiting_approval → cancelled`: Approver rejects session [v3]
 - `executing → completed`: All steps succeed
 - `executing → failed`: Any step fails
 - `failed → executing`: User retries after fixing issues
@@ -356,11 +432,27 @@ CREATE TABLE harvest_sessions (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'executing', 'completed', 'failed', 'cancelled')),
-  opportunities_selected JSONB DEFAULT '[]',
+  
+  -- v1 states + v3 awaiting_approval state
+  status TEXT NOT NULL DEFAULT 'draft' 
+    CHECK (status IN ('draft', 'awaiting_approval', 'executing', 'completed', 'failed', 'cancelled')),
+  
+  -- v3: execution strategy
+  execution_strategy TEXT DEFAULT 'IMMEDIATE'
+    CHECK (execution_strategy IN ('IMMEDIATE', 'TWAP', 'MANUAL')),
+  
+  opportunities_selected JSONB DEFAULT '[]'::jsonb,
   realized_losses_total NUMERIC DEFAULT 0,
   net_benefit_total NUMERIC DEFAULT 0,
-  execution_steps JSONB DEFAULT '[]',
+  
+  -- v2: economic substance
+  economic_substance_status TEXT
+    CHECK (economic_substance_status IN ('PASS', 'WARN', 'BLOCKED')),
+  
+  -- v3: custody integration
+  custody_transaction_id TEXT,
+  
+  execution_steps JSONB DEFAULT '[]'::jsonb,
   export_url TEXT,
   proof_hash TEXT
 );
@@ -390,6 +482,18 @@ CREATE TABLE harvest_user_settings (
   notification_threshold NUMERIC DEFAULT 100,
   preferred_wallets TEXT[] DEFAULT '{}',
   risk_tolerance TEXT DEFAULT 'moderate' CHECK (risk_tolerance IN ('conservative', 'moderate', 'aggressive')),
+  
+  -- v2/v3: Institutional Guardrails
+  max_daily_loss_usd NUMERIC,
+  max_single_trade_notional_usd NUMERIC,
+  max_slippage_bps INTEGER DEFAULT 50,  -- e.g. 50 = 0.5%
+  require_private_rpc BOOLEAN DEFAULT FALSE,
+  
+  -- v3: Custody Configuration
+  custody_provider TEXT DEFAULT 'NONE'
+    CHECK (custody_provider IN ('FIREBLOCKS', 'COPPER', 'NONE')),
+  custody_vault_id TEXT,  -- encrypted at application level
+  
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -436,6 +540,31 @@ CREATE TABLE cex_trades (
   UNIQUE(cex_account_id, token, timestamp)
 );
 
+-- v3: Approval requests table (Maker/Checker governance)
+CREATE TABLE approval_requests (
+  request_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID REFERENCES harvest_sessions(session_id) ON DELETE CASCADE,
+  requester_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  approver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  requested_at TIMESTAMPTZ DEFAULT NOW(),
+  approved_at TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'approved', 'rejected')),
+  digital_signature TEXT,  -- cryptographic proof of approval
+  metadata JSONB DEFAULT '{}'  -- IP, device, risk context
+);
+
+-- v3: Sanctions screening logs (KYT/AML audit trail)
+CREATE TABLE sanctions_screening_logs (
+  log_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID REFERENCES harvest_sessions(session_id) ON DELETE CASCADE,
+  address_checked TEXT NOT NULL,
+  risk_score NUMERIC,
+  screening_provider TEXT NOT NULL,  -- 'TRM_LABS', 'CHAINALYSIS', 'OFAC_DIRECT'
+  result TEXT NOT NULL CHECK (result IN ('CLEAN', 'FLAGGED', 'BLOCKED')),
+  checked_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX idx_harvest_lots_user ON harvest_lots(user_id, created_at DESC);
 CREATE INDEX idx_harvest_lots_eligible ON harvest_lots(user_id, eligible_for_harvest) WHERE eligible_for_harvest = TRUE;
@@ -446,6 +575,10 @@ CREATE INDEX idx_harvest_sessions_status ON harvest_sessions(user_id, status);
 CREATE INDEX idx_execution_steps_session ON execution_steps(session_id, step_number);
 CREATE INDEX idx_wallet_transactions_user_token ON wallet_transactions(user_id, wallet_address, token, timestamp DESC);
 CREATE INDEX idx_cex_trades_user_token ON cex_trades(user_id, token, timestamp DESC);
+CREATE INDEX idx_approval_requests_session ON approval_requests(session_id);
+CREATE INDEX idx_approval_requests_approver ON approval_requests(approver_id, status);
+CREATE INDEX idx_sanctions_logs_session ON sanctions_screening_logs(session_id);
+CREATE INDEX idx_sanctions_logs_address ON sanctions_screening_logs(address_checked);
 
 -- Full-text search index for token search
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -479,6 +612,20 @@ CREATE POLICY p_cex_accounts_user ON cex_accounts
 ALTER TABLE cex_trades ENABLE ROW LEVEL SECURITY;
 CREATE POLICY p_cex_trades_user ON cex_trades
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE approval_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p_approval_requests_user ON approval_requests
+  USING (auth.uid() = requester_id OR auth.uid() = approver_id)
+  WITH CHECK (auth.uid() = requester_id OR auth.uid() = approver_id);
+
+ALTER TABLE sanctions_screening_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p_sanctions_logs_user ON sanctions_screening_logs
+  USING (EXISTS (
+    SELECT 1 FROM harvest_sessions hs
+    WHERE hs.session_id = sanctions_screening_logs.session_id
+      AND hs.user_id = auth.uid()
+  ))
+  WITH CHECK (TRUE);
 ```
 
 ### API Response Schemas
@@ -643,6 +790,82 @@ ectness Properties
 *For any* harvest opportunity where net benefit exceeds the user's notification threshold, a notification SHALL be sent.
 **Validates: Requirements 13.1, 13.2**
 
+---
+
+## v2 Institutional Correctness Properties
+
+### Property 21: Private RPC Routing
+*For any* harvest session where `requirePrivateRpc` is enabled, all on-chain transactions SHALL be routed through a configured private RPC provider and SHALL NOT use public RPC.
+**Validates: Requirements 21.1, 21.3**
+
+### Property 22: Private RPC Recording
+*For any* execution step sent via private RPC, the step SHALL have `privateRpcUsed = true` and SHALL include the provider name.
+**Validates: Requirements 21.2**
+
+### Property 23: Economic Substance Evaluation
+*For any* harvest session creation, the system SHALL evaluate economic substance and set `economicSubstanceStatus` to exactly one of `PASS`, `WARN`, or `BLOCKED`.
+**Validates: Requirements 22.1**
+
+### Property 24: Economic Substance Blocking
+*For any* harvest session where `economicSubstanceStatus = BLOCKED`, execution SHALL be prevented and SHALL NOT transition to `executing` status.
+**Validates: Requirements 22.2**
+
+### Property 25: Proxy Asset Recording
+*For any* harvest opportunity using a proxy asset, the `proxyAssetSymbol` field SHALL be populated and SHALL be included in the Proof-of-Harvest export.
+**Validates: Requirements 23.4**
+
+### Property 26: Guardrail Enforcement - Daily Loss
+*For any* harvest session where estimated realized losses would exceed `maxDailyRealizedLossUsd`, execution SHALL be blocked.
+**Validates: Requirements 24.1**
+
+### Property 27: Guardrail Enforcement - Position Size
+*For any* execution step where notional value exceeds `maxSingleTradeNotionalUsd`, the step SHALL be split or rejected.
+**Validates: Requirements 24.2**
+
+### Property 28: Guardrail Enforcement - Slippage
+*For any* harvest opportunity where estimated slippage exceeds `maxSlippageBps`, the opportunity SHALL be blocked.
+**Validates: Requirements 24.3**
+
+### Property 29: Enhanced Proof Payload
+*For any* completed harvest session in v2 mode, the proof payload SHALL include economic substance status, MEV protection mode, and provider details.
+**Validates: Requirements 25.1**
+
+---
+
+## v3 Enterprise Correctness Properties
+
+### Property 30: Custody Integration - No Private Keys
+*For any* user with custody provider configured, the system SHALL NOT request or store private keys.
+**Validates: Requirements 26.1**
+
+### Property 31: Custody Transaction Routing
+*For any* harvest execution with custody integration, transactions SHALL be pushed to the custody API and SHALL NOT be broadcast directly.
+**Validates: Requirements 26.2, 26.3**
+
+### Property 32: Approval Threshold Transition
+*For any* harvest session where net benefit exceeds `approvalThresholdUsd`, the status SHALL transition to `awaiting_approval` instead of `executing`.
+**Validates: Requirements 27.1**
+
+### Property 33: Approval Requirement
+*For any* session in `awaiting_approval` status, execution SHALL NOT proceed until an APPROVER cryptographically signs the approval.
+**Validates: Requirements 27.3**
+
+### Property 34: Sanctions Screening
+*For any* proposed swap route, all pool contract addresses SHALL be screened against the OFAC Sanctions List before execution.
+**Validates: Requirements 28.1**
+
+### Property 35: Sanctioned Route Blocking
+*For any* route interacting with a sanctioned address, the route SHALL be blocked and an alternative compliant route SHALL be found.
+**Validates: Requirements 28.2**
+
+### Property 36: TWAP Order Slicing
+*For any* harvest exceeding the liquidity threshold with TWAP selected, the parent order SHALL be sliced into multiple child orders executed over the specified duration.
+**Validates: Requirements 29.2**
+
+### Property 37: TWAP Safety Floor
+*For any* TWAP execution, if the price drops below the `limitPriceFloor`, execution SHALL be dynamically paused.
+**Validates: Requirements 29.3**
+
 ## Error Handling
 
 ### Error Handling Strategy
@@ -723,11 +946,15 @@ const ERROR_HANDLERS = {
 - State machine transitions
 
 ### Property-Based Tests
-- **Property 1-20**: Implement each correctness property as a property-based test
+- **Property 1-37**: Implement each correctness property as a property-based test
+  - Properties 1-20: v1 core functionality
+  - Properties 21-29: v2 institutional features
+  - Properties 30-37: v3 enterprise features
 - Use fast-check library for TypeScript
 - Generate random inputs for comprehensive coverage
 - Minimum 100 iterations per property test
 - Tag each test with property number and requirement reference
+- Format: `// Feature: harvestpro, Property X: [description]`
 
 ### Integration Tests
 - Wallet connection and data fetching
@@ -1286,6 +1513,558 @@ export async function GET(req: NextRequest) {
 }
 ```
 
+## v2/v3 Implementation Details
+
+### MEV Protection and Private RPC (v2)
+
+```typescript
+// lib/mev-protection.ts
+export interface PrivateRPCConfig {
+  provider: 'FLASHBOTS' | 'EDEN' | 'BLOXROUTE';
+  endpoint: string;
+  apiKey: string;
+}
+
+export async function sendViaPrivateRPC(
+  transaction: Transaction,
+  config: PrivateRPCConfig
+): Promise<TransactionReceipt> {
+  switch (config.provider) {
+    case 'FLASHBOTS':
+      return sendViaFlashbots(transaction, config);
+    case 'EDEN':
+      return sendViaEden(transaction, config);
+    case 'BLOXROUTE':
+      return sendViaBloxroute(transaction, config);
+  }
+}
+
+async function sendViaFlashbots(
+  transaction: Transaction,
+  config: PrivateRPCConfig
+): Promise<TransactionReceipt> {
+  const flashbotsProvider = await FlashbotsBundleProvider.create(
+    provider,
+    authSigner,
+    config.endpoint
+  );
+  
+  const signedBundle = await flashbotsProvider.signBundle([
+    { signer: wallet, transaction }
+  ]);
+  
+  const simulation = await flashbotsProvider.simulate(
+    signedBundle,
+    targetBlockNumber
+  );
+  
+  if ('error' in simulation) {
+    throw new Error(`Flashbots simulation failed: ${simulation.error.message}`);
+  }
+  
+  const bundleSubmission = await flashbotsProvider.sendRawBundle(
+    signedBundle,
+    targetBlockNumber
+  );
+  
+  return bundleSubmission.wait();
+}
+```
+
+### Economic Substance Validation (v2)
+
+```typescript
+// lib/economic-substance.ts
+export interface EconomicSubstanceCheck {
+  status: 'PASS' | 'WARN' | 'BLOCKED';
+  reason: string;
+  score: number; // 0-100
+}
+
+export function evaluateEconomicSubstance(
+  session: HarvestSession,
+  userHistory: HarvestSession[]
+): EconomicSubstanceCheck {
+  let score = 100;
+  const reasons: string[] = [];
+  
+  // Check 1: Immediate repurchase pattern
+  const hasImmediateRepurchase = checkImmediateRepurchase(session, userHistory);
+  if (hasImmediateRepurchase) {
+    score -= 40;
+    reasons.push('Immediate repurchase detected within 30 days');
+  }
+  
+  // Check 2: Frequency of harvesting
+  const harvestFrequency = calculateHarvestFrequency(userHistory);
+  if (harvestFrequency > 10) { // More than 10 harvests per year
+    score -= 20;
+    reasons.push('High frequency harvesting pattern');
+  }
+  
+  // Check 3: Round-trip to same asset
+  const hasRoundTrip = checkRoundTripPattern(session);
+  if (hasRoundTrip) {
+    score -= 50;
+    reasons.push('Round-trip to substantially identical asset');
+  }
+  
+  // Check 4: Proxy asset usage
+  const usesProxyAsset = session.opportunitiesSelected.some(
+    opp => opp.proxyAssetSymbol
+  );
+  if (usesProxyAsset) {
+    score += 20; // Proxy assets demonstrate economic substance
+    reasons.push('Uses proxy assets to maintain exposure');
+  }
+  
+  // Determine status
+  if (score < 40) {
+    return { status: 'BLOCKED', reason: reasons.join('; '), score };
+  } else if (score < 70) {
+    return { status: 'WARN', reason: reasons.join('; '), score };
+  } else {
+    return { status: 'PASS', reason: 'Sufficient economic substance', score };
+  }
+}
+```
+
+### Proxy Asset Selection (v2)
+
+```typescript
+// lib/proxy-assets.ts
+export interface ProxyAssetMapping {
+  baseAsset: string;
+  proxyAssets: ProxyAsset[];
+}
+
+export interface ProxyAsset {
+  symbol: string;
+  correlation: number; // 0-1
+  liquidity: number; // 0-100
+  blocked: boolean;
+  reason?: string;
+}
+
+const PROXY_ASSET_MAPPINGS: ProxyAssetMapping[] = [
+  {
+    baseAsset: 'ETH',
+    proxyAssets: [
+      { symbol: 'stETH', correlation: 0.99, liquidity: 95, blocked: false },
+      { symbol: 'rETH', correlation: 0.98, liquidity: 85, blocked: false },
+      { symbol: 'cbETH', correlation: 0.99, liquidity: 90, blocked: false },
+    ],
+  },
+  {
+    baseAsset: 'BTC',
+    proxyAssets: [
+      { symbol: 'WBTC', correlation: 0.99, liquidity: 95, blocked: false },
+      { symbol: 'renBTC', correlation: 0.98, liquidity: 70, blocked: true, reason: 'Protocol deprecated' },
+    ],
+  },
+];
+
+export function getProxyAssets(baseAsset: string): ProxyAsset[] {
+  const mapping = PROXY_ASSET_MAPPINGS.find(m => m.baseAsset === baseAsset);
+  return mapping?.proxyAssets.filter(p => !p.blocked) || [];
+}
+
+export function addProxyAssetStep(
+  opportunity: HarvestOpportunity,
+  proxyAsset: ProxyAsset
+): ExecutionStep[] {
+  return [
+    {
+      stepNumber: 1,
+      description: `Sell ${opportunity.token} for USDC`,
+      type: 'on-chain',
+      status: 'pending',
+    },
+    {
+      stepNumber: 2,
+      description: `Buy ${proxyAsset.symbol} with USDC`,
+      type: 'on-chain',
+      status: 'pending',
+    },
+  ];
+}
+```
+
+### Institutional Guardrails (v2)
+
+```typescript
+// lib/guardrails.ts
+export interface GuardrailCheck {
+  passed: boolean;
+  violations: GuardrailViolation[];
+}
+
+export interface GuardrailViolation {
+  type: 'DAILY_LOSS' | 'POSITION_SIZE' | 'SLIPPAGE';
+  limit: number;
+  actual: number;
+  message: string;
+}
+
+export function checkGuardrails(
+  session: HarvestSession,
+  settings: UserSettings,
+  todaysSessions: HarvestSession[]
+): GuardrailCheck {
+  const violations: GuardrailViolation[] = [];
+  
+  // Check daily loss limit
+  if (settings.maxDailyRealizedLossUsd) {
+    const todaysLoss = todaysSessions.reduce(
+      (sum, s) => sum + s.realizedLossesTotal,
+      0
+    );
+    const projectedLoss = todaysLoss + session.realizedLossesTotal;
+    
+    if (projectedLoss > settings.maxDailyRealizedLossUsd) {
+      violations.push({
+        type: 'DAILY_LOSS',
+        limit: settings.maxDailyRealizedLossUsd,
+        actual: projectedLoss,
+        message: `Daily loss limit exceeded: $${projectedLoss.toFixed(2)} > $${settings.maxDailyRealizedLossUsd.toFixed(2)}`,
+      });
+    }
+  }
+  
+  // Check position size limits
+  if (settings.maxSingleTradeNotionalUsd) {
+    for (const opp of session.opportunitiesSelected) {
+      const notional = opp.unrealizedLoss;
+      if (notional > settings.maxSingleTradeNotionalUsd) {
+        violations.push({
+          type: 'POSITION_SIZE',
+          limit: settings.maxSingleTradeNotionalUsd,
+          actual: notional,
+          message: `Position size exceeds limit: $${notional.toFixed(2)} > $${settings.maxSingleTradeNotionalUsd.toFixed(2)}`,
+        });
+      }
+    }
+  }
+  
+  // Check slippage limits
+  if (settings.maxSlippageBps) {
+    for (const opp of session.opportunitiesSelected) {
+      const slippageBps = (opp.slippageEstimate / opp.unrealizedLoss) * 10000;
+      if (slippageBps > settings.maxSlippageBps) {
+        violations.push({
+          type: 'SLIPPAGE',
+          limit: settings.maxSlippageBps,
+          actual: slippageBps,
+          message: `Slippage exceeds limit: ${slippageBps.toFixed(0)}bps > ${settings.maxSlippageBps}bps`,
+        });
+      }
+    }
+  }
+  
+  return {
+    passed: violations.length === 0,
+    violations,
+  };
+}
+```
+
+### Custody Integration (v3)
+
+```typescript
+// lib/custody-integration.ts
+export interface CustodyProvider {
+  type: 'FIREBLOCKS' | 'COPPER';
+  apiKey: string;
+  apiSecret: string;
+  vaultId: string;
+}
+
+export async function submitToCustody(
+  transaction: Transaction,
+  provider: CustodyProvider,
+  sessionId: string
+): Promise<CustodySubmission> {
+  switch (provider.type) {
+    case 'FIREBLOCKS':
+      return submitToFireblocks(transaction, provider, sessionId);
+    case 'COPPER':
+      return submitToCopper(transaction, provider, sessionId);
+  }
+}
+
+async function submitToFireblocks(
+  transaction: Transaction,
+  provider: CustodyProvider,
+  sessionId: string
+): Promise<CustodySubmission> {
+  const fireblocks = new FireblocksSDK(
+    provider.apiSecret,
+    provider.apiKey
+  );
+  
+  const txPayload = {
+    assetId: transaction.token,
+    source: {
+      type: 'VAULT_ACCOUNT',
+      id: provider.vaultId,
+    },
+    destination: {
+      type: 'EXTERNAL_WALLET',
+      oneTimeAddress: {
+        address: transaction.to,
+      },
+    },
+    amount: transaction.value.toString(),
+    note: `HarvestPro Session ${sessionId}`,
+  };
+  
+  const result = await fireblocks.createTransaction(txPayload);
+  
+  return {
+    custodyTxId: result.id,
+    status: result.status,
+    requiresApproval: result.status === 'PENDING_AUTHORIZATION',
+  };
+}
+
+export async function pollCustodyStatus(
+  custodyTxId: string,
+  provider: CustodyProvider
+): Promise<CustodyStatus> {
+  // Poll custody provider for transaction status
+  // Return when signed or rejected
+}
+```
+
+### Maker/Checker Governance (v3)
+
+```typescript
+// lib/maker-checker.ts
+export interface ApprovalRequest {
+  sessionId: string;
+  requestedBy: string;
+  requestedAt: string;
+  netBenefit: number;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: string;
+  signature?: string;
+}
+
+export async function requestApproval(
+  session: HarvestSession,
+  approvers: string[]
+): Promise<ApprovalRequest> {
+  const request: ApprovalRequest = {
+    sessionId: session.sessionId,
+    requestedBy: session.userId,
+    requestedAt: new Date().toISOString(),
+    netBenefit: session.netBenefitTotal,
+    status: 'pending',
+  };
+  
+  // Store approval request
+  await db.approvalRequests.insert(request);
+  
+  // Notify approvers
+  for (const approver of approvers) {
+    await sendApprovalNotification(approver, request);
+  }
+  
+  return request;
+}
+
+export async function approveSession(
+  sessionId: string,
+  approverId: string,
+  signature: string
+): Promise<void> {
+  // Verify signature
+  const isValid = await verifyApprovalSignature(sessionId, approverId, signature);
+  if (!isValid) {
+    throw new Error('Invalid approval signature');
+  }
+  
+  // Update approval request
+  await db.approvalRequests.update({
+    sessionId,
+    status: 'approved',
+    approvedBy: approverId,
+    approvedAt: new Date().toISOString(),
+    signature,
+  });
+  
+  // Transition session to executing
+  await db.harvestSessions.update({
+    sessionId,
+    status: 'executing',
+  });
+}
+```
+
+### Sanctions Screening (v3)
+
+```typescript
+// lib/sanctions-screening.ts
+export interface SanctionsCheck {
+  passed: boolean;
+  flaggedAddresses: FlaggedAddress[];
+}
+
+export interface FlaggedAddress {
+  address: string;
+  reason: string;
+  source: 'OFAC' | 'EU' | 'UN';
+  addedAt: string;
+}
+
+export async function screenSwapRoute(
+  route: SwapRoute
+): Promise<SanctionsCheck> {
+  const flaggedAddresses: FlaggedAddress[] = [];
+  
+  // Check all addresses in the route
+  for (const hop of route.hops) {
+    const poolAddress = hop.poolAddress;
+    
+    // Check against OFAC list
+    const ofacResult = await checkOFAC(poolAddress);
+    if (ofacResult.flagged) {
+      flaggedAddresses.push({
+        address: poolAddress,
+        reason: ofacResult.reason,
+        source: 'OFAC',
+        addedAt: ofacResult.addedAt,
+      });
+    }
+    
+    // Check pool participants
+    const participants = await getPoolParticipants(poolAddress);
+    for (const participant of participants) {
+      const participantCheck = await checkOFAC(participant);
+      if (participantCheck.flagged) {
+        flaggedAddresses.push({
+          address: participant,
+          reason: `Pool participant: ${participantCheck.reason}`,
+          source: 'OFAC',
+          addedAt: participantCheck.addedAt,
+        });
+      }
+    }
+  }
+  
+  return {
+    passed: flaggedAddresses.length === 0,
+    flaggedAddresses,
+  };
+}
+
+export async function findCompliantRoute(
+  fromToken: string,
+  toToken: string,
+  amount: number
+): Promise<SwapRoute | null> {
+  const routes = await getAllPossibleRoutes(fromToken, toToken, amount);
+  
+  for (const route of routes) {
+    const check = await screenSwapRoute(route);
+    if (check.passed) {
+      return route;
+    }
+  }
+  
+  return null; // No compliant route found
+}
+```
+
+### TWAP Order Routing (v3)
+
+```typescript
+// lib/twap-execution.ts
+export interface TWAPConfig {
+  totalAmount: number;
+  durationMinutes: number;
+  numSlices: number;
+  limitPriceFloor: number;
+}
+
+export interface TWAPExecution {
+  parentOrderId: string;
+  childOrders: ChildOrder[];
+  status: 'active' | 'paused' | 'completed' | 'cancelled';
+  averagePrice: number;
+}
+
+export interface ChildOrder {
+  orderId: string;
+  sliceNumber: number;
+  amount: number;
+  executedAt?: string;
+  executedPrice?: number;
+  status: 'pending' | 'executing' | 'completed' | 'failed';
+}
+
+export async function executeTWAP(
+  token: string,
+  config: TWAPConfig
+): Promise<TWAPExecution> {
+  const sliceAmount = config.totalAmount / config.numSlices;
+  const intervalMs = (config.durationMinutes * 60 * 1000) / config.numSlices;
+  
+  const childOrders: ChildOrder[] = [];
+  
+  for (let i = 0; i < config.numSlices; i++) {
+    childOrders.push({
+      orderId: generateOrderId(),
+      sliceNumber: i + 1,
+      amount: sliceAmount,
+      status: 'pending',
+    });
+  }
+  
+  const execution: TWAPExecution = {
+    parentOrderId: generateOrderId(),
+    childOrders,
+    status: 'active',
+    averagePrice: 0,
+  };
+  
+  // Execute child orders with intervals
+  for (const childOrder of childOrders) {
+    // Check price floor
+    const currentPrice = await getCurrentPrice(token);
+    if (currentPrice < config.limitPriceFloor) {
+      execution.status = 'paused';
+      await notifyPriceFloorHit(execution, currentPrice);
+      break;
+    }
+    
+    // Execute child order
+    childOrder.status = 'executing';
+    const result = await executeSwap(token, childOrder.amount);
+    
+    childOrder.executedAt = new Date().toISOString();
+    childOrder.executedPrice = result.price;
+    childOrder.status = 'completed';
+    
+    // Wait for next interval
+    if (i < config.numSlices - 1) {
+      await sleep(intervalMs);
+    }
+  }
+  
+  // Calculate average execution price
+  const completedOrders = childOrders.filter(o => o.status === 'completed');
+  execution.averagePrice = completedOrders.reduce(
+    (sum, o) => sum + o.executedPrice!,
+    0
+  ) / completedOrders.length;
+  
+  execution.status = 'completed';
+  return execution;
+}
+```
+
 ## Deployment Strategy
 
 ### Feature Flags
@@ -1324,11 +2103,11 @@ const ROLLOUT_PERCENTAGES = {
 - [ ] Review accessibility compliance
 - [ ] Test mobile responsive design
 
-## Future Enhancements (v2.0+)
+## Future Enhancements (v4.0+)
 
 1. **Automated CEX Execution**: Direct API execution for supported exchanges
 2. **Multi-Year Tax Planning**: Optimize harvesting across multiple tax years
-3. **Wash Sale Detection**: Automatic detection and prevention of wash sales
+3. **Wash Sale Detection**: Automatic detection and prevention of wash sales (enhanced beyond v2)
 4. **Portfolio Rebalancing**: Combine harvesting with portfolio rebalancing
 5. **Tax Form Generation**: Generate complete IRS forms (not just CSV)
 6. **International Tax Support**: Support for non-US tax regimes
@@ -1336,9 +2115,17 @@ const ROLLOUT_PERCENTAGES = {
 8. **AI Recommendations**: ML-based optimization of harvest timing
 9. **Batch Harvesting**: Execute multiple harvests in a single transaction
 10. **Mobile App**: Native iOS/Android app for on-the-go harvesting
+11. **Cross-Chain Atomic Swaps**: Harvest across chains in single transaction
+12. **DeFi Protocol Integration**: Direct integration with lending protocols for collateral harvesting
+13. **NFT Tax-Loss Harvesting**: Extend to NFT collections
+14. **Derivatives Support**: Options and futures for sophisticated tax strategies
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 3.0  
 **Last Updated:** November 2025  
-**Next Review:** After v1 launch
+**Versions:**
+- v1.0: Core retail features (Requirements 1-20)
+- v2.0: Institutional enhancements (Requirements 21-25)
+- v3.0: Enterprise features (Requirements 26-29)
+**Next Review:** After v3 launch

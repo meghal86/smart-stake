@@ -283,13 +283,19 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Update wallet labels when they change in user preferences
-    setConnectedWallets(prev => 
-      prev.map(w => ({
+    // Only update if labels actually changed to prevent infinite loops
+    setConnectedWallets(prev => {
+      const updated = prev.map(w => ({
         ...w,
         label: getLabel(w.address),
-      }))
-    );
-  }, [walletLabels, getLabel]);
+      }));
+      
+      // Check if any labels actually changed
+      const hasChanges = updated.some((w, i) => w.label !== prev[i].label);
+      
+      return hasChanges ? updated : prev;
+    });
+  }, [walletLabels]); // Only depend on walletLabels, not getLabel
 
   // ============================================================================
   // Resolve Wallet Name

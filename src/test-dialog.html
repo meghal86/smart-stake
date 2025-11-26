@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dialog Test</title>
+  <style>
+    body {
+      background: #0A0E1A;
+      color: white;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 50;
+      display: none;
+    }
+    .dialog-overlay.open {
+      display: block;
+    }
+    .dialog-content {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1f2e;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 24px;
+      z-index: 51;
+      max-width: 500px;
+      width: 90%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dialog Test</h1>
+  <button onclick="openDialog()">Open Dialog</button>
+  
+  <div id="overlay" class="dialog-overlay" onclick="closeDialog()">
+    <div class="dialog-content" onclick="event.stopPropagation()">
+      <h2>Test Dialog</h2>
+      <p>This is a test dialog to verify basic functionality.</p>
+      <button onclick="closeDialog()">Close</button>
+    </div>
+  </div>
+  
+  <script>
+    function openDialog() {
+      console.log('Opening dialog');
+      document.getElementById('overlay').classList.add('open');
+    }
+    
+    function closeDialog() {
+      console.log('Closing dialog');
+      document.getElementById('overlay').classList.remove('open');
+    }
+  </script>
+</body>
+</html>

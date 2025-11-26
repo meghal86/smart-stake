@@ -100,6 +100,17 @@ export interface ExecutionStep {
   timestamp: string | null;
   durationMs?: number;
   createdAt: string;
+  metadata?: ExecutionStepMetadata;
+}
+
+export interface ExecutionStepMetadata {
+  instruction?: string;
+  platform?: string;
+  tokenPair?: string;
+  orderType?: string;
+  token?: string;
+  quantity?: number;
+  [key: string]: unknown;
 }
 
 export interface HarvestUserSettings {

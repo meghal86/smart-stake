@@ -1,0 +1,368 @@
+/**
+ * Property-Based Tests for Net Benefit Calculation (Edge Functions)
+ * Feature: harvestpro, Property 6: Net Benefit Calculation
+ * Validates: Requirements 4.1, 4.2, 4.3, 4.4
+ */
+
+import { assertEquals, assertAlmostEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts';
+import fc from 'https://cdn.skypack.dev/fast-check@3.13.2';
+import {
+  calculateNetBenefit,
+  calculateTaxSavings,
+  calculateTotalCosts,
+  calculateHarvestBenefit,
+  type NetBenefitParams,
+} from '../net-benefit.ts';
+
+/**
+ * Helper function for floating point comparison
+ */
+function assertClose(actual: number, expected: number, precision = 5) {
+  const epsilon = Math.pow(10, -precision);
+  const diff = Math.abs(actual - expected);
+  if (diff > epsilon) {
+    throw new Error(`Expected ${actual} to be close to ${expected} (diff: ${diff}, epsilon: ${epsilon})`);
+  }
+}
+
+Deno.test('Net Benefit Calculation - Property Tests', async (t) => {
+  /**
+   * Property 6: Net Benefit Calculation
+   * Feature: harvestpro, Property 6: Net Benefit Calculation
+   * Validates: Requirements 4.1, 4.2, 4.3, 4.4
+   * 
+   * For any harvest opportunity, net benefit SHALL equal:
+   * (unrealized_loss * tax_rate) - gas_estimate - slippage_estimate - trading_fees
+   */
+  await t.step('Property 6: Net benefit equals tax savings minus all costs', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 0.01, max: 100000, noNaN: true }),
+          taxRate: fc.float({ min: 0, max: 1, noNaN: true }),
+          gasEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          slippageEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          tradingFees: fc.float({ min: 0, max: 1000, noNaN: true }),
+        }),
+        (params) => {
+          const netBenefit = calculateNetBenefit(params);
+          
+          // Calculate expected value manually
+          const taxSavings = params.unrealizedLoss * params.taxRate;
+          const totalCosts = params.gasEstimate + params.slippageEstimate + params.tradingFees;
+          const expectedNetBenefit = taxSavings - totalCosts;
+          
+          // Verify the formula is correct
+          assertClose(netBenefit, expectedNetBenefit, 5);
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Tax savings calculation is correct
+   * Validates: Requirement 4.1
+   */
+  await t.step('Property: Tax savings equals unrealized loss times tax rate', () => {
+    fc.assert(
+      fc.property(
+        fc.float({ min: 0.01, max: 100000, noNaN: true }),
+        fc.float({ min: 0, max: 1, noNaN: true }),
+        (unrealizedLoss, taxRate) => {
+          const taxSavings = calculateTaxSavings(unrealizedLoss, taxRate);
+          const expected = unrealizedLoss * taxRate;
+          
+          assertClose(taxSavings, expected, 5);
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Total costs is sum of all cost components
+   * Validates: Requirements 4.2, 4.3, 4.4
+   */
+  await t.step('Property: Total costs equals sum of gas, slippage, and trading fees', () => {
+    fc.assert(
+      fc.property(
+        fc.float({ min: 0, max: 1000, noNaN: true }),
+        fc.float({ min: 0, max: 1000, noNaN: true }),
+        fc.float({ min: 0, max: 1000, noNaN: true }),
+        (gasEstimate, slippageEstimate, tradingFees) => {
+          const costs = calculateTotalCosts(gasEstimate, slippageEstimate, tradingFees);
+          const expectedTotal = gasEstimate + slippageEstimate + tradingFees;
+          
+          assertClose(costs.totalCosts, expectedTotal, 5);
+          assertEquals(costs.gasCost, gasEstimate);
+          assertEquals(costs.slippageCost, slippageEstimate);
+          assertEquals(costs.tradingFees, tradingFees);
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Net benefit is monotonic with respect to tax rate
+   * Higher tax rate should always result in higher net benefit (all else equal)
+   */
+  await t.step('Property: Net benefit increases with tax rate', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 100, max: 100000, noNaN: true }),
+          gasEstimate: fc.float({ min: 0, max: 50, noNaN: true }),
+          slippageEstimate: fc.float({ min: 0, max: 50, noNaN: true }),
+          tradingFees: fc.float({ min: 0, max: 50, noNaN: true }),
+        }),
+        fc.float({ min: 0.1, max: 0.4, noNaN: true }),
+        fc.float({ min: 0.1, max: 0.4, noNaN: true }),
+        (params, taxRate1, taxRate2) => {
+          // Ensure taxRate1 < taxRate2
+          const lowerRate = Math.min(taxRate1, taxRate2);
+          const higherRate = Math.max(taxRate1, taxRate2);
+          
+          if (lowerRate === higherRate) return true; // Skip if equal
+          
+          const netBenefit1 = calculateNetBenefit({ ...params, taxRate: lowerRate });
+          const netBenefit2 = calculateNetBenefit({ ...params, taxRate: higherRate });
+          
+          // Higher tax rate should result in higher net benefit
+          if (netBenefit2 <= netBenefit1) {
+            throw new Error(`Expected ${netBenefit2} > ${netBenefit1}`);
+          }
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Net benefit decreases with costs
+   * Higher costs should always result in lower net benefit (all else equal)
+   */
+  await t.step('Property: Net benefit decreases with higher costs', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 100, max: 100000, noNaN: true }),
+          taxRate: fc.float({ min: 0.1, max: 0.5, noNaN: true }),
+        }),
+        fc.float({ min: 0, max: 100, noNaN: true }),
+        fc.float({ min: 0, max: 100, noNaN: true }),
+        (params, cost1, cost2) => {
+          // Ensure cost1 < cost2
+          const lowerCost = Math.min(cost1, cost2);
+          const higherCost = Math.max(cost1, cost2);
+          
+          // Skip if costs are equal or too close (within floating point precision)
+          const epsilon = 1e-6;
+          if (Math.abs(higherCost - lowerCost) < epsilon) return true;
+          
+          const netBenefit1 = calculateNetBenefit({
+            ...params,
+            gasEstimate: lowerCost,
+            slippageEstimate: 0,
+            tradingFees: 0,
+          });
+          
+          const netBenefit2 = calculateNetBenefit({
+            ...params,
+            gasEstimate: higherCost,
+            slippageEstimate: 0,
+            tradingFees: 0,
+          });
+          
+          // Higher cost should result in lower net benefit
+          if (netBenefit1 <= netBenefit2) {
+            throw new Error(`Expected ${netBenefit1} > ${netBenefit2}`);
+          }
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Net benefit is zero when tax rate is zero
+   * If there's no tax benefit, net benefit should be negative (just costs)
+   */
+  await t.step('Property: Zero tax rate results in negative net benefit', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 0.01, max: 100000, noNaN: true }),
+          gasEstimate: fc.float({ min: 0.01, max: 1000, noNaN: true }),
+          slippageEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          tradingFees: fc.float({ min: 0, max: 1000, noNaN: true }),
+        }),
+        (params) => {
+          const netBenefit = calculateNetBenefit({ ...params, taxRate: 0 });
+          
+          // With zero tax rate, net benefit should be negative (just costs)
+          const totalCosts = params.gasEstimate + params.slippageEstimate + params.tradingFees;
+          assertClose(netBenefit, -totalCosts, 5);
+          
+          if (netBenefit > 0) {
+            throw new Error(`Expected ${netBenefit} <= 0`);
+          }
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Net benefit with zero costs equals tax savings
+   */
+  await t.step('Property: Zero costs results in net benefit equal to tax savings', () => {
+    fc.assert(
+      fc.property(
+        fc.float({ min: 0.01, max: 100000, noNaN: true }),
+        fc.float({ min: 0.01, max: 1, noNaN: true }),
+        (unrealizedLoss, taxRate) => {
+          const netBenefit = calculateNetBenefit({
+            unrealizedLoss,
+            taxRate,
+            gasEstimate: 0,
+            slippageEstimate: 0,
+            tradingFees: 0,
+          });
+          
+          const taxSavings = unrealizedLoss * taxRate;
+          assertClose(netBenefit, taxSavings, 5);
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Harvest benefit includes recommendation flag
+   * Validates: Requirement 4.5 (not recommended if net benefit <= 0)
+   */
+  await t.step('Property: Recommendation is false when net benefit is non-positive', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 0.01, max: 100000, noNaN: true }),
+          taxRate: fc.float({ min: 0, max: 1, noNaN: true }),
+          gasEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          slippageEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          tradingFees: fc.float({ min: 0, max: 1000, noNaN: true }),
+        }),
+        (params) => {
+          const result = calculateHarvestBenefit(params);
+          
+          // Verify recommendation matches net benefit sign
+          if (result.netBenefit > 0) {
+            assertEquals(result.recommended, true);
+          } else {
+            assertEquals(result.recommended, false);
+          }
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: All cost components are preserved in harvest benefit
+   */
+  await t.step('Property: Harvest benefit preserves all input values', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 0.01, max: 100000, noNaN: true }),
+          taxRate: fc.float({ min: 0, max: 1, noNaN: true }),
+          gasEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          slippageEstimate: fc.float({ min: 0, max: 1000, noNaN: true }),
+          tradingFees: fc.float({ min: 0, max: 1000, noNaN: true }),
+        }),
+        (params) => {
+          const result = calculateHarvestBenefit(params);
+          
+          // Verify all input values are preserved
+          assertEquals(result.unrealizedLoss, params.unrealizedLoss);
+          assertEquals(result.gasCost, params.gasEstimate);
+          assertEquals(result.slippageCost, params.slippageEstimate);
+          assertEquals(result.tradingFees, params.tradingFees);
+          
+          // Verify tax savings calculation
+          const expectedTaxSavings = params.unrealizedLoss * params.taxRate;
+          assertClose(result.taxSavings, expectedTaxSavings, 5);
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  /**
+   * Property: Net benefit is commutative with respect to cost components
+   * Order of costs shouldn't matter
+   */
+  await t.step('Property: Cost order does not affect net benefit', () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          unrealizedLoss: fc.float({ min: 0.01, max: 100000, noNaN: true }),
+          taxRate: fc.float({ min: 0, max: 1, noNaN: true }),
+        }),
+        fc.float({ min: 0, max: 100, noNaN: true }),
+        fc.float({ min: 0, max: 100, noNaN: true }),
+        fc.float({ min: 0, max: 100, noNaN: true }),
+        (params, cost1, cost2, cost3) => {
+          // Calculate with costs in different positions
+          const result1 = calculateNetBenefit({
+            ...params,
+            gasEstimate: cost1,
+            slippageEstimate: cost2,
+            tradingFees: cost3,
+          });
+          
+          const result2 = calculateNetBenefit({
+            ...params,
+            gasEstimate: cost2,
+            slippageEstimate: cost3,
+            tradingFees: cost1,
+          });
+          
+          const result3 = calculateNetBenefit({
+            ...params,
+            gasEstimate: cost3,
+            slippageEstimate: cost1,
+            tradingFees: cost2,
+          });
+          
+          // All should be equal (within floating point precision)
+          assertClose(result1, result2, 5);
+          assertClose(result2, result3, 5);
+          assertClose(result1, result3, 5);
+          
+          return true;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});

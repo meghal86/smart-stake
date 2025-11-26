@@ -372,3 +372,79 @@ The Hunter Screen is the primary discovery surface for the Verified DeFi Opportu
 18. WHEN a wallet label is set in user preferences THEN it SHALL be displayed in the selector instead of "Wallet 1", "Wallet 2"
 19. WHEN the active wallet is shown THEN its ENS name SHALL be displayed if available, falling back to label or truncated address
 20. WHEN switching between wallets THEN the transition SHALL be smooth with no flickering or layout shifts
+
+### Requirement 19: Opportunity Creation (Permissionless Create Flow)
+
+**User Story:** As a creator, I want to publish a new Opportunity (Quest/Airdrop/Yield) safely and permissionlessly so that the marketplace can grow without centralized bottlenecks.
+
+#### Acceptance Criteria
+
+1. WHEN a user clicks "Create Opportunity" THEN a guided wizard SHALL open with: Metadata → Tasks → Verification → Rewards → Publish
+2. WHEN metadata is entered THEN it SHALL support: Markdown, Images, Video links, Attributes (difficulty, capital needed, time to complete)
+3. WHEN a creator submits an opportunity THEN they SHALL be required to deposit a Creator Bond of minimum $5–$20 USDC or equivalent
+4. WHEN a campaign ends with no abuse THEN the Creator Bond SHALL be returned
+5. WHEN an opportunity is malicious, flagged, or rejected THEN the Creator Bond SHALL be slashed
+6. WHEN tasks are defined THEN no raw code or SQL SHALL be required; a No-Code Query Builder SHALL be provided
+7. WHEN defining verification THEN creators SHALL select: On-chain (via Graph/Covalent), Off-chain (Twitter/Discord), or Mixed
+8. WHEN a creator defines PII fields (email, Discord ID) THEN an immutable consent schema SHALL be generated and signed by the user
+9. WHEN a creator publishes THEN an Opportunity Metadata object SHALL be stored to IPFS with Lens-compatible schema
+10. WHEN unverified opportunities go live THEN they SHALL display "Unverified – Pending Guardian Review" until verified
+
+### Requirement 20: Guardian Verification (Economic Trust Layer)
+
+**User Story:** As a Guardian, I want to verify opportunities and earn rewards so I am incentivized to keep the marketplace safe.
+
+#### Acceptance Criteria
+
+1. WHEN a Guardian registers THEN they SHALL stake $AWHALE or stablecoins into a Guardian Bond Contract
+2. WHEN verifying an opportunity THEN they SHALL receive a Verification Reward (configurable, default 5%)
+3. WHEN a Guardian verifies a malicious or harmful opportunity THEN their bond SHALL be slashed
+4. WHEN a Guardian approves an opportunity THEN they SHALL sign an EIP-712 attestation
+5. WHEN multiple Guardians verify THEN the highest reputation Guardian SHALL take precedence
+6. WHEN a Guardian's verification is disputed THEN a Guardian Tribunal SHALL assemble to adjudicate
+7. WHEN 5 or more reports are received within 1 hour THEN the opportunity SHALL be auto-quarantined
+8. WHEN Guardians disagree THEN a quorum vote SHALL determine outcome; dissenting Guardians may be penalized
+9. WHEN verification occurs THEN a Guardian score SHALL be appended to the Opportunity Metadata
+10. WHEN guardians are offline THEN new opportunities remain "Unverified" but accessible in Degen Mode
+
+### Requirement 21: Embedded Execution (Zaps & In-Card Actions)
+
+**User Story:** As a Hunter, I want to complete the required on-chain actions (swap, bridge, stake) inside the opportunity card so that I don't need to leave AlphaWhale.
+
+#### Acceptance Criteria
+
+1. WHEN an opportunity requires swap/bridge/stake THEN an embedded widget SHALL render inside the card
+2. WHEN the user executes the action THEN it SHALL use: Li.Fi widget (bridge/swap), Socket widget (bridge), or Enso Shortcuts (multi-step Zaps)
+3. WHEN a Zap is executed THEN only one transaction SHALL be required where possible
+4. WHEN transaction succeeds THEN the UI SHALL optimistically mark "Pending Verification"
+5. WHEN transaction hash is received THEN backend SHALL check: Covalent, Graph, or Indexed mempool
+6. WHEN verification is detected THEN the card SHALL update to "Verified – Claim Reward"
+7. WHEN verification fails after 10 seconds THEN a retry option SHALL appear
+8. WHEN actions are performed THEN all smart contract interactions SHALL be simulated with Tenderly before executing
+9. WHEN using embedded widgets THEN AlphaWhale MAY apply a small convenience fee
+
+### Requirement 22: Anti-Sybil & Hunter Identity Layer (Proof of Hunter)
+
+**User Story:** As a protocol or creator, I want to ensure that only real users (not bots) engage with my opportunity.
+
+#### Acceptance Criteria
+
+1. WHEN a hunter enters a high-value quest THEN their wallet MUST pass Sybil checks: Wallet age (>30 days), Gitcoin Passport Score ≥ threshold, On-chain activity checks
+2. WHEN a hunter passes Sybil checks THEN an SBT-based Hunter License SHALL be minted
+3. WHEN a hunter completes verified quests THEN the Hunter License SHALL upgrade Tier 1 → Tier 2 → Tier 3
+4. WHEN a Creator sets "Tier 3 only" THEN only wallets with advanced SBT SHALL be eligible
+5. WHEN Sybil presence is detected THEN the user SHALL be required to stake USDC ("Stake-to-Hunt")
+6. WHEN a quest is botted THEN automated detection SHALL flag unusual patterns (identical timestamps, tx patterns)
+7. WHEN Sybil Abuse is confirmed THEN: Rewards revoked, Hunter License downgraded, Wallet flagged
+
+### Requirement 23: Scout & Viral Growth Loops
+
+**User Story:** As a Hunter/Creator, I want to earn by discovering and sharing real opportunities.
+
+#### Acceptance Criteria
+
+1. WHEN a user submits an external opportunity THEN they SHALL earn a Scout Bounty if approved
+2. WHEN a user shares an opportunity THEN a tracked link SHALL be generated
+3. WHEN others complete via that link THEN the sharer earns XP/points/commission
+4. WHEN creators publish a quest THEN a Farcaster Frame SHALL be automatically generated
+5. WHEN Frames are shared THEN the CTA SHALL execute eligibility check directly inside social feed

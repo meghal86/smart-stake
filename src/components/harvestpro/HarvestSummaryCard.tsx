@@ -44,15 +44,15 @@ export function HarvestSummaryCard({
   return (
     <motion.div
       className={cn(
-        'rounded-2xl border-2 p-6',
-        'bg-gradient-to-br from-[rgba(20,184,166,0.1)] to-[rgba(6,182,212,0.05)]',
-        'border-[rgba(20,184,166,0.2)]',
+        'rounded-2xl border-2 p-7',
+        'bg-gradient-to-br from-[rgba(20,184,166,0.12)] via-[rgba(139,92,246,0.08)] to-[rgba(6,182,212,0.06)]',
+        'border-[rgba(20,184,166,0.25)]',
         'backdrop-blur-md',
         className
       )}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
+      transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
     >
       {/* Warning Banner */}
       {hasHighRiskOpportunities && (
@@ -70,75 +70,75 @@ export function HarvestSummaryCard({
       )}
 
       {/* 2x2 Metrics Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6">
         {/* Total Harvestable Loss */}
         <motion.div
-          className="space-y-1"
+          className="space-y-2"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.25 }}
         >
           <div className="flex items-center gap-2">
-            <TrendingDown className="w-4 h-4 text-red-400" />
-            <p className="text-xs uppercase text-gray-400 tracking-wide">
+            <TrendingDown className="w-5 h-5 text-red-400" />
+            <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
               Total Loss
             </p>
           </div>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-3xl font-bold text-white">
             {formatCurrency(summary.totalHarvestableLoss)}
           </p>
         </motion.div>
 
         {/* Estimated Net Benefit */}
         <motion.div
-          className="space-y-1"
+          className="space-y-2"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-green-400" />
-            <p className="text-xs uppercase text-gray-400 tracking-wide">
+            <DollarSign className="w-5 h-5 text-green-400" />
+            <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
               Net Benefit
             </p>
           </div>
-          <p className="text-2xl font-bold text-green-400">
+          <p className="text-3xl font-bold text-green-400">
             {formatCurrency(summary.estimatedNetBenefit)}
           </p>
         </motion.div>
 
         {/* Eligible Tokens Count */}
         <motion.div
-          className="space-y-1"
+          className="space-y-2"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.35 }}
         >
           <div className="flex items-center gap-2">
-            <Coins className="w-4 h-4 text-blue-400" />
-            <p className="text-xs uppercase text-gray-400 tracking-wide">
+            <Coins className="w-5 h-5 text-blue-400" />
+            <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
               Eligible Tokens
             </p>
           </div>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-3xl font-bold text-white">
             {summary.eligibleTokensCount}
           </p>
         </motion.div>
 
         {/* Gas Efficiency Score */}
         <motion.div
-          className="space-y-1"
+          className="space-y-2"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
         >
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-yellow-400" />
-            <p className="text-xs uppercase text-gray-400 tracking-wide">
+            <Zap className="w-5 h-5 text-yellow-400" />
+            <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
               Gas Efficiency
             </p>
           </div>
-          <p className={cn('text-2xl font-bold', getGasEfficiencyColor(summary.gasEfficiencyScore))}>
+          <p className={cn('text-3xl font-bold', getGasEfficiencyColor(summary.gasEfficiencyScore))}>
             {summary.gasEfficiencyScore}
           </p>
         </motion.div>
