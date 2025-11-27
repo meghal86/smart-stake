@@ -448,3 +448,123 @@ The Hunter Screen is the primary discovery surface for the Verified DeFi Opportu
 3. WHEN others complete via that link THEN the sharer earns XP/points/commission
 4. WHEN creators publish a quest THEN a Farcaster Frame SHALL be automatically generated
 5. WHEN Frames are shared THEN the CTA SHALL execute eligibility check directly inside social feed
+
+### Requirement 24: Ranking Safety & Drift Detection (Feed Guardrails – v2)
+
+**User Story:** As a platform operator, I want safeguards around the ranking algorithm so that the feed does not drift toward low-trust, degen opportunities even if they get high engagement.
+
+#### Acceptance Criteria
+
+1. WHEN computing the ranked feed THEN the system SHALL log the average Guardian trust score, average risk level, and distribution of categories for the top 10 and top 50 items
+2. WHEN the 30-minute rolling average Guardian trust score of the top 10 items drops below a configurable threshold (e.g. 75/100) THEN the system SHALL trigger a Ranking Safety Mode
+3. WHEN Ranking Safety Mode is active THEN the feed SHALL fall back to a safe baseline sort: trust_score desc → verified_only → time_left asc, and Red trust items SHALL be excluded regardless of user filters
+4. WHEN Ranking Safety Mode is triggered THEN an alert SHALL be sent to monitoring with: time window, previous vs current trust averages, and last deploy SHA
+5. WHEN Ranking Safety Mode is deactivated (metrics back above threshold for 30 minutes) THEN the system SHALL automatically restore normal ranking and log the transition
+
+### Requirement 25: Regulatory Policy Engine & Geo Compliance (v2)
+
+**User Story:** As a compliance-conscious operator, I want Hunter to respect regional regulations so that non-compliant assets and actions are not surfaced to restricted users.
+
+#### Acceptance Criteria
+
+1. WHEN building the feed response THEN the system SHALL evaluate each opportunity against a Regulatory Policy Engine using inputs: user region (IP / profile), asset type (e.g. stablecoin EMT/ART, algo stable), protocol risk flags, and action type (swap, leverage, RWA, etc.)
+2. WHEN an opportunity is classified as disallowed in the user's region by the policy engine THEN it SHALL be excluded from the default feed response (not just greyed-out) and SHALL NOT be executable via embedded widgets
+3. WHEN an opportunity is restricted but viewable (e.g. informational only) THEN the card CTA SHALL be disabled with a pill such as "Not available in your region" and the analytics SHALL tag impressions as restricted_view
+4. WHEN regulations or internal policies change THEN policy rules SHALL be updatable without redeploying the frontend (e.g. via config table or feature flags)
+5. WHEN a feed API request is processed THEN the response metadata SHALL include a policy_version identifier so that decisions are auditable over time
+
+### Requirement 26: Guardian Liability & Safety Pool (Economic Trust Layer – v2)
+
+**User Story:** As a Hunter, I want assurance that "Verified / Green" opportunities are backed by real economic skin-in-the-game so that Guardian scores feel trustworthy.
+
+#### Acceptance Criteria
+
+1. WHEN a Guardian opts into Liability Mode THEN they SHALL stake assets (e.g. stablecoins or $AWHALE) into a Guardian Safety Pool contract
+2. WHEN a Guardian marks an opportunity as Green/Verified under Liability Mode THEN the verification record SHALL reference the Guardian's stake and liability window (e.g. 7–30 days)
+3. WHEN a verified opportunity is later confirmed malicious (e.g. protocol hack, rug pull) within the liability window THEN a slashing event SHALL be triggered that deducts a predefined portion of the responsible Guardian's stake into an Affected Users Pool
+4. WHEN affected users are identified (by on-chain participation in the compromised opportunity) THEN they SHALL be able to claim from the Affected Users Pool according to a transparent pro-rata rule
+5. WHEN a Guardian has been slashed beyond a configurable threshold THEN their verification power SHALL be downgraded or suspended until they restake and pass a re-approval process
+
+### Requirement 27: Intent-Centric Outcome Execution (Beyond Widgets – v2+)
+
+**User Story:** As a Hunter, I want to specify the outcome I desire (e.g., "Stake 500 USDC into this Base pool") and have the system orchestrate the bridge/swap/deposit, so that I don't manage the low-level steps.
+
+#### Acceptance Criteria
+
+1. WHEN an opportunity is intent-enabled THEN the card SHALL allow the user to express an outcome such as: input asset (ETH/USDC), input chain, desired position size, and target pool/strategy, without manually selecting routes
+2. WHEN a user submits an intent THEN the backend SHALL construct an Intent Plan object describing required steps (bridge, swap, approve, deposit) and preferred solver/aggregator (e.g. Li.Fi, 1inch Fusion, CowSwap)
+3. WHEN an intent is accepted by a solver THEN the user SHALL see a single UX flow (one or minimal transactions) while the routing complexity remains abstracted; gas and slippage estimates SHALL be shown upfront
+4. WHEN an intent cannot be satisfied under the user's configured constraints (max slippage, min output, gas limit) THEN it SHALL fail gracefully with a clear explanation and suggested alternatives (smaller size, different chain)
+5. WHEN intent execution completes THEN the opportunity card and user history SHALL be updated with: solver used, actual route, realized gas/slippage, and a status of intent_completed for future analytics and proofs
+
+### Requirement 28: Hunter Sentinel Agents (Auto-Protection Layer – v3 / Future)
+
+**User Story:** As a risk-averse user, I want to attach an automated Sentinel Agent to my positions so that I am automatically protected if conditions deteriorate while I am offline.
+
+#### Acceptance Criteria
+
+1. WHEN a user enters a supported opportunity THEN they SHALL be able to toggle "Enable Sentinel Protection" for that position with configurable triggers: Guardian score drop threshold, TVL drop %, APR collapse %, or protocol alert signals
+2. WHEN Sentinel Protection is enabled THEN the system SHALL continuously monitor the configured conditions using Guardian scans, TVL feeds, and external risk alert providers (e.g. Hypernative/Forta-style feeds if integrated)
+3. WHEN any trigger condition is met THEN the Sentinel Agent SHALL either: a) automatically exit the position using a pre-authorized Action Engine flow, or b) prompt the user with a high-priority notification depending on chosen mode (auto vs manual confirm)
+4. WHEN a Sentinel exit is executed THEN the resulting transaction(s) SHALL be recorded and linked to the originating opportunity and Sentinel rule for future Proof-of-Protection reporting
+5. WHEN Sentinel Agents are enabled for a user THEN an overview panel SHALL list active protections, trigger conditions, and recent actions taken
+
+### Requirement 29: Privacy-Preserving Eligibility (ZK Eligibility Mode – v3 / Future)
+
+**User Story:** As a privacy-conscious Whale, I want Hunter to check my eligibility for opportunities without exposing my main wallet address or balances to the backend.
+
+#### Acceptance Criteria
+
+1. WHEN Privacy Mode is enabled in settings THEN eligibility checks SHALL prefer off-chain or ZK-friendly methods where the backend does not store or log the raw wallet address
+2. WHEN an opportunity supports ZK eligibility THEN the UI SHALL allow the user to generate a local proof (e.g. "this wallet has >N txs" or "interacted with contract X") and send only the proof to the backend, not the address
+3. WHEN a valid eligibility proof is received THEN the backend SHALL mark the opportunity as "Verified Eligible (Private)" and SHALL NOT persist any reversible mapping from proof to the original address
+4. WHEN Privacy Mode is active THEN analytics events SHALL use a separate, non-linkable salted identifier distinct from the standard session hash to reduce cross-context correlation
+5. WHEN ZK proofs fail or are unsupported for a given opportunity THEN the system SHALL gracefully fall back to standard heuristics, with the UI clearly indicating that eligibility is being estimated rather than privately proven
+
+### Requirement 30: Real-Time Threat Alerts & Circuit Breakers (Flash Safety – v2+)
+
+**User Story:** As a Hunter, I want Hunter to actively protect me in the event of sudden protocol hacks or exploits so that I don't deposit into compromised opportunities, and I'm warned to exit quickly.
+
+#### Acceptance Criteria
+
+1. WHEN a protocol in the Hunter feed receives a High Severity alert from integrated threat monitoring providers (e.g. exploit detection, abnormal outflows) THEN all related opportunities SHALL be immediately flagged in the backend
+2. WHEN an opportunity is flagged as under active threat THEN the frontend SHALL: disable all deposit/participation CTAs, display a prominent red "Protocol Risk – Temporarily Paused" banner, and mark the card as paused_due_to_risk for analytics
+3. WHEN a flagged opportunity is currently held by the user (based on on-chain position detection) THEN the system SHALL send a high-priority notification and optionally activate any configured Sentinel exit flows
+4. WHEN the threat is cleared or downgraded by the monitoring provider AND Guardian rescans confirm stability THEN the paused state MAY be lifted via a controlled manual or policy-driven process; the feed SHALL log who/what cleared the pause
+5. WHEN a circuit-breaker event occurs THEN it SHALL be persisted as an incident record with: affected protocols, time window, trigger source, and mitigation actions, for later audit and communication
+
+### Requirement 31: Solver Surplus Capture & Monetization
+
+**User Story:** As a platform operator, I want to capture positive slippage and optimize execution pricing so that the platform generates revenue without explicitly overcharging users.
+
+#### Acceptance Criteria
+
+1. WHEN a Solver executes an intent at a price better than the user's signed minimum output (i.e., positive slippage) THEN the surplus value SHALL be measured as the difference between the executed outcome and the user's minimum guaranteed outcome
+2. WHEN surplus is captured on an executed intent THEN the surplus split SHALL be configurable via server-side configuration (e.g., default 50% to User, 30% to Protocol, 20% to Solver) without requiring a client deployment
+3. WHEN an intent is quoted to the user THEN the UI MAY display an informational "Estimated Price Improvement" or "You keep X% of surplus" message, but SHALL NOT promise a specific surplus amount in advance
+4. WHEN a Solver repeatedly submits quotes that result in negative or zero surplus relative to market benchmarks THEN the Solver's reputation score SHALL be downgraded and its selection weight in future intent auctions SHALL decrease
+5. WHEN surplus distribution events are recorded THEN the system SHALL persist per-intent records including: solver identifier, total surplus, user share, protocol share, solver share, and timestamps for auditability
+
+### Requirement 32: Universal Gas Abstraction (Paymaster)
+
+**User Story:** As a user, I want to pay for transaction fees using the tokens I already hold (e.g., USDC) so that I don't need to bridge native gas tokens just to execute Hunter opportunities.
+
+#### Acceptance Criteria
+
+1. WHEN a user initiates an intent or embedded action (swap/bridge/stake) THEN the system SHALL check for sufficient native gas balance on the source chain to cover estimated fees
+2. WHEN native gas is insufficient AND Paymaster support is available for that chain and action type THEN the Action Engine SHALL offer a "Pay gas with token" option (e.g., USDC) to the user
+3. WHEN the user selects "Pay gas with token" THEN the UI SHALL display the effective gas charge in the selected token, including any convenience buffer or fee (e.g., up to a configurable maximum such as 5% above oracle-based gas cost)
+4. WHEN the transaction is constructed for broadcast using ERC-4337 or equivalent account abstraction THEN the Paymaster sponsorship data SHALL be included so that the user's transaction can execute without additional native gas
+5. WHEN a Paymaster-backed transaction fails due to sponsorship issues (e.g., depleted Paymaster balance, configuration error) THEN the system SHALL surface a clear error to the user and offer fallback options (top up native gas, retry later, or cancel) without silently dropping the action
+
+### Requirement 33: Emergency Exit & Direct Contract Access
+
+**User Story:** As a safety-conscious user, I want a way to exit positions directly on-chain even if the AlphaWhale UI or APIs are unavailable, so that I am never fully dependent on the app to recover my funds.
+
+#### Acceptance Criteria
+
+1. WHEN Hunter creates or manages positions via intents, Sentinels, or Action Engine smart contracts THEN each relevant contract SHALL expose at least one public method that allows a position owner to withdraw or unwind their position without relying on AlphaWhale backend services
+2. WHEN a new smart contract is deployed for Hunter execution or Sentinel management THEN its source code and ABI SHALL be verified and published on the primary chain explorer (e.g., Etherscan, Basescan) so that users and auditors can inspect and interact with it directly
+3. WHEN a user views an active on-chain position within AlphaWhale (e.g., "Positions" or "My Opportunities" view) THEN the UI SHALL provide an "Emergency Exit via Explorer" link or equivalent, pointing to the verified contract and function documentation for manual interaction
+4. WHEN a major frontend or API outage is detected by monitoring THEN an incident status page (separate from the main app) SHALL clearly document that users can still exit via the underlying contracts, and SHALL link to the relevant explorer pages and high-level instructions
+5. WHEN designing new Hunter flows that custody or route user funds through protocol-controlled contracts THEN a threat model review SHALL confirm that Emergency Exit functionality exists and is tested as part of pre-production checks

@@ -56,10 +56,10 @@ export function useWalletLabels() {
         .from('user_preferences')
         .select('wallet_labels')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // If no preferences exist yet, return empty object
+        // Gracefully handle "no rows" responses without surfacing a console error
         if (error.code === 'PGRST116') {
           return {};
         }
@@ -92,7 +92,7 @@ export function useWalletLabels() {
         .from('user_preferences')
         .select('wallet_labels')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       const currentLabels = (currentPrefs?.wallet_labels as WalletLabels) || {};
       
@@ -168,7 +168,7 @@ export function useWalletLabels() {
         .from('user_preferences')
         .select('wallet_labels')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       const currentLabels = (currentPrefs?.wallet_labels as WalletLabels) || {};
       
@@ -260,4 +260,3 @@ export function useWalletLabels() {
     isRemovingLabel: removeLabelMutation.isPending,
   };
 }
-

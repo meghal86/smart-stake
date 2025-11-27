@@ -2,9 +2,38 @@
 
 This document outlines the implementation tasks for building the Hunter Screen feature. Each task is designed to be incremental, testable, and builds upon previous tasks.
 
+## ⚠️ CRITICAL STATUS UPDATE
+
+**Current Implementation Status: ~15% Complete**
+
+The codebase has a basic UI shell and a simple Edge Function, but **most of the core functionality specified in the design document is NOT implemented**. This includes:
+
+- ❌ **No ranking system** (no materialized view, no personalization)
+- ❌ **No eligibility engine** (no scoring algorithm, no Edge Function)
+- ❌ **No Guardian integration** (no trust scores, no security scanning)
+- ❌ **No caching layer** (no Redis, no optimization)
+- ❌ **No proper pagination** (no cursor-based, no snapshot watermark)
+- ❌ **No analytics** (no tracking, no metrics)
+- ❌ **No testing** (no unit tests, no integration tests, no E2E tests)
+
+**What exists:**
+- ✅ Basic Hunter page UI (`src/pages/Hunter.tsx`)
+- ✅ Basic components (OpportunityCard, Header, RightRail, SearchBar, FilterDrawer, WalletSelector)
+- ✅ Simple Edge Function (`supabase/functions/hunter-opportunities/index.ts`) with basic query
+- ✅ Basic useHunterFeed hook with infinite scroll
+
+**What's needed:**
+1. **Complete database schema** with ranking view, eligibility cache, Guardian integration
+2. **New Edge Functions** for ranking, eligibility scoring, Guardian integration
+3. **Refactor existing Edge Function** to implement proper ranking, cursor pagination, sponsored capping
+4. **Integrate UI with new backend** - update hooks and components to use new APIs
+5. **Implement all missing features** - caching, rate limiting, analytics, testing, monitoring
+
+**Estimated work remaining:** 8-10 weeks (2-3 developers)
+
 ## Task List
 
-- [x] 1. Set up database schema and migrations
+- [ ] 1. Set up database schema and migrations
   - Create opportunities table with all required columns (status, urgency, trust_score, trust_level)
   - Create guardian_scans table with relationship to opportunities
   - Create eligibility_cache table for caching eligibility calculations
@@ -13,42 +42,47 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Add all required indexes including optimized partial indexes
   - Add multicolumn indexes: (status, published_at DESC), (trust_level, expires_at)
   - Create enums for opportunity_type, reward_unit, opportunity_status, urgency_type
+  - **Status:** Basic opportunities table exists, but missing guardian_scans, eligibility_cache, analytics_events, proper indexes
   - _Requirements: 1.1, 2.1, 6.1, 12.1_
 
-- [x] 2. Implement database triggers and functions
+- [ ] 2. Implement database triggers and functions
   - Create apply_latest_guardian_snapshot() trigger function
   - Create upsert_opportunity() function with source precedence logic
   - Set up RLS policies for saved_opportunities, completed_opportunities, analytics_events
   - Test trigger updates trust_score and trust_level on new Guardian scans
   - Test upsert function handles partner > internal > aggregator precedence
+  - **Status:** NOT IMPLEMENTED - No triggers or functions exist
   - _Requirements: 2.10, 13.1, 13.2, 13.3_
 
-- [x] 3. Create TypeScript types and Zod schemas
+- [ ] 3. Create TypeScript types and Zod schemas
   - Define Opportunity interface matching database schema
   - Define OpportunityCard component props interface
   - Define FilterState interface
   - Define API response schemas (OpportunitiesResponse, ErrorResponse, GuardianSummaryResponse, EligibilityPreviewResponse)
   - Create Zod schemas for runtime validation
   - Define ErrorCode enum with all error types
+  - **Status:** Basic types exist in src/types/hunter.ts, but incomplete - missing many schemas
   - _Requirements: 1.7, 8.14_
 
-- [x] 4. Implement cursor pagination utilities
+- [ ] 4. Implement cursor pagination utilities
   - Create encodeCursor() function for base64url encoding
   - Create decodeCursor() function for parsing cursor tuples
   - Write unit tests for cursor encoding/decoding
   - Test cursor stability across multiple pages
+  - **Status:** NOT IMPLEMENTED - Current pagination is simple offset-based
   - _Requirements: 3.7, 7.9, 7.10_
 
-- [x] 4a. Add snapshot watermark to cursor
+- [ ] 4a. Add snapshot watermark to cursor
   - Add snapshot_ts to cursor tuple as compact UNIX seconds int
   - Constrain queries to updated_at <= snapshot_ts for entire scroll session
   - Add hash(slug) as hidden final tiebreaker for full ties
   - Prevent duplicates/flicker when trust/expiry changes mid-scroll
   - Write mutation test: no dupes across 3 pages when data changes
   - Test cursor stays URL-safe and compact
+  - **Status:** NOT IMPLEMENTED
   - _Requirements: 7.9, 7.10_
 
-- [x] 5. Implement eligibility scoring algorithm
+- [ ] 5. Implement eligibility scoring algorithm
   - Create calculateEligibilityScore() function with weighted scoring
   - Implement chain presence check (40% weight)
   - Implement wallet age calculation (25% weight, capped at 30 days)
@@ -57,34 +91,39 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Implement allowlist proofs bonus (+5%)
   - Add label determination (likely ≥0.7, maybe 0.4-0.69, unlikely <0.4)
   - Write unit tests for all scoring scenarios
+  - **Status:** NOT IMPLEMENTED - No Edge Function exists
+  - **Location:** Must be in `supabase/functions/hunter-eligibility-preview/lib/eligibility-scorer.ts`
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [x] 6. Create Redis caching utilities
+- [ ] 6. Create Redis caching utilities
   - Set up Redis client with Upstash or Vercel KV
   - Implement RedisKeys namespace functions
   - Create cache get/set helpers with TTL
   - Implement cache invalidation utilities
   - Test cache operations with different key types
+  - **Status:** NOT IMPLEMENTED - No Redis integration exists
   - _Requirements: 8.7, 8.8, 8.9_
 
-- [x] 7. Implement rate limiting middleware
+- [ ] 7. Implement rate limiting middleware
   - Set up Upstash Ratelimit with sliding window
   - Create checkRateLimit() function
   - Implement different limits for auth vs anon users (120/hr vs 60/hr)
   - Add burst allowance (10 req/10s)
   - Handle rate limit errors with Retry-After header
   - Write tests for rate limit enforcement
+  - **Status:** Basic rate limiting exists in Edge Function, but incomplete
   - _Requirements: 4.13, 4.14, 4.15, 8.6, 8.11_
 
-- [x] 8. Implement content sanitization utilities
+- [ ] 8. Implement content sanitization utilities
   - Set up DOMPurify with JSDOM for server-side sanitization
   - Create sanitizeHtml() function with allowed tags/attributes
   - Create createSafeLink() function for redirector
   - Test sanitization removes dangerous content
   - Test safe links are properly encoded
+  - **Status:** NOT IMPLEMENTED
   - _Requirements: 5.20, 5.21, 11.2_
 
-- [x] 9. Create feed query service
+- [ ] 9. Create feed query service
   - Implement getFeedPage() function with cursor-based pagination
   - Build SQL query with proper ORDER BY (rank_score DESC, trust_score DESC, expires_at ASC, id ASC)
   - Implement filter application (type, chains, trust_min, urgency, difficulty)
@@ -92,9 +131,11 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Add sponsored item capping (≤2 per fold)
   - Test query performance with indexes
   - Test deduplication across pages
+  - **Status:** Basic query exists in `hunter-opportunities` Edge Function, but NO ranking, NO cursor pagination, NO sponsored capping
+  - **Location:** Must be in `supabase/functions/hunter-feed/index.ts` (NEW Edge Function needed)
   - _Requirements: 3.7, 4.1-4.12, 4.16, 4.19, 7.9_
 
-- [x] 9a. Create ranking materialized view
+- [ ] 9a. Create ranking materialized view
   - Create mv_opportunity_rank materialized view
   - Compute rank_score = relevance(60%) + trust(25%) + freshness/urgency(15%)
   - Store individual components (relevance, trust_weighted, freshness_weighted) for observability
@@ -104,17 +145,20 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Update feed queries to read from mv_opportunity_rank
   - Add WHERE (expires_at IS NULL OR expires_at > now()) to prevent expired items
   - Test P95 < 200ms on 100k rows
+  - **Status:** NOT IMPLEMENTED - No materialized view exists
+  - **Critical:** This is the foundation of the ranking system
   - _Requirements: 3.1-3.6_
 
-- [x] 9c. Add rank observability and debug view
-  - Create vw_opportunity_rank_debug exposing weights + final score (✅ Already created in 9a)
-  - Store relevance, trust_weighted, freshness_weighted as columns (✅ Already done)
-  - Enable A/B analysis of ranking components (✅ Already done)
+- [ ] 9c. Add rank observability and debug view
+  - Create vw_opportunity_rank_debug exposing weights + final score
+  - Store relevance, trust_weighted, freshness_weighted as columns
+  - Enable A/B analysis of ranking components
   - Test debug view is accessible
   - Document debug view usage for A/B testing
+  - **Status:** NOT IMPLEMENTED - Depends on 9a
   - _Requirements: 3.1-3.6_
 
-- [x] 16a. Integrate existing UI with ranking API
+- [ ] 16a. Integrate existing UI with ranking API
   - Update OpportunityGrid to call getFeedPage() with ranking
   - Verify opportunities display in ranked order
   - Test filters work with materialized view
@@ -122,15 +166,19 @@ This document outlines the implementation tasks for building the Hunter Screen f
   - Test infinite scroll with ranked data
   - Verify sponsored capping works correctly
   - Test all sort options use rank_score appropriately
+  - **Status:** NOT IMPLEMENTED - UI calls basic Edge Function without ranking
+  - **Depends on:** Tasks 9, 9a, 4, 4a
   - _Requirements: 3.1-3.7, 7.3-7.10_
 
-- [x] 9b. Enforce sponsored window filter server-side
+- [ ] 9b. Enforce sponsored window filter server-side
   - Implement "≤2 sponsored per any contiguous 12 cards" in server result set
   - Keep sliding counter across pages (stateful per request)
   - Ensure deterministic behavior across all viewport sizes
   - Write E2E test asserting compliance across folds and window sizes
   - Test at various grid densities (mobile/tablet/desktop)
   - Test partial folds (e.g., 7 items on short viewports)
+  - **Status:** NOT IMPLEMENTED
+  - **Location:** Must be in `supabase/functions/hunter-feed/lib/sponsored-cap.ts`
   - _Requirements: 4.16, 4.19, 5.10, 5.15_
 
 - [x] 10. Integrate existing Guardian service with Hunter Screen
@@ -694,81 +742,180 @@ This document outlines the implementation tasks for building the Hunter Screen f
 
 ## Implementation Status Summary
 
-**Current State:** The Hunter Screen is feature-complete with all core functionality implemented. The remaining work focuses on production readiness: monitoring/alerting setup, accessibility audit, security hardening, comprehensive documentation, and final deployment preparation.
+**Current State:** The Hunter Screen has basic UI components and a simple Edge Function, but most backend logic, ranking, eligibility, and advanced features are NOT implemented. The codebase needs significant work to match the design specification.
 
-### ✅ Completed (56 tasks)
-- Database schema and migrations (Tasks 1-2)
-- TypeScript types and schemas (Task 3)
-- Cursor pagination with snapshot watermark (Tasks 4, 4a)
-- Eligibility scoring algorithm (Task 5)
-- Redis caching utilities (Task 6)
-- Rate limiting middleware (Task 7)
-- Content sanitization (Task 8)
-- Feed query service with ranking (Tasks 9, 9a, 9b, 9c, 16a)
-- Guardian integration (Task 10)
-- Eligibility preview service (Tasks 11, 11a, 11b)
-- API endpoints (Tasks 12, 12a, 12b, 12c, 13, 14)
-- Security headers and CSP (Tasks 15, 15a)
-- UI Components (Tasks 16-25, 30a-30g)
-- Analytics tracking (Task 26)
-- Save/share/report functionality (Task 27)
-- Guardian staleness cron job (Task 28)
-- Feature flags (Task 29)
-- Test fixtures endpoint (Task 30)
-- Unit tests (Task 31)
-- Integration tests (Task 32)
-- E2E tests (Task 33)
-- Performance optimization (Tasks 34, 34a)
-- Multi-wallet support (Tasks 41-54)
-- DNT and consent (Task 38b)
-- Data retention policy (Task 38a)
+### ✅ Completed (Partial - ~15% complete)
+- Basic database schema exists (needs enhancement for ranking, eligibility cache, etc.)
+- Basic TypeScript types (needs expansion)
+- Basic Edge Function `hunter-opportunities` (simple query, no ranking/eligibility)
+- Basic UI components (OpportunityCard, Header, RightRail, SearchBar, FilterDrawer, WalletSelector)
+- Basic Hunter page with infinite scroll
+- Basic useHunterFeed hook
 
-### 🚧 Remaining (7 tasks)
-- **Monitoring and Alerting (Tasks 35, 35a, 35b)** - Set up Vercel Analytics, Sentry, golden signals dashboard, rank drift alerts
-- **Accessibility Audit (Task 36)** - Install axe-core, run accessibility tests, verify WCAG AA compliance
-- **Security Hardening (Tasks 37, 37a, 37b, 37c)** - Security audit, incident runbook, RLS tests, link redirector hardening
-- **Documentation (Tasks 38, 38c)** - API docs, Storybook setup, deployment guide, data retention cleanup jobs
-- **Deployment (Tasks 39, 40)** - Final deployment preparation and production launch
+### 🚧 Critical Missing Implementation (~85% remaining)
+**Backend/Edge Functions (NOT IMPLEMENTED):**
+- ❌ Cursor pagination with snapshot watermark
+- ❌ Eligibility scoring algorithm (Edge Function)
+- ❌ Feed ranking with materialized view
+- ❌ Guardian integration for trust scores
+- ❌ Redis caching layer
+- ❌ Rate limiting middleware
+- ❌ Content sanitization
+- ❌ Sponsored cap enforcement
+- ❌ Analytics tracking
+- ❌ Save/share/report functionality
+- ❌ Guardian staleness cron job
+- ❌ Feature flags
+- ❌ Image proxy
+- ❌ API versioning
+- ❌ Idempotency for reports
+- ❌ Sync scheduler with backoff
+
+**Database (INCOMPLETE):**
+- ❌ Ranking materialized view (mv_opportunity_rank)
+- ❌ Eligibility cache table
+- ❌ Guardian scans integration
+- ❌ Analytics events table
+- ❌ Proper indexes for performance
+- ❌ RLS policies
+- ❌ Triggers for Guardian updates
+
+**UI Components (PARTIALLY COMPLETE):**
+- ✅ Basic OpportunityCard (needs GuardianTrustChip, EligibilityPreview, proper badges)
+- ✅ Basic FilterDrawer (needs Red consent modal, all filter types)
+- ✅ Basic SearchBar (needs debouncing, caching)
+- ✅ Basic HunterTabs (needs proper integration)
+- ❌ StickySubFilters (exists but not integrated)
+- ✅ RightRail (basic version exists)
+- ❌ GuardianTrustChip component
+- ❌ EligibilityPreview component
+- ❌ ReportModal component
+- ❌ Proper error boundaries
+
+**Testing (NOT IMPLEMENTED):**
+- ❌ Unit tests for backend logic
+- ❌ Integration tests for API
+- ❌ E2E tests with Playwright
+- ❌ Property-based tests
+- ❌ Performance tests
+
+**Production Readiness (NOT IMPLEMENTED):**
+- ❌ Monitoring and alerting
+- ❌ Accessibility audit
+- ❌ Security hardening
+- ❌ Documentation
+- ❌ Deployment checklist
 
 ## Next Steps
 
-The Hunter Screen implementation is **95% complete**. To reach production readiness:
+The Hunter Screen implementation is **~15% complete**. To reach production readiness:
 
-1. **Week 1: Monitoring & Security**
-   - Set up monitoring and alerting infrastructure (Tasks 35, 35a, 35b)
-   - Run accessibility audit and fix issues (Task 36)
-   - Complete security hardening (Tasks 37, 37a, 37b, 37c)
+### Phase 1: Core Backend Infrastructure (Weeks 1-4)
+**Priority: CRITICAL - Nothing works without this**
 
-2. **Week 2: Documentation & Deployment**
-   - Write comprehensive documentation (Task 38)
-   - Implement data retention cleanup jobs (Task 38c)
-   - Final deployment preparation (Task 39)
-   - Production deployment (Task 40)
+1. **Database Foundation (Week 1)**
+   - Complete database schema with all tables (Tasks 1-2)
+   - Create ranking materialized view (Task 9a)
+   - Set up proper indexes and RLS policies
+   - Create triggers for Guardian integration
 
-## Key Achievements
+2. **Edge Functions - Core Logic (Weeks 2-3)**
+   - Implement feed ranking Edge Function (Task 9)
+   - Implement eligibility scoring Edge Function (Tasks 5, 11)
+   - Implement Guardian integration (Task 10)
+   - Set up Redis caching (Task 6)
+   - Implement rate limiting (Task 7)
 
-✅ **Complete Backend Infrastructure** - All database schemas, migrations, API endpoints, and services implemented  
-✅ **Full UI Implementation** - All components built and integrated with proper data flow  
-✅ **Comprehensive Testing** - Unit, integration, and E2E tests covering all critical paths  
-✅ **Performance Optimized** - Cursor pagination, caching, ranking view, infinite scroll  
-✅ **Multi-Wallet Support** - Full wallet switching, ENS resolution, wallet labels  
-✅ **Security Foundations** - CSP, rate limiting, content sanitization, RLS policies  
-✅ **Analytics & Tracking** - PostHog integration with consent management and DNT support
+3. **API Layer (Week 4)**
+   - Refactor API routes to call Edge Functions (Tasks 12-14)
+   - Implement cursor pagination (Tasks 4, 4a)
+   - Add API versioning (Task 12a)
+   - Implement content sanitization (Task 8)
+
+### Phase 2: UI Integration (Weeks 5-6)
+**Priority: HIGH - Connect UI to backend**
+
+1. **Component Enhancement**
+   - Add GuardianTrustChip to cards (Task 16, 17)
+   - Add EligibilityPreview to cards (Task 16)
+   - Complete FilterDrawer with Red consent (Task 18)
+   - Integrate StickySubFilters (Task 21)
+   - Update HunterTabs (Task 20)
+
+2. **Data Flow**
+   - Update useHunterFeed to use new API (Task 22)
+   - Implement infinite scroll with cursor (Task 22)
+   - Add loading states and error handling (Task 25)
+
+### Phase 3: Features & Polish (Weeks 7-8)
+**Priority: MEDIUM - User-facing features**
+
+1. **User Actions**
+   - Implement save/share/report (Task 27)
+   - Add analytics tracking (Task 26)
+   - Implement image proxy (Task 11a)
+
+2. **Background Jobs**
+   - Guardian staleness cron (Task 28)
+   - Feature flags setup (Task 29)
+
+### Phase 4: Testing & Production (Weeks 9-10)
+**Priority: HIGH - Quality assurance**
+
+1. **Testing**
+   - Unit tests (Task 31)
+   - Integration tests (Task 32)
+   - E2E tests (Task 33)
+   - Performance optimization (Task 34)
+
+2. **Production Readiness**
+   - Monitoring and alerting (Tasks 35, 35a, 35b)
+   - Accessibility audit (Task 36)
+   - Security hardening (Tasks 37, 37a, 37b, 37c)
+   - Documentation (Task 38)
+   - Deployment (Tasks 39, 40)
+
+**Estimated Timeline:** 10-12 weeks (2-3 developers)  
+**Current Progress:** ~15% complete  
+**Critical Path:** Phase 1 must be completed before Phase 2 can begin
+
+## Current State Assessment
+
+### What Exists
+✅ **Basic UI Shell** - Hunter page with basic components (OpportunityCard, Header, RightRail)  
+✅ **Simple Edge Function** - `hunter-opportunities` with basic query (no ranking/eligibility)  
+✅ **Basic Hooks** - useHunterFeed with infinite scroll  
+✅ **Component Library** - SearchBar, FilterDrawer, WalletSelector, HunterTabs (not fully integrated)
+
+### Critical Gaps
+❌ **No Ranking System** - No materialized view, no personalization, no relevance scoring  
+❌ **No Eligibility Engine** - No scoring algorithm, no wallet analysis, no caching  
+❌ **No Guardian Integration** - No trust scores, no security scanning, no staleness checks  
+❌ **No Caching Layer** - No Redis, no edge caching, no optimization  
+❌ **No Rate Limiting** - No protection against abuse  
+❌ **No Analytics** - No tracking, no metrics, no monitoring  
+❌ **No Testing** - No unit tests, no integration tests, no E2E tests  
+❌ **No Production Features** - No monitoring, no security hardening, no documentation
 
 ## Production Readiness Checklist
 
-- [x] Core functionality implemented
-- [x] API endpoints tested and documented
-- [x] UI components built and tested
-- [x] Performance optimizations applied
-- [x] Security headers configured
-- [x] Analytics tracking implemented
+- [ ] Core functionality implemented (15% complete)
+- [ ] Database schema complete with ranking view
+- [ ] Edge Functions implemented (ranking, eligibility, Guardian)
+- [ ] API endpoints tested and documented
+- [ ] UI components fully integrated with backend
+- [ ] Performance optimizations applied
+- [ ] Security headers configured
+- [ ] Analytics tracking implemented
 - [ ] Monitoring and alerting configured
 - [ ] Accessibility audit passed
 - [ ] Security audit completed
 - [ ] Comprehensive documentation written
+- [ ] Testing suite complete (unit, integration, E2E)
 - [ ] Deployment checklist created
-- [ ] Production deployment executed** - NEW
+- [ ] Production deployment executed
+
+**Current Status:** Early development phase - core backend infrastructure needed
   - OpportunityCard refactor with GuardianTrustChip
   - FilterDrawer with all filters
   - SearchBar with debouncing
@@ -1071,3 +1218,291 @@ The Hunter Screen implementation is **95% complete**. To reach production readin
 - **Priority**: HIGH
 - **Dependencies**: Existing wallet connection infrastructure
 - **Impact**: Significantly improves UX for multi-wallet users
+
+
+---
+
+## Architecture Audit v1 Implementation Tasks
+
+**Based on:** ARCHITECTURE_AUDIT_V1.md  
+**Priority:** CRITICAL - A++++ Production Standards  
+**Phase:** Post-v1 Launch (v2 Features)
+
+### Sentinel Engine - Queue–Worker Architecture
+
+- [ ] 59. Implement Sentinel Scheduler Edge Function
+  - Create `supabase/functions/sentinel-scheduler/index.ts`
+  - Implement lightweight cron job (triggered every 30-60s)
+  - Query `sentinel_targets` table for enabled contracts/opportunities
+  - NO blockchain RPC calls in scheduler
+  - Enqueue small batches (1-5 targets) into `sentinel_jobs` queue
+  - Use Supabase Queues or pgmq for job queue
+  - Test scheduler runs on schedule
+  - Test job batching works correctly
+  - _Requirements: 28.1-28.9_
+  - _Audit: Section 1 - Sentinel Engine_
+
+- [ ] 60. Implement Sentinel Worker Edge Function
+  - Create `supabase/functions/sentinel-worker/index.ts`
+  - Triggered by queue messages from sentinel-scheduler
+  - Handle 1-5 contracts/opportunities per invocation
+  - Implement hot/warm/cold tier logic:
+    - Hot: Read from dedicated indexer (Goldsky/Substreams)
+    - Warm: Read from webhooks (Alchemy Notify)
+    - Cold: Simple RPC polling at large intervals
+  - Run Guardian/Sentinel rules on fetched data
+  - Write results to `sentinel_executions` table
+  - Keep CPU work < 2s per job
+  - Test worker processes jobs correctly
+  - Test hot/warm/cold tier routing
+  - _Requirements: 28.1-28.9_
+  - _Audit: Section 1 - Sentinel Engine_
+
+- [ ] 61. Create Sentinel Targets Table
+  - Add `sentinel_targets` table to database schema
+  - Columns: id, contract_address, chain, tier (hot/warm/cold), enabled, last_checked_at
+  - Add indexes for efficient querying
+  - Create RLS policies
+  - Test table creation and queries
+  - _Requirements: 28.1-28.9_
+  - _Audit: Section 1 - Sentinel Engine_
+
+- [ ] 62. Create Sentinel Jobs Queue
+  - Set up Supabase Queue or pgmq for job management
+  - Create `sentinel_jobs` table if using custom queue
+  - Implement job enqueue/dequeue logic
+  - Add job status tracking (pending/processing/completed/failed)
+  - Test queue operations
+  - _Requirements: 28.1-28.9_
+  - _Audit: Section 1 - Sentinel Engine_
+
+- [ ] 63. Integrate Indexer for Hot Tier
+  - Set up Goldsky or Substreams indexer for high-TVL protocols
+  - Configure indexer to filter relevant events
+  - Create API client for indexer
+  - Implement data fetching in sentinel-worker
+  - Test indexer integration
+  - _Requirements: 28.1-28.9_
+  - _Audit: Section 1 - Sentinel Engine_
+
+- [ ] 64. Set Up Webhooks for Warm Tier
+  - Configure Alchemy Notify webhooks
+  - Create webhook receiver endpoint
+  - Enqueue webhook payloads to sentinel_jobs
+  - Test webhook delivery and processing
+  - _Requirements: 28.1-28.9_
+  - _Audit: Section 1 - Sentinel Engine_
+
+### Intent Engine - Protocol-Level Surplus Sharing
+
+- [ ] 65. Implement Intent Settlement Smart Contract
+  - Create `contracts/IntentSettlement.sol`
+  - Implement surplus calculation: `surplus = max(actualOutput - minOutput, 0)`
+  - Implement configurable surplus split (user/protocol/solver percentages)
+  - Add `settleSurplus()` function with distribution logic
+  - Emit `SurplusDistributed` event
+  - Write Foundry tests for surplus split
+  - Test all split ratios work correctly
+  - Deploy to testnet
+  - _Requirements: 27.1-27.9, 31.1-31.6_
+  - _Audit: Section 2 - Intent Engine_
+
+- [ ] 66. Implement Hunter Intent Execute Edge Function
+  - Create `supabase/functions/hunter-intent-execute/index.ts`
+  - Load intent with user-signed minOutput
+  - Call solver network for execution
+  - Submit transaction via IntentSettlement contract
+  - Read actualOutput from transaction receipt
+  - Compute surplus and log to `surplus_events` table
+  - Update solver reputation
+  - Test execution flow end-to-end
+  - _Requirements: 27.1-27.9, 31.1-31.6_
+  - _Audit: Section 2 - Intent Engine_
+
+- [ ] 67. Create Surplus Events Table
+  - Add `surplus_events` table to database schema (already exists, verify)
+  - Ensure columns: intent_id, solver, user_address, total_surplus, user_share, protocol_share, solver_share
+  - Add indexes for analytics queries
+  - Create RLS policies
+  - Test table operations
+  - _Requirements: 31.1-31.6_
+  - _Audit: Section 2 - Intent Engine_
+
+- [ ] 68. Implement Solver Reputation System
+  - Create `updateSolverReputation()` function
+  - Track total_intents, avg_surplus, negative_surplus_count
+  - Calculate reputation_score and selection_weight
+  - Update `solver_reputation` table
+  - Test reputation calculations
+  - _Requirements: 31.1-31.6_
+  - _Audit: Section 2 - Intent Engine_
+
+### Mobile ZK - Native Rust Proving
+
+- [ ] 69. Implement Server-Side ZK Proving (Phase 1)
+  - Update `supabase/functions/zk-eligibility-verify/index.ts`
+  - Implement server-side proof generation
+  - Accept wallet inputs from mobile client
+  - Generate proof using snarkjs or similar
+  - Return eligibility verdict to client
+  - Test proof generation performance
+  - Test mobile client integration
+  - _Requirements: 29.1-29.8_
+  - _Audit: Section 3 - Mobile ZK_
+
+- [ ] 70. Research Mopro Integration (Phase 2)
+  - Research Mopro library for native mobile proving
+  - Evaluate iOS Swift ↔ Rust FFI
+  - Evaluate Android Kotlin ↔ Rust FFI
+  - Test Groth16 circuit performance on mobile
+  - Document integration approach
+  - Create proof-of-concept
+  - _Requirements: 29.1-29.8_
+  - _Audit: Section 3 - Mobile ZK_
+
+- [ ] 71. Implement Native Mobile ZK (Phase 2+)
+  - Integrate Mopro into mobile app
+  - Implement Rust prover with FFI bindings
+  - Use Groth16 for small proof size
+  - Implement proof generation on device
+  - Add fallback to server-side proving
+  - Test on-device proving performance
+  - Test battery impact
+  - _Requirements: 29.1-29.8_
+  - _Audit: Section 3 - Mobile ZK_
+
+### Paymaster - Volatility Guardrails
+
+- [ ] 72. Implement AlphaWhale Paymaster Smart Contract
+  - Create `contracts/AlphaWhalePaymaster.sol`
+  - Implement ERC-4337 Paymaster interface
+  - Add oracle price reading with staleness check
+  - Implement risk premium (configurable, default 12%)
+  - Add panic mode with gas threshold
+  - Implement `validatePaymasterUserOp()` with all checks
+  - Write Foundry tests for all scenarios
+  - Test oracle staleness rejection
+  - Test panic mode activation
+  - Deploy to testnet
+  - _Requirements: 32.1-32.8_
+  - _Audit: Section 4 - Paymaster_
+
+- [ ] 73. Implement Paymaster Orchestrator Edge Function
+  - Create `supabase/functions/paymaster-orchestrator/index.ts`
+  - Read on-chain oracle price
+  - Cross-check with off-chain price feed
+  - Calculate deviation and apply risk premium
+  - Check current gas price against threshold
+  - Set panicMode flag if needed
+  - Return quote with tokenGasAmount
+  - Test quote calculation
+  - Test panic mode detection
+  - _Requirements: 32.1-32.8_
+  - _Audit: Section 4 - Paymaster_
+
+- [ ] 74. Integrate Paymaster with Intent Execution
+  - Update intent execution flow to use Paymaster
+  - Add gas abstraction option for users
+  - Handle Paymaster rejections gracefully
+  - Test gas payment in tokens
+  - Test fallback to native gas
+  - _Requirements: 32.1-32.8_
+  - _Audit: Section 4 - Paymaster_
+
+### EigenLayer / AVS - Phased Adoption
+
+- [ ] 75. Implement Phase 1 - Whitelist Solvers
+  - Create `solver_allowlist` table
+  - Implement admin interface for managing allowlist
+  - Add allowlist check in intent execution
+  - Implement simple reputation scoring
+  - Test allowlist enforcement
+  - _Requirements: 31.1-31.6_
+  - _Audit: Section 5 - EigenLayer_
+
+- [ ] 76. Design Phase 2 - Optimistic Bonds
+  - Design on-chain bond system
+  - Design challenge period mechanism
+  - Design Security Council multisig for disputes
+  - Document bond amounts and slashing conditions
+  - Create implementation plan
+  - _Requirements: 31.1-31.6_
+  - _Audit: Section 5 - EigenLayer_
+
+- [ ] 77. Research Phase 3 - AVS Integration
+  - Research EigenLayer AVS architecture
+  - Evaluate restaking requirements
+  - Design programmable slashing conditions
+  - Design decentralized operator set
+  - Document integration approach
+  - Create implementation roadmap
+  - _Requirements: 31.1-31.6_
+  - _Audit: Section 5 - EigenLayer_
+
+### Audit Compliance & Testing
+
+- [ ] 78. Write Audit Compliance Tests
+  - Test Sentinel uses Queue–Worker pattern (no monolithic polling)
+  - Test Worker handles only 1-5 contracts per run
+  - Test Surplus split happens at contract level
+  - Test Edge Functions don't bypass on-chain surplus split
+  - Test Mobile ZK uses server-side or native proving (no heavy JS)
+  - Test Paymaster has risk premium and panic mode
+  - Test AVS references are Phase 3 only
+  - Document test results
+  - _Audit: All Sections_
+
+- [ ] 79. Create Audit Compliance Checklist
+  - Create checklist based on ARCHITECTURE_AUDIT_V1.md
+  - Verify all patterns are implemented correctly
+  - Document any deviations with justification
+  - Get sign-off from tech lead
+  - _Audit: All Sections_
+
+- [ ] 80. Update Documentation for Audit Compliance
+  - Document Sentinel Queue–Worker architecture
+  - Document Intent surplus sharing mechanism
+  - Document Mobile ZK proving strategy
+  - Document Paymaster volatility protection
+  - Document EigenLayer phased adoption plan
+  - Update README.md with audit compliance status
+  - _Audit: All Sections_
+
+---
+
+**Architecture Audit Tasks Summary:**
+- **New Tasks**: 22 tasks (59-80)
+- **Estimated Effort**: 8-12 weeks (2-3 developers)
+- **Priority**: CRITICAL (A++++ Production Standards)
+- **Phase**: Post-v1 Launch (v2 Features)
+- **Dependencies**: v1 Hunter Screen complete
+
+**Audit Compliance Milestones:**
+
+### 🔜 Milestone A1: Sentinel Queue–Worker (Weeks 1-3)
+**Tasks:** 59-64  
+**Outcome:** Sentinel monitoring uses queue-worker pattern with hot/warm/cold tiers
+
+### 🔜 Milestone A2: Intent Surplus Sharing (Weeks 4-6)
+**Tasks:** 65-68  
+**Outcome:** On-chain surplus split with solver reputation system
+
+### 🔜 Milestone A3: Mobile ZK & Paymaster (Weeks 7-9)
+**Tasks:** 69-74  
+**Outcome:** Server-side ZK proving and Paymaster with volatility protection
+
+### 🔜 Milestone A4: EigenLayer Phases (Weeks 10-12)
+**Tasks:** 75-77  
+**Outcome:** Phase 1 whitelist implemented, Phase 2/3 designed
+
+### 🔜 Milestone A5: Audit Compliance (Week 12)
+**Tasks:** 78-80  
+**Outcome:** All audit patterns verified and documented
+
+---
+
+**Total Tasks:** 80 (58 original + 22 audit tasks)  
+**Completed:** 56 tasks  
+**Remaining:** 24 tasks (7 v1 polish + 17 v2 audit features)  
+**Current Phase:** v1 Production Polish  
+**Next Phase:** v2 Audit Compliance Implementation
