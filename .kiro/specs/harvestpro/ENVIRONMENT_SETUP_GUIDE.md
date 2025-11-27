@@ -9,13 +9,14 @@ This guide walks you through setting up all required environment variables for H
 
 ## Quick Start (Minimum Required for v1)
 
-To get HarvestPro working, you need these **5 essential variables**:
+To get HarvestPro working, you need these **4 essential variables** (down from 5!):
 
 1. ✅ **SUPABASE_URL** - Already configured
 2. ✅ **SUPABASE_SERVICE_ROLE_KEY** - Already configured  
-3. ⚠️ **COINGECKO_API_KEY** - Partially configured (need production key)
-4. ❌ **GUARDIAN_API_KEY** - Not configured
-5. ❌ **CEX_ENCRYPTION_KEY** - Not configured
+3. ❌ **GUARDIAN_API_KEY** - Not configured (use your existing Guardian)
+4. ❌ **CEX_ENCRYPTION_KEY** - Not configured
+
+**Good News:** CoinGecko now uses a **free public API** (no key required)! 🎉
 
 ## Environment Variable Checklist
 
@@ -27,7 +28,7 @@ These are already set in your `.env` file:
 NEXT_PUBLIC_SUPABASE_URL=https://rebeznxivaxgserswhbn.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-COINGECKO_API_KEY=your_coingecko_api_key  # Need production key
+# COINGECKO_API_KEY - NO LONGER REQUIRED (uses free public API)
 ```
 
 ### ❌ Required for v1 Core (Not Yet Configured)
@@ -215,12 +216,14 @@ CHAINALYSIS_API_KEY=your_chainalysis_api_key
 
 2. Add the required variables to your `.env` file:
    ```bash
-   # Add these to your .env file
+   # Add these to your .env file (Only 2 required!)
    GUARDIAN_API_KEY=your_guardian_api_key_here
    CEX_ENCRYPTION_KEY=your_generated_32_byte_hex_key
-   COINMARKETCAP_API_KEY=your_coinmarketcap_api_key_here
-   ALCHEMY_API_KEY=your_alchemy_api_key_here
-   ONEINCH_API_KEY=your_oneinch_api_key_here
+   
+   # Optional but recommended
+   COINMARKETCAP_API_KEY=your_coinmarketcap_api_key_here  # Fallback price oracle
+   ALCHEMY_API_KEY=your_alchemy_api_key_here  # RPC provider
+   ONEINCH_API_KEY=your_oneinch_api_key_here  # Slippage estimation
    ```
 
 ### Step 2: Set Supabase Secrets (Edge Functions)
@@ -228,16 +231,15 @@ CHAINALYSIS_API_KEY=your_chainalysis_api_key
 Edge Functions need access to these variables via Supabase Secrets:
 
 ```bash
-# Required for v1
+# Required for v1 (Only 2!)
 supabase secrets set GUARDIAN_API_KEY=your_guardian_api_key_here
 supabase secrets set CEX_ENCRYPTION_KEY=your_generated_key_here
-supabase secrets set COINGECKO_API_KEY=your_coingecko_api_key_here
-supabase secrets set COINMARKETCAP_API_KEY=your_coinmarketcap_key_here
 
-# Recommended for v1
-supabase secrets set ALCHEMY_API_KEY=your_alchemy_key_here
-supabase secrets set INFURA_API_KEY=your_infura_key_here
-supabase secrets set ONEINCH_API_KEY=your_oneinch_key_here
+# Recommended for v1 (Optional)
+supabase secrets set COINMARKETCAP_API_KEY=your_coinmarketcap_key_here  # Fallback price oracle
+supabase secrets set ALCHEMY_API_KEY=your_alchemy_key_here  # RPC provider
+supabase secrets set INFURA_API_KEY=your_infura_key_here  # RPC fallback
+supabase secrets set ONEINCH_API_KEY=your_oneinch_key_here  # Slippage estimation
 
 # Verify secrets are set
 supabase secrets list
@@ -273,8 +275,8 @@ supabase functions logs harvest-recompute-opportunities
 |----------|---------|---------|
 | `SUPABASE_URL` | Edge Functions | Database connection |
 | `SUPABASE_SERVICE_ROLE_KEY` | Edge Functions | Database admin access |
-| `COINGECKO_API_KEY` | `price-oracle.ts` | Primary price data |
-| `COINMARKETCAP_API_KEY` | `price-oracle.ts` | Fallback price data |
+| `COINGECKO_API_KEY` | `price-oracle.ts` | ~~Not required (free API)~~ |
+| `COINMARKETCAP_API_KEY` | `price-oracle.ts` | Optional fallback price data |
 | `GUARDIAN_API_KEY` | `guardian-adapter.ts` | Security scanning |
 | `CEX_ENCRYPTION_KEY` | `cex-integration.ts` | Encrypt CEX credentials |
 | `ALCHEMY_API_KEY` | `multi-chain-engine.ts` | RPC provider |
@@ -305,13 +307,12 @@ supabase secrets set CEX_ENCRYPTION_KEY=your_generated_key
 
 ### Error: "Price oracle unavailable"
 
-**Solution:** Verify CoinGecko and CoinMarketCap API keys:
+**Solution:** Test CoinGecko free API (no key required):
 ```bash
-# Test CoinGecko API
-curl "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&x_cg_demo_api_key=YOUR_KEY"
+# Test CoinGecko free public API
+curl "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
 
-# Add to Supabase secrets
-supabase secrets set COINGECKO_API_KEY=your_key_here
+# If rate limited, add CoinMarketCap fallback (optional)
 supabase secrets set COINMARKETCAP_API_KEY=your_key_here
 ```
 

@@ -12,13 +12,13 @@
 ### Your Existing Guardian Feature
 
 You have Guardian Edge Functions already deployed:
-- `guardian-scan` - Security scanning for wallets/tokens
-- `guardian-scan-v2` - Enhanced scanning with SSE support
+- `guardian-scan-v2` - Enhanced scanning with SSE support (currently in use)
+- `guardian-scan` - Original security scanning for wallets/tokens
 - `wallet-registry-scan` - Wallet registry scanning
 
 ### HarvestPro Integration
 
-HarvestPro's `guardian-adapter.ts` calls your internal Guardian Edge Function:
+HarvestPro's `guardian-adapter.ts` calls your internal Guardian Edge Function (v2):
 
 ```typescript
 // From: supabase/functions/_shared/harvestpro/guardian-adapter.ts
@@ -26,8 +26,8 @@ async function fetchGuardianScore(token: string): Promise<GuardianScore> {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const GUARDIAN_API_KEY = Deno.env.get('GUARDIAN_API_KEY');
   
-  // Calls YOUR Guardian Edge Function
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/guardian-scan`, {
+  // Calls YOUR Guardian Edge Function (v2)
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/guardian-scan-v2`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -86,9 +86,9 @@ HarvestPro Edge Function
   ↓
 guardian-adapter.ts
   ↓
-fetch(`${SUPABASE_URL}/functions/v1/guardian-scan`)
+fetch(`${SUPABASE_URL}/functions/v1/guardian-scan-v2`)
   ↓
-YOUR Guardian Edge Function
+YOUR Guardian Edge Function (v2)
   ↓
 Returns risk score
   ↓
@@ -137,9 +137,9 @@ This ensures HarvestPro works even if Guardian is temporarily unavailable.
 ### 1. Verify Guardian Edge Function Works
 
 ```bash
-# Test your Guardian Edge Function directly
+# Test your Guardian Edge Function (v2) directly
 curl -X POST \
-  https://rebeznxivaxgserswhbn.supabase.co/functions/v1/guardian-scan \
+  https://rebeznxivaxgserswhbn.supabase.co/functions/v1/guardian-scan-v2 \
   -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY" \
   -H "Content-Type: application/json" \
   -d '{"token": "ETH", "scan_type": "token"}'
@@ -156,8 +156,8 @@ curl http://localhost:3003/api/harvest/opportunities
 ### 3. Check Logs
 
 ```bash
-# Check Guardian Edge Function logs
-supabase functions logs guardian-scan
+# Check Guardian Edge Function logs (v2)
+supabase functions logs guardian-scan-v2
 
 # Check HarvestPro Edge Function logs
 supabase functions logs harvest-recompute-opportunities
@@ -215,5 +215,8 @@ That's it! HarvestPro will now use your existing Guardian feature for risk scori
 
 **Related Documentation:**
 - Guardian Adapter: `supabase/functions/_shared/harvestpro/guardian-adapter.ts`
-- Guardian Edge Functions: `supabase/functions/guardian-scan/`
+- Guardian Edge Functions: `supabase/functions/guardian-scan-v2/`
 - Risk Classification: `supabase/functions/_shared/harvestpro/risk-classification.ts`
+
+**Your Guardian Endpoint:**
+- Production: `https://rebeznxivaxgserswhbn.supabase.co/functions/v1/guardian-scan-v2`

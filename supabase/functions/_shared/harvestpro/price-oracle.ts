@@ -3,10 +3,13 @@
  * HarvestPro Tax-Loss Harvesting Module
  * 
  * Implements a robust price fetching system with:
- * - Primary: CoinGecko API
- * - Fallback: CoinMarketCap API
+ * - Primary: CoinGecko Free Public API (no key required)
+ * - Fallback: CoinMarketCap API (optional, requires key)
  * - Final fallback: Internal cache
  * - 1 minute TTL caching
+ * 
+ * Note: CoinGecko free API has rate limits (10-50 calls/min)
+ * For production, consider CoinMarketCap fallback or caching strategy
  * 
  * Migrated from src/lib/harvestpro/price-oracle.ts for Deno runtime
  */
@@ -92,9 +95,8 @@ class CoinGeckoClient {
   }
 
   async getPrice(token: string): Promise<number> {
-    const url = this.apiKey
-      ? `${this.baseUrl}/simple/price?ids=${this.mapTokenToId(token)}&vs_currencies=usd&x_cg_demo_api_key=${this.apiKey}`
-      : `${this.baseUrl}/simple/price?ids=${this.mapTokenToId(token)}&vs_currencies=usd`;
+    // Use free public API (no key required)
+    const url = `${this.baseUrl}/simple/price?ids=${this.mapTokenToId(token)}&vs_currencies=usd`;
 
     const response = await fetch(url, {
       headers: {
@@ -118,9 +120,8 @@ class CoinGeckoClient {
 
   async getPrices(tokens: string[]): Promise<Record<string, number>> {
     const ids = tokens.map(t => this.mapTokenToId(t)).join(',');
-    const url = this.apiKey
-      ? `${this.baseUrl}/simple/price?ids=${ids}&vs_currencies=usd&x_cg_demo_api_key=${this.apiKey}`
-      : `${this.baseUrl}/simple/price?ids=${ids}&vs_currencies=usd`;
+    // Use free public API (no key required)
+    const url = `${this.baseUrl}/simple/price?ids=${ids}&vs_currencies=usd`;
 
     const response = await fetch(url, {
       headers: {
@@ -413,7 +414,9 @@ let priceOracleInstance: PriceOracle | null = null;
 export function getPriceOracle(): PriceOracle {
   if (!priceOracleInstance) {
     priceOracleInstance = new PriceOracle({
-      coinGeckoApiKey: Deno.env.get('COINGECKO_API_KEY'),
+      // CoinGecko API key is optional - free public API works without it
+      coinGeckoApiKey: undefined,
+      // CoinMarketCap is optional fallback (requires API key)
       coinMarketCapApiKey: Deno.env.get('COINMARKETCAP_API_KEY'),
       cacheTTL: 60000, // 1 minute
     });

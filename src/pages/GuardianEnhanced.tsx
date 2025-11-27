@@ -64,7 +64,11 @@ export function GuardianEnhanced() {
   const [showAddWalletModal, setShowAddWalletModal] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [activeWalletIndex, setActiveWalletIndex] = useState(0);
-  const { wallets: guardianWallets, updateWallet, refreshWallets } = useWalletContext();
+  const walletContext = useWalletContext();
+  const guardianWallets = walletContext?.wallets ?? [];
+  const updateWallet = walletContext?.updateWallet ?? (() => undefined);
+  const refreshWallets = walletContext?.refreshWallets ?? (() => undefined);
+
   const wallets = useMemo(() => guardianWallets.map(wallet => ({
     address: wallet.address,
     label: wallet.alias || wallet.ens_name || wallet.short,

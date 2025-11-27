@@ -112,7 +112,7 @@ async function fetchGuardianScore(token: string): Promise<GuardianScore> {
   }
   
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/guardian-scan`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/guardian-scan-v2`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

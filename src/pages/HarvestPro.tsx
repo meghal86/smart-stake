@@ -48,7 +48,6 @@ export default function HarvestPro() {
     data: opportunitiesData,
     isLoading,
     isError,
-    error,
     refetch,
   } = useHarvestOpportunities({
     enabled: !isDemo, // Only fetch when not in demo mode
@@ -194,7 +193,8 @@ export default function HarvestPro() {
   // Handle opening detail modal
   const handleStartHarvest = (opportunityId: string) => {
     console.log('🚀 Start Harvest clicked! Opportunity ID:', opportunityId);
-    const opportunity = mockOpportunities.find(opp => opp.id === opportunityId);
+    // Search in the actual opportunities array (not mockOpportunities)
+    const opportunity = opportunities.find(opp => opp.id === opportunityId);
     console.log('📦 Found opportunity:', opportunity);
     if (opportunity) {
       setSelectedOpportunity(opportunity);
@@ -470,11 +470,6 @@ export default function HarvestPro() {
       <FooterNav />
 
       {/* Detail Modal */}
-      {console.log('🔍 Pre-render check:', { 
-        hasOpportunity: !!selectedOpportunity, 
-        isModalOpen,
-        opportunityId: selectedOpportunity?.id 
-      })}
       <HarvestDetailModal
         opportunity={selectedOpportunity}
         isOpen={isModalOpen}

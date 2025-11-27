@@ -3,6 +3,12 @@
 **⏱️ Time Required:** 10-15 minutes  
 **Status:** 6 variables need configuration
 
+## 🎉 Great News: Only 2 Variables Required!
+
+CoinGecko now uses a **free public API** (no key needed), so you only need to configure:
+1. CEX Encryption Key (for encrypting exchange credentials)
+2. Guardian API Key (use your existing Guardian feature)
+
 ## 🚨 Critical Variables (Must Have)
 
 ### 1. CEX Encryption Key ✅ GENERATED
@@ -37,23 +43,19 @@ supabase secrets set GUARDIAN_API_KEY=$(echo $SUPABASE_SERVICE_ROLE_KEY)
 
 **Note:** HarvestPro calls your internal `guardian-scan` Edge Function, not an external API.
 
-### 3. CoinGecko API Key ⚠️ NEEDS PRODUCTION KEY
+### 3. CoinGecko API Key ✅ NO LONGER REQUIRED
 
 **What it does:** Primary price oracle for token prices
 
-**How to get:**
-1. Go to https://www.coingecko.com/en/api/pricing
-2. Sign up for API plan (free tier available)
-3. Get API key from dashboard
+**Good News:** HarvestPro now uses CoinGecko's **FREE public API** which requires **NO API KEY**!
 
 **Action Required:**
 ```bash
-# Update in .env (replace placeholder)
-COINGECKO_API_KEY=your_real_coingecko_api_key
-
-# Set in Supabase
-supabase secrets set COINGECKO_API_KEY=your_real_coingecko_api_key
+# ✅ Nothing! CoinGecko free API works without a key
+# You can remove COINGECKO_API_KEY from .env if it exists
 ```
+
+**Rate Limits:** 10-50 calls/minute (sufficient for most use cases with caching)
 
 ## 🔧 Recommended Variables (Improves Functionality)
 
@@ -118,15 +120,14 @@ supabase secrets set ONEINCH_API_KEY=your_oneinch_api_key
 Open `.env` and add these lines:
 
 ```bash
-# HarvestPro Required Variables
+# HarvestPro Required Variables (Only 2!)
 CEX_ENCRYPTION_KEY=9141f796f32f7b16d4b9239f8cb1c3574c9f39ade8f42d02862f3cd70f16e419
 GUARDIAN_API_KEY=your_guardian_api_key_here
-COINGECKO_API_KEY=your_real_coingecko_api_key_here
 
-# HarvestPro Recommended Variables
-COINMARKETCAP_API_KEY=your_coinmarketcap_api_key_here
-ALCHEMY_API_KEY=your_alchemy_api_key_here
-ONEINCH_API_KEY=your_oneinch_api_key_here
+# HarvestPro Recommended Variables (Optional)
+COINMARKETCAP_API_KEY=your_coinmarketcap_api_key_here  # Fallback price oracle
+ALCHEMY_API_KEY=your_alchemy_api_key_here  # RPC provider
+ONEINCH_API_KEY=your_oneinch_api_key_here  # Slippage estimation
 ```
 
 ### Step 2: Set Supabase Secrets (for Edge Functions)
@@ -134,12 +135,11 @@ ONEINCH_API_KEY=your_oneinch_api_key_here
 Run these commands:
 
 ```bash
-# Required
+# Required (Only 2!)
 supabase secrets set CEX_ENCRYPTION_KEY=9141f796f32f7b16d4b9239f8cb1c3574c9f39ade8f42d02862f3cd70f16e419
 supabase secrets set GUARDIAN_API_KEY=your_guardian_api_key_here
-supabase secrets set COINGECKO_API_KEY=your_real_coingecko_api_key_here
 
-# Recommended
+# Recommended (Optional)
 supabase secrets set COINMARKETCAP_API_KEY=your_coinmarketcap_api_key_here
 supabase secrets set ALCHEMY_API_KEY=your_alchemy_api_key_here
 supabase secrets set ONEINCH_API_KEY=your_oneinch_api_key_here
