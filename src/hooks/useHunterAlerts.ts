@@ -188,7 +188,7 @@ export function useHunterAlerts() {
 }
 
 // Helper function to map database records to HunterAlert
-function mapAlertFromDB(record: any): HunterAlert {
+function mapAlertFromDB(record: Record<string, unknown>): HunterAlert {
   return {
     id: record.id,
     type: record.type,

@@ -164,7 +164,7 @@ export function useEnhancedPortfolio(addresses: string[]) {
       };
 
       setData(mockData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Enhanced portfolio fetch error:', err);
       setError(null); // Ignore errors in demo mode
     } finally {
@@ -176,7 +176,13 @@ export function useEnhancedPortfolio(addresses: string[]) {
     fetchEnhancedData();
   }, [addresses.join(',')]);
 
-  const simulateScenario = useCallback(async (scenario: any) => {
+  const simulateScenario = useCallback(async (scenario: {
+    ethChange: number;
+    btcChange: number;
+    altcoinChange: number;
+    correlationBreak?: boolean;
+    stablecoinDepeg?: boolean;
+  }) => {
     // Mock simulation logic
     const baseValue = data?.totalValue || 100000;
     const ethImpact = scenario.ethChange / 100;
@@ -282,7 +288,7 @@ function generateMockWhaleInteractions() {
   return STATIC_WHALE_INTERACTIONS;
 }
 
-function convertLiveDataToEnhanced(liveData: any, addresses: string[]): EnhancedPortfolioData {
+function convertLiveDataToEnhanced(liveData: Record<string, unknown>, addresses: string[]): EnhancedPortfolioData {
   const firstAddress = addresses[0];
   const portfolioData = liveData[firstAddress];
   
@@ -298,7 +304,7 @@ function convertLiveDataToEnhanced(liveData: any, addresses: string[]): Enhanced
     { name: 'Polygon', value: portfolioData.total_value_usd * 0.08, percentage: 8, color: '#8247E5' }
   ];
 
-  const topTokens = portfolioData.tokens.slice(0, 5).map((token: any, index: number) => ({
+  const topTokens = portfolioData.tokens.slice(0, 5).map((token: Record<string, unknown>, index: number) => ({
     symbol: token.symbol,
     percentage: (token.value_usd / portfolioData.total_value_usd) * 100,
     value: token.value_usd,
@@ -330,7 +336,7 @@ function convertLiveDataToEnhanced(liveData: any, addresses: string[]): Enhanced
     marketCorrelation: 0.72,
     liquidityRisk: 3.2,
     upcomingUnlocks: [],
-    liquidityData: portfolioData.tokens.slice(0, 4).map((token: any) => ({
+    liquidityData: portfolioData.tokens.slice(0, 4).map((token: Record<string, unknown>) => ({
       token: token.symbol,
       totalLiquidity: Math.random() * 1000000000,
       dailyVolume: Math.random() * 500000000,

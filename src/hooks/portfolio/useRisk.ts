@@ -13,7 +13,7 @@ export interface RiskTrendPoint {
 
 export function useRisk(): { 
   metrics?: RiskMetrics; 
-  factors?: any; 
+  factors?: Record<string, number>; 
   trend?: RiskTrendPoint[]; 
   isLoading: boolean;
 } {

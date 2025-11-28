@@ -22,7 +22,7 @@ interface WatchlistItem {
 interface ExportRequest {
   type: 'alerts' | 'clusters' | 'watchlist';
   format: 'csv' | 'json';
-  filters?: any;
+  filters?: Record<string, unknown>;
 }
 
 // Market Summary Hook
@@ -100,17 +100,17 @@ export function useAlertsStream(filters?: AlertFilters) {
       const alerts: ProcessedAlert[] = alertEvents?.map(event => ({
         id: event.id,
         ts: event.created_at,
-        chain: (event.trigger_data as any)?.chain || 'ETH',
-        token: (event.trigger_data as any)?.token || 'USDT',
-        usd: (event.trigger_data as any)?.amount || 0,
-        cluster: (event.trigger_data as any)?.clusterId || 'unknown',
-        severity: (event.trigger_data as any)?.severity || 'Info',
-        impactScore: (event.trigger_data as any)?.score || 0,
+        chain: (event.trigger_data as Record<string, unknown>)?.chain as string || 'ETH',
+        token: (event.trigger_data as Record<string, unknown>)?.token as string || 'USDT',
+        usd: (event.trigger_data as Record<string, unknown>)?.amount as number || 0,
+        cluster: (event.trigger_data as Record<string, unknown>)?.clusterId as string || 'unknown',
+        severity: (event.trigger_data as Record<string, unknown>)?.severity as string || 'Info',
+        impactScore: (event.trigger_data as Record<string, unknown>)?.score as number || 0,
         confidence: 0.8,
-        reasons: (event.trigger_data as any)?.reasons || [],
+        reasons: (event.trigger_data as Record<string, unknown>)?.reasons as string[] || [],
         threadKey: `${event.id}`,
         isRead: event.is_read || false,
-        score: (event.trigger_data as any)?.score || 0
+        score: (event.trigger_data as Record<string, unknown>)?.score as number || 0
       })) || [];
 
       return {

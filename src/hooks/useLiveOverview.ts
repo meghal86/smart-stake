@@ -101,7 +101,7 @@ export function useLiveOverview(addresses: string[]) {
     }
     
     // Fetch real address data using Alchemy API
-    async function fetchAddressData(address: string, prices: any) {
+    async function fetchAddressData(address: string, prices: Record<string, { usd: number; usd_24h_change: number }>) {
       try {
         // Get ETH balance
         const ethBalance = await fetchETHBalance(address);
@@ -166,7 +166,7 @@ export function useLiveOverview(addresses: string[]) {
     }
     
     // Fetch top tokens with deterministic balances based on address
-    async function fetchTopTokens(address: string, prices: any) {
+    async function fetchTopTokens(address: string, prices: Record<string, { usd: number; usd_24h_change: number }>) {
       const hashValue = parseInt(address.slice(2, 10), 16);
       
       // Deterministic token balances based on address hash

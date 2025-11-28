@@ -37,7 +37,7 @@ export function useStress(): {
     setParamsState(prev => ({ ...prev, ...p }));
   };
 
-  const run = async (customParams?: any) => {
+  const run = async (customParams?: Partial<StressParams & { ethereum?: number; bitcoin?: number; altcoins?: number }>) => {
     setIsRunning(true);
     await new Promise(resolve => setTimeout(resolve, 3000));
     

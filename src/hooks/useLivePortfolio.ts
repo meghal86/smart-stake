@@ -36,7 +36,12 @@ export function useLivePortfolio(addresses: string[]) {
       // });
       
       // Use mock data instead
-      const liveData: any = {};
+      const liveData: Record<string, {
+        total_value_usd: number;
+        tokens: Array<{ symbol: string; balance: number; value_usd: number; price_change_24h: number }>;
+        risk_score: number;
+        whale_interactions: number;
+      }> = {};
       addresses.forEach(address => {
         liveData[address] = {
           total_value_usd: Math.random() * 100000 + 50000,
@@ -72,7 +77,7 @@ export function useLivePortfolio(addresses: string[]) {
       }
       
       setData(transformedData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Live portfolio fetch error:', err);
       setError('Failed to fetch live portfolio data. Using cached data.');
       

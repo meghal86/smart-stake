@@ -8,7 +8,7 @@ export type ExportType = 'chain_risk' | 'whale_clusters' | 'alerts' | 'correlati
 interface ExportOptions {
   exportType: ExportType;
   window?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 export function useCSVExport() {
@@ -64,11 +64,12 @@ export function useCSVExport() {
         description: `${formatExportType(options.exportType)} data exported successfully`,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export data';
       console.error('Export error:', error);
       toast({
         title: "Export Failed",
-        description: error.message || "Failed to export data",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface AlertCondition {
   type: 'amount' | 'chain' | 'token' | 'whale_tag' | 'direction' | 'time_window';
   operator: string;
-  value: any;
+  value: string | number | boolean;
   currency?: string;
   unit?: string;
 }
@@ -38,7 +38,7 @@ export interface AlertTemplate {
   category: 'whale' | 'defi' | 'security' | 'trading';
   template_conditions: AlertCondition[];
   default_logic_operator: string;
-  suggested_delivery_channels: any;
+  suggested_delivery_channels: Record<string, boolean>;
   is_premium: boolean;
   popularity_score: number;
 }
@@ -68,7 +68,7 @@ export function useCustomAlerts() {
         return;
       }
       setRules(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Alert rules table not found, using empty array');
       setRules([]);
     } finally {
@@ -91,7 +91,7 @@ export function useCustomAlerts() {
         return;
       }
       setTemplates(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Alert templates table not found, using empty array');
       setTemplates([]);
     } finally {

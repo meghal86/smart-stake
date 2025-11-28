@@ -4,14 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface AnalyticsEvent {
   event: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 export function useAnalytics() {
   const { user } = useAuth();
   const { tier } = useTier();
 
-  const track = async (eventName: string, properties: Record<string, any> = {}) => {
+  const track = async (eventName: string, properties: Record<string, unknown> = {}) => {
     const payload = {
       user_id: user?.id,
       event_name: eventName,

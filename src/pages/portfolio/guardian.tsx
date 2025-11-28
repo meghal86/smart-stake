@@ -7,8 +7,8 @@ import { usePortfolioSummary } from '@/hooks/portfolio/usePortfolioSummary';
 import { useGuardian } from '@/hooks/portfolio/useGuardian';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Download, Share, Shield, AlertTriangle, Eye, CheckCircle } from 'lucide-react';
+
+import { Download, Share, Shield, CheckCircle } from 'lucide-react';
 import { useUIMode } from '@/store/uiMode';
 import Hub2Layout from '@/components/hub2/Hub2Layout';
 import LegendaryLayout from '@/components/ui/LegendaryLayout';
@@ -20,7 +20,6 @@ export default function Guardian() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
-  const [expandedFlag, setExpandedFlag] = useState<string | null>(null);
   const { mode } = useUIMode() || { mode: 'novice' };
   
   useEffect(() => {
@@ -229,10 +228,7 @@ export default function Guardian() {
                   transition={{ delay: 0.8 }}
                 >
                   <Card className="p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                      Security Flags Detected
-                    </h3>
+                    <h3 className="text-lg font-semibold mb-4">Security Flags Detected</h3>
                     <div className="space-y-3">
                       {guardian.flags.map((flag, index) => (
                         <motion.div
@@ -240,73 +236,34 @@ export default function Guardian() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.9 + index * 0.1 }}
-                          className="border border-muted rounded-lg overflow-hidden"
+                          className="border border-muted rounded-lg p-4"
                         >
-                          <motion.div
-                            className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                            onClick={() => setExpandedFlag(expandedFlag === flag.type ? null : flag.type)}
-                            whileHover={{ x: 5 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <motion.div
-                                  animate={{ 
-                                    scale: [1, 1.2, 1],
-                                    opacity: [0.7, 1, 0.7]
-                                  }}
-                                  transition={{ 
-                                    duration: 2, 
-                                    repeat: Infinity,
-                                    delay: index * 0.5
-                                  }}
-                                >
-                                  <div className={`w-3 h-3 rounded-full ${
-                                    flag.severity === 'high' ? 'bg-red-500' :
-                                    flag.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
-                                  }`} />
-                                </motion.div>
-                                <div>
-                                  <p className="font-medium">{flag.type.toUpperCase()}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {flag.count} occurrence{flag.count > 1 ? 's' : ''}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge className={`${
-                                flag.severity === 'high' ? 'bg-red-500/10 text-red-500' :
-                                flag.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-500' : 
-                                'bg-blue-500/10 text-blue-500'
-                              }`}>
-                                {flag.severity}
-                              </Badge>
-                            </div>
-                          </motion.div>
-                          
-                          <AnimatePresence>
-                            {expandedFlag === flag.type && (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
                               <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="border-t border-muted bg-muted/20 p-4"
+                                animate={{ 
+                                  scale: [1, 1.2, 1],
+                                  opacity: [0.7, 1, 0.7]
+                                }}
+                                transition={{ 
+                                  duration: 2, 
+                                  repeat: Infinity,
+                                  delay: index * 0.5
+                                }}
                               >
-                                <div className="space-y-2">
-                                  <p className="text-sm font-medium">Flag Details:</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {flag.type === 'mixer' ? 'Interaction with privacy mixer detected. This may indicate attempts to obscure transaction history.' :
-                                     flag.type === 'suspicious' ? 'Suspicious activity patterns detected. Manual review recommended.' :
-                                     'Security concern identified requiring attention.'}
-                                  </p>
-                                  <div className="flex gap-2 mt-3">
-                                    <Button size="sm" variant="outline">
-                                      <Eye className="h-3 w-3 mr-1" />
-                                      View Details
-                                    </Button>
-                                  </div>
-                                </div>
+                                <div className={`w-3 h-3 rounded-full ${
+                                  flag.severity === 'high' ? 'bg-red-500' :
+                                  flag.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                                }`} />
                               </motion.div>
-                            )}
-                          </AnimatePresence>
+                              <div>
+                                <p className="font-medium">{flag.type.toUpperCase()}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {flag.count} occurrence{flag.count > 1 ? 's' : ''} • {flag.severity} severity
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         </motion.div>
                       ))}
                     </div>

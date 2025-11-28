@@ -152,7 +152,7 @@ export function useHunterXP() {
       // Map unlocked badges
       const badges = BADGE_DEFINITIONS.map(badge => ({
         ...badge,
-        unlockedAt: unlockedBadges.find((b: any) => b.id === badge.id)?.unlockedAt
+        unlockedAt: unlockedBadges.find((b: { id: string; unlockedAt?: Date }) => b.id === badge.id)?.unlockedAt
       })).filter(badge => badge.unlockedAt);
 
       setXPData({

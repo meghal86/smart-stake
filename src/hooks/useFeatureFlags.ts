@@ -12,7 +12,7 @@ const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
   mobile_widgets: false
 }
 
-let flagCache: Record<FeatureFlag, boolean> = DEFAULT_FLAGS
+const flagCache: Record<FeatureFlag, boolean> = DEFAULT_FLAGS
 
 export function useFeatureFlags() {
   const [flags, setFlags] = useState<Record<FeatureFlag, boolean>>(DEFAULT_FLAGS)

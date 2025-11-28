@@ -78,10 +78,12 @@ export function useAggregatedPortfolio() {
       // Group positions by wallet
       const walletBalances: WalletBalance[] = wallets.map((wallet) => {
         const walletPositions = (positions || []).filter(
-          (p: any) => p.wallet_address.toLowerCase() === wallet.address.toLowerCase()
+          (p: Record<string, unknown>) => 
+            typeof p.wallet_address === 'string' && 
+            p.wallet_address.toLowerCase() === wallet.address.toLowerCase()
         )
 
-        const tokens = walletPositions.map((p: any) => ({
+        const tokens = walletPositions.map((p: Record<string, unknown>) => ({
           symbol: p.token_symbol || 'UNKNOWN',
           balance: parseFloat(p.balance || '0'),
           balanceUSD: parseFloat(p.balance_usd || '0'),

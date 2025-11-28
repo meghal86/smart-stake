@@ -99,9 +99,19 @@ const API = {
 
           // Build whale entities from whale alerts (like main app)
           const whaleTransactions = whaleAlerts.data?.transactions || [];
-          const whaleMap = new Map<string, any>();
+          const whaleMap = new Map<string, {
+            id: string;
+            kind: string;
+            symbol: string;
+            name: string;
+            price_usd: number;
+            change_24h: number;
+            is_real: boolean;
+            metrics: Record<string, unknown>;
+            events: Array<Record<string, unknown>>;
+          }>();
           
-          whaleTransactions.forEach((tx: any) => {
+          whaleTransactions.forEach((tx: Record<string, unknown>) => {
             const symbol = tx.symbol?.toUpperCase() || 'UNKNOWN';
             if (!whaleMap.has(symbol)) {
               whaleMap.set(symbol, {
@@ -154,7 +164,11 @@ const API = {
 
       // Filter/sort
       items = items.filter(i => i.gauges.sentiment >= sentiment_min);
-      items.sort((a,b)=> (b.gauges as any)[sort] - (a.gauges as any)[sort]);
+      items.sort((a,b)=> {
+        const aVal = (b.gauges as Record<string, number>)[sort] || 0;
+        const bVal = (a.gauges as Record<string, number>)[sort] || 0;
+        return aVal - bVal;
+      });
 
       return { items, total: items.length, hasMore: false };
     } catch (error) {
@@ -176,7 +190,7 @@ const API = {
 
           // Find whale transactions for this entity
           const whaleTransactions = whaleAlerts.data?.transactions || [];
-          const entityTransactions = whaleTransactions.filter((tx: any) => 
+          const entityTransactions = whaleTransactions.filter((tx: Record<string, unknown>) => 
             tx.symbol?.toUpperCase() === id.toUpperCase()
           );
           
@@ -211,7 +225,7 @@ const API = {
         metrics 
       });
 
-          const timeline = entityTransactions.map((t:any)=> toSignalEvent({
+          const timeline = entityTransactions.map((t: Record<string, unknown>)=> toSignalEvent({
           id: t.hash, 
           type: t.to?.owner_type === 'exchange' ? 'cex_inflow' : 'cex_outflow', 
           ts: new Date(t.timestamp*1000).toISOString(),
@@ -238,7 +252,7 @@ const API = {
     }
   },
   
-  backtest: async (rule: any) => {
+  backtest: async (rule: Partial<AlertRule>) => {
     // TODO: Implement real backtest Edge Function
     throw new Error('Backtest functionality not yet implemented');
   },
@@ -258,7 +272,7 @@ const API = {
           const whaleTransactions = whaleAlerts.data?.transactions || [];
           const alertMap = new Map<string, any>();
           
-          whaleTransactions.forEach((tx: any, index: number) => {
+          whaleTransactions.forEach((tx: Record<string, unknown>, index: number) => {
             const symbol = tx.symbol?.toUpperCase() || 'UNKNOWN';
             const alertId = `whale-${symbol}-${index}`;
             
@@ -296,7 +310,7 @@ const API = {
         }
       },
   
-  createAlert: async (rule: any) => {
+  createAlert: async (rule: Partial<AlertRule>) => {
     try {
       // Try Edge Function first
       const { data, error } = await supabase.functions.invoke('create-alert', {
@@ -386,7 +400,7 @@ export function useEntity(id: string) {
 
 export function useBacktest() {
   return useMutation({
-    mutationFn: async (rule: any) => {
+    mutationFn: async (rule: Partial<AlertRule>) => {
       const data = await API.backtest(rule);
       return data as BacktestResult;
     }

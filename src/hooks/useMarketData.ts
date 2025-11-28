@@ -97,22 +97,22 @@ export function useMarketSummary() {
         const now = Date.now();
         const dayMs = 24 * 60 * 60 * 1000;
         
-        const tx24h = transactions.filter((tx: any) => {
+        const tx24h = transactions.filter((tx: Record<string, unknown>) => {
           const txTime = new Date(tx.timestamp * 1000).getTime();
           return (now - txTime) < dayMs;
         });
         
-        const volume24h = tx24h.reduce((sum: number, tx: any) => sum + (tx.amount_usd || 0), 0);
+        const volume24h = tx24h.reduce((sum: number, tx: Record<string, unknown>) => sum + (typeof tx.amount_usd === 'number' ? tx.amount_usd : 0), 0);
         const uniqueAddresses = new Set();
-        tx24h.forEach((tx: any) => {
+        tx24h.forEach((tx: Record<string, unknown>) => {
           if (tx.from?.address) uniqueAddresses.add(tx.from.address);
           if (tx.to?.address) uniqueAddresses.add(tx.to.address);
         });
         
         const activeWhales = uniqueAddresses.size;
-        const riskAlerts = tx24h.filter((tx: any) => tx.amount_usd > 10000000).length;
+        const riskAlerts = tx24h.filter((tx: Record<string, unknown>) => typeof tx.amount_usd === 'number' && tx.amount_usd > 10000000).length;
         const avgRiskScore = tx24h.length > 0 ? 
-          tx24h.reduce((sum: number, tx: any) => sum + Math.min(100, (tx.amount_usd || 0) / 100000), 0) / tx24h.length : 0;
+          tx24h.reduce((sum: number, tx: Record<string, unknown>) => sum + Math.min(100, (typeof tx.amount_usd === 'number' ? tx.amount_usd : 0) / 100000), 0) / tx24h.length : 0;
         
         return {
           success: true,

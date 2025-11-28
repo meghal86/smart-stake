@@ -16,8 +16,8 @@ interface ExportProofModalProps {
     riskScore: number;
     trustScore: number;
     timestamp: Date;
-    guardianFlags: any[];
-    dataLineage: any[];
+    guardianFlags: Array<{ type: string; severity: string; count: number }>;
+    dataLineage: Array<{ type: string; source: string }>;
   };
 }
 
