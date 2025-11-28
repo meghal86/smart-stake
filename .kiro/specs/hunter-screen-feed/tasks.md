@@ -64,6 +64,20 @@ The codebase has a basic UI shell and a simple Edge Function, but **most of the 
   - **Status:** Basic types exist in src/types/hunter.ts, but incomplete - missing many schemas
   - _Requirements: 1.7, 8.14_
 
+- [ ] 3a. Establish lint and type-check standards (Code Quality)
+  - Configure ESLint with strict rules for Hunter Screen code
+  - Enable TypeScript strict mode for all Hunter files
+  - Set up pre-commit hooks to run lint checks (optional)
+  - Configure CI/CD to fail on lint errors
+  - Document linting standards in README or docs
+  - Run `npm run lint` and fix any existing errors
+  - Run `npm run type-check` and fix any TypeScript errors
+  - Ensure no `any` types are used (use `unknown` with type guards instead)
+  - Verify all functions have explicit return types
+  - Test that build succeeds without warnings
+  - **Status:** NOT IMPLEMENTED - Critical for code quality
+  - _Requirements: All (Code Quality)_
+
 - [ ] 4. Implement cursor pagination utilities
   - Create encodeCursor() function for base64url encoding
   - Create decodeCursor() function for parsing cursor tuples
@@ -578,6 +592,17 @@ The codebase has a basic UI shell and a simple Edge Function, but **most of the 
   - Test synthetic checks run on schedule
   - _Requirements: 14.1-14.6_
 
+- [ ] 34b. Run lint checks and fix errors
+  - Run `npm run lint` to check for ESLint errors
+  - Run `npm run lint:fix` to auto-fix fixable issues
+  - Fix any remaining ESLint errors or warnings manually
+  - Run `npm run type-check` or `tsc --noEmit` to check for TypeScript errors
+  - Fix all TypeScript type errors
+  - Ensure strict mode compliance (no `any` types, explicit return types)
+  - Verify all imports are valid and used
+  - Test that build succeeds without errors
+  - _Requirements: All (Code Quality)_
+
 - [ ] 35. Set up monitoring and alerting
   - Install and configure @vercel/analytics package
   - Set up Sentry SDK for error tracking with DSN
@@ -705,6 +730,8 @@ The codebase has a basic UI shell and a simple Edge Function, but **most of the 
   - _Requirements: 10.12-10.14_
 
 - [ ] 39. Deployment preparation
+  - Run `npm run lint` and ensure no errors or warnings
+  - Run `npm run type-check` and ensure no TypeScript errors
   - Run all tests: npm run test && npm run test:e2e
   - Run Lighthouse CI: npm run lighthouse (target: FCP < 1.0s warm, < 1.6s cold)
   - Verify all database migrations are applied in production

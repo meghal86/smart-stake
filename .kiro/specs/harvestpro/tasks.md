@@ -248,6 +248,21 @@ The critical path for HarvestPro implementation is:
   - **Property 1: FIFO Cost Basis Consistency**
   - **Validates: Requirements 2.1, 16.1**
 
+- [ ] 1.4 Establish lint and type-check standards (Code Quality) 🔴
+  - Configure ESLint with strict rules for HarvestPro code
+  - Enable TypeScript strict mode for all HarvestPro files
+  - Set up pre-commit hooks to run lint checks (optional)
+  - Configure CI/CD to fail on lint errors
+  - Document linting standards in .kiro/specs/harvestpro/LINTING_STANDARDS.md
+  - Run `npm run lint` and fix any existing errors in HarvestPro code
+  - Run `npm run type-check` and fix any TypeScript errors
+  - Ensure no `any` types are used (use `unknown` with type guards instead)
+  - Verify all functions have explicit return types
+  - Test that build succeeds without warnings
+  - **Dependencies**: Task 1 (project structure)
+  - **Blocks**: All subsequent tasks (establishes code quality baseline)
+  - _Requirements: All (Code Quality)_
+
 - [x] 2. Implement FIFO cost basis calculation engine 🔴
   - Create transaction processing logic
   - Implement FIFO lot calculation algorithm
@@ -658,8 +673,16 @@ The critical path for HarvestPro implementation is:
   - Check contrast ratios
   - _Requirements: 18.3, 18.4, 18.5_
 
-- [ ] 28. Checkpoint - Ensure all tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+- [ ] 28. Checkpoint - Ensure all tests pass and no lint errors
+  - Run `npm run lint` to check for ESLint errors
+  - Run `npm run lint:fix` to auto-fix fixable issues
+  - Fix any remaining ESLint errors or warnings manually
+  - Run `npm run type-check` or `tsc --noEmit` to check for TypeScript errors
+  - Fix all TypeScript type errors
+  - Ensure strict mode compliance (no `any` types, explicit return types)
+  - Verify all imports are valid and used
+  - Ensure all tests pass
+  - Ask the user if questions arise
 
 - [ ] 29. Implement responsive design
   - Test mobile layout (≤768px)
@@ -753,10 +776,21 @@ The critical path for HarvestPro implementation is:
   - Verify P95 API response < 200ms
   - _Requirements: 2.5, 17.1_
 
-- [ ] 34. Final checkpoint - Ensure all tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+- [ ] 34. Final checkpoint - Ensure all tests pass and no lint errors
+  - Run `npm run lint` to check for ESLint errors
+  - Run `npm run lint:fix` to auto-fix fixable issues
+  - Fix any remaining ESLint errors or warnings manually
+  - Run `npm run type-check` or `tsc --noEmit` to check for TypeScript errors
+  - Fix all TypeScript type errors
+  - Ensure strict mode compliance (no `any` types, explicit return types)
+  - Verify all imports are valid and used
+  - Ensure all tests pass
+  - Ask the user if questions arise
 
 - [ ] 35. Documentation and deployment preparation
+  - Run `npm run lint` and ensure no errors or warnings
+  - Run `npm run type-check` and ensure no TypeScript errors
+  - Verify build succeeds: `npm run build`
   - Write API documentation
   - Create user guide
   - Document deployment process
@@ -865,7 +899,9 @@ The critical path for HarvestPro implementation is:
   - **Property 29: Enhanced Proof Payload**
   - **Validates: Requirements 25.1**
 
-- [ ] 42. Checkpoint - Ensure all v2 tests pass
+- [ ] 42. Checkpoint - Ensure all v2 tests pass and no lint errors
+  - Run `npm run lint` and fix any errors
+  - Run `npm run type-check` and fix any TypeScript errors
   - Ensure all v2 property tests pass
   - Verify MEV protection works correctly
   - Verify economic substance validation works correctly
@@ -968,7 +1004,9 @@ The critical path for HarvestPro implementation is:
   - **Dependencies**: Tasks 37-46 (all v2/v3 features)
   - _Requirements: 21-29_
 
-- [ ] 48. Checkpoint - Ensure all v3 tests pass
+- [ ] 48. Checkpoint - Ensure all v3 tests pass and no lint errors
+  - Run `npm run lint` and fix any errors
+  - Run `npm run type-check` and fix any TypeScript errors
   - Ensure all v3 property tests pass
   - Verify custody integration works correctly
   - Verify maker/checker workflows work correctly
