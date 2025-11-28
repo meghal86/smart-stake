@@ -176,11 +176,10 @@ export const performanceMonitor = new PerformanceMonitor();
  * React hook for measuring component render time
  */
 export function usePerformanceMonitor(componentName: string) {
-  if (typeof window === 'undefined') return;
-
-  const renderStart = performance.now();
+  const renderStart = typeof window !== 'undefined' ? performance.now() : 0;
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
     const renderTime = performance.now() - renderStart;
     performanceMonitor.recordMetric(
       `render:${componentName}`,
@@ -208,9 +207,9 @@ export function measureWebVitals() {
     try {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as unknown;
+        const lastEntry = entries[entries.length - 1] as { renderTime?: number; loadTime?: number };
         if (lastEntry) {
-          performanceMonitor.recordMetric('LCP', lastEntry.renderTime || lastEntry.loadTime, 2500);
+          performanceMonitor.recordMetric('LCP', lastEntry.renderTime || lastEntry.loadTime || 0, 2500);
         }
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
@@ -224,7 +223,7 @@ export function measureWebVitals() {
     try {
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries() as any[]) {
+        for (const entry of list.getEntries() as Array<{ value: number; hadRecentInput?: boolean }>) {
           if (!entry.hadRecentInput) {
             clsValue += entry.value;
           }
@@ -241,7 +240,7 @@ export function measureWebVitals() {
   if ('PerformanceObserver' in window) {
     try {
       const fidObserver = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries() as any[]) {
+        for (const entry of list.getEntries() as Array<{ processingStart: number; startTime: number }>) {
           performanceMonitor.recordMetric('FID', entry.processingStart - entry.startTime, 100);
         }
       });

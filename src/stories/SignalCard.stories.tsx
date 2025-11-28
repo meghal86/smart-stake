@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import type { Meta, StoryObj } from '@storybook/react'
 import SignalCard from '@/components/signals/SignalCard'
 import { SignalEvent } from '@/types/hub2'

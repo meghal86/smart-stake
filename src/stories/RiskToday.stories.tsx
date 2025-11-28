@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import type { Meta, StoryObj } from '@storybook/react'
 import RiskToday from '@/components/kpi/RiskToday'
 import { useEffect, useState } from 'react'

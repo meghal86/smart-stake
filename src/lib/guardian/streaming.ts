@@ -56,7 +56,7 @@ export async function streamGuardianScan(
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while(1) {
+    for(;;) {
       const { done, value } = await reader.read();
 
       if (done) {
