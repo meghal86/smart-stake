@@ -4,48 +4,7 @@
   "framework": "vite",
   "installCommand": "npm install",
   "devCommand": "npm run dev",
-  "crons": [
-    {
-      "path": "/api/cron/refresh-ranking",
-      "schedule": "*/3 * * * *"
-    },
-    {
-      "path": "/api/cron/guardian-rescan",
-      "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/cron/smoke-test",
-      "schedule": "*/5 * * * *"
-    }
-  ],
   "headers": [
-    {
-      "source": "/api/hunter/opportunities",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=60, stale-while-revalidate=300"
-        }
-      ]
-    },
-    {
-      "source": "/api/guardian/summary",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=1800"
-        }
-      ]
-    },
-    {
-      "source": "/api/img",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
     {
       "source": "/(.*\\.(js|css|woff2|png|jpg|jpeg|gif|svg|webp|ico))",
       "headers": [
@@ -58,8 +17,8 @@
   ],
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/((?!.*\\.).*)",
+      "destination": "/index.html"
     }
   ]
 }
