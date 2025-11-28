@@ -310,7 +310,7 @@ async function fetchFromApi(request: GuardianScanRequest): Promise<GuardianScanR
   let data: GuardianScanApiResponse | null = null;
 
   if (reader) {
-    while (true) {
+    while(1) {
       const { done, value } = await reader.read();
       if (done) break;
       

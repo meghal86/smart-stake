@@ -14,11 +14,11 @@ import { Header } from '@/components/hunter/Header';
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    header: ({ children, ...props }: any) => <header {...props}>{children}</header>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    header: ({ children, ...props }: unknown) => <header {...props}>{children}</header>,
+    button: ({ children, ...props }: unknown) => <button {...props}>{children}</button>,
+    div: ({ children, ...props }: unknown) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: unknown) => <>{children}</>,
 }));
 
 // Mock WalletSelector

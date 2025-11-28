@@ -83,9 +83,8 @@ const GlassmorphicPod: React.FC<GlassmorphicPodProps> = ({
   const getVariantStyles = () => {
     const base = getModeStyles();
     switch (variant) {
-      case 'circle':
-        {
-    const size = mode === 'novice' ? '300px' : mode === 'simuto' ? '180px' : '240px';
+      case 'circle': {
+        const size = mode === 'novice' ? '300px' : mode === 'simuto' ? '180px' : '240px';
         return {
           ...base,
           shape: {
@@ -99,6 +98,7 @@ const GlassmorphicPod: React.FC<GlassmorphicPodProps> = ({
             textAlign: 'center' as const
           }
         };
+      }
       case 'rounded':
         return {
           ...base,

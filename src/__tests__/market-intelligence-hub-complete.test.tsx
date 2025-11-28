@@ -749,7 +749,7 @@ describe('Edge Functions Integration Tests', () => {
       
       expect(response.data).toHaveLength(5)
       
-      const clusterTypes = response.data.map((c: any) => c.type)
+      const clusterTypes = response.data.map((c: unknown) => c.type)
       expect(clusterTypes).toContain('DORMANT_WAKING')
       expect(clusterTypes).toContain('CEX_INFLOW')
       expect(clusterTypes).toContain('DEFI_ACTIVITY')
@@ -763,7 +763,7 @@ describe('Edge Functions Integration Tests', () => {
       })
       
       const expectedOrder = ['DORMANT_WAKING', 'CEX_INFLOW', 'DEFI_ACTIVITY', 'DISTRIBUTION', 'ACCUMULATION']
-      const actualOrder = response.data.map((c: any) => c.type)
+      const actualOrder = response.data.map((c: unknown) => c.type)
       
       expect(actualOrder).toEqual(expectedOrder)
     })
@@ -777,7 +777,7 @@ describe('Edge Functions Integration Tests', () => {
       
       expect(response.data.chains).toHaveLength(4)
       
-      const chains = response.data.chains.map((c: any) => c.chain)
+      const chains = response.data.chains.map((c: unknown) => c.chain)
       expect(chains).toContain('BTC')
       expect(chains).toContain('ETH')
       expect(chains).toContain('SOL')
@@ -789,7 +789,7 @@ describe('Edge Functions Integration Tests', () => {
         body: { window: '24h' }
       })
       
-      const chainsWithRisk = response.data.chains.filter((c: any) => c.risk !== null)
+      const chainsWithRisk = response.data.chains.filter((c: unknown) => c.risk !== null)
       expect(chainsWithRisk.length).toBeGreaterThan(0)
     })
   })

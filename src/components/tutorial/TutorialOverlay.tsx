@@ -75,7 +75,7 @@ const teamSteps: TutorialStep[] = [
   {
     id: '4',
     title: 'Status Indicators',
-    content: 'See who\'s online and track team member activity for better collaboration.',
+    content: 'See who's online and track team member activity for better collaboration.',
     target: '[data-tutorial="member-status"]',
     position: 'top'
   }

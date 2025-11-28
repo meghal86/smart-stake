@@ -97,7 +97,7 @@ describe('Analytics Integration Tests', () => {
         const [eventName, properties] = call;
         
         // Check all property values recursively
-        const checkProperties = (obj: any) => {
+        const checkProperties = (obj: unknown) => {
           for (const [key, value] of Object.entries(obj)) {
             if (typeof value === 'string') {
               expect(
@@ -277,7 +277,7 @@ describe('Analytics Integration Tests', () => {
       });
 
       // All should have same session_id
-      const sessionIds = (posthog.capture as any).mock.calls.map((call: any) => call[1].session_id);
+      const sessionIds = (posthog.capture as any).mock.calls.map((call: unknown) => call[1].session_id);
       expect(new Set(sessionIds).size).toBe(1);
     });
   });

@@ -21,8 +21,8 @@ import type { HarvestOpportunity } from '@/types/harvestpro';
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    div: ({ children, ...props }: unknown) => <div {...props}>{children}</div>,
+    button: ({ children, ...props }: unknown) => <button {...props}>{children}</button>,
   },
 }));
 

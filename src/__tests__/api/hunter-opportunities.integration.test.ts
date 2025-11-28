@@ -89,7 +89,7 @@ describe('GET /api/hunter/opportunities - Integration', () => {
     const data = await response.json();
     
     // All items should have trust_score >= 90
-    data.items.forEach((item: any) => {
+    data.items.forEach((item: unknown) => {
       expect(item.trust.score).toBeGreaterThanOrEqual(90);
     });
   });
@@ -110,8 +110,8 @@ describe('GET /api/hunter/opportunities - Integration', () => {
       expect(data2).toHaveProperty('items');
       
       // Items should be different
-      const ids1 = data1.items.map((item: any) => item.id);
-      const ids2 = data2.items.map((item: any) => item.id);
+      const ids1 = data1.items.map((item: unknown) => item.id);
+      const ids2 = data2.items.map((item: unknown) => item.id);
       
       // No duplicates across pages
       const intersection = ids1.filter((id: string) => ids2.includes(id));
@@ -157,7 +157,7 @@ describe('GET /api/hunter/opportunities - Integration', () => {
     const data = await response.json();
     
     // All items should be airdrops
-    data.items.forEach((item: any) => {
+    data.items.forEach((item: unknown) => {
       expect(item.type).toBe('airdrop');
     });
   });
@@ -171,7 +171,7 @@ describe('GET /api/hunter/opportunities - Integration', () => {
     const data = await response.json();
     
     // All items should include ethereum chain
-    data.items.forEach((item: any) => {
+    data.items.forEach((item: unknown) => {
       expect(item.chains).toContain('ethereum');
     });
   });

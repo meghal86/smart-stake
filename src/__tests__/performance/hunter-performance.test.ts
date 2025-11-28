@@ -201,7 +201,7 @@ describe('Hunter Screen Performance', () => {
       
       // Check for opportunities endpoint caching
       const opportunitiesHeader = vercelConfig.headers.find(
-        (h: any) => h.source === '/api/hunter/opportunities'
+        (h: unknown) => h.source === '/api/hunter/opportunities'
       );
       expect(opportunitiesHeader).toBeDefined();
       expect(opportunitiesHeader.headers[0].value).toContain('max-age=60');
@@ -211,7 +211,7 @@ describe('Hunter Screen Performance', () => {
       const vercelConfig = await import('../../../vercel.json');
       
       const imageHeader = vercelConfig.headers.find(
-        (h: any) => h.source === '/api/img'
+        (h: unknown) => h.source === '/api/img'
       );
       expect(imageHeader).toBeDefined();
       expect(imageHeader.headers[0].value).toContain('immutable');

@@ -453,7 +453,7 @@ describe('Wallet Switching Logic', () => {
       // Verify lastUsed was updated in localStorage
       await waitFor(() => {
         const savedWallets = JSON.parse(localStorageMock.getItem('connectedWallets') || '[]');
-        const wallet2 = savedWallets.find((w: any) => w.address === '0x2222');
+        const wallet2 = savedWallets.find((w: unknown) => w.address === '0x2222');
         expect(wallet2).toBeDefined();
         expect(new Date(wallet2.lastUsed).getTime()).toBeGreaterThan(new Date('2024-01-01').getTime());
       });

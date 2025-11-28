@@ -67,7 +67,7 @@ describe('Smoke Tests', () => {
     it('should handle timeout', async () => {
       // Mock a slow response that will be aborted
       (global.fetch as any).mockImplementationOnce(
-        (_url: string, options: any) =>
+        (_url: string, options: unknown) =>
           new Promise((resolve, reject) => {
             // Simulate abort signal
             if (options.signal) {

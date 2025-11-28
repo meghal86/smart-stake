@@ -14,7 +14,7 @@ const mockOutcomes = [
 ];
 
 // Helper functions for testing drift calculations
-function calculateHitRate(outcomes: any[], windowDays: number): number {
+function calculateHitRate(outcomes: unknown[], windowDays: number): number {
   const cutoff = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
   const relevantOutcomes = outcomes.filter(o => new Date(o.recorded_at) >= cutoff);
   

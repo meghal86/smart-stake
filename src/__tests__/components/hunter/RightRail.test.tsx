@@ -22,7 +22,7 @@ vi.mock('@/hooks/useAuth');
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: unknown) => <div {...props}>{children}</div>,
   },
 }));
 

@@ -23,8 +23,8 @@ vi.mock('@/lib/cursor', async () => {
 });
 
 describe('Feed Query Service', () => {
-  let mockSupabase: any;
-  let mockQuery: any;
+  let mockSupabase: unknown;
+  let mockQuery: unknown;
 
   beforeEach(() => {
     // Reset mocks
@@ -211,7 +211,7 @@ describe('Feed Query Service', () => {
 
       // Should not filter out red trust items
       const gteCallsForTrust = mockQuery.gte.mock.calls.filter(
-        (call: any) => call[0] === 'trust_score'
+        (call: unknown) => call[0] === 'trust_score'
       );
       
       // Should only have one call for trustMin (0), not the default 60 filter

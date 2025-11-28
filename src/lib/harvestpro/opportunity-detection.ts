@@ -150,10 +150,11 @@ export function sortOpportunities(
       return sorted.sort((a, b) => b.holdingPeriodDays - a.holdingPeriodDays);
     case 'holding-period-asc':
       return sorted.sort((a, b) => a.holdingPeriodDays - b.holdingPeriodDays);
-    case 'risk-asc':
+    case 'risk-asc': {
       // Sort by risk level (LOW < MEDIUM < HIGH)
       const riskOrder = { LOW: 0, MEDIUM: 1, HIGH: 2 };
       return sorted.sort((a, b) => riskOrder[a.riskLevel] - riskOrder[b.riskLevel]);
+    }
     default:
       return sorted;
   }

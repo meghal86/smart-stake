@@ -13,7 +13,7 @@ import { getFeedPage } from '@/lib/feed/query';
 /**
  * Helper to verify no window has more than 2 sponsored items
  */
-function verifyWindowCompliance(items: any[], windowSize: number = 12): boolean {
+function verifyWindowCompliance(items: unknown[], windowSize: number = 12): boolean {
   for (let i = 0; i <= items.length - windowSize; i++) {
     const window = items.slice(i, i + windowSize);
     const sponsoredCount = window.filter(item => item.sponsored).length;

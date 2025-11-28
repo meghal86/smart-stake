@@ -14,7 +14,7 @@ describe('Smoke Test Integration', () => {
     const vercelConfig = await import('../../../vercel.json');
     
     const smokeTestCron = vercelConfig.crons?.find(
-      (cron: any) => cron.path === '/api/cron/smoke-test'
+      (cron: unknown) => cron.path === '/api/cron/smoke-test'
     );
 
     expect(smokeTestCron).toBeDefined();

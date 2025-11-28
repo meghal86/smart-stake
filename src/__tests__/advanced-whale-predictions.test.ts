@@ -266,7 +266,7 @@ describe('Advanced Whale Predictions', () => {
 });
 
 // Helper functions for testing
-function validateSimulationParams(params: any) {
+function validateSimulationParams(params: unknown) {
   const errors: string[] = [];
   
   if (params.whaleCount <= 0) errors.push('whaleCount must be positive');
@@ -280,7 +280,7 @@ function validateSimulationParams(params: any) {
   };
 }
 
-function calculatePriceImpact(params: any) {
+function calculatePriceImpact(params: unknown) {
   const liquidityPools = {
     ethereum: { depth: 50000 },
     polygon: { depth: 15000 },

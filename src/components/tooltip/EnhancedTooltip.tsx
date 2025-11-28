@@ -138,7 +138,7 @@ export function EnhancedTooltip({
           )}
           style={mobile && window.innerWidth < 768 ? 
             { bottom: '8px', left: '8px', right: '8px' } : 
-            { left: position.x, top: position.y, transform: side === 'top' || side === 'bottom' ? 'translateX(-50%)' : side === 'left' || side === 'right' ? 'translateY(-50%)' : 'none' }
+            { left: position.x, top: position.y, transform: (side === 'top' || side === 'bottom') ? 'translateX(-50%)' : ((side === 'left' || side === 'right') ? 'translateY(-50%)' : 'none') }
           }
         >
           {content}

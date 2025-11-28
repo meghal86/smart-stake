@@ -49,10 +49,10 @@ vi.mock('@/integrations/supabase/server', () => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           order: vi.fn(() => ({
-            or: vi.fn(function(this: any) { return this; }),
-            gte: vi.fn(function(this: any) { return this; }),
-            in: vi.fn(function(this: any) { return this; }),
-            lt: vi.fn(function(this: any) { return this; }),
+            or: vi.fn(function(this: unknown) { return this; }),
+            gte: vi.fn(function(this: unknown) { return this; }),
+            in: vi.fn(function(this: unknown) { return this; }),
+            lt: vi.fn(function(this: unknown) { return this; }),
             limit: vi.fn(() => ({
               data: [],
               error: null,
@@ -295,10 +295,10 @@ describe('GET /api/harvest/opportunities - Integration Tests', () => {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
-                or: vi.fn(function(this: any) { return this; }),
-                gte: vi.fn(function(this: any) { return this; }),
-                in: vi.fn(function(this: any) { return this; }),
-                lt: vi.fn(function(this: any) { return this; }),
+                or: vi.fn(function(this: unknown) { return this; }),
+                gte: vi.fn(function(this: unknown) { return this; }),
+                in: vi.fn(function(this: unknown) { return this; }),
+                lt: vi.fn(function(this: unknown) { return this; }),
                 limit: vi.fn(() => ({
                   data: [],
                   error: null,
@@ -350,10 +350,10 @@ describe('GET /api/harvest/opportunities - Integration Tests', () => {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
-                or: vi.fn(function(this: any) { return this; }),
-                gte: vi.fn(function(this: any) { return this; }),
-                in: vi.fn(function(this: any) { return this; }),
-                lt: vi.fn(function(this: any) { return this; }),
+                or: vi.fn(function(this: unknown) { return this; }),
+                gte: vi.fn(function(this: unknown) { return this; }),
+                in: vi.fn(function(this: unknown) { return this; }),
+                lt: vi.fn(function(this: unknown) { return this; }),
                 limit: vi.fn(() => ({
                   data: [],
                   error: null,
@@ -390,10 +390,10 @@ describe('GET /api/harvest/opportunities - Integration Tests', () => {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
-                or: vi.fn(function(this: any) { return this; }),
-                gte: vi.fn(function(this: any) { return this; }),
-                in: vi.fn(function(this: any) { return this; }),
-                lt: vi.fn(function(this: any) { return this; }),
+                or: vi.fn(function(this: unknown) { return this; }),
+                gte: vi.fn(function(this: unknown) { return this; }),
+                in: vi.fn(function(this: unknown) { return this; }),
+                lt: vi.fn(function(this: unknown) { return this; }),
                 limit: vi.fn(() => ({
                   data: null,
                   error: new Error('Database error'),
@@ -447,10 +447,10 @@ describe('GET /api/harvest/opportunities - Integration Tests', () => {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               order: vi.fn(() => ({
-                or: vi.fn(function(this: any) { return this; }),
-                gte: vi.fn(function(this: any) { return this; }),
-                in: vi.fn(function(this: any) { return this; }),
-                lt: vi.fn(function(this: any) { return this; }),
+                or: vi.fn(function(this: unknown) { return this; }),
+                gte: vi.fn(function(this: unknown) { return this; }),
+                in: vi.fn(function(this: unknown) { return this; }),
+                lt: vi.fn(function(this: unknown) { return this; }),
                 limit: vi.fn(() => ({
                   data: [],
                   error: null,

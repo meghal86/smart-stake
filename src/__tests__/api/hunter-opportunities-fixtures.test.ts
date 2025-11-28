@@ -95,7 +95,7 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      const types = new Set(data.items.map((item: any) => item.type));
+      const types = new Set(data.items.map((item: unknown) => item.type));
       
       expect(types).toContain('airdrop');
       expect(types).toContain('quest');
@@ -114,7 +114,7 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      const trustLevels = new Set(data.items.map((item: any) => item.trust.level));
+      const trustLevels = new Set(data.items.map((item: unknown) => item.trust.level));
       
       expect(trustLevels).toContain('green');
       expect(trustLevels).toContain('amber');
@@ -131,8 +131,8 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
 
       const eligibilityStates = new Set(
         data.items
-          .filter((item: any) => item.eligibility_preview)
-          .map((item: any) => item.eligibility_preview.status)
+          .filter((item: unknown) => item.eligibility_preview)
+          .map((item: unknown) => item.eligibility_preview.status)
       );
       
       expect(eligibilityStates).toContain('likely');
@@ -148,11 +148,11 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      const sponsored = data.items.filter((item: any) => item.sponsored);
+      const sponsored = data.items.filter((item: unknown) => item.sponsored);
       
       expect(sponsored.length).toBeGreaterThanOrEqual(3);
-      sponsored.forEach((item: any) => {
-        expect(item.badges.some((b: any) => b.type === 'sponsored')).toBe(true);
+      sponsored.forEach((item: unknown) => {
+        expect(item.badges.some((b: unknown) => b.type === 'sponsored')).toBe(true);
       });
     });
 
@@ -164,10 +164,10 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      const expired = data.items.filter((item: any) => item.status === 'expired');
+      const expired = data.items.filter((item: unknown) => item.status === 'expired');
       
       expect(expired.length).toBeGreaterThan(0);
-      expired.forEach((item: any) => {
+      expired.forEach((item: unknown) => {
         expect(item.time_left_sec).toBe(0);
       });
     });
@@ -181,7 +181,7 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const data = await response.json();
 
       const zeroReward = data.items.filter(
-        (item: any) => item.reward.min === 0 && item.reward.max === 0
+        (item: unknown) => item.reward.min === 0 && item.reward.max === 0
       );
       
       expect(zeroReward.length).toBeGreaterThan(0);
@@ -197,7 +197,7 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      data.items.forEach((item: any) => {
+      data.items.forEach((item: unknown) => {
         // Required fields
         expect(item).toHaveProperty('id');
         expect(item).toHaveProperty('slug');
@@ -244,7 +244,7 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       expect(() => new Date(data.ts)).not.toThrow();
 
       // Item timestamps
-      data.items.forEach((item: any) => {
+      data.items.forEach((item: unknown) => {
         expect(() => new Date(item.created_at)).not.toThrow();
         expect(() => new Date(item.updated_at)).not.toThrow();
         expect(() => new Date(item.trust.last_scanned_ts)).not.toThrow();
@@ -259,7 +259,7 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      data.items.forEach((item: any) => {
+      data.items.forEach((item: unknown) => {
         expect(() => new URL(item.protocol.logo)).not.toThrow();
         
         if (item.external_url) {
@@ -282,11 +282,11 @@ describe('GET /api/hunter/opportunities - Fixtures Mode', () => {
       expect(data.items).toHaveLength(15);
       
       // Should include non-airdrop types
-      const types = new Set(data.items.map((item: any) => item.type));
+      const types = new Set(data.items.map((item: unknown) => item.type));
       expect(types.size).toBeGreaterThan(1);
       
       // Should include trust scores below 90
-      const lowTrust = data.items.filter((item: any) => item.trust.score < 90);
+      const lowTrust = data.items.filter((item: unknown) => item.trust.score < 90);
       expect(lowTrust.length).toBeGreaterThan(0);
     });
 

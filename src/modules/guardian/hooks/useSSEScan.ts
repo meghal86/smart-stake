@@ -62,7 +62,7 @@ export function useSSEScan() {
         const decoder = new TextDecoder();
         let buffer = '';
 
-        while (true) {
+        while(1) {
           const { done, value } = await reader.read();
 
           if (done) break;

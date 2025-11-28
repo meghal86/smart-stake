@@ -183,7 +183,7 @@ describe('Session State Transitions (Property 9)', () => {
     );
   });
 
-  it('should maintain state machine invariant: any sequence of valid transitions produces valid state', () => {
+  it('should maintain state machine invariant: unknown sequence of valid transitions produces valid state', () => {
     fc.assert(
       fc.property(
         fc.array(statusArbitrary, { minLength: 1, maxLength: 10 }),

@@ -53,9 +53,8 @@ export function parseSearchQuery(query: string): SearchContext {
           context.chain = value.toLowerCase();
           break;
           
-        case 'amount':
-          {
-    const amountMatch = value.match(/^([><=]+)?(\d+(?:\.\d+)?)(k|m|b)?$/i);
+        case 'amount': {
+          const amountMatch = value.match(/^([><=]+)?(\d+(?:\.\d+)?)(k|m|b)?$/i);
           if (amountMatch) {
             const [, operator = '>=', amount, suffix] = amountMatch;
             let numValue = parseFloat(amount);
@@ -73,6 +72,7 @@ export function parseSearchQuery(query: string): SearchContext {
             };
           }
           break;
+        }
       }
     });
   } else {

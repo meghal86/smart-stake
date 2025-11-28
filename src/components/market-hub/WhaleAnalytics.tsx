@@ -44,7 +44,7 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
   const [selectedWhaleDetail, setSelectedWhaleDetail] = useState<string | null>(null);
   const [showCharts, setShowCharts] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
-  const [comparisonWhales, setComparisonWhales] = useState<any[]>([]);
+  const [comparisonWhales, setComparisonWhales] = useState<unknown[]>([]);
   const [showComparison, setShowComparison] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');

@@ -2,9 +2,7 @@
 
 import React from 'react';
 
-interface BrandHeaderProps {}
-
-const BrandHeader: React.FC<BrandHeaderProps> = () => {
+const BrandHeader: React.FC = () => {
   const config = {
     title: 'AlphaWhale Intelligence',
     subtitle: 'Advanced whale tracking and market analysis',

@@ -93,49 +93,49 @@ describe('Cursor Pagination Utilities', () => {
     });
 
     it('should throw error for invalid rank score', () => {
-      const invalidTuple: any = ['not-a-number', 85, '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, mockSlugHash];
+      const invalidTuple: unknown = ['not-a-number', 85, '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Rank score must be a valid number');
     });
 
     it('should throw error for NaN rank score', () => {
-      const invalidTuple: any = [NaN, 85, '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, mockSlugHash];
+      const invalidTuple: unknown = [NaN, 85, '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Rank score must be a valid number');
     });
 
     it('should throw error for invalid trust score', () => {
-      const invalidTuple: any = [95.5, 'not-a-number', '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, mockSlugHash];
+      const invalidTuple: unknown = [95.5, 'not-a-number', '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Trust score must be a valid number');
     });
 
     it('should throw error for empty expires_at', () => {
-      const invalidTuple: any = [95.5, 85, '', 'abc-123', mockSnapshotTs, mockSlugHash];
+      const invalidTuple: unknown = [95.5, 85, '', 'abc-123', mockSnapshotTs, mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Expires at must be a non-empty string');
     });
 
     it('should throw error for empty id', () => {
-      const invalidTuple: any = [95.5, 85, '2025-12-31T23:59:59Z', '', mockSnapshotTs, mockSlugHash];
+      const invalidTuple: unknown = [95.5, 85, '2025-12-31T23:59:59Z', '', mockSnapshotTs, mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('ID must be a non-empty string');
     });
 
     it('should throw error for invalid snapshot timestamp', () => {
-      const invalidTuple: any = [95.5, 85, '2025-12-31T23:59:59Z', 'abc-123', 'not-a-number', mockSlugHash];
+      const invalidTuple: unknown = [95.5, 85, '2025-12-31T23:59:59Z', 'abc-123', 'not-a-number', mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Snapshot timestamp must be a valid positive number');
     });
 
     it('should throw error for negative snapshot timestamp', () => {
-      const invalidTuple: any = [95.5, 85, '2025-12-31T23:59:59Z', 'abc-123', -100, mockSlugHash];
+      const invalidTuple: unknown = [95.5, 85, '2025-12-31T23:59:59Z', 'abc-123', -100, mockSlugHash];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Snapshot timestamp must be a valid positive number');
     });
 
     it('should throw error for invalid slug hash', () => {
-      const invalidTuple: any = [95.5, 85, '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, 'not-a-number'];
+      const invalidTuple: unknown = [95.5, 85, '2025-12-31T23:59:59Z', 'abc-123', mockSnapshotTs, 'not-a-number'];
       
       expect(() => encodeCursor(invalidTuple)).toThrow('Slug hash must be a valid number');
     });

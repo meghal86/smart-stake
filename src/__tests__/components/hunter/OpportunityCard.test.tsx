@@ -25,8 +25,8 @@ vi.mock('@/hooks/useAuth', () => ({
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    article: ({ children, ...props }: any) => <article {...props}>{children}</article>,
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    article: ({ children, ...props }: unknown) => <article {...props}>{children}</article>,
+    div: ({ children, ...props }: unknown) => <div {...props}>{children}</div>,
   },
 }));
 

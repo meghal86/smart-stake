@@ -31,7 +31,7 @@ const ExplainModal: React.FC<ExplainModalProps> = ({
             },
             {
               title: 'Why Do They Matter?',
-              content: 'When whales buy or sell large amounts, it often predicts price changes. If many whales are buying, prices usually go up. If they\'re selling, prices often go down.'
+              content: 'When whales buy or sell large amounts, it often predicts price changes. If many whales are buying, prices usually go up. If they're selling, prices often go down.'
             },
             {
               title: 'How to Use This Info',
@@ -65,7 +65,7 @@ const ExplainModal: React.FC<ExplainModalProps> = ({
           sections: [
             {
               title: 'What is Market Intelligence?',
-              content: 'Market intelligence combines whale tracking, sentiment analysis, and AI predictions to give you a complete picture of what\'s happening in crypto markets.'
+              content: 'Market intelligence combines whale tracking, sentiment analysis, and AI predictions to give you a complete picture of what's happening in crypto markets.'
             },
             {
               title: 'How We Calculate It',
