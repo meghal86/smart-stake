@@ -261,7 +261,7 @@ export const WhaleProfileModal: React.FC<WhaleProfileModalProps> = ({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {Object.entries(profile.analytics.token_distribution).map(([token, data]: [string, any]) => (
+                      {Object.entries(profile.analytics.token_distribution).map(([token, data]: [string, unknown]) => (
                         <div key={token} className="flex items-center justify-between">
                           <span className="text-sm">{token}</span>
                           <span className="text-sm font-medium">{data.percentage.toFixed(1)}%</span>
