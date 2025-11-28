@@ -81,7 +81,7 @@ export const HelpSupport = ({ isOpen, onClose }: HelpSupportProps) => {
 
   const handleSubmitContact = () => {
     console.log('Contact form submitted:', contactForm);
-    alert('Thank you! We'll get back to you within 24 hours.');
+    alert('Thank you! We will get back to you within 24 hours.');
     setContactForm({ subject: '', message: '', email: '' });
   };
 
