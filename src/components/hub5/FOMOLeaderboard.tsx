@@ -32,7 +32,7 @@ export default function FOMOLeaderboard({ isLoggedIn = false, userStreak = 0, us
             <Trophy className="w-5 h-5 text-yellow-600 animate-bounce" />
             <div>
               <div className="text-sm font-semibold text-purple-800 dark:text-purple-200">
-                {isLoggedIn ? 'Your Progress' : 'Today's Top Copilot User'}
+                {isLoggedIn ? 'Your Progress' : "Today's Top Copilot User"}
               </div>
               <div className="text-sm text-meta">
                 {isLoggedIn ? (

@@ -88,7 +88,7 @@ export function GuardianUX2() {
     if (score >= 90 && flagCount === 0) {
       return {
         title: 'Your wallet looks pristine',
-        subtitle: `${score}% secure with zero risks detected. You're in perfect health.`,
+        subtitle: `${score}% secure with zero risks detected. You are in perfect health.`,
         icon: CheckCircle2,
         color: 'text-emerald-400',
       };
@@ -104,14 +104,14 @@ export function GuardianUX2() {
     if (score >= 60) {
       return {
         title: 'A few things need attention',
-        subtitle: `${score}% secure. ${flagCount} ${flagCount === 1 ? 'approval' : 'approvals'} might need review — we'll guide you.`,
+        subtitle: `${score}% secure. ${flagCount} ${flagCount === 1 ? 'approval' : 'approvals'} might need review — we will guide you.`,
         icon: AlertTriangle,
         color: 'text-amber-400',
       };
     }
     return {
-      title: 'Let's secure your wallet together',
-      subtitle: `${score}% secure. ${criticalFlags} critical ${criticalFlags === 1 ? 'risk' : 'risks'} detected. We're here to help.`,
+      title: 'Let us secure your wallet together',
+      subtitle: `${score}% secure. ${criticalFlags} critical ${criticalFlags === 1 ? 'risk' : 'risks'} detected. We are here to help.`,
       icon: AlertTriangle,
       color: 'text-red-400',
     };
@@ -177,7 +177,7 @@ export function GuardianUX2() {
               Welcome to Guardian
             </h1>
             <p className="text-lg text-slate-400 mb-8 leading-relaxed">
-              Let's make sure your wallet stays in perfect health.
+              Let us make sure your wallet stays in perfect health.
               <br />
               Connect to begin your 30-second security check.
             </p>
