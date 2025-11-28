@@ -97,7 +97,7 @@ export default function FilterChips() {
     setSearchParams(params);
   };
 
-  const handleFilterChange = (key: keyof typeof filters, value: any) => {
+  const handleFilterChange = (key: keyof typeof filters, value: unknown) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     updateURL(newFilters);

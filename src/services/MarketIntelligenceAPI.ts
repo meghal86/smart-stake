@@ -30,7 +30,7 @@ export class MarketIntelligenceAPI {
   }
 
   // Alerts & Streaming APIs
-  static async getAlertsStream(filters: any = {}) {
+  static async getAlertsStream(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('alerts-stream', {
       body: { filters }
     });
@@ -46,7 +46,7 @@ export class MarketIntelligenceAPI {
     return data;
   }
 
-  static async getWhaleAlerts(filters: any = {}) {
+  static async getWhaleAlerts(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('whale-alerts', {
       body: { filters }
     });
@@ -93,7 +93,7 @@ export class MarketIntelligenceAPI {
     return data;
   }
 
-  static async getAdvancedWhalePredictions(filters: any = {}) {
+  static async getAdvancedWhalePredictions(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('advanced-whale-predictions', {
       body: { filters }
     });
@@ -192,7 +192,7 @@ export class MarketIntelligenceAPI {
     return data;
   }
 
-  static async getMLPredictions(filters: any = {}) {
+  static async getMLPredictions(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('ml-predictions', {
       body: { filters }
     });
@@ -200,7 +200,7 @@ export class MarketIntelligenceAPI {
     return data;
   }
 
-  static async getFeatureEngineering(data: any) {
+  static async getFeatureEngineering(data: unknown) {
     const { data: result, error } = await supabase.functions.invoke('feature-engineering', {
       body: { data }
     });
@@ -209,7 +209,7 @@ export class MarketIntelligenceAPI {
   }
 
   // Market Intelligence Hub API
-  static async getMarketIntelligenceHub(filters: any = {}) {
+  static async getMarketIntelligenceHub(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('market-intelligence-hub', {
       body: { filters }
     });
@@ -240,7 +240,7 @@ export class MarketIntelligenceAPI {
     return data;
   }
 
-  static async getMultiChannelAlerts(filters: any = {}) {
+  static async getMultiChannelAlerts(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('multi-channel-alerts', {
       body: { filters }
     });
@@ -257,7 +257,7 @@ export class MarketIntelligenceAPI {
   }
 
   // Custom Alert Processing
-  static async getCustomAlertProcessor(rules: any) {
+  static async getCustomAlertProcessor(rules: unknown) {
     const { data, error } = await supabase.functions.invoke('custom-alert-processor', {
       body: { rules }
     });
@@ -283,7 +283,7 @@ export class MarketIntelligenceAPI {
   }
 
   // News & External Data
-  static async getCryptoNews(filters: any = {}) {
+  static async getCryptoNews(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('crypto-news', {
       body: { filters }
     });
@@ -317,7 +317,7 @@ export class MarketIntelligenceAPI {
   }
 
   // BI & Analytics APIs
-  static async getBISummary(filters: any = {}) {
+  static async getBISummary(filters: unknown = {}) {
     const { data, error } = await supabase.functions.invoke('bi-summary', {
       body: { filters }
     });
@@ -381,7 +381,7 @@ export class MarketIntelligenceAPI {
     // Whale clusters bullet
     if (whaleClusters.status === 'fulfilled') {
       const clusters = whaleClusters.value;
-      const topCluster = clusters?.sort((a: any, b: any) => b.sumBalanceUsd - a.sumBalanceUsd)[0];
+      const topCluster = clusters?.sort((a: unknown, b: unknown) => b.sumBalanceUsd - a.sumBalanceUsd)[0];
       if (topCluster) {
         bullets.push(`${topCluster.name} cluster leads with $${(topCluster.sumBalanceUsd / 1e9).toFixed(1)}B`);
       }
@@ -390,7 +390,7 @@ export class MarketIntelligenceAPI {
     // Chain risk bullet
     if (chainRisk.status === 'fulfilled') {
       const risk = chainRisk.value;
-      const highRiskChains = risk?.chains?.filter((c: any) => c.risk >= 70);
+      const highRiskChains = risk?.chains?.filter((c: unknown) => c.risk >= 70);
       if (highRiskChains?.length) {
         bullets.push(`${highRiskChains.length} chains showing elevated risk levels`);
       }

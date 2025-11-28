@@ -43,7 +43,7 @@ function MarketHubContent() {
     const urlAlert = searchParams.get('alert');
     
     if (urlWindow && urlWindow !== timeWindow) {
-      setTimeWindow(urlWindow as any);
+      setTimeWindow(urlWindow as unknown);
     }
     
     if (urlCluster || urlAlert) {

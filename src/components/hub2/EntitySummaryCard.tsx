@@ -119,7 +119,7 @@ export default function EntitySummaryCard({
             value={gauges.sentiment}
             max={100}
             label="Sentiment"
-            color={getSentimentColor(gauges.sentiment) as any}
+            color={getSentimentColor(gauges.sentiment) as 'red' | 'yellow' | 'green'}
             size="sm"
           />
           <PressureBar value={gauges.whalePressure} />
@@ -127,7 +127,7 @@ export default function EntitySummaryCard({
             value={gauges.risk}
             max={10}
             label="Risk"
-            color={getRiskColor(gauges.risk) as any}
+            color={getRiskColor(gauges.risk) as 'red' | 'yellow' | 'green'}
             size="sm"
           />
         </div>

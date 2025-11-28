@@ -111,7 +111,7 @@ export async function getGuardianSummary(
     const issues = Array.isArray(scan.issues) ? scan.issues : [];
     const topIssues = issues
       .slice(0, 3)
-      .map((issue: any) => issue.type || issue.message || 'Unknown issue');
+      .map((issue: unknown) => issue.type || issue.message || 'Unknown issue');
 
     const summary: GuardianSummary = {
       opportunityId,
@@ -202,7 +202,7 @@ export async function listStaleOpportunities(options: {
     if (scans.length === 0) continue;
     
     // Sort by scanned_at descending to get the latest
-    const sortedScans = scans.sort((a: any, b: any) => 
+    const sortedScans = scans.sort((a: unknown, b: unknown) => 
       new Date(b.scanned_at).getTime() - new Date(a.scanned_at).getTime()
     );
     

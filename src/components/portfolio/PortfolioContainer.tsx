@@ -65,7 +65,7 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
       <div className="absolute top-4 right-4 z-50">
         <select
           value={mode}
-          onChange={(e) => setMode(e.target.value as any)}
+          onChange={(e) => setMode(e.target.value as unknown)}
           className="px-3 py-1 text-sm bg-gray-800 border border-gray-600 rounded-lg text-white"
         >
           <option value="novice">Novice</option>

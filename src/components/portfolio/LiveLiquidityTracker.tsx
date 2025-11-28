@@ -17,7 +17,7 @@ export function LiveLiquidityTracker({ holdings = [], totalValue }: LiveLiquidit
   // Generate liquidity data based on actual holdings
   const generateLiquidityData = () => {
     return holdings.map(holding => {
-      const tokenData: Record<string, any> = {
+      const tokenData: Record<string, unknown> = {
         'ETH': { dailyVolume: 15000000000, totalLiquidity: 2500000000, risk: 'low' },
         'BTC': { dailyVolume: 25000000000, totalLiquidity: 1800000000, risk: 'low' },
         'BITCOIN': { dailyVolume: 25000000000, totalLiquidity: 1800000000, risk: 'low' },

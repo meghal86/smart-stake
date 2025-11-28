@@ -8,16 +8,16 @@ import { Search, Fish, Coins, Users } from 'lucide-react';
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEntitySelect: (entity: any) => void;
+  onEntitySelect: (entity: unknown) => void;
 }
 
 export function CommandPalette({ open, onOpenChange, onEntitySelect }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
 
   // Search results should come from API - showing empty for now
-  const searchResults: any[] = [];
+  const searchResults: unknown[] = [];
 
-  const handleSelect = (item: any) => {
+  const handleSelect = (item: unknown) => {
     onEntitySelect(item);
     onOpenChange(false);
     setQuery('');

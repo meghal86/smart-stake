@@ -1,16 +1,16 @@
 import { EntitySummary, SignalEvent, Gauges } from "@/types/hub2";
 
 const clamp = (n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
-const nz = (n:any, d=0)=> (Number.isFinite(+n) ? +n : d);
+const nz = (n:unknown, d=0)=> (Number.isFinite(Number(n)) ? Number(n) : d);
 
-export function toGauges(src:any): Gauges {
+export function toGauges(src:Record<string, unknown>): Gauges {
   const sentiment = clamp(nz(src.sentiment), 0, 100);
   const pressure  = clamp(nz(src.whale_in) - nz(src.whale_out), -100, 100);
   const risk10    = clamp(nz(src.risk ?? (nz(src.riskIndex)*0.1)), 0, 10);
   return { sentiment, whalePressure: pressure, risk: risk10 };
 }
 
-export function toSignalEvent(src:any): SignalEvent {
+export function toSignalEvent(src:Record<string, unknown>): SignalEvent {
   const type = src.type ?? src.cluster_type ?? 'sentiment_change';
   const ts = String(src.ts ?? src.timestamp ?? src.created_at);
   const impactUsd = src.impact_usd ?? src.amount_usd ?? src.size_usd ?? src.netFlow24h;
@@ -26,7 +26,7 @@ export function toSignalEvent(src:any): SignalEvent {
   } as SignalEvent;
 }
 
-export function toEntitySummary(src:any): EntitySummary {
+export function toEntitySummary(src:Record<string, unknown>): EntitySummary {
   const metrics = src.metrics ?? src.summary?.metrics ?? src;
   return {
     id: String(src.id ?? src.entity_id ?? src.symbol ?? src.chain),

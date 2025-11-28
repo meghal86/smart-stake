@@ -222,7 +222,7 @@ export function LiveWhaleActivity({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium">{interaction.token}</span>
-                        <Badge variant={getImpactColor(interaction.impact) as any} className="text-xs">
+                        <Badge variant={getImpactColor(interaction.impact) as unknown} className="text-xs">
                           {interaction.impact}
                         </Badge>
                         <Badge variant="outline" className="text-xs">

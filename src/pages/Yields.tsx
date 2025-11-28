@@ -73,7 +73,7 @@ export default function Yields() {
   const [protocols, setProtocols] = useState(mockProtocols);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
+  const [selectedProtocol, setSelectedProtocol] = useState<unknown>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);

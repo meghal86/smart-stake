@@ -52,7 +52,7 @@ export const ManualSync = () => {
 
       console.log('Fix results:', data);
       
-      const successful = data.fixes_applied.some((fix: any) => fix.success);
+      const successful = data.fixes_applied.some((fix: unknown) => fix.success);
       
       if (successful) {
         toast({

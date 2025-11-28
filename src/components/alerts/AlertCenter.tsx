@@ -114,7 +114,7 @@ export function AlertCenter({ walletAddress }: AlertCenterProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="alertType">Alert Type</Label>
-                <Select value={newRule.type} onValueChange={(value: any) => setNewRule({ ...newRule, type: value })}>
+                <Select value={newRule.type} onValueChange={(value: unknown) => setNewRule({ ...newRule, type: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

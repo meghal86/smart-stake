@@ -231,7 +231,7 @@ export function AnomalyDetectionDashboard() {
         </Card>
 
         {/* Anomaly List */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as unknown)}>
           <TabsList>
             <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
             <TabsTrigger value="critical">Critical ({stats.critical})</TabsTrigger>

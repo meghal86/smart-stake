@@ -19,7 +19,7 @@ export const validateClustering = {
   },
 
   // Validate cluster thresholds
-  validateThresholds: (clusters: any[]) => {
+  validateThresholds: (clusters: unknown[]) => {
     const validation = {
       cexInflow: clusters.find(c => c.type === 'CEX_INFLOW'),
       defiActivity: clusters.find(c => c.type === 'DEFI_ACTIVITY'),
@@ -41,7 +41,7 @@ export const validateClustering = {
   },
 
   // Test alert routing
-  testAlertRouting: (alerts: any[]) => {
+  testAlertRouting: (alerts: unknown[]) => {
     const routingTest = alerts.map(alert => ({
       id: alert.id,
       toEntity: alert.to?.owner,
@@ -74,7 +74,7 @@ export const validateClustering = {
 
 // Real-time data quality checks
 export const dataQualityChecks = {
-  validateTransactionData: (transactions: any[]) => {
+  validateTransactionData: (transactions: unknown[]) => {
     const checks = {
       hasTimestamps: transactions.every(tx => tx.ts || tx.timestamp),
       hasAmounts: transactions.every(tx => tx.amount_usd || tx.value_usd),
@@ -87,7 +87,7 @@ export const dataQualityChecks = {
     return checks;
   },
 
-  validateWhaleData: (whales: any[]) => {
+  validateWhaleData: (whales: unknown[]) => {
     const checks = {
       hasAddresses: whales.every(w => w.fullAddress),
       hasBalances: whales.every(w => w.balance),

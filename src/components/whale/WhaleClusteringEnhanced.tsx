@@ -39,7 +39,7 @@ interface WhaleClusteringEnhancedProps {
   clusters?: WhaleCluster[];
   chainRiskData?: ChainRiskData[];
   onClusterSelect: (cluster: WhaleCluster) => void;
-  onWhaleSelect: (whale: any) => void;
+  onWhaleSelect: (whale: unknown) => void;
 }
 
 export function WhaleClusteringEnhanced({ 

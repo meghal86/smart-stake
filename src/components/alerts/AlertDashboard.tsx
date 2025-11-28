@@ -69,7 +69,7 @@ export function AlertDashboard({ isOpen, onClose }: AlertDashboardProps) {
     }
   };
 
-  const formatConditions = (conditions: any[]) => {
+  const formatConditions = (conditions: unknown[]) => {
     return conditions.map(c => {
       if (c.type === 'amount') {
         return `${c.operator === 'gte' ? '≥' : c.operator === 'lte' ? '≤' : '='} ${c.value.toLocaleString()} ${c.currency}`;

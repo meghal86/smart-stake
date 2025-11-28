@@ -128,7 +128,7 @@ export function AlertsCard({ alerts, onCreateAlert, onUpdateAlert, onDeleteAlert
               <label className="text-sm font-medium mb-2 block">Trigger Type</label>
               <Select 
                 value={newAlert.triggerType} 
-                onValueChange={(value: any) => setNewAlert({...newAlert, triggerType: value})}
+                onValueChange={(value: unknown) => setNewAlert({...newAlert, triggerType: value})}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -204,7 +204,7 @@ export function AlertsCard({ alerts, onCreateAlert, onUpdateAlert, onDeleteAlert
                   <label className="text-sm font-medium mb-2 block">Direction</label>
                   <Select 
                     value={newAlert.threshold?.direction} 
-                    onValueChange={(value: any) => setNewAlert({
+                    onValueChange={(value: unknown) => setNewAlert({
                       ...newAlert, 
                       threshold: {...newAlert.threshold, direction: value}
                     })}

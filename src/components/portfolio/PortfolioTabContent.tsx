@@ -14,9 +14,9 @@ const Guardian = React.lazy(() => import('../../pages/portfolio/guardian'));
 
 interface TabContentProps {
   activeTab: string;
-  riskData?: any;
-  guardianData?: any;
-  summaryData?: any;
+  riskData?: unknown;
+  guardianData?: unknown;
+  summaryData?: unknown;
   isLoading?: boolean;
 }
 

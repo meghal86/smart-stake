@@ -51,7 +51,7 @@ export default function PortfolioIntelligence() {
   const { addresses, loading: addressesLoading } = useUserAddresses();
   const { mode } = useUIMode();
   const [isGuardianScanning, setIsGuardianScanning] = useState(false);
-  const [guardianData, setGuardianData] = useState<any>(null);
+  const [guardianData, setGuardianData] = useState<unknown>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [copilotQuery, setCopilotQuery] = useState('');
   const [copilotResponse, setCopilotResponse] = useState('');
@@ -143,7 +143,7 @@ export default function PortfolioIntelligence() {
     }
   };
 
-  const handleStressTest = async (scenarios: any) => {
+  const handleStressTest = async (scenarios: unknown) => {
     // Simulate stress test
     await new Promise(resolve => setTimeout(resolve, 3000));
     
@@ -179,7 +179,7 @@ export default function PortfolioIntelligence() {
     const responses = {
       'is my portfolio clean': `Based on Guardian scan results, your portfolio shows a ${guardianData?.trustScore || 75}% trust score. ${guardianData?.flags?.length || 0} security flags detected. Overall assessment: ${guardianData?.trustScore >= 80 ? 'Clean' : guardianData?.trustScore >= 60 ? 'Moderate Risk' : 'High Risk'}.`,
       'what is my risk': `Your portfolio risk score is ${portfolioData?.riskScore || 6}/10. Key risks include concentration (${mockRiskFactors[0].score}/10) and smart contract exposure (${mockRiskFactors[2].score}/10). Liquidity risk is low at ${mockRiskFactors[1].score}/10.`,
-      'should i diversify': `Yes, analysis shows concentration risk at ${mockRiskFactors[0].score}/10. Consider reducing exposure to top holdings and adding uncorrelated assets. Target: <50% in any single asset class.`
+      'should i diversify': `Yes, analysis shows concentration risk at ${mockRiskFactors[0].score}/10. Consider reducing exposure to top holdings and adding uncorrelated assets. Target: <50% in unknown single asset class.`
     };
     
     const query = copilotQuery.toLowerCase();

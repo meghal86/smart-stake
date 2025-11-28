@@ -152,7 +152,7 @@ export function RiskIntelligenceCard({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium">{factor.name}</span>
-                <Badge variant={getImpactColor(factor.impact) as any} className="text-xs">
+                <Badge variant={getImpactColor(factor.impact) as unknown} className="text-xs">
                   {factor.impact}
                 </Badge>
               </div>

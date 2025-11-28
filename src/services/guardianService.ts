@@ -357,7 +357,7 @@ async function fetchFromSupabase(request: GuardianScanRequest): Promise<Guardian
     );
 
     const { data } = await supabase
-      .from('guardian_scans' as any)
+      .from('guardian_scans' as unknown)
       .select('*')
       .eq('wallet_address', request.walletAddress)
       .in('network', networkFilters.length ? networkFilters : [request.network])

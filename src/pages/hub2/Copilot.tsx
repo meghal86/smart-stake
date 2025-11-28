@@ -32,7 +32,7 @@ interface CopilotMessage {
 interface CopilotAction {
   id: string;
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<unknown>;
   onClick: () => void;
 }
 
@@ -116,7 +116,7 @@ export default function CopilotPage() {
       const assistantMessage: CopilotMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: "I understand you're asking about market conditions. Based on current data, I can see that market sentiment is moderate with some interesting whale activity patterns. Would you like me to dive deeper into any specific aspect?",
+        content: "I understand you're asking about market conditions. Based on current data, I can see that market sentiment is moderate with some interesting whale activity patterns. Would you like me to dive deeper into unknown specific aspect?",
         timestamp: new Date().toISOString(),
         actions: [
           {

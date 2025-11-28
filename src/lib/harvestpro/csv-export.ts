@@ -175,7 +175,7 @@ export function parseCSV(csv: string): CSVRow[] {
     if (!lines[i].trim()) continue;
     
     const values = lines[i].split(',');
-    const row: any = {};
+    const row: unknown = {};
     
     headers.forEach((header, index) => {
       row[header] = values[index] || '';

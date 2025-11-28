@@ -175,7 +175,7 @@ async function fetchWhaleMetrics(): Promise<WhaleMetrics[]> {
       t => t.from_address === whale.address || t.to_address === whale.address
     );
 
-    const transferVolume = whaleTransfers.reduce((sum, t) => sum + (parseFloat(t.amount_usd as any) || 0), 0);
+    const transferVolume = whaleTransfers.reduce((sum, t) => sum + (parseFloat(t.amount_usd as unknown) || 0), 0);
     const avgTransferSize = whaleTransfers.length > 0 ? transferVolume / whaleTransfers.length : 0;
     
     const uniqueCounterparties = new Set(
@@ -190,7 +190,7 @@ async function fetchWhaleMetrics(): Promise<WhaleMetrics[]> {
     return {
       address: whale.address,
       chain: whale.chain,
-      balance_usd: parseFloat(whale.balance_usd as any) || 0,
+      balance_usd: parseFloat(whale.balance_usd as unknown) || 0,
       transfer_count_24h: whaleTransfers.length,
       transfer_volume_24h: transferVolume,
       avg_transfer_size: avgTransferSize,
@@ -217,7 +217,7 @@ async function fetchHistoricalBaseline() {
   if (!historicalTransfers) return null;
 
   // Group by day
-  const dailyMetrics: Record<string, any> = {};
+  const dailyMetrics: Record<string, unknown> = {};
   
   historicalTransfers.forEach(transfer => {
     const date = new Date(transfer.timestamp).toISOString().split('T')[0];
@@ -230,16 +230,16 @@ async function fetchHistoricalBaseline() {
       };
     }
     
-    dailyMetrics[date].volume += parseFloat(transfer.amount_usd as any) || 0;
+    dailyMetrics[date].volume += parseFloat(transfer.amount_usd as unknown) || 0;
     dailyMetrics[date].count += 1;
     dailyMetrics[date].uniqueWhales.add(transfer.from_address);
     dailyMetrics[date].uniqueWhales.add(transfer.to_address);
   });
 
   return {
-    dailyVolumes: Object.values(dailyMetrics).map((m: any) => m.volume),
-    dailyCounts: Object.values(dailyMetrics).map((m: any) => m.count),
-    dailyActiveWhales: Object.values(dailyMetrics).map((m: any) => m.uniqueWhales.size)
+    dailyVolumes: Object.values(dailyMetrics).map((m: unknown) => m.volume),
+    dailyCounts: Object.values(dailyMetrics).map((m: unknown) => m.count),
+    dailyActiveWhales: Object.values(dailyMetrics).map((m: unknown) => m.uniqueWhales.size)
   };
 }
 
@@ -251,9 +251,7 @@ async function fetchHistoricalBaseline() {
  * Detect volume spikes using statistical methods
  */
 async function detectVolumeSpike(
-  currentMetrics: WhaleMetrics[],
-  historical: any
-): Promise<AnomalyResult | null> {
+  currentMetrics: WhaleMetrics[], historical: unknown): Promise<AnomalyResult | null> {
   if (!historical) return null;
 
   const currentVolume = currentMetrics.reduce((sum, m) => sum + m.transfer_volume_24h, 0);
@@ -387,9 +385,7 @@ async function detectCoordinatedMovement(
  * Detect velocity anomalies (rapid succession of transfers)
  */
 async function detectVelocityAnomaly(
-  currentMetrics: WhaleMetrics[],
-  historical: any
-): Promise<AnomalyResult[]> {
+  currentMetrics: WhaleMetrics[], historical: unknown): Promise<AnomalyResult[]> {
   if (!historical) return [];
 
   const anomalies: AnomalyResult[] = [];

@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface MetricEvent {
   eventType: string;
-  eventData?: Record<string, any>;
+  eventData?: Record<string, unknown>;
   sessionId?: string;
 }
 
@@ -127,7 +127,7 @@ class MetricsService {
   }
 
   // Private methods
-  private async track(eventType: string, eventData?: Record<string, any>) {
+  private async track(eventType: string, eventData?: Record<string, unknown>) {
     try {
       if (!this.userId) {
         await this.initializeUser();

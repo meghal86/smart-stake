@@ -67,7 +67,7 @@ export function GuardianRegistry() {
     if (!selectedWallet) return
     setIsScanning(true)
     setShowResults(false)
-    analytics.track('guardian_rescan_requested' as any, { wallet_address: selectedWallet.address })
+    analytics.track('guardian_rescan_requested' as unknown, { wallet_address: selectedWallet.address })
     try {
       await rescan()
       setTimeout(() => {
@@ -84,7 +84,7 @@ export function GuardianRegistry() {
   const handleWalletSelect = (wallet: UserWallet) => {
     setSelectedWallet(wallet)
     setShowResults(false)
-    analytics.track('guardian_wallet_switched' as any, { 
+    analytics.track('guardian_wallet_switched' as unknown, { 
       from: selectedWallet?.address,
       to: wallet.address 
     })

@@ -53,7 +53,7 @@ export async function checkHoneypot(
 /**
  * Extract warnings from honeypot API response
  */
-function extractWarnings(data: any): string[] {
+function extractWarnings(data: unknown): string[] {
   const warnings: string[] = [];
 
   if (data.honeypotResult?.isHoneypot) {
@@ -86,7 +86,7 @@ export async function checkHoneypotHeuristic(
   // In production, you'd analyze the contract source code
 
   const warnings: string[] = [];
-  let suspicionScore = 0;
+  const suspicionScore = 0;
 
   // Placeholder: In real implementation, fetch and analyze source code
   // Look for patterns like:

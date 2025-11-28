@@ -11,7 +11,7 @@ import { TrendingUp, TrendingDown, AlertCircle, BarChart3 } from 'lucide-react'
 import type { Signal } from '@/types/signal'
 
 export default function SignalCards() {
-  const [signals, setSignals] = useState<any[]>([])
+  const [signals, setSignals] = useState<unknown[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null)
   const [isPatternOpen, setIsPatternOpen] = useState(false)
@@ -39,7 +39,7 @@ export default function SignalCards() {
           return
         }
         
-        const liveSignals = data.transactions.slice(0, 3).map((tx: any, idx: number) => ({
+        const liveSignals = data.transactions.slice(0, 3).map((tx: unknown, idx: number) => ({
           id: `${tx.hash || idx}`,
           asset: tx.symbol,
           assetSymbol: tx.symbol,
@@ -147,7 +147,7 @@ function SignalCard({
   onClick,
   delay = 0
 }: { 
-  signal: any
+  signal: unknown
   onClick: () => void
   delay?: number
 }) {

@@ -165,7 +165,7 @@ export function AlertsManager() {
               
               <div>
                 <Label>Channel Type</Label>
-                <Select value={newAlert.type} onValueChange={(value: any) => 
+                <Select value={newAlert.type} onValueChange={(value: unknown) => 
                   setNewAlert(prev => ({ ...prev, type: value }))
                 }>
                   <SelectTrigger>

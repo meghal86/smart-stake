@@ -24,7 +24,7 @@ export default function DigestCard({ mode, demoMode, onDigestShared }: DigestCar
   const [isExpanded, setIsExpanded] = useState(false)
   const [confidence, setConfidence] = useState(87)
   const [confidenceAnimated, setConfidenceAnimated] = useState(0)
-  const [whaleData, setWhaleData] = useState<any>(null)
+  const [whaleData, setWhaleData] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
 
 

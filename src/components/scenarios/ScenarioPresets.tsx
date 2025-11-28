@@ -79,7 +79,7 @@ export function ScenarioPresets({ onSelectPreset, userTier }: ScenarioPresetsPro
     return tierOrder[userTier as keyof typeof tierOrder] >= tierOrder[presetTier as keyof typeof tierOrder];
   };
 
-  const handlePresetClick = (preset: any) => {
+  const handlePresetClick = (preset: unknown) => {
     // Analytics tracking
     track('preset_clicked', {
       preset_name: preset.name,

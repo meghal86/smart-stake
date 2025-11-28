@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface UserMenuProps {
-  user: any;
+  user: unknown;
   tier: string;
 }
 

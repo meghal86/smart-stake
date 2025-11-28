@@ -29,7 +29,7 @@ export default function Pulse() {
       <div>
         <h2 className="text-xl font-bold mb-2">Top Signals</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.entities.slice(0, 6).map((signal: any) => (
+          {data.entities.slice(0, 6).map((signal: unknown) => (
             <Card key={signal.id} className="p-4">
               <div className="font-bold">{signal.name || signal.id}</div>
               <div className="text-sm text-muted-foreground">Risk: {signal.gauges.risk}</div>

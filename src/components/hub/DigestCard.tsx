@@ -27,7 +27,7 @@ export default function DigestCard() {
         setError('No whale data received')
         return
       }
-      const transformed = data.transactions.slice(0, 5).map((tx: any) => ({
+      const transformed = data.transactions.slice(0, 5).map((tx: unknown) => ({
         id: `${tx.hash || tx.id}-${tx.timestamp}`,
         event_time: new Date(tx.timestamp * 1000).toISOString(),
         asset: tx.symbol,

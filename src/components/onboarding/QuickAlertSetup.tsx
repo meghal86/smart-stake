@@ -88,7 +88,7 @@ const QuickAlertSetup: React.FC<QuickAlertSetupProps> = ({ isOpen, onClose, onCo
                         ? 'border-primary bg-primary/5' 
                         : 'border-muted hover:border-muted-foreground/50'
                     }`}
-                    onClick={() => setAlertType(type.value as any)}
+                    onClick={() => setAlertType(type.value as unknown)}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className="h-4 w-4" />

@@ -71,7 +71,7 @@ export function PredictionHistory() {
     <div className="space-y-6">
       {/* Period Selection */}
       <div className="flex items-center justify-between">
-        <Tabs value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as any)}>
+        <Tabs value={selectedPeriod} onValueChange={(value) => setSelectedPeriod(value as unknown)}>
           <TabsList>
             <TabsTrigger value="7d">7 Days</TabsTrigger>
             <TabsTrigger value="30d">30 Days</TabsTrigger>

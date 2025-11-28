@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 interface ROIQuery {
   question: string;
   sql?: string;
-  result?: any;
+  result?: unknown;
   insight?: string;
 }
 

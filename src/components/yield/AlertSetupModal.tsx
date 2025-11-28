@@ -10,7 +10,7 @@ import { toast } from "sonner";
 interface AlertSetupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  protocol?: any;
+  protocol?: unknown;
 }
 
 export const AlertSetupModal: React.FC<AlertSetupModalProps> = ({

@@ -37,7 +37,7 @@ export async function GET() {
       source: 'supabase-live'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ /api/lite/unlocks FAILED:', error.message);
     return NextResponse.json(
       { 

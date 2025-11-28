@@ -69,7 +69,7 @@ export const SubscriptionManager: React.FC = () => {
     }
   }, [user]);
 
-  const callStripeFunction = async (action: string, data: any = {}) => {
+  const callStripeFunction = async (action: string, data: unknown = {}) => {
     const response = await supabase.functions.invoke('manage-subscription', {
       body: { action, ...data },
     });
@@ -86,7 +86,7 @@ export const SubscriptionManager: React.FC = () => {
       setError(null);
       const result = await callStripeFunction('get_details');
       setSubscription(result.subscription);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -97,7 +97,7 @@ export const SubscriptionManager: React.FC = () => {
     try {
       const result = await callStripeFunction('get_invoices');
       setInvoices(result.invoices || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch invoices:', err);
     }
   };
@@ -113,7 +113,7 @@ export const SubscriptionManager: React.FC = () => {
         title: "Subscription Canceled",
         description: result.message,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -135,7 +135,7 @@ export const SubscriptionManager: React.FC = () => {
         title: "Subscription Reactivated",
         description: result.message,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -151,7 +151,7 @@ export const SubscriptionManager: React.FC = () => {
     try {
       const result = await callStripeFunction('create_portal_session');
       window.open(result.url, '_blank');
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         variant: "destructive",
         title: "Error",

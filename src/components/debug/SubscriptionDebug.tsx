@@ -7,7 +7,7 @@ import { EnvCheck } from './EnvCheck';
 export const SubscriptionDebug = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<unknown>({});
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
@@ -46,9 +46,9 @@ export const SubscriptionDebug = () => {
         setError(`Function error: ${error.message}`);
       } else {
         console.log('Function success:', data);
-        setDebugInfo((prev: any) => ({ ...prev, functionResult: data }));
+        setDebugInfo((prev: unknown) => ({ ...prev, functionResult: data }));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Catch error:', err);
       setError(`Catch error: ${err.message}`);
     }

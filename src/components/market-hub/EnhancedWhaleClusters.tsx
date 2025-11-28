@@ -6,7 +6,7 @@ import { Star, StarOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EnhancedWhaleClustersProps {
-  clusters: any[];
+  clusters: unknown[];
   onClusterClick: (clusterId: string) => void;
   onToggleStar: (clusterId: string) => void;
   starredClusters: Set<string>;
@@ -105,7 +105,7 @@ function MobileClusterCard({
   isStarred, 
   getClusterColor, 
   getRiskLevel 
-}: any) {
+}: unknown) {
   const risk = getRiskLevel(cluster.riskScore);
   
   return (
@@ -162,7 +162,7 @@ function DesktopClusterCard({
   isStarred, 
   getClusterColor, 
   getRiskLevel 
-}: any) {
+}: unknown) {
   const risk = getRiskLevel(cluster.riskScore);
   
   return (

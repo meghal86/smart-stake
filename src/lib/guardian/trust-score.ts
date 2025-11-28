@@ -22,7 +22,7 @@ export interface RiskFactor {
   severity: 'low' | 'medium' | 'high';
   description: string;
   evidence?: Evidence;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 export interface TrustScoreResult {

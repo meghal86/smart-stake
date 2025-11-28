@@ -7,7 +7,7 @@ import { syncSubscriptionStatus } from '@/utils/syncSubscription';
 
 export const UserPlanDebug = () => {
   const { user } = useAuth();
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
 

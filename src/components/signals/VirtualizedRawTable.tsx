@@ -24,7 +24,7 @@ interface RowData {
 const ROW_HEIGHT = 48;
 const EXPANDED_ROW_HEIGHT = 120;
 
-function TableRow({ index, style, data }: { index: number; style: any; data: RowData }) {
+function TableRow({ index, style, data }: { index: number; style: unknown; data: RowData }) {
   const { signals, expandedRows, toggleRow } = data;
   const signal = signals[index];
   const isExpanded = expandedRows.has(signal.id);

@@ -64,7 +64,7 @@ export function GuardianPage() {
   }, [lastError]);
 
   // Handle revoke approvals
-  const handleRevoke = async (approvals: any[]) => {
+  const handleRevoke = async (approvals: unknown[]) => {
     // Mock revoke - in production, use wagmi writeContract
     return new Promise<void>((resolve) => {
       setTimeout(() => {
@@ -106,13 +106,13 @@ export function GuardianPage() {
   }
 
   // Extract risk factors for cards
-  const mixerFlag = scanData.flags?.find((f: any) =>
+  const mixerFlag = scanData.flags?.find((f: unknown) =>
     f.type.toLowerCase().includes('mixer')
   );
-  const approvalFlags = scanData.flags?.filter((f: any) =>
+  const approvalFlags = scanData.flags?.filter((f: unknown) =>
     f.type.toLowerCase().includes('approval')
   ) || [];
-  const contractFlags = scanData.flags?.filter((f: any) =>
+  const contractFlags = scanData.flags?.filter((f: unknown) =>
     f.type.toLowerCase().includes('contract') ||
     f.type.toLowerCase().includes('honeypot')
   ) || [];
@@ -132,7 +132,7 @@ export function GuardianPage() {
     contractFlags.length > 0
       ? {
           severity: 'medium' as const,
-          lines: contractFlags.map((f: any) => f.details || f.type),
+          lines: contractFlags.map((f: unknown) => f.details || f.type),
         }
       : {
           severity: 'ok' as const,
@@ -143,7 +143,7 @@ export function GuardianPage() {
     approvalFlags.length > 0
       ? {
           count: approvalFlags.length,
-          lines: approvalFlags.slice(0, 2).map((f: any) => f.details || f.type),
+          lines: approvalFlags.slice(0, 2).map((f: unknown) => f.details || f.type),
         }
       : { count: 0, lines: [] };
 
@@ -206,7 +206,7 @@ export function GuardianPage() {
           }
           flags={scanData.flags?.length || 0}
           critical={
-            scanData.flags?.filter((f: any) => f.severity === 'high').length || 0
+            scanData.flags?.filter((f: unknown) => f.severity === 'high').length || 0
           }
           lastScan={scanData.lastScanRelative || 'just now'}
           chains={[scanData.networkCode || 'ethereum']}

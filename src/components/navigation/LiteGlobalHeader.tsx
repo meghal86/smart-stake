@@ -24,7 +24,7 @@ interface UserProfile {
 
 export default function LiteGlobalHeader() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<unknown>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [unreadCount, setUnreadCount] = useState<number>(0)
   const [prevUnreadCount, setPrevUnreadCount] = useState<number>(0)

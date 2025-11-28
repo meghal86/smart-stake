@@ -18,7 +18,7 @@ interface KpiSummaryProps {
   whalesDelta?: number;
   riskAlertsDelta?: number;
   riskScoreDelta?: number;
-  onCreateAlert?: (context: any) => void;
+  onCreateAlert?: (context: unknown) => void;
   onCardClick?: (type: string) => void;
 }
 

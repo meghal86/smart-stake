@@ -12,7 +12,7 @@ import {
 interface Tab {
   id: string;
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<unknown>;
 }
 
 interface PortfolioTabsProps {

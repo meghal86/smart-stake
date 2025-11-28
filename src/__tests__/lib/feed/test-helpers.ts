@@ -43,7 +43,7 @@ export function applySponsoredCapping(
 /**
  * Transforms a database row into an Opportunity object
  */
-export function transformRowToOpportunity(row: any): Opportunity {
+export function transformRowToOpportunity(row: unknown): Opportunity {
   // Build badges array
   const badges = [];
   if (row.featured) {

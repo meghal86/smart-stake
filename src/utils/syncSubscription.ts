@@ -45,7 +45,7 @@ export const syncSubscriptionStatus = async (userId: string) => {
     }));
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Sync error:', error);
     return { success: false, error: error.message };
   }

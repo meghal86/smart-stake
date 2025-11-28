@@ -8,7 +8,7 @@ interface TutorialStep {
   id: number;
   title: string;
   content: string;
-  icon: any;
+  icon: unknown;
   tips?: string[];
 }
 

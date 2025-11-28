@@ -29,7 +29,7 @@ const Index = () => {
   const [streakAdvanced, setStreakAdvanced] = useState(false)
   const [alertCreated, setAlertCreated] = useState(false)
   const [digestShared, setDigestShared] = useState(false)
-  const [kpiData, setKpiData] = useState<any>(null)
+  const [kpiData, setKpiData] = useState<unknown>(null)
   
   // Simulate streak advancement (would come from real data)
   useEffect(() => {

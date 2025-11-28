@@ -28,7 +28,7 @@ export function SimpleAddWalletButton({
     setIsModalOpen(false);
   };
 
-  const handleWalletAdded = (wallet: any) => {
+  const handleWalletAdded = (wallet: unknown) => {
     console.log('Wallet added:', wallet);
     // Modal will close automatically after success animation
   };

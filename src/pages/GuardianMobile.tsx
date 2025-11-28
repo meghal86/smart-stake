@@ -53,7 +53,7 @@ export function GuardianMobile() {
         data.trustScorePercent || 0,
         data.confidence || 0.8,
         data.flags?.length || 0,
-        data.flags?.filter((f: any) => f.severity === 'high').length || 0,
+        data.flags?.filter((f: unknown) => f.severity === 'high').length || 0,
         duration,
         undefined, // ttfr not tracked here
         data.scanId
@@ -68,7 +68,7 @@ export function GuardianMobile() {
     setIsScanning(true);
     setScanStartTime(Date.now());
     
-    analytics.track('guardian_rescan_requested' as any, {
+    analytics.track('guardian_rescan_requested' as unknown, {
       wallet_address: address,
     });
 
@@ -122,7 +122,7 @@ export function GuardianMobile() {
             <button
               className="connect-wallet-button"
               onClick={() => {
-                analytics.track('guardian_wallet_connected' as any, {});
+                analytics.track('guardian_wallet_connected' as unknown, {});
                 connect();
               }}
               aria-label="Connect wallet to start security scan"
@@ -130,7 +130,7 @@ export function GuardianMobile() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  analytics.track('guardian_wallet_connected' as any, {});
+                  analytics.track('guardian_wallet_connected' as unknown, {});
                   connect();
                 }
               }}
@@ -194,7 +194,7 @@ export function GuardianMobile() {
   const scanData = data;
   const trustScore = scanData?.trustScorePercent || 87;
   const flags = scanData?.flags?.length || 2;
-  const critical = scanData?.flags?.filter((f: any) => f.severity === 'high').length || 0;
+  const critical = scanData?.flags?.filter((f: unknown) => f.severity === 'high').length || 0;
   const chains = 'ETH, Base';
   const lastScan = '3m ago';
 
@@ -298,14 +298,14 @@ export function GuardianMobile() {
               aria-label="View all security reports"
               onClick={(e) => {
                 e.preventDefault();
-                analytics.track('guardian_view_all_reports' as any, {
+                analytics.track('guardian_view_all_reports' as unknown, {
                   wallet_address: address,
                 });
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  analytics.track('guardian_view_all_reports' as any, {
+                  analytics.track('guardian_view_all_reports' as unknown, {
                     wallet_address: address,
                   });
                   // Navigate to all reports

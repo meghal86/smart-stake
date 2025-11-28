@@ -37,7 +37,7 @@ interface Alert {
 
 interface AlertsIntegrationProps {
   alerts: Alert[];
-  clusters: any[];
+  clusters: unknown[];
   onAlertClick?: (alert: Alert) => void;
   onClusterClick?: (clusterId: string) => void;
   compact?: boolean;

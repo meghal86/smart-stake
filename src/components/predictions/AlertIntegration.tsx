@@ -117,7 +117,7 @@ export function AlertIntegration() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Alert Type</Label>
-                  <Select value={newAlert.type} onValueChange={(value: any) => 
+                  <Select value={newAlert.type} onValueChange={(value: unknown) => 
                     setNewAlert(prev => ({ ...prev, type: value }))
                   }>
                     <SelectTrigger>

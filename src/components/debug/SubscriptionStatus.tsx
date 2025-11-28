@@ -8,10 +8,10 @@ import { syncSubscriptionStatus } from '@/utils/syncSubscription';
 
 export const SubscriptionStatus = () => {
   const { user } = useAuth();
-  const [userData, setUserData] = useState<any>(null);
-  const [subscriptionData, setSubscriptionData] = useState<any>(null);
-  const [metadataData, setMetadataData] = useState<any>(null);
-  const [dbStatus, setDbStatus] = useState<any>(null);
+  const [userData, setUserData] = useState<unknown>(null);
+  const [subscriptionData, setSubscriptionData] = useState<unknown>(null);
+  const [metadataData, setMetadataData] = useState<unknown>(null);
+  const [dbStatus, setDbStatus] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
 

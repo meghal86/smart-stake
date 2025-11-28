@@ -94,7 +94,7 @@ function deriveDirection(clusterType: string | undefined, tx?: WhaleAlertTransac
     return 'out';
   }
 
-  const toType = (tx as any)?.to?.owner_type?.toLowerCase?.() || (tx as any)?.counterparty_type?.toLowerCase?.();
+  const toType = (tx as unknown)?.to?.owner_type?.toLowerCase?.() || (tx as unknown)?.counterparty_type?.toLowerCase?.();
   if (toType && ['bridge', 'amm', 'dex'].includes(toType)) {
     return 'out';
   }
@@ -105,8 +105,8 @@ function deriveDirection(clusterType: string | undefined, tx?: WhaleAlertTransac
 function detectVenue(tx?: WhaleAlertTransaction | ClusterAlert): TxSample['venue'] {
   if (!tx) return 'Unknown';
 
-  const toOwner = ((tx as any).to?.owner || (tx as any).to_entity || '').toLowerCase();
-  const toType = ((tx as any).to?.owner_type || (tx as any).counterparty_type || '').toLowerCase();
+  const toOwner = ((tx as unknown).to?.owner || (tx as unknown).to_entity || '').toLowerCase();
+  const toType = ((tx as unknown).to?.owner_type || (tx as unknown).counterparty_type || '').toLowerCase();
 
   if (CEX_KEYWORDS.some(keyword => toOwner.includes(keyword) || toType.includes(keyword))) {
     return 'CEX';

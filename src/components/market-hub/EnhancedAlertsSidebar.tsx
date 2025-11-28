@@ -8,7 +8,7 @@ import { Eye, Download, ExternalLink, ChevronDown, ChevronUp } from 'lucide-reac
 import { cn } from '@/lib/utils';
 
 interface EnhancedAlertsSidebarProps {
-  alerts: any[];
+  alerts: unknown[];
   onViewCluster: (clusterId: string) => void;
   className?: string;
   isMobile?: boolean;
@@ -31,7 +31,7 @@ export function EnhancedAlertsSidebar({
   const [isCollapsed, setIsCollapsed] = useState(isMobile);
   const { exportData, isExporting } = useCSVExport();
 
-  const handleExportAlert = (alert: any) => {
+  const handleExportAlert = (alert: unknown) => {
     exportData({
       exportType: 'alerts',
       filters: {
@@ -96,9 +96,9 @@ function AlertsList({
   isExporting, 
   compact = false 
 }: {
-  alerts: any[];
+  alerts: unknown[];
   onViewCluster: (clusterId: string) => void;
-  onExportAlert: (alert: any) => void;
+  onExportAlert: (alert: unknown) => void;
   isExporting: boolean;
   compact?: boolean;
 }) {

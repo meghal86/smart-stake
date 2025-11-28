@@ -83,8 +83,8 @@ export function isPlainWalletAddress(value: string): boolean {
  * Sanitize event properties to ensure no plain wallet addresses
  * This is a safety check that should be used before sending any analytics
  */
-export function sanitizeEventProperties(properties: Record<string, any>): Record<string, any> {
-  const sanitized: Record<string, any> = {};
+export function sanitizeEventProperties(properties: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(properties)) {
     if (typeof value === 'string' && isPlainWalletAddress(value)) {

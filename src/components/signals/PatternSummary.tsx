@@ -9,7 +9,7 @@ import type { Signal } from '@/types/signal';
 
 interface PatternSummaryProps {
   signal: Signal;
-  patternData: any;
+  patternData: unknown;
   timeframe: string;
 }
 

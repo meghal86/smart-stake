@@ -21,7 +21,7 @@ interface AlertTemplate {
   name: string;
   description: string;
   category: 'whale' | 'defi' | 'security' | 'trading';
-  templateConditions: any[];
+  templateConditions: unknown[];
   defaultLogicOperator: 'AND' | 'OR' | 'NOR';
   suggestedDeliveryChannels: {
     push: boolean;

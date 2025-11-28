@@ -16,7 +16,7 @@ interface PatternChartProps {
   signal: Signal;
   timeframe: '24h' | '48h' | '7d';
   isLoading: boolean;
-  patternData: any;
+  patternData: unknown;
 }
 
 interface CandlestickData {

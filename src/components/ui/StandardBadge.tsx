@@ -36,7 +36,7 @@ export function StandardBadge({ type, value, level, className = '' }: StandardBa
 
   const renderBadge = () => {
     switch (type) {
-      case 'impact':
+      case 'impact': {
         const config = getImpactConfig(level || 'medium');
         return (
           <Badge className={`h-7 px-3 flex items-center gap-1.5 ${config.color} ${className}`}>
@@ -44,6 +44,7 @@ export function StandardBadge({ type, value, level, className = '' }: StandardBa
             <span className="text-xs font-medium">Impact • {value}</span>
           </Badge>
         );
+      }
       
       case 'provider':
         return (

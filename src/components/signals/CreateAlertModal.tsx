@@ -173,7 +173,7 @@ export function CreateAlertModal({ signal, isOpen, onClose, onSuccess }: CreateA
                         
                         <div>
                           <Label htmlFor="direction">Direction</Label>
-                          <Select value={formData.direction} onValueChange={(v) => setFormData({...formData, direction: v as any})}>
+                          <Select value={formData.direction} onValueChange={(v) => setFormData({...formData, direction: v as unknown})}>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>

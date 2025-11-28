@@ -36,7 +36,7 @@ export function usePredictions(options: UsePredictionsOptions = {}) {
       if (error) throw error;
 
       // Transform data to match interface
-      const transformedPredictions: Prediction[] = (data?.predictions || []).map((p: any) => ({
+      const transformedPredictions: Prediction[] = (data?.predictions || []).map((p: unknown) => ({
         id: p.id,
         ts: p.timestamp || new Date().toISOString(),
         asset: p.asset,

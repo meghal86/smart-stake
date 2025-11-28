@@ -181,7 +181,7 @@ export function NotificationCenter({
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as unknown)}>
             <TabsList className="w-full justify-start rounded-none border-b border-slate-700 bg-transparent p-0">
               <TabsTrigger
                 value="all"
@@ -437,7 +437,7 @@ export function useNotifications() {
 
 function playNotificationSound() {
   // Simple notification sound using Web Audio API
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const audioContext = new (window.AudioContext || (window as unknown).webkitAudioContext)();
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
 

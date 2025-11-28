@@ -96,7 +96,7 @@ export function RiskAnalysis({ mode }: RiskAnalysisProps) {
 
           {activeTab === "breakdown" && (
             <div className="space-y-4">
-              {riskData?.riskFactors?.map((factor: any, index: number) => (
+              {riskData?.riskFactors?.map((factor: unknown, index: number) => (
                 <div
                   key={factor.name}
                   className="p-4 bg-gray-800/50 rounded-lg border border-gray-700/50"

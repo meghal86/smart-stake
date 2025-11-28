@@ -110,7 +110,7 @@ export function TodaysSignals({ predictions, isFreeTier }: TodaysSignalsProps) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                 {Object.entries(prediction.features).map(([key, value]) => {
                   const score = typeof value === 'object' && value !== null && 'score' in value 
-                    ? (value as any).score 
+                    ? (value as unknown).score 
                     : typeof value === 'number' 
                     ? value 
                     : 0.5;

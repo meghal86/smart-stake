@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     
     // Convert searchParams to object for Zod validation
-    const queryObject: any = {};
+    const queryObject: unknown = {};
     searchParams.forEach((value, key) => {
       // Handle array parameters (type, chains, urgency, difficulty)
       if (['type', 'chains', 'urgency', 'difficulty'].includes(key)) {

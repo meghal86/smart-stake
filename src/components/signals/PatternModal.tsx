@@ -40,7 +40,7 @@ interface PatternInstance {
 export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: PatternModalProps) {
   const [timeframe, setTimeframe] = useState<'24h' | '48h' | '7d'>('24h');
   const [isLoading, setIsLoading] = useState(true);
-  const [patternData, setPatternData] = useState<any>(null);
+  const [patternData, setPatternData] = useState<unknown>(null);
   const [aiExplaining, setAiExplaining] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'drift'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -403,7 +403,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
             {/* Enhanced Controls with Advanced Filters */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Tabs value={timeframe} onValueChange={(v) => setTimeframe(v as any)}>
+                <Tabs value={timeframe} onValueChange={(v) => setTimeframe(v as unknown)}>
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="24h" className="relative">
                       24H
@@ -453,7 +453,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs text-slate-600 dark:text-slate-400 mb-1 block">Risk Level</label>
-                        <Tabs value={riskFilter} onValueChange={(v) => setRiskFilter(v as any)}>
+                        <Tabs value={riskFilter} onValueChange={(v) => setRiskFilter(v as unknown)}>
                           <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
                             <TabsTrigger value="high" className="text-xs">High</TabsTrigger>

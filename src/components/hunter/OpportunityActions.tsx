@@ -87,7 +87,7 @@ export function OpportunityActions({
         onSaveToggle?.(true);
         toast.success('Saved to your collection');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Save error:', error);
       toast.error(error.message || 'Failed to save opportunity');
     } finally {
@@ -118,7 +118,7 @@ export function OpportunityActions({
           });
           toast.success('Shared successfully');
           return;
-        } catch (err: any) {
+        } catch (err: unknown) {
           // User cancelled or share failed, fall back to clipboard
           if (err.name !== 'AbortError') {
             console.error('Share error:', err);

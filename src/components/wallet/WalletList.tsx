@@ -267,7 +267,7 @@ export function WalletList({
             {/* Risk Flags (if any) */}
             {wallet.risk_flags && Array.isArray(wallet.risk_flags) && wallet.risk_flags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
-                {wallet.risk_flags.slice(0, 3).map((flag: any, idx: number) => (
+                {wallet.risk_flags.slice(0, 3).map((flag: unknown, idx: number) => (
                   <span
                     key={idx}
                     className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${

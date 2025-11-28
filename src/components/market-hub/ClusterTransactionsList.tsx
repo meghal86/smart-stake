@@ -94,7 +94,7 @@ export function ClusterTransactionsList({
     if (!clusterData?.transactions) return;
 
     // Transform whale alert data into transaction format
-    const transformedTransactions: Transaction[] = clusterData.transactions.map((tx: any, index: number) => {
+    const transformedTransactions: Transaction[] = clusterData.transactions.map((tx: unknown, index: number) => {
       const amountUSD = Number(tx.amount_usd || tx.amount) || 0;
       
       // Determine direction based on cluster context

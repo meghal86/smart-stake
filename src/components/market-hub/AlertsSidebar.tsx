@@ -24,7 +24,7 @@ export function AlertsSidebar({
   filters, 
   onFiltersChange, 
   timeWindow 
-}: any) {
+}: unknown) {
   const { selectedAlert, setSelectedAlert, selectedCluster, setSelectedCluster, setChain } = useClusterStore();
   // AI Digest with fallback data
   const aiDigest = {
@@ -35,7 +35,7 @@ export function AlertsSidebar({
     ]
   };
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     const newFilters = { ...filters, [key]: value };
     onFiltersChange(newFilters);
     
@@ -182,7 +182,7 @@ export function AlertsSidebar({
           </div>
         ) : filters?.showHistory ? (
           <div className="p-4 space-y-3 pb-32">
-            {filters?.historicalAlerts?.map((alert: any) => (
+            {filters?.historicalAlerts?.map((alert: unknown) => (
               <AlertCard 
                 key={alert.id}
                 alert={alert}
@@ -193,7 +193,7 @@ export function AlertsSidebar({
           </div>
         ) : alerts?.alerts?.length ? (
           <div className="p-4 space-y-3 pb-32">
-            {alerts.alerts.map((alert: any) => (
+            {alerts.alerts.map((alert: unknown) => (
               <AlertCard 
                 key={alert.id}
                 alert={alert}
@@ -265,7 +265,7 @@ export function AlertsSidebar({
 }
 
 // Anchor Alert Component
-function AnchorAlert({ title, subtitle, time, severity, onClick }: any) {
+function AnchorAlert({ title, subtitle, time, severity, onClick }: unknown) {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'High': return 'text-red-600 bg-red-50';
@@ -295,7 +295,7 @@ function AnchorAlert({ title, subtitle, time, severity, onClick }: any) {
 }
 
 // Alert Card with Threading
-function AlertCard({ alert, isSelected, onClick, isHistorical }: any) {
+function AlertCard({ alert, isSelected, onClick, isHistorical }: unknown) {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'High': return 'destructive';

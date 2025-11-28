@@ -39,7 +39,7 @@ export function ExplainModal(props: ExplainModalPropsUnion) {
   const onCreateAlert = props.onCreateAlert;
   
   const [showSimilarCases, setShowSimilarCases] = useState(false);
-  const [patternData, setPatternData] = useState<any>(null);
+  const [patternData, setPatternData] = useState<unknown>(null);
   const [isLoadingPattern, setIsLoadingPattern] = useState(false);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   

@@ -129,8 +129,8 @@ export function trackEvent(event: TelemetryEvent, properties?: TelemetryProperti
 
   // Send to analytics service
   try {
-    if (typeof window !== 'undefined' && (window as any).analytics) {
-      (window as any).analytics.track(event, {
+    if (typeof window !== 'undefined' && (window as unknown).analytics) {
+      (window as unknown).analytics.track(event, {
         ...sanitized,
         timestamp: new Date().toISOString(),
         url: window.location.href,

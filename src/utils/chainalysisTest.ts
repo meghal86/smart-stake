@@ -22,8 +22,8 @@ export async function testChainalysisAPI(address: string) {
       // Parse response according to documentation
       const isSanctioned = data.identifications && data.identifications.length > 0;
       const sanctionsList = data.identifications
-        ?.filter((id: any) => id.category === 'sanctions')
-        ?.map((id: any) => id.name || 'OFAC SDN List') || [];
+        ?.filter((id: unknown) => id.category === 'sanctions')
+        ?.map((id: unknown) => id.name || 'OFAC SDN List') || [];
       
       return { 
         success: true, 

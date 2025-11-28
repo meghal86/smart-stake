@@ -247,7 +247,7 @@ export default function Portfolio() {
             {addresses.length > 1 && (
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={filterBy} onValueChange={(value: any) => setFilterBy(value)}>
+                <Select value={filterBy} onValueChange={(value: unknown) => setFilterBy(value)}>
                   <SelectTrigger className="w-24 sm:w-32">
                     <SelectValue />
                   </SelectTrigger>
@@ -263,7 +263,7 @@ export default function Portfolio() {
                 </Select>
                 
                 <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <Select value={sortBy} onValueChange={(value: unknown) => setSortBy(value)}>
                   <SelectTrigger className="w-20 sm:w-28">
                     <SelectValue />
                   </SelectTrigger>

@@ -91,10 +91,9 @@ export const ExportProofModal: React.FC<ExportProofModalProps> = ({
     
     switch (exportType) {
       case 'pdf':
-        // In real implementation, generate actual PDF
         downloadFile(copilotSummary, `portfolio-proof-${timestamp}.txt`, 'text/plain');
         break;
-      case 'json':
+      case 'json': {
         const jsonData = {
           ...portfolioData,
           proofHash,
@@ -103,8 +102,8 @@ export const ExportProofModal: React.FC<ExportProofModalProps> = ({
         };
         downloadFile(JSON.stringify(jsonData, null, 2), `portfolio-proof-${timestamp}.json`, 'application/json');
         break;
+      }
       case 'image':
-        // In real implementation, generate actual image
         downloadFile(copilotSummary, `portfolio-proof-${timestamp}.txt`, 'text/plain');
         break;
     }

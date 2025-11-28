@@ -66,7 +66,7 @@ async function example3_apiHandler(request: Request) {
   
   // Build WHERE clause
   let whereClause = 'WHERE status = $1';
-  let params: any[] = ['published'];
+  const params: unknown[] = ['published'];
   
   // If cursor provided, decode and add to WHERE clause
   if (cursorParam) {
@@ -129,7 +129,7 @@ async function example3_apiHandler(request: Request) {
 
 function example4_reactQuery() {
   // This would be in a React component
-  const useOpportunities = (filters: any) => {
+  const useOpportunities = (filters: unknown) => {
     // Using @tanstack/react-query
     return {
       queryKey: ['opportunities', filters],
@@ -147,7 +147,7 @@ function example4_reactQuery() {
         
         return response.json();
       },
-      getNextPageParam: (lastPage: any) => lastPage.cursor ?? undefined,
+      getNextPageParam: (lastPage: unknown) => lastPage.cursor ?? undefined,
       initialPageParam: undefined,
     };
   };
@@ -267,7 +267,7 @@ function example8_errorHandling(cursor: string) {
 // Mock Database Query (for example purposes)
 // ============================================================================
 
-async function mockDbQuery(query: string, params: any[]) {
+async function mockDbQuery(query: string, params: unknown[]) {
   // This would be replaced with actual database call
   // e.g., using Supabase, Prisma, or pg
   return [

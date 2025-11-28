@@ -8,7 +8,7 @@ interface NotificationLog {
   title: string;
   message: string;
   channels: string[];
-  results: any[];
+  results: unknown[];
   priority: string;
   sent_at: string;
 }
@@ -31,7 +31,7 @@ export const useNotifications = () => {
     message: string;
     channels?: string[];
     priority?: string;
-    data?: Record<string, any>;
+    data?: Record<string, unknown>;
   }) => {
     if (!user) throw new Error('User not authenticated');
 

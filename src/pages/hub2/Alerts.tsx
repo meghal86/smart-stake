@@ -260,7 +260,7 @@ export default function AlertsPage() {
                       <label className="text-sm font-medium mb-2 block">Time Window</label>
                       <Select
                         value={newAlert.window}
-                        onValueChange={(value) => setNewAlert({ ...newAlert, window: value as any })}
+                        onValueChange={(value) => setNewAlert({ ...newAlert, window: value as unknown })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -280,7 +280,7 @@ export default function AlertsPage() {
                         value={newAlert.scope.kind}
                         onValueChange={(value) => setNewAlert({ 
                           ...newAlert, 
-                          scope: { ...newAlert.scope, kind: value as any } 
+                          scope: { ...newAlert.scope, kind: value as unknown } 
                         })}
                       >
                         <SelectTrigger>

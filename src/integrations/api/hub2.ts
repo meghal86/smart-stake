@@ -76,7 +76,7 @@ export async function fetchEnhancedSummary(window: TimeWindow): Promise<Enhanced
 
     // Extract top venues from whale transactions
     const venueMap = new Map<string, { inflow: number; outflow: number }>();
-    whaleTransactions.forEach((tx: any) => {
+    whaleTransactions.forEach((tx: unknown) => {
       const fromVenue = tx.from?.owner_type || 'Unknown';
       const toVenue = tx.to?.owner_type || 'Unknown';
       
@@ -154,7 +154,7 @@ export async function fetchAIDigest(window: TimeWindow): Promise<AIDigest> {
     if (whaleAlerts.error) throw new Error(whaleAlerts.error.message);
 
     const transactions = whaleAlerts.data?.transactions || [];
-    const totalVolume = transactions.reduce((sum: number, tx: any) => sum + tx.amount_usd, 0);
+    const totalVolume = transactions.reduce((sum: number, tx: unknown) => sum + tx.amount_usd, 0);
     const avgVolume = totalVolume / transactions.length || 0;
 
     // Generate AI narrative based on whale activity
@@ -221,7 +221,7 @@ export async function fetchAssetSentiment(symbol: string, window: TimeWindow): P
     
     // Calculate sentiment from whale data for specific symbol
     const whaleTransactions = data?.transactions || [];
-    const assetTransactions = whaleTransactions.filter((tx: any) => 
+    const assetTransactions = whaleTransactions.filter((tx: unknown) => 
       tx.symbol?.toLowerCase() === symbol.toLowerCase()
     );
     

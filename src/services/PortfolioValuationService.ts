@@ -190,7 +190,7 @@ class PortfolioValuationService {
   
   private getCachedPrices(tokens: string[]) {
     // Fallback cached prices (SLA: <150ms response)
-    const cachedPrices: Record<string, any> = {
+    const cachedPrices: Record<string, unknown> = {
       ethereum: { price: 4171.90, change_24h: 0.18 },
       bitcoin: { price: 65000, change_24h: -0.5 },
       solana: { price: 150, change_24h: 2.1 },
@@ -198,7 +198,7 @@ class PortfolioValuationService {
       polygon: { price: 0.8, change_24h: -1.1 }
     };
     
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     tokens.forEach(token => {
       result[token] = cachedPrices[token] || { price: 1, change_24h: 0 };
     });

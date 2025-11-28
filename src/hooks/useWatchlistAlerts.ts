@@ -56,7 +56,7 @@ export function useWatchlistAlerts() {
         description: "Your watchlist alert has been created successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Failed to Create Alert",
         description: error.message || "Something went wrong",
@@ -85,7 +85,7 @@ export function useWatchlistAlerts() {
         description: "Your watchlist alert has been updated successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Failed to Update Alert",
         description: error.message || "Something went wrong",
@@ -114,7 +114,7 @@ export function useWatchlistAlerts() {
         description: "Your watchlist alert has been deleted successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Failed to Delete Alert",
         description: error.message || "Something went wrong",

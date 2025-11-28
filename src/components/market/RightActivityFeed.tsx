@@ -16,7 +16,7 @@ interface ActivityItem {
   title: string;
   description: string;
   timestamp: Date;
-  metadata?: any;
+  metadata?: unknown;
   deepLink?: string;
   followable?: {
     type: 'address' | 'asset';
@@ -47,7 +47,7 @@ export function RightActivityFeed({ onItemClick }: RightActivityFeedProps) {
         if (!error && data?.transactions) {
           const realActivities: ActivityItem[] = data.transactions
             .slice(0, 20)
-            .map((tx: any, index: number) => {
+            .map((tx: unknown, index: number) => {
               const amount = tx.amount_usd || 0;
               const token = (tx.symbol || 'UNKNOWN').toUpperCase();
               const fromAddr = tx.from?.address || 'Unknown';

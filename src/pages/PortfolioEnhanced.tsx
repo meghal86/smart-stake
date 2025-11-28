@@ -81,10 +81,10 @@ export default function PortfolioEnhanced() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [timeframe, setTimeframe] = useState<'1D' | '7D' | '30D' | '90D'>('30D');
   const [whaleFilter, setWhaleFilter] = useState('all');
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<Array<Record<string, unknown>>>([]);
   const [dailyAlertUsage, setDailyAlertUsage] = useState(0);
   const [isGuardianScanning, setIsGuardianScanning] = useState(false);
-  const [guardianData, setGuardianData] = useState<any>(null);
+  const [guardianData, setGuardianData] = useState<unknown>(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [copilotQuery, setCopilotQuery] = useState('');
   const [copilotResponse, setCopilotResponse] = useState('');
@@ -194,14 +194,14 @@ export default function PortfolioEnhanced() {
   // Addresses are now managed by useUserAddresses hook
   
   // Alert management functions
-  const handleCreateAlert = async (alert: any) => {
+  const handleCreateAlert = async (alert: Record<string, unknown>) => {
     const newAlert = { ...alert, id: Date.now().toString() };
     setAlerts(prev => [...prev, newAlert]);
     setDailyAlertUsage(prev => prev + 1);
     await metricsService.trackAlertCreated(alert.triggerType, alerts.length === 0);
   };
   
-  const handleUpdateAlert = async (id: string, updates: any) => {
+  const handleUpdateAlert = async (id: string, updates: Record<string, unknown>) => {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
   };
   
@@ -209,7 +209,7 @@ export default function PortfolioEnhanced() {
     setAlerts(prev => prev.filter(a => a.id !== id));
   };
 
-  const handleAddAddress = async (newAddress: any) => {
+  const handleAddAddress = async (newAddress: { address: string; label: string; group?: string }) => {
     try {
       await addAddress({
         address: newAddress.address,
@@ -243,7 +243,7 @@ export default function PortfolioEnhanced() {
     }
   };
 
-  const handleStressTest = async (scenarios: any) => {
+  const handleStressTest = async (scenarios: Record<string, number>) => {
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     return {
@@ -277,7 +277,7 @@ export default function PortfolioEnhanced() {
     const responses = {
       'is my portfolio clean': `Based on Guardian scan results, your portfolio shows a ${guardianData?.trustScore || 75}% trust score. ${guardianData?.flags?.length || 0} security flags detected. Overall assessment: ${guardianData?.trustScore >= 80 ? 'Clean' : guardianData?.trustScore >= 60 ? 'Moderate Risk' : 'High Risk'}.`,
       'what is my risk': `Your portfolio risk score is ${currentData?.riskScore || 6}/10. Key risks include concentration (${mockRiskFactors[0].score}/10) and smart contract exposure (${mockRiskFactors[2].score}/10). Liquidity risk is low at ${mockRiskFactors[1].score}/10.`,
-      'should i diversify': `Yes, analysis shows concentration risk at ${mockRiskFactors[0].score}/10. Consider reducing exposure to top holdings and adding uncorrelated assets. Target: <50% in any single asset class.`
+      'should i diversify': `Yes, analysis shows concentration risk at ${mockRiskFactors[0].score}/10. Consider reducing exposure to top holdings and adding uncorrelated assets. Target: <50% in unknown single asset class.`
     };
     
     const query = copilotQuery.toLowerCase();

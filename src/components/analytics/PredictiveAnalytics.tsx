@@ -30,12 +30,12 @@ interface SimulationScenario {
 }
 
 export const PredictiveAnalytics = () => {
-  const [models, setModels] = useState<any[]>([]);
+  const [models, setModels] = useState<unknown[]>([]);
   const [predictions, setPredictions] = useState<WhaleBehaviorPrediction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [simulationResult, setSimulationResult] = useState<unknown>(null);
   const [simulationLoading, setSimulationLoading] = useState(false);
-  const [showAccuracyDetails, setShowAccuracyDetails] = useState<any>(null);
+  const [showAccuracyDetails, setShowAccuracyDetails] = useState<unknown>(null);
   const [activeTab, setActiveTab] = useState('predictions');
   const [simulationParams, setSimulationParams] = useState<SimulationScenario>({
     whaleCount: 5,
@@ -55,10 +55,10 @@ export const PredictiveAnalytics = () => {
       const { data, error } = await supabase.functions.invoke('ml-predictions');
       if (error) throw error;
       
-      const uniqueModels = data.models?.reduce((acc: any[], model: any) => {
-        const existing = acc.find((m: any) => m.type === model.type);
+      const uniqueModels = data.models?.reduce((acc: unknown[], model: unknown) => {
+        const existing = acc.find((m: unknown) => m.type === model.type);
         if (!existing || new Date(model.last_trained) > new Date(existing.last_trained)) {
-          return [...acc.filter((m: any) => m.type !== model.type), model];
+          return [...acc.filter((m: unknown) => m.type !== model.type), model];
         }
         return acc;
       }, []) || [];
@@ -463,7 +463,7 @@ export const PredictiveAnalytics = () => {
                   <div>
                     <h5 className="font-medium mb-3">Price Risk Zones</h5>
                     <div className="space-y-2">
-                      {simulationResult.riskZones.map((zone: any, idx: number) => (
+                      {simulationResult.riskZones.map((zone: unknown, idx: number) => (
                         <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                           <span className="font-medium">{zone.price}</span>
                           <div className="flex items-center gap-4">

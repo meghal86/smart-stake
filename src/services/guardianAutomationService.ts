@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface AutomationPolicy {
   id: string;
   policy_type: 'auto_revoke' | 'allowlist' | 'denylist' | 'threshold';
-  policy_data: Record<string, any>;
+  policy_data: Record<string, unknown>;
   enabled: boolean;
 }
 
@@ -102,7 +102,7 @@ export class GuardianAutomationService {
     }
   }
 
-  static async updatePolicy(policyId: string, policyData: Record<string, any>, enabled: boolean) {
+  static async updatePolicy(policyId: string, policyData: Record<string, unknown>, enabled: boolean) {
     try {
       const { error } = await supabase
         .from('guardian_automation_policies')

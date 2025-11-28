@@ -6,7 +6,7 @@ import { logOnboardingEvent, logTourStep, onboardingTracking } from "@/services/
 export function useDiscoveryTelemetry() {
   const { user } = useAuth();
 
-  const logEvent = useCallback(async (eventType: string, eventData: Record<string, any>) => {
+  const logEvent = useCallback(async (eventType: string, eventData: Record<string, unknown>) => {
     if (!user) return;
 
     try {

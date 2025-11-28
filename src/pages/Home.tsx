@@ -52,7 +52,7 @@ export default function Home() {
   const [selectedChain, setSelectedChain] = useState("all");
   const [dailyAlertsCount, setDailyAlertsCount] = useState(0);
   const [minAmount, setMinAmount] = useState("");
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<unknown[]>([]);
   const [isMockData, setIsMockData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,13 +60,13 @@ export default function Home() {
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const [viewMode, setViewMode] = useState<'expanded' | 'compact' | 'summary'>('expanded');
   const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<unknown>(null);
   const [apiHealth, setApiHealth] = useState<'healthy' | 'degraded' | 'down'>('healthy');
   const [lastApiUpdate, setLastApiUpdate] = useState<string>('');
   const [alertCenterOpen, setAlertCenterOpen] = useState(false);
   const [activeRules, setActiveRules] = useState(0);
   const [triggeredToday, setTriggeredToday] = useState(3);
-  const [predictions, setPredictions] = useState<any[]>([]);
+  const [predictions, setPredictions] = useState<unknown[]>([]);
   const [predLoading, setPredLoading] = useState(false);
   
   const whaleAccess = canAccessFeature('whaleAlerts');
@@ -139,7 +139,7 @@ export default function Home() {
       console.log('Processing', transactions.length, 'transactions...');
 
       // Use fresh API data with transaction classification
-      const apiTransactions = transactions.map((tx: any, index: number) => {
+      const apiTransactions = transactions.map((tx: unknown, index: number) => {
         // Determine transaction type based on context
         let txType = "transfer" as const;
         if (tx.from?.owner_type === 'exchange' && tx.to?.owner_type !== 'exchange') {
@@ -486,7 +486,7 @@ export default function Home() {
         {/* Predictions strip */}
         {(predictions?.length || 0) > 0 && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
-            {predictions.slice(0, 6).map((p: any, index: number) => {
+            {predictions.slice(0, 6).map((p: unknown, index: number) => {
               const type = (p.prediction_type || '').replace(/_/g, ' ');
               const confidence = Math.round((p.confidence || 0) * 100);
               const isPrice = (p.prediction_type || '') === 'price_movement';

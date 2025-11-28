@@ -33,7 +33,7 @@ serve(async (req) => {
 
     // Calculate whale index score based on severity
     let totalScore = 0
-    let eventCount = digestEvents.length
+    const eventCount = digestEvents.length
 
     if (eventCount === 0) {
       totalScore = 50 // Neutral score for no events

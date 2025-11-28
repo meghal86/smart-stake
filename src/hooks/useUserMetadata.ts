@@ -75,7 +75,7 @@ export const useUserMetadata = () => {
       const { data: userData, error: userError } = await Promise.race([
         userDataPromise,
         timeoutPromise
-      ]) as any;
+      ]) as unknown;
 
       if (userError) {
         console.error('User data error:', userError);
@@ -107,9 +107,9 @@ export const useUserMetadata = () => {
       const { data: metadataData, error: metadataError } = await Promise.race([
         metadataPromise,
         timeoutPromise
-      ]) as any;
+      ]) as unknown;
 
-      let metadata: any = {};
+      let metadata: unknown = {};
       
       if (metadataError) {
         console.error('Metadata error:', metadataError);
@@ -213,7 +213,7 @@ export const useUserMetadata = () => {
       const { data: subscriptionData } = await Promise.race([
         subscriptionPromise,
         timeoutPromise
-      ]) as any;
+      ]) as unknown;
 
       const combinedMetadata: UserMetadata = {
         ...metadata,

@@ -70,7 +70,7 @@ export default function Overview() {
   // Mock digest items
   useEffect(() => {
     if (marketSummary?.topAlerts) {
-      const items = marketSummary.topAlerts.slice(0, 5).map((alert: any, i: number) => ({
+      const items = marketSummary.topAlerts.slice(0, 5).map((alert: unknown, i: number) => ({
         id: `alert-${i}`,
         title: alert.title || `High volume ${alert.chain || 'ETH'} activity`,
         severity: i === 0 ? 'High' : i === 1 ? 'Medium' : 'Low',
@@ -85,7 +85,7 @@ export default function Overview() {
   // Mock watchlist items
   useEffect(() => {
     if (whaleClusters?.length) {
-      const items = whaleClusters.slice(0, 3).map((cluster: any) => ({
+      const items = whaleClusters.slice(0, 3).map((cluster: unknown) => ({
         id: cluster.id,
         type: 'cluster',
         name: cluster.name,
@@ -117,7 +117,7 @@ export default function Overview() {
     }
   };
 
-  const handleDigestCreateRule = (item: any) => {
+  const handleDigestCreateRule = (item: unknown) => {
     alert(`Creating alert rule for: ${item.title}`);
   };
 
@@ -155,7 +155,7 @@ export default function Overview() {
               <div>
                 <h2 className="text-lg font-semibold mb-4">Whale Clusters</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  {whaleClusters?.slice(0, 4).map((cluster: any) => (
+                  {whaleClusters?.slice(0, 4).map((cluster: unknown) => (
                     <ClusterCard
                       key={cluster.id}
                       cluster={cluster}
@@ -176,7 +176,7 @@ export default function Overview() {
               {/* Selected Cluster Detail */}
               {selectedCluster && (
                 <ClusterDetail
-                  cluster={whaleClusters?.find((c: any) => c.id === selectedCluster)}
+                  cluster={whaleClusters?.find((c: unknown) => c.id === selectedCluster)}
                   onClose={() => setSelectedCluster(null)}
                 />
               )}
@@ -236,7 +236,7 @@ export default function Overview() {
                 </div>
               </div>
               <div className="grid grid-cols-5 gap-4">
-                {whaleClusters?.map((cluster: any) => (
+                {whaleClusters?.map((cluster: unknown) => (
                   <ClusterCard
                     key={cluster.id}
                     cluster={cluster}
@@ -247,7 +247,7 @@ export default function Overview() {
               </div>
               {selectedCluster && (
                 <ClusterDetail
-                  cluster={whaleClusters?.find((c: any) => c.id === selectedCluster)}
+                  cluster={whaleClusters?.find((c: unknown) => c.id === selectedCluster)}
                   onClose={() => setSelectedCluster(null)}
                 />
               )}
@@ -282,7 +282,7 @@ export default function Overview() {
 }
 
 // Metric Cards Components
-function MarketMoodCard({ data, mobile }: { data: any; mobile?: boolean }) {
+function MarketMoodCard({ data, mobile }: { data: unknown; mobile?: boolean }) {
   const mood = data?.marketMood || 0;
   const delta = data?.marketMoodDelta || 0;
   
@@ -306,7 +306,7 @@ function MarketMoodCard({ data, mobile }: { data: any; mobile?: boolean }) {
   );
 }
 
-function VolumeCard({ data, mobile }: { data: any; mobile?: boolean }) {
+function VolumeCard({ data, mobile }: { data: unknown; mobile?: boolean }) {
   const volume = data?.volume24h || 0;
   const delta = data?.volumeDelta || 0;
   
@@ -332,7 +332,7 @@ function VolumeCard({ data, mobile }: { data: any; mobile?: boolean }) {
   );
 }
 
-function ActiveWhalesCard({ data, mobile }: { data: any; mobile?: boolean }) {
+function ActiveWhalesCard({ data, mobile }: { data: unknown; mobile?: boolean }) {
   const whales = data?.activeWhales || 0;
   const delta = data?.whalesDelta || 0;
   
@@ -356,7 +356,7 @@ function ActiveWhalesCard({ data, mobile }: { data: any; mobile?: boolean }) {
   );
 }
 
-function CriticalAlertsCard({ data, mobile }: { data: any; mobile?: boolean }) {
+function CriticalAlertsCard({ data, mobile }: { data: unknown; mobile?: boolean }) {
   const alerts = data?.criticalAlerts || 0;
   
   return (

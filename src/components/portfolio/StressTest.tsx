@@ -19,7 +19,7 @@ interface StressTestScenario {
 
 interface StressTestProps {
   currentValue: number;
-  onRunStressTest: (scenarios: any) => Promise<any>;
+  onRunStressTest: (scenarios: unknown) => Promise<unknown>;
 }
 
 export const StressTest: React.FC<StressTestProps> = ({
@@ -27,7 +27,7 @@ export const StressTest: React.FC<StressTestProps> = ({
   onRunStressTest
 }) => {
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<unknown>(null);
   const [scenarios, setScenarios] = useState({
     ethereum: -30,
     bitcoin: -25,
@@ -144,7 +144,7 @@ export const StressTest: React.FC<StressTestProps> = ({
     }
   };
 
-  const getResilienceMessage = (results: any) => {
+  const getResilienceMessage = (results: unknown) => {
     if (!results) return '';
     const worstCase = results.worstCase || 0;
     const portfolioValue = currentValue;
@@ -202,7 +202,7 @@ export const StressTest: React.FC<StressTestProps> = ({
     return currentValue * (1 + impact / 100);
   };
 
-  const calculateAverageImpact = (scenarioParams: any) => {
+  const calculateAverageImpact = (scenarioParams: unknown) => {
     return (scenarioParams.ethereum + scenarioParams.bitcoin + scenarioParams.altcoins) / 3;
   };
 

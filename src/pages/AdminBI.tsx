@@ -93,12 +93,12 @@ export default function AdminBI() {
       // Process preset funnel
       const presetFunnel = presetClicks.data ? 
         Object.entries(
-          presetClicks.data.reduce((acc: any, click: any) => {
+          presetClicks.data.reduce((acc: unknown, click: unknown) => {
             const key = click.preset_key;
             if (!acc[key]) acc[key] = { preset_name: key, total_clicks: 0, upgrades_within_72h: 0 };
             acc[key].total_clicks++;
             
-            const hasUpgrade = upgradeEvents.data?.some((upgrade: any) => 
+            const hasUpgrade = upgradeEvents.data?.some((upgrade: unknown) => 
               upgrade.user_id === click.user_id &&
               upgrade.last_preset_key === click.preset_key
             );
@@ -106,7 +106,7 @@ export default function AdminBI() {
             if (hasUpgrade) acc[key].upgrades_within_72h++;
             return acc;
           }, {})
-        ).map(([_, data]: any) => ({
+        ).map(([_, data]: unknown) => ({
           ...data,
           conversion_rate: data.total_clicks > 0 ? (data.upgrades_within_72h / data.total_clicks * 100).toFixed(1) : 0
         })) : [];
@@ -114,12 +114,12 @@ export default function AdminBI() {
       // Process lock funnel
       const lockFunnel = lockEvents.data ?
         Object.entries(
-          lockEvents.data.reduce((acc: any, lock: any) => {
+          lockEvents.data.reduce((acc: unknown, lock: unknown) => {
             const key = lock.lock_key;
             if (!acc[key]) acc[key] = { feature_name: key, total_locks: 0, upgrades_within_24h: 0 };
             acc[key].total_locks++;
             
-            const hasUpgrade = upgradeEvents.data?.some((upgrade: any) => 
+            const hasUpgrade = upgradeEvents.data?.some((upgrade: unknown) => 
               upgrade.user_id === lock.user_id &&
               upgrade.last_lock_key === lock.lock_key
             );
@@ -127,7 +127,7 @@ export default function AdminBI() {
             if (hasUpgrade) acc[key].upgrades_within_24h++;
             return acc;
           }, {})
-        ).map(([_, data]: any) => ({
+        ).map(([_, data]: unknown) => ({
           ...data,
           conversion_rate: data.total_locks > 0 ? (data.upgrades_within_24h / data.total_locks * 100).toFixed(1) : 0
         })) : [];
@@ -151,7 +151,7 @@ export default function AdminBI() {
       }];
 
       const runsByTier = scenarioRuns.data ? 
-        scenarioRuns.data.slice(0, 7).map((run: any, idx: number) => ({
+        scenarioRuns.data.slice(0, 7).map((run: unknown, idx: number) => ({
           day: new Date(Date.now() - idx * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           user_tier: 'free',
           total_runs: Math.floor(Math.random() * 20) + 5,

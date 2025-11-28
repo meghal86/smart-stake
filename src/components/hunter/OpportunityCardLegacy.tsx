@@ -37,7 +37,7 @@ interface LegacyOpportunityCardProps {
 // Transform legacy opportunity to new format
 function transformLegacyOpportunity(legacy: LegacyOpportunity): NewOpportunity {
   // Parse reward string to extract min/max values
-  const parseReward = (rewardStr: string): { min: number; max: number; currency: any } => {
+  const parseReward = (rewardStr: string): { min: number; max: number; currency: unknown} => {
     // Handle ranges like "$500-2000"
     const rangeMatch = rewardStr.match(/\$?(\d+(?:,\d+)?)-(\d+(?:,\d+)?)/);
     if (rangeMatch) {
@@ -92,7 +92,7 @@ function transformLegacyOpportunity(legacy: LegacyOpportunity): NewOpportunity {
   const reward = parseReward(legacy.reward);
 
   // Map legacy type to new type
-  const typeMap: Record<string, any> = {
+  const typeMap: Record<string, unknown> = {
     'Airdrop': 'airdrop',
     'Staking': 'staking',
     'NFT': 'points', // Map NFT to points for now
@@ -100,7 +100,7 @@ function transformLegacyOpportunity(legacy: LegacyOpportunity): NewOpportunity {
   };
 
   // Map risk level to trust level
-  const trustLevelMap: Record<string, any> = {
+  const trustLevelMap: Record<string, unknown> = {
     'Low': 'green',
     'Medium': 'amber',
     'High': 'red',
@@ -116,7 +116,7 @@ function transformLegacyOpportunity(legacy: LegacyOpportunity): NewOpportunity {
       logo: 'https://via.placeholder.com/40', // Placeholder logo
     },
     type: typeMap[legacy.type] || 'quest',
-    chains: legacy.chain ? [legacy.chain.toLowerCase() as any] : [],
+    chains: legacy.chain ? [legacy.chain.toLowerCase() as unknown] : [],
     reward: {
       min: reward.min,
       max: reward.max,

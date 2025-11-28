@@ -22,7 +22,7 @@ export async function GET() {
     const { data: { session } } = await supabase.auth.getSession();
     const plan = session ? 'PRO' : 'LITE';
 
-    const items = data.transactions.slice(0, plan === 'LITE' ? 5 : 50).map((tx: any) => ({
+    const items = data.transactions.slice(0, plan === 'LITE' ? 5 : 50).map((tx: unknown) => ({
       id: tx.id || `${tx.hash}-${tx.timestamp}`,
       event_time: new Date(tx.timestamp * 1000).toISOString(),
       asset: tx.symbol,
@@ -42,7 +42,7 @@ export async function GET() {
       source: 'whale-alert-live'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ /api/lite/digest FAILED:', error.message);
     return NextResponse.json(
       { 

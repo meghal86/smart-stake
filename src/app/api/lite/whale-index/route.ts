@@ -33,7 +33,7 @@ export async function GET() {
       source: 'market-summary-live'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ /api/lite/whale-index FAILED:', error.message);
     return NextResponse.json(
       { 

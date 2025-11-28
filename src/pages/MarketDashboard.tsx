@@ -84,8 +84,8 @@ export default function MarketDashboard() {
   const [clusteringEnabled, setClusteringEnabled] = useState(false);
   const [selectedWhaleForGraph, setSelectedWhaleForGraph] = useState<string | null>(null);
   const [showTour, setShowTour] = useState(false);
-  const [whaleTransactions, setWhaleTransactions] = useState<any[]>([]);
-  const [sentimentCoins, setSentimentCoins] = useState<any[]>([]);
+  const [whaleTransactions, setWhaleTransactions] = useState<unknown[]>([]);
+  const [sentimentCoins, setSentimentCoins] = useState<unknown[]>([]);
   const [hasAccessedSentiment, setHasAccessedSentiment] = useState(false);
   
   // Mock sentiment coins data for correlation heatmap
@@ -101,7 +101,7 @@ export default function MarketDashboard() {
     { id: 'uniswap', name: 'Uniswap', sentimentScore: 66, sentimentHistory: [63, 65, 67, 66] },
     { id: 'litecoin', name: 'Litecoin', sentimentScore: 41, sentimentHistory: [43, 42, 40, 41] }
   ];
-  const [portfolioAssets, setPortfolioAssets] = useState<any[]>([]);
+  const [portfolioAssets, setPortfolioAssets] = useState<unknown[]>([]);
   
   // Performance metrics (mock data - would come from API headers)
   const performanceMetrics = {
@@ -269,7 +269,7 @@ export default function MarketDashboard() {
     });
   };
 
-  const handleActivityItemClick = (item: any) => {
+  const handleActivityItemClick = (item: unknown) => {
     track('activity_opened', { type: item.type, id: item.id });
     
     // Navigate to relevant tab/context
@@ -284,12 +284,12 @@ export default function MarketDashboard() {
     }
   };
 
-  const handleWalletAdded = (wallet: any) => {
+  const handleWalletAdded = (wallet: unknown) => {
     track('wallet_added', { chain: wallet.chain, hasLabel: !!wallet.label });
     // Refresh portfolio data
   };
 
-  const handleCreateAlert = (context: any) => {
+  const handleCreateAlert = (context: unknown) => {
     console.log('🔔 Create alert clicked:', context);
     track('alert_created', { 
       source: 'kpi_card', 
@@ -367,7 +367,7 @@ export default function MarketDashboard() {
     }
   };
   
-  const handleClusterSelect = (cluster: any) => {
+  const handleClusterSelect = (cluster: unknown) => {
     track('whale_cluster_selected', { 
       clusterId: cluster.id, 
       type: cluster.type, 

@@ -37,7 +37,7 @@ import {
   Bell
 } from 'lucide-react';
 
-export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect }: any) {
+export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect }: unknown) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('balance');
   const [filterBy, setFilterBy] = useState('all');
@@ -50,12 +50,12 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
   const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');
 
   // Handle whale selection
-  const handleWhaleSelect = (whale: any) => {
+  const handleWhaleSelect = (whale: unknown) => {
     onWhaleSelect?.(whale);
   };
 
   // Handle adding whale to comparison
-  const handleAddToComparison = (whale: any) => {
+  const handleAddToComparison = (whale: unknown) => {
     if (comparisonWhales.find(w => w.id === whale.id)) {
       // Remove if already in comparison
       setComparisonWhales(prev => prev.filter(w => w.id !== whale.id));
@@ -106,7 +106,7 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
       const whaleMap = new Map();
       
       // Group transactions by address to create whale profiles
-      transactions.forEach((tx: any) => {
+      transactions.forEach((tx: unknown) => {
         const fromAddress = tx.from?.address || tx.from;
         const toAddress = tx.to?.address || tx.to;
         
@@ -147,7 +147,7 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
       });
       
       // Convert to array and calculate influence
-      const whales = Array.from(whaleMap.values()).map((whale: any) => ({
+      const whales = Array.from(whaleMap.values()).map((whale: unknown) => ({
         ...whale,
         chains: Array.from(whale.chains),
         labels: [...new Set(whale.labels)],
@@ -242,10 +242,11 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
       case 'activity':
         filtered.sort((a, b) => (b.transactions24h || 0) - (a.transactions24h || 0));
         break;
-      case 'influence':
+      case 'influence': {
         const influenceOrder = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
         filtered.sort((a, b) => (influenceOrder[b.influence as keyof typeof influenceOrder] || 0) - (influenceOrder[a.influence as keyof typeof influenceOrder] || 0));
         break;
+      }
       case 'recent':
         filtered.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
         break;
@@ -442,7 +443,7 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
       {/* Whale Cards Grid */}
       {filteredWhales.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredWhales.map((whale: any, index: number) => (
+          {filteredWhales.map((whale: unknown, index: number) => (
             <WhaleCard
               key={`whale-${index}-${typeof whale.id === 'string' ? whale.id : typeof whale.address === 'string' ? whale.address : `unknown-${index}`}`}
               whale={whale}
@@ -502,7 +503,7 @@ export function DesktopWhales({ clusters, loading, selectedWhale, onWhaleSelect 
   );
 }
 
-export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }: any) {
+export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }: unknown) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -510,7 +511,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
   const [whaleFilter, setWhaleFilter] = useState<'all' | 'large' | 'mega'>('all');
 
   // Handle whale selection
-  const handleWhaleSelect = (whale: any) => {
+  const handleWhaleSelect = (whale: unknown) => {
     onWhaleSelect?.(whale);
   };
 
@@ -551,7 +552,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
       
       const whaleMap = new Map();
       
-      transactions.forEach((tx: any) => {
+      transactions.forEach((tx: unknown) => {
         const fromAddress = tx.from?.address || tx.from;
         const toAddress = tx.to?.address || tx.to;
         
@@ -582,7 +583,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
         });
       });
       
-      const whales = Array.from(whaleMap.values()).map((whale: any) => ({
+      const whales = Array.from(whaleMap.values()).map((whale: unknown) => ({
         ...whale,
         chains: Array.from(whale.chains),
         labels: [...new Set(whale.labels)],
@@ -674,10 +675,11 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
       case 'activity':
         filtered.sort((a, b) => (b.transactions24h || 0) - (a.transactions24h || 0));
         break;
-      case 'influence':
+      case 'influence': {
         const influenceOrder = { 'Very High': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
         filtered.sort((a, b) => (influenceOrder[b.influence as keyof typeof influenceOrder] || 0) - (influenceOrder[a.influence as keyof typeof influenceOrder] || 0));
         break;
+      }
       case 'recent':
         filtered.sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
         break;
@@ -778,7 +780,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
       {/* Mobile Whale Cards */}
       {filteredWhales.length > 0 ? (
         <div className="space-y-3">
-          {filteredWhales.map((whale: any, index: number) => (
+          {filteredWhales.map((whale: unknown, index: number) => (
             <WhaleCard
               key={`mobile-whale-${index}-${typeof whale.id === 'string' ? whale.id : typeof whale.address === 'string' ? whale.address : `unknown-${index}`}`}
               whale={whale}
@@ -816,7 +818,7 @@ export function MobileWhales({ clusters, loading, selectedWhale, onWhaleSelect }
   );
 }
 
-function WhaleCardsGrid({ clusterId, selectedWhale, onWhaleSelect, mobile }: any) {
+function WhaleCardsGrid({ clusterId, selectedWhale, onWhaleSelect, mobile }: unknown) {
   const { data: whales, isLoading } = useQuery({
     queryKey: ['fetchWhales', clusterId],
     queryFn: async () => {
@@ -870,7 +872,7 @@ function WhaleCardsGrid({ clusterId, selectedWhale, onWhaleSelect, mobile }: any
 
   return (
     <div className={mobile ? "space-y-3" : "grid grid-cols-3 gap-6"}>
-      {whales.map((whale: any, index: number) => (
+      {whales.map((whale: unknown, index: number) => (
         <WhaleCard
           key={`comparison-whale-${index}-${typeof whale.id === 'string' ? whale.id : typeof whale.address === 'string' ? whale.address : `unknown-${index}`}`}
           whale={whale}
@@ -883,7 +885,7 @@ function WhaleCardsGrid({ clusterId, selectedWhale, onWhaleSelect, mobile }: any
   );
 }
 
-function WhaleCard({ whale, isSelected, onClick, mobile, isInComparison, onAddToComparison }: any) {
+function WhaleCard({ whale, isSelected, onClick, mobile, isInComparison, onAddToComparison }: unknown) {
   const getRiskColor = (score: number) => {
     if (score >= 70) return 'text-red-600';
     if (score >= 40) return 'text-amber-600';
@@ -995,7 +997,7 @@ function WhaleCard({ whale, isSelected, onClick, mobile, isInComparison, onAddTo
   );
 }
 
-function FactorBars({ factors }: any) {
+function FactorBars({ factors }: unknown) {
   const factorData = [
     { name: 'Exchange Activity', value: factors?.exchangeActivity || 0, weight: 30 },
     { name: 'Large Transfers', value: factors?.largeTransfers || 0, weight: 25 },
@@ -1019,7 +1021,7 @@ function FactorBars({ factors }: any) {
   );
 }
 
-function WhaleDetailPanel({ whaleId, onClose }: any) {
+function WhaleDetailPanel({ whaleId, onClose }: unknown) {
   const { data: whaleDetail, isLoading } = useQuery({
     queryKey: ['whale-detail', whaleId],
     queryFn: async () => {

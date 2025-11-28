@@ -16,7 +16,7 @@ import { buildClusterBundle } from '@/lib/market/cluster-utils';
 interface ClusterPanelProps {
   clusterId: string;
   onClose: () => void;
-  clusterData?: any;
+  clusterData?: unknown;
 }
 
 const WHALE_ALERT_QUERY_STALE_TIME = 2 * 60 * 1000;

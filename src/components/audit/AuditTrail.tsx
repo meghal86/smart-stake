@@ -11,7 +11,7 @@ interface AuditEvent {
   userEmail: string;
   action: string;
   resource: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   ipAddress: string;
   userAgent: string;
 }

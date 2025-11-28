@@ -79,7 +79,7 @@ export const portfolioStrings = {
 // Helper function to get localized string
 export function t(key: string, locale: string = 'en'): string {
   const keys = key.split('.');
-  let value: any = portfolioStrings[locale as keyof typeof portfolioStrings];
+  let value: unknown = portfolioStrings[locale as keyof typeof portfolioStrings];
   
   for (const k of keys) {
     value = value?.[k];

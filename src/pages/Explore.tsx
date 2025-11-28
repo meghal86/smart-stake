@@ -22,7 +22,7 @@ export default function Explore() {
         <button className="px-3 py-1 bg-gray-200 rounded">Real/Sim</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data.items.map((item: any) => (
+        {data.items.map((item: unknown) => (
           <Card key={item.id} className="p-4">
             <div className="font-bold">{item.name || item.id}</div>
             <div className="text-sm">Price: ${item.priceUsd}</div>

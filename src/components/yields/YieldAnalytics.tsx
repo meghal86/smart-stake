@@ -59,12 +59,12 @@ export function YieldAnalytics() {
     return `$${(value / 1000000).toFixed(1)}M`;
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: unknown) => {
     if (active && payload && payload.length) {
       return (
         <Card className="p-3 bg-card/95 backdrop-blur-sm border border-border/50">
           <p className="text-sm font-medium text-foreground mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: unknown, index: number) => (
             <div key={index} className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full" 

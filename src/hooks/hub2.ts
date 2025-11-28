@@ -270,7 +270,7 @@ const API = {
 
           // Convert whale transactions to alert rules
           const whaleTransactions = whaleAlerts.data?.transactions || [];
-          const alertMap = new Map<string, any>();
+          const alertMap = new Map<string, unknown>();
           
           whaleTransactions.forEach((tx: Record<string, unknown>, index: number) => {
             const symbol = tx.symbol?.toUpperCase() || 'UNKNOWN';

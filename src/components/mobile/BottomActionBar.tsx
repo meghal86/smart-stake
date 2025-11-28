@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 interface BottomActionBarProps {
-  selectedEntity: any;
+  selectedEntity: unknown;
   onClose: () => void;
   onTrade?: () => void;
   onWatchlist?: () => void;

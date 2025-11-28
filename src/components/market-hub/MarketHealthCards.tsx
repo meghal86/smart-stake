@@ -19,7 +19,7 @@ interface MarketHealthCardsProps {
     refreshedAt: string;
   };
   loading: boolean;
-  onAlertClick: (alert: any) => void;
+  onAlertClick: (alert: unknown) => void;
 }
 
 export function MarketHealthCards({ data, loading, onAlertClick }: MarketHealthCardsProps) {

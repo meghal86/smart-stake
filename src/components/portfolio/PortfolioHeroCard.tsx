@@ -7,7 +7,7 @@ import { SimpleTooltip } from './SimpleTooltip';
 interface PortfolioHeroCardProps {
   title: string;
   value: number | string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<unknown>;
   change?: number;
   lastSync?: Date;
   isLoading?: boolean;

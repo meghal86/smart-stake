@@ -92,7 +92,7 @@ function formatDateForFilename(date: Date): string {
   return date.toISOString().split('T')[0].replace(/-/g, '');
 }
 
-export function prepareWhaleAnalyticsExport(whales: any[]): ExportData {
+export function prepareWhaleAnalyticsExport(whales: unknown[]): ExportData {
   return {
     title: 'Whale Analytics Report',
     timestamp: new Date(),
@@ -109,7 +109,7 @@ export function prepareWhaleAnalyticsExport(whales: any[]): ExportData {
   };
 }
 
-export function preparePortfolioExport(assets: any[], totalValue: number): ExportData {
+export function preparePortfolioExport(assets: unknown[], totalValue: number): ExportData {
   return {
     title: 'Portfolio Summary Report',
     timestamp: new Date(),

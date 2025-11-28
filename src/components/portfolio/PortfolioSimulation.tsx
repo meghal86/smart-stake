@@ -30,7 +30,7 @@ interface SimulationResult {
 
 interface PortfolioSimulationProps {
   currentValue: number;
-  onSimulate: (scenario: any) => Promise<SimulationResult>;
+  onSimulate: (scenario: unknown) => Promise<SimulationResult>;
 }
 
 const PRESET_SCENARIOS: SimulationScenario[] = [

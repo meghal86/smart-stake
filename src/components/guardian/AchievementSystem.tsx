@@ -142,7 +142,7 @@ export function AchievementSystem({
         {Object.entries(categorizedAchievements).map(([category, categoryAchievements]) => (
           <div key={category} className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              {getCategoryIcon(category as any)}
+              {getCategoryIcon(category as unknown)}
               {category}
               <Badge variant="outline" className="ml-auto">
                 {categoryAchievements.filter((a) => a.unlocked).length} /{' '}

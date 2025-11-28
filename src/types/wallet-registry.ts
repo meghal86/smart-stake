@@ -13,7 +13,7 @@ export interface UserWallet {
   last_scan?: string
   trust_score?: number
   risk_flags?: RiskFlag[]
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   created_at: string
   updated_at: string
 }

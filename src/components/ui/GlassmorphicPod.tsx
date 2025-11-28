@@ -84,7 +84,8 @@ const GlassmorphicPod: React.FC<GlassmorphicPodProps> = ({
     const base = getModeStyles();
     switch (variant) {
       case 'circle':
-        const size = mode === 'novice' ? '300px' : mode === 'simuto' ? '180px' : '240px';
+        {
+    const size = mode === 'novice' ? '300px' : mode === 'simuto' ? '180px' : '240px';
         return {
           ...base,
           shape: {

@@ -11,7 +11,7 @@ import { Download, FileText, Image, Share2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ExportButtonProps {
-  data: any;
+  data: unknown;
   type: 'narrative' | 'watchlist' | 'entity' | 'alerts';
   className?: string;
 }
@@ -67,12 +67,12 @@ export default function ExportButton({ data, type, className }: ExportButtonProp
     }
   };
 
-  const generateCSVData = (data: any, type: string): string => {
+  const generateCSVData = (data: unknown, type: string): string => {
     if (type === 'watchlist' && Array.isArray(data)) {
       const headers = ['entityType', 'entityId', 'label', 'sentiment', 'whalePressure', 'risk', 'updatedAt'];
       const csvRows = [
         headers.join(','),
-        ...data.map((item: any) => {
+        ...data.map((item: unknown) => {
           const sentiment = item.snapshots?.sentiment ?? '';
           const whalePressure = item.snapshots?.whalePressure ?? '';
           const risk = item.snapshots?.risk ?? '';

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 interface WhaleComparisonProps {
-  selectedWhales: any[];
+  selectedWhales: unknown[];
   onRemoveWhale: (whaleId: string) => void;
   onClearAll: () => void;
   onAddToWatchlist: (whaleId: string) => void;

@@ -50,7 +50,7 @@ export function ProductionStressTest({ portfolioData }: ProductionStressTestProp
   const [altcoinChange, setAltcoinChange] = useState([0]);
   const [correlationBreak, setCorrelationBreak] = useState(false);
   const [stablecoinDepeg, setStablecoinDepeg] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
   const { simulateScenario } = useProductionStressTest(portfolioData);
@@ -90,7 +90,7 @@ export function ProductionStressTest({ portfolioData }: ProductionStressTestProp
     setResult(null);
   };
 
-  const applyPreset = (scenario: any) => {
+  const applyPreset = (scenario: unknown) => {
     console.log('🎯 Applying preset scenario:', scenario);
     setEthChange([scenario.parameters.ethChange]);
     setBtcChange([scenario.parameters.btcChange]);

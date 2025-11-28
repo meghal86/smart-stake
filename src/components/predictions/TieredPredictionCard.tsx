@@ -15,7 +15,7 @@ interface TieredPredictionCardProps {
     confidence: number;
     prediction_type: string;
     explanation: string;
-    features: Record<string, any>;
+    features: Record<string, unknown>;
   };
 }
 
@@ -112,7 +112,7 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
           {Object.entries(prediction.features).slice(0, 4).map(([key, value]) => (
             <div key={key} className="p-2 bg-muted rounded text-xs">
               <div className="capitalize">{key.replace('_', ' ')}</div>
-              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+              <div className="font-medium">{Math.round((value as unknown)?.score * 100 || 50)}%</div>
             </div>
           ))}
         </div>
@@ -154,7 +154,7 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
           {Object.entries(prediction.features).map(([key, value]) => (
             <div key={key} className="p-2 bg-muted rounded text-xs">
               <div className="capitalize">{key.replace('_', ' ')}</div>
-              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+              <div className="font-medium">{Math.round((value as unknown)?.score * 100 || 50)}%</div>
             </div>
           ))}
         </div>
@@ -214,7 +214,7 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
           {Object.entries(prediction.features).map(([key, value]) => (
             <div key={key} className="p-2 bg-muted rounded text-xs">
               <div className="capitalize">{key.replace('_', ' ')}</div>
-              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+              <div className="font-medium">{Math.round((value as unknown)?.score * 100 || 50)}%</div>
             </div>
           ))}
         </div>
@@ -271,7 +271,7 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
           {Object.entries(prediction.features).map(([key, value]) => (
             <div key={key} className="p-2 bg-muted rounded text-xs">
               <div className="capitalize">{key.replace('_', ' ')}</div>
-              <div className="font-medium">{Math.round((value as any)?.score * 100 || 50)}%</div>
+              <div className="font-medium">{Math.round((value as unknown)?.score * 100 || 50)}%</div>
             </div>
           ))}
         </div>

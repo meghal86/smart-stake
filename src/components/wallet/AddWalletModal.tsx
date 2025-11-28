@@ -56,7 +56,7 @@ export function AddWalletModal({ isOpen, onClose }: AddWalletModalProps) {
       setManualLabel('')
       setMode('choose')
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || 'Failed to add wallet')
     }
   }

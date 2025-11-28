@@ -54,7 +54,8 @@ export function parseSearchQuery(query: string): SearchContext {
           break;
           
         case 'amount':
-          const amountMatch = value.match(/^([><=]+)?(\d+(?:\.\d+)?)(k|m|b)?$/i);
+          {
+    const amountMatch = value.match(/^([><=]+)?(\d+(?:\.\d+)?)(k|m|b)?$/i);
           if (amountMatch) {
             const [, operator = '>=', amount, suffix] = amountMatch;
             let numValue = parseFloat(amount);
@@ -67,7 +68,7 @@ export function parseSearchQuery(query: string): SearchContext {
             }
             
             context.amount = {
-              operator: operator as any,
+              operator: operator as unknown,
               value: numValue
             };
           }

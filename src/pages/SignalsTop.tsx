@@ -33,7 +33,7 @@ export default function SignalsTop() {
           const { data, error } = await supabase.functions.invoke('whale-alerts');
           
           if (!error && data?.transactions) {
-            const transformedSignals: Signal[] = data.transactions.map((tx: any, index: number) => ({
+            const transformedSignals: Signal[] = data.transactions.map((tx: unknown, index: number) => ({
               id: tx.hash || `signal_${index}_${Date.now()}`,
               asset: (tx.symbol || 'ETH').toUpperCase(),
               direction: tx.from?.owner_type === 'exchange' ? 'outflow' : 'inflow',
@@ -61,7 +61,7 @@ export default function SignalsTop() {
           .limit(50);
         
         if (!digestError && digestData) {
-          const transformedSignals: Signal[] = digestData.map((item: any) => ({
+          const transformedSignals: Signal[] = digestData.map((item: unknown) => ({
             id: String(item.id),
             asset: item.asset,
             direction: item.severity > 3 ? 'outflow' : 'inflow',

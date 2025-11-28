@@ -212,7 +212,7 @@ export function useSignalFeed(options: UseSignalFeedOptions = {}) {
         schema: 'public',
         table: 'whale_digest',
       }, (payload) => {
-        const item = payload.new as any;
+        const item = payload.new as unknown;
         const signal: Signal = {
           id: String(item.id),
           asset: item.asset,

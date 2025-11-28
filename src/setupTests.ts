@@ -37,8 +37,8 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock window.location
-delete (window as any).location;
-(window as any).location = {
+delete (window as unknown).location;
+(window as unknown).location = {
   href: 'http://localhost:3000',
   origin: 'http://localhost:3000',
   pathname: '/',
@@ -53,7 +53,7 @@ const localStorageMock = {
   removeItem: jest.fn(),
   clear: jest.fn(),
 };
-global.localStorage = localStorageMock as any;
+global.localStorage = localStorageMock as unknown;
 
 // Mock sessionStorage
 const sessionStorageMock = {
@@ -62,7 +62,7 @@ const sessionStorageMock = {
   removeItem: jest.fn(),
   clear: jest.fn(),
 };
-global.sessionStorage = sessionStorageMock as any;
+global.sessionStorage = sessionStorageMock as unknown;
 
 // Mock fetch
 global.fetch = jest.fn();

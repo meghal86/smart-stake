@@ -6,7 +6,7 @@ import { RightActivityFeed } from './RightActivityFeed';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface MobileActivityDrawerProps {
-  onItemClick: (item: any) => void;
+  onItemClick: (item: unknown) => void;
 }
 
 export function MobileActivityDrawer({ onItemClick }: MobileActivityDrawerProps) {

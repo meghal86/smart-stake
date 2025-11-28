@@ -25,7 +25,7 @@ export function useWatchlist() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setWatchlist(parsed.map((item: any) => ({
+        setWatchlist(parsed.map((item: unknown) => ({
           ...item,
           lastActivity: new Date(item.lastActivity),
           addedAt: new Date(item.addedAt)

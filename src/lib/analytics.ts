@@ -1,4 +1,4 @@
-export const track = (name: string, props: any = {}) => {
+export const track = (name: string, props: unknown = {}) => {
   try {
     // @ts-ignore
     window?.posthog?.capture?.(name, props);

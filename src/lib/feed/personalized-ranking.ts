@@ -258,7 +258,7 @@ export function applyPersonalizedRanking(
 
   // Sort by personalized rank score (descending)
   scoredOpportunities.sort((a, b) => {
-    const scoreDiff = (b as any).personalizedRankScore - (a as any).personalizedRankScore;
+    const scoreDiff = (b as unknown).personalizedRankScore - (a as unknown).personalizedRankScore;
     
     // If scores are equal, use secondary sort criteria
     if (Math.abs(scoreDiff) < 0.001) {

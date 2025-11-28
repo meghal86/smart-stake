@@ -80,7 +80,7 @@ export const AlertsManager = ({ isOpen, onClose }: AlertsManagerProps) => {
     }, 500);
   };
 
-  const handleUseTemplate = (template: any) => {
+  const handleUseTemplate = (template: unknown) => {
     setShowTemplates(false);
     setShowDashboard(true);
   };

@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 
 interface ExportData {
-  whaleTransactions: any[];
-  analytics: any[];
-  alerts: any[];
+  whaleTransactions: unknown[];
+  analytics: unknown[];
+  alerts: unknown[];
 }
 
 export const ExportReports = () => {
@@ -17,7 +17,7 @@ export const ExportReports = () => {
   const [reportType, setReportType] = useState<'whale' | 'analytics' | 'alerts'>('whale');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
 
-  const generateCSV = (data: any[], filename: string) => {
+  const generateCSV = (data: unknown[], filename: string) => {
     if (!data.length) return;
     
     const headers = Object.keys(data[0]);
@@ -35,7 +35,7 @@ export const ExportReports = () => {
     URL.revokeObjectURL(url);
   };
 
-  const generatePDF = async (data: any[], filename: string) => {
+  const generatePDF = async (data: unknown[], filename: string) => {
     // Simple PDF generation using HTML canvas
     const content = `
       <html>
@@ -64,7 +64,7 @@ export const ExportReports = () => {
     }
   };
 
-  const getMockData = (): any[] => {
+  const getMockData = (): unknown[] => {
     switch (reportType) {
       case 'whale':
         return [
@@ -128,7 +128,7 @@ export const ExportReports = () => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium">Report Type</label>
-            <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
+            <Select value={reportType} onValueChange={(value: unknown) => setReportType(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -142,7 +142,7 @@ export const ExportReports = () => {
           
           <div>
             <label className="text-sm font-medium">Date Range</label>
-            <Select value={dateRange} onValueChange={(value: any) => setDateRange(value)}>
+            <Select value={dateRange} onValueChange={(value: unknown) => setDateRange(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

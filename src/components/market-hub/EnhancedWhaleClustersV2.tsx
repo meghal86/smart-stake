@@ -28,7 +28,7 @@ interface EnhancedWhaleClustersProps {
   timeWindow?: string;
   onClusterSelect?: (clusterId: string) => void;
   selectedCluster?: string | null;
-  alerts?: any[];
+  alerts?: unknown[];
 }
 
 interface ClusterGroup {
@@ -292,7 +292,7 @@ interface EnhancedClusterCardProps {
   };
   isSelected: boolean;
   onSelect: () => void;
-  alerts: any[];
+  alerts: unknown[];
 }
 
 function EnhancedClusterCard({ cluster, isSelected, onSelect, alerts }: EnhancedClusterCardProps) {

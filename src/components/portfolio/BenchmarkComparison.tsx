@@ -37,12 +37,12 @@ export function BenchmarkComparison({
 }: BenchmarkComparisonProps) {
   const [selectedBenchmarks, setSelectedBenchmarks] = useState(['ethereum', 'bitcoin']);
 
-  const CustomTooltip = useMemo(() => ({ active, payload, label }: any) => {
+  const CustomTooltip = useMemo(() => ({ active, payload, label }: unknown) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border rounded-lg p-3 shadow-lg">
           <p className="font-medium mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: unknown, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value.toFixed(2)}%
             </p>

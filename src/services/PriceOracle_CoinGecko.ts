@@ -34,7 +34,7 @@ class PriceOracle_CoinGecko {
       const prices: Record<string, TokenPrice> = {};
       
       for (const [id, priceData] of Object.entries(data)) {
-        const price = priceData as any;
+        const price = priceData as unknown;
         prices[id] = {
           price: price.usd || 0,
           change_24h: price.usd_24h_change || 0,
@@ -64,7 +64,7 @@ class PriceOracle_CoinGecko {
     }
   }
 
-  private getFromCache(key: string): any {
+  private getFromCache(key: string): unknown {
     const entry = this.cache.get(key);
     if (!entry) return null;
     
@@ -76,7 +76,7 @@ class PriceOracle_CoinGecko {
     return entry.data;
   }
 
-  private setCache(key: string, data: any, ttl: number = this.CACHE_TTL): void {
+  private setCache(key: string, data: unknown, ttl: number = this.CACHE_TTL): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),

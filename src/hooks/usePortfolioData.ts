@@ -37,7 +37,7 @@ export function usePortfolioData(addresses: string[]) {
       
       if (error) throw error;
       setData(portfolioData || {});
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Portfolio API error:', err);
       if (err.message?.includes('404') || err.message?.includes('Failed to send a request')) {
         setError('Portfolio tracking service is not deployed. Please deploy the portfolio-tracker Edge Function.');

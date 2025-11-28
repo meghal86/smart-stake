@@ -118,7 +118,7 @@ export default function MarketSentiment() {
     return `$${num.toLocaleString()}`;
   };
 
-  const generateAiInsight = (data: any) => {
+  const generateAiInsight = (data: unknown) => {
     const fearGreed = data.fearGreedIndex.value;
     const btcChange = data.prices.bitcoin.change24h;
     const btcDom = data.market.btcDominance;

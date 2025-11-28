@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface SavedView {
   id: string;
   name: string;
-  view_state: any;
+  view_state: unknown;
   is_default: boolean | null;
   user_id: string | null;
   created_at: string | null;

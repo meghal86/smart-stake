@@ -69,7 +69,7 @@ export function useProductionPortfolio(addresses: string[]) {
           simVersion: valuation.meta.sim_version
         });
         
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Production portfolio error:', err);
         setError(err.message);
       } finally {
@@ -93,7 +93,7 @@ export function useProductionPortfolio(addresses: string[]) {
     try {
       const valuation = await portfolioValuationService.valuatePortfolio(addresses);
       // Update data...
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message);
     } finally {
       setLoading(false);

@@ -9,12 +9,12 @@ import { useWhaleAnalytics } from '@/hooks/useWhaleAnalytics';
 import { WhaleCard } from './WhaleCard';
 
 // Enhanced header with actions
-const EnhancedHeader = ({ metrics, onRefresh, onIngest, loading }: any) => {
+const EnhancedHeader = ({ metrics, onRefresh, onIngest, loading }: unknown) => {
   const exportData = () => {
     // Export whale data as CSV
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Address,Balance,Risk Score,Activity,Chain\n" +
-      metrics.whales?.map((w: any) => 
+      metrics.whales?.map((w: unknown) => 
         `${w.fullAddress},${w.balance},${w.riskScore},${w.recentActivity},${w.chain}`
       ).join("\n");
     
@@ -94,7 +94,7 @@ const EnhancedHeader = ({ metrics, onRefresh, onIngest, loading }: any) => {
             <span className="text-sm font-medium">Current Market Signals</span>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {metrics.topSignals.map((signal: any, idx: number) => (
+            {metrics.topSignals.map((signal: unknown, idx: number) => (
               <Badge key={idx} variant="outline" className="whitespace-nowrap">
                 <span className="capitalize">{signal.signal_type.replace('_', ' ')}</span>
                 <span className="text-xs opacity-70 ml-1">
@@ -110,7 +110,7 @@ const EnhancedHeader = ({ metrics, onRefresh, onIngest, loading }: any) => {
 };
 
 // Enhanced whale card with quick alert
-const EnhancedWhaleCard = ({ whale, onCreateAlert }: any) => {
+const EnhancedWhaleCard = ({ whale, onCreateAlert }: unknown) => {
   const [showQuickAlert, setShowQuickAlert] = useState(false);
 
   return (

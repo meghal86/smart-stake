@@ -71,7 +71,7 @@ export async function cacheSet<T>(
   }
 
   try {
-    const setOptions: Record<string, any> = {};
+    const setOptions: Record<string, unknown> = {};
     
     if (options.ttl !== undefined) {
       setOptions.ex = options.ttl;

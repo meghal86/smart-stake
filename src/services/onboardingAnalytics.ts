@@ -33,7 +33,7 @@ export type OnboardingEventType =
 
 export interface OnboardingEvent {
   eventType: OnboardingEventType;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp?: string;
 }
 
@@ -347,7 +347,7 @@ export async function getDailyMetrics(days: number = 30): Promise<DailyMetrics[]
 /**
  * Get user's onboarding progress
  */
-export async function getUserProgress(userId: string): Promise<any> {
+export async function getUserProgress(userId: string): Promise<unknown> {
   try {
     const { data, error } = await supabase
       .from('onboarding_funnel_metrics')

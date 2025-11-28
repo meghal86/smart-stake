@@ -39,7 +39,7 @@ describe('UI Redesign - Reports & Exports', () => {
     it('should schedule report', () => {
       cy.contains('Schedule Report').click();
       cy.window().its('console').then((console) => {
-        cy.stub(console, log').as('consoleLog');
+        cy.stub(console, 'log').as('consoleLog');
       });
       cy.get('@consoleLog').should('have.been.calledWith', 'Opening schedule modal...');
     });

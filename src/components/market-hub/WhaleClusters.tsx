@@ -6,13 +6,13 @@ import { calculateShareOfTotal } from '@/lib/market/compute';
 import { useClusterStore } from '@/stores/clusterStore';
 
 interface WhaleClustersProps {
-  clusters?: any[];
-  onClusterSelect?: (cluster: any) => void;
-  onWhaleSelect?: (whale: any) => void;
+  clusters?: unknown[];
+  onClusterSelect?: (cluster: unknown) => void;
+  onWhaleSelect?: (whale: unknown) => void;
 }
 
-function mapLegacyType(type: string): any {
-  const mapping: Record<string, any> = {
+function mapLegacyType(type: string): unknown {
+  const mapping: Record<string, unknown> = {
     'ACCUMULATION': 'Accumulation',
     'DISTRIBUTION': 'Outflow',
     'CEX_INFLOW': 'CEXInflow',

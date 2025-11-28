@@ -39,7 +39,7 @@ export interface MixerProximityResult {
  * Check for direct mixer interactions
  */
 function checkDirectMixerInteractions(
-  transactions: any[],
+  transactions: unknown[],
   mixerAddresses: string[]
 ): {
   count: number;
@@ -83,7 +83,7 @@ function checkDirectMixerInteractions(
  * Check for one-hop mixer interactions (address interacted with someone who used a mixer)
  */
 function checkOneHopMixerInteractions(
-  transactions: any[],
+  transactions: unknown[],
   mixerAddresses: string[],
   targetAddress: string
 ): {
@@ -171,7 +171,7 @@ function calculateProximityScore(
 export async function checkMixerProximity(
   address: string,
   chain: string,
-  transactions: any[]
+  transactions: unknown[]
 ): Promise<MixerProximityResult> {
   const mixerAddresses = MIXER_ADDRESSES[chain.toLowerCase()] || [];
 

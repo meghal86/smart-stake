@@ -8,7 +8,7 @@ export interface LogContext {
   userId?: string;
   walletAddress?: string;
   action?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -30,7 +30,7 @@ export class Logger {
     this.context = context;
   }
 
-  private log(level: LogLevel, message: string, data?: any) {
+  private log(level: LogLevel, message: string, data?: unknown) {
     const timestamp = new Date().toISOString();
     const logEntry = {
       timestamp,
@@ -50,27 +50,27 @@ export class Logger {
     }
 
     // Send errors to Sentry if configured
-    if (level === 'error' && (window as any).Sentry) {
-      const Sentry = (window as any).Sentry;
+    if (level === 'error' && (window as unknown).Sentry) {
+      const Sentry = (window as unknown).Sentry;
       Sentry.captureException(new Error(message), {
         extra: logEntry,
       });
     }
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, data?: unknown) {
     this.log('debug', message, data);
   }
 
-  info(message: string, data?: any) {
+  info(message: string, data?: unknown) {
     this.log('info', message, data);
   }
 
-  warn(message: string, data?: any) {
+  warn(message: string, data?: unknown) {
     this.log('warn', message, data);
   }
 
-  error(message: string, data?: any) {
+  error(message: string, data?: unknown) {
     this.log('error', message, data);
   }
 
@@ -160,7 +160,7 @@ export class PerformanceTracker {
   }
 
   getAllMetrics(): Record<string, ReturnType<typeof this.getStats>> {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     for (const [name] of this.metrics) {
       result[name] = this.getStats(name);
     }
@@ -184,8 +184,8 @@ export function captureError(
   });
 
   // Send to Sentry if available
-  if ((window as any).Sentry) {
-    const Sentry = (window as any).Sentry;
+  if ((window as unknown).Sentry) {
+    const Sentry = (window as unknown).Sentry;
     Sentry.captureException(error, { extra: context });
   }
 }
@@ -203,7 +203,7 @@ export function initSentry(dsn?: string): void {
   const script = document.createElement('script');
   script.src = 'https://browser.sentry-cdn.com/7.x/bundle.min.js';
   script.onload = () => {
-    const Sentry = (window as any).Sentry;
+    const Sentry = (window as unknown).Sentry;
     if (Sentry) {
       Sentry.init({
         dsn,
@@ -227,13 +227,13 @@ export function initSentry(dsn?: string): void {
  */
 export function trackEvent(
   eventName: string,
-  properties?: Record<string, any>
+  properties?: Record<string, unknown>
 ): void {
   logger.info(`Event: ${eventName}`, properties);
 
   // Send to analytics service if configured
-  if ((window as any).analytics) {
-    (window as any).analytics.track(eventName, properties);
+  if ((window as unknown).analytics) {
+    (window as unknown).analytics.track(eventName, properties);
   }
 }
 

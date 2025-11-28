@@ -20,9 +20,9 @@ import {
 
 interface QuantStatusDashboardProps {
   timeWindow: string;
-  chainRisk?: any;
-  whaleClusters?: any[];
-  alertsStream?: any;
+  chainRisk?: unknown;
+  whaleClusters?: unknown[];
+  alertsStream?: unknown;
 }
 
 export function QuantStatusDashboard({ 
@@ -41,7 +41,7 @@ export function QuantStatusDashboard({
     const features = [
       {
         name: 'Real Chain Risk Calculation',
-        status: chainRisk?.chains?.some((c: any) => c.risk !== null) ? 'complete' : 'partial',
+        status: chainRisk?.chains?.some((c: unknown) => c.risk !== null) ? 'complete' : 'partial',
         description: 'Quantitative risk scoring with component breakdown'
       },
       {

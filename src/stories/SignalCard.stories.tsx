@@ -157,7 +157,7 @@ export const NewSignalFadeIn: S = {
         id: `sig_${Date.now()}`,
         type: ['cex_outflow', 'dormant_awake', 'risk_change', 'sentiment_change'][
           Math.floor(Math.random() * 4)
-        ] as any,
+        ] as unknown,
         entity: {
           name: ['Bitcoin', 'Ethereum', 'Solana', 'Cardano'][Math.floor(Math.random() * 4)],
           symbol: ['BTC', 'ETH', 'SOL', 'ADA'][Math.floor(Math.random() * 4)],

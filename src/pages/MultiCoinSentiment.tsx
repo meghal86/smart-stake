@@ -127,7 +127,7 @@ export default function MultiCoinSentiment() {
       
       setCoins(coinData);
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch multi-coin sentiment:', error);
       setError(`Failed to load sentiment data: ${error.message || 'Unknown error'}`);
     } finally {
@@ -253,9 +253,9 @@ export default function MultiCoinSentiment() {
     // Mock historical data
     const priceHistory = [coin.price * 0.95, coin.price * 0.98, coin.price * 1.02, coin.price];
     
-    const [realNews, setRealNews] = useState<any[]>([]);
+    const [realNews, setRealNews] = useState<unknown[]>([]);
     const [newsLoading, setNewsLoading] = useState(true);
-    const [selectedNews, setSelectedNews] = useState<any>(null);
+    const [selectedNews, setSelectedNews] = useState<unknown>(null);
     const [showNewsModal, setShowNewsModal] = useState(false);
     
     // Fetch real news data with caching
@@ -773,7 +773,7 @@ export default function MultiCoinSentiment() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs">Alert Type</Label>
-                  <Select value={alertType} onValueChange={(value: any) => setAlertType(value)}>
+                  <Select value={alertType} onValueChange={(value: unknown) => setAlertType(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -788,7 +788,7 @@ export default function MultiCoinSentiment() {
                 
                 <div>
                   <Label className="text-xs">Condition</Label>
-                  <Select value={alertCondition} onValueChange={(value: any) => setAlertCondition(value)}>
+                  <Select value={alertCondition} onValueChange={(value: unknown) => setAlertCondition(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -963,7 +963,7 @@ export default function MultiCoinSentiment() {
             />
           </div>
           
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as unknown)}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -974,7 +974,7 @@ export default function MultiCoinSentiment() {
             </SelectContent>
           </Select>
           
-          <Select value={filterSentiment} onValueChange={(value) => setFilterSentiment(value as any)}>
+          <Select value={filterSentiment} onValueChange={(value) => setFilterSentiment(value as unknown)}>
             <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue placeholder="Filter" />
             </SelectTrigger>

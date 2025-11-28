@@ -39,7 +39,7 @@ export interface FilterChangeEvent extends BaseEventPayload {
   properties: {
     filter_type: string;
     filter_value: string | string[] | number | boolean;
-    active_filters: Record<string, any>;
+    active_filters: Record<string, unknown>;
   };
 }
 

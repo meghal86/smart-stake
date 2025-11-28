@@ -3,12 +3,12 @@ interface CoalescedRequest<T> {
   timestamp: number;
   subscribers: Array<{
     resolve: (value: T) => void;
-    reject: (error: any) => void;
+    reject: (error: unknown) => void;
   }>;
 }
 
 class RequestCoalescer {
-  private activeRequests = new Map<string, CoalescedRequest<any>>();
+  private activeRequests = new Map<string, CoalescedRequest<unknown>>();
   private readonly BUCKET_SIZE = 30000; // 30 seconds
 
   async coalesce<T>(
@@ -27,7 +27,7 @@ class RequestCoalescer {
     }
 
     // Create new coalesced request
-    const subscribers: Array<{ resolve: (value: T) => void; reject: (error: any) => void }> = [];
+    const subscribers: Array<{ resolve: (value: T) => void; reject: (error: unknown) => void }> = [];
     
     const promise = operation()
       .then((result) => {

@@ -128,7 +128,7 @@ export async function getWalletTransactions(
     const data = await response.json();
     const transfers = data.result?.transfers || [];
 
-    return transfers.map((tx: any) => ({
+    return transfers.map((tx: unknown) => ({
       hash: tx.hash,
       from: tx.from,
       to: tx.to,

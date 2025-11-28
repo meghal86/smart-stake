@@ -50,10 +50,10 @@ class MemoryCache<T> {
 }
 
 // Global cache instances
-const contractMetaCache = new MemoryCache<any>();
-const honeypotCache = new MemoryCache<any>();
+const contractMetaCache = new MemoryCache<unknown>();
+const honeypotCache = new MemoryCache<unknown>();
 const priceCache = new MemoryCache<number>();
-const reputationCache = new MemoryCache<any>();
+const reputationCache = new MemoryCache<unknown>();
 
 // Periodic cleanup (every 5 minutes)
 if (typeof window !== 'undefined') {

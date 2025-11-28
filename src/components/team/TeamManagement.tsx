@@ -203,7 +203,7 @@ export const TeamManagement = () => {
               </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">Role</label>
-                <Select value={newMember.role} onValueChange={(value: any) => setNewMember({...newMember, role: value})}>
+                <Select value={newMember.role} onValueChange={(value: unknown) => setNewMember({...newMember, role: value})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

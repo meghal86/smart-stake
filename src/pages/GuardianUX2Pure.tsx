@@ -390,7 +390,7 @@ export function GuardianUX2Pure() {
     if (!address) return;
     setIsScanning(true);
     setShowResults(false);
-    analytics.track('guardian_rescan_requested' as any, { wallet_address: address });
+    analytics.track('guardian_rescan_requested' as unknown, { wallet_address: address });
     try {
       await rescan();
       setTimeout(() => {
@@ -427,7 +427,7 @@ export function GuardianUX2Pure() {
     // Select this wallet
     setSelectedWalletAddress(demoAddress);
     
-    analytics.track('guardian_demo_mode_activated' as any, { demo_address: demoAddress });
+    analytics.track('guardian_demo_mode_activated' as unknown, { demo_address: demoAddress });
   };
 
   const trustScore = data?.trustScorePercent || 87;
@@ -515,7 +515,7 @@ export function GuardianUX2Pure() {
               }}
               onClick={() => {
                 console.log('Wrapper clicked');
-                analytics.track('guardian_wallet_connect_clicked' as any, {});
+                analytics.track('guardian_wallet_connect_clicked' as unknown, {});
               }}
             >
               <ConnectButton 
@@ -569,7 +569,7 @@ export function GuardianUX2Pure() {
               onClick={() => {
                 setShowAddWalletOptions(true);
                 setAddWalletMode('manual');
-                analytics.track('guardian_manual_input_opened' as any, {});
+                analytics.track('guardian_manual_input_opened' as unknown, {});
               }}
             >
               🔍 Scan Any Address

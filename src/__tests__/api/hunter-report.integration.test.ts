@@ -13,9 +13,9 @@ import { createClient } from '@supabase/supabase-js';
 
 describe('Hunter Report API Integration', () => {
   let supabase: ReturnType<typeof createClient>;
-  let testUserIds: string[] = [];
+  const testUserIds: string[] = [];
   let testOpportunityId: string;
-  let authTokens: string[] = [];
+  const authTokens: string[] = [];
 
   beforeAll(async () => {
     // Initialize Supabase client

@@ -237,7 +237,7 @@ export async function deleteHarvestSession(
 /**
  * Map database session to TypeScript type
  */
-function mapDatabaseSessionToType(dbSession: any): HarvestSession {
+function mapDatabaseSessionToType(dbSession: unknown): HarvestSession {
   return {
     sessionId: dbSession.session_id,
     userId: dbSession.user_id,

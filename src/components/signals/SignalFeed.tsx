@@ -54,7 +54,7 @@ export function SignalFeed({ enableRealtime = true, pageSize = 50 }: SignalFeedP
     refresh,
   } = useSignalFeed({ enableRealtime, pageSize });
 
-  const virtuosoRef = useRef<any>(null);
+  const virtuosoRef = useRef<unknown>(null);
 
   const loadMoreCallback = useCallback(() => {
     if (!isLoading && hasMore) {

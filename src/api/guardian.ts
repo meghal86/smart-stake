@@ -17,7 +17,7 @@ const GUARDIAN_BASE_URL = `${SUPABASE_URL}/functions/v1`;
 export async function scanWallet(
   walletAddress: string,
   network: string
-): Promise<any> {
+): Promise<{ trust_score: number; flags: unknown[]; scan_timestamp: string }> {
   const response = await fetch(`${GUARDIAN_BASE_URL}/guardian-scan`, {
     method: 'POST',
     headers: {

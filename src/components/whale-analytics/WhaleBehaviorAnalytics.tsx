@@ -26,7 +26,7 @@ interface WhaleData {
 }
 
 // Live whale data will be fetched from API
-let liveWhales: WhaleData[] = [];
+const liveWhales: WhaleData[] = [];
 
 const getWhaleTypeIcon = (type: string) => {
   switch (type) {

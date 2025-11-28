@@ -118,7 +118,7 @@ export async function getWalletHistory(
   // Process completed opportunities
   if (completedData) {
     for (const item of completedData) {
-      const opp = (item as any).opportunities;
+      const opp = (item as unknown).opportunities;
       if (opp) {
         completedTypesSet.add(opp.type);
         if (opp.chains) {
@@ -133,7 +133,7 @@ export async function getWalletHistory(
   // Process saved opportunities
   if (savedData) {
     for (const item of savedData) {
-      const opp = (item as any).opportunities;
+      const opp = (item as unknown).opportunities;
       if (opp) {
         savedTypesSet.add(opp.type);
         if (opp.chains) {

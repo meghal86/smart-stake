@@ -9,7 +9,7 @@ import { Bell, ExternalLink } from "lucide-react";
 interface ProtocolDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  protocol: any;
+  protocol: unknown;
 }
 
 export const ProtocolDetailModal: React.FC<ProtocolDetailModalProps> = ({
@@ -17,7 +17,7 @@ export const ProtocolDetailModal: React.FC<ProtocolDetailModalProps> = ({
   onClose,
   protocol
 }) => {
-  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [historicalData, setHistoricalData] = useState<unknown[]>([]);
 
   useEffect(() => {
     if (isOpen && protocol) {

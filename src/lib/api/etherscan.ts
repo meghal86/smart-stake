@@ -187,7 +187,7 @@ export async function getTransactions(
   endBlock = 99999999,
   page = 1,
   offset = 100
-): Promise<any[]> {
+): Promise<unknown[]> {
   try {
     const url = getEtherscanUrl(chain);
     const apiKey = getApiKey();
@@ -220,7 +220,7 @@ export async function getTokenTransfers(
   address: string,
   chain = 'ethereum',
   contractAddress?: string
-): Promise<any[]> {
+): Promise<Array<Record<string, unknown>>> {
   try {
     const url = getEtherscanUrl(chain);
     const apiKey = getApiKey();

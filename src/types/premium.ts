@@ -52,7 +52,7 @@ export interface AlertDelivery {
   status: 'pending' | 'sent' | 'failed' | 'rate_limited'
   sent_at?: string
   error_message?: string
-  delivery_metadata: Record<string, any>
+  delivery_metadata: Record<string, unknown>
 }
 
 // NFT Whale Tracking

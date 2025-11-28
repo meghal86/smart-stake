@@ -83,7 +83,7 @@ export function EnhancedRiskHeatmap({ timeWindow, className }: EnhancedRiskHeatm
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {chains.map((chain: any) => (
+          {chains.map((chain: unknown) => (
             <EnhancedTooltip
               key={chain.chain}
               content={

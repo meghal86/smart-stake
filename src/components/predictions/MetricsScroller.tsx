@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 
 interface MetricsScrollerProps {
-  features: Record<string, any>;
+  features: Record<string, unknown>;
   isMobile?: boolean;
 }
 

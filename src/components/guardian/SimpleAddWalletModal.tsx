@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface SimpleAddWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onWalletAdded?: (wallet: any) => void;
+  onWalletAdded?: (wallet: unknown) => void;
 }
 
 export function SimpleAddWalletModal({ isOpen, onClose, onWalletAdded }: SimpleAddWalletModalProps) {

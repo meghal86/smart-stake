@@ -23,7 +23,7 @@ interface GraphEdge {
 
 interface CounterpartyGraphProps {
   whaleAddress: string;
-  transactions: any[];
+  transactions: unknown[];
   isOpen: boolean;
   onClose: () => void;
 }

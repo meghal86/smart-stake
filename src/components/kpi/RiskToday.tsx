@@ -20,7 +20,7 @@ type RiskTodayProps = {
   onOpenAlert?: () => void
   plan?: 'Lite' | 'Pro' | 'Institutional'
   theme?: 'light' | 'dark'
-  trackEvent?: (name: string, props?: Record<string, any>) => void
+  trackEvent?: (name: string, props?: Record<string, unknown>) => void
   pulseOnNextRender?: boolean
 }
 

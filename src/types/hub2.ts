@@ -41,7 +41,7 @@ export interface BacktestResult {
 export interface AlertRule {
   id: string;
   name: string;
-  predicate: Record<string, any>;
+  predicate: Record<string, unknown>;
   scope: { kind:'asset'|'chain'|'cluster'; ids:string[] };
   threshold?: Record<string, number>;
   window: '1h'|'4h'|'24h'|'7d';

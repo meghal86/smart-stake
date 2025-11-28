@@ -16,12 +16,12 @@ interface WhaleProfileModalProps {
 }
 
 interface WhaleProfile {
-  profile: any;
-  transactions: any[];
-  portfolio: any[];
-  counterparties: any[];
-  metrics: any;
-  analytics: any;
+  profile: unknown;
+  transactions: unknown[];
+  portfolio: unknown[];
+  counterparties: unknown[];
+  metrics: unknown;
+  analytics: unknown;
 }
 
 export const WhaleProfileModal: React.FC<WhaleProfileModalProps> = ({
@@ -154,12 +154,12 @@ export const WhaleProfileModal: React.FC<WhaleProfileModalProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="h-32 flex items-end gap-1">
-                    {profile.analytics.activity_timeline.map((day: any, index: number) => (
+                    {profile.analytics.activity_timeline.map((day: unknown, index: number) => (
                       <div
                         key={index}
                         className="flex-1 bg-blue-200 rounded-t"
                         style={{
-                          height: `${Math.max(4, (day.volume / Math.max(...profile.analytics.activity_timeline.map((d: any) => d.volume))) * 100)}%`
+                          height: `${Math.max(4, (day.volume / Math.max(...profile.analytics.activity_timeline.map((d: unknown) => d.volume))) * 100)}%`
                         }}
                         title={`${day.date}: ${formatNumber(day.volume)}`}
                       />
@@ -171,7 +171,7 @@ export const WhaleProfileModal: React.FC<WhaleProfileModalProps> = ({
 
             <TabsContent value="transactions" className="space-y-4">
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {profile.transactions.map((tx: any) => (
+                {profile.transactions.map((tx: unknown) => (
                   <Card key={tx.id} className="p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -202,7 +202,7 @@ export const WhaleProfileModal: React.FC<WhaleProfileModalProps> = ({
 
             <TabsContent value="portfolio" className="space-y-4">
               <div className="space-y-2">
-                {profile.portfolio.map((holding: any) => (
+                {profile.portfolio.map((holding: unknown) => (
                   <Card key={`${holding.token_address}-${holding.chain}`} className="p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ export const WhaleProfileModal: React.FC<WhaleProfileModalProps> = ({
 
             <TabsContent value="counterparties" className="space-y-4">
               <div className="space-y-2">
-                {profile.counterparties.map((counterparty: any) => (
+                {profile.counterparties.map((counterparty: unknown) => (
                   <Card key={counterparty.id} className="p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">

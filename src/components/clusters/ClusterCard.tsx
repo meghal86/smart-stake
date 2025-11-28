@@ -95,7 +95,7 @@ export function ClusterCard({
   const impactScore = Math.abs(cluster.netFlow24h || 0) / 1e6;
   const scaleClass = impactScore > 3 ? 'scale-105' : impactScore > 1 ? 'scale-102' : 'scale-100';
   
-  const getStorytellingLabel = (cluster: any) => {
+  const getStorytellingLabel = (cluster: unknown) => {
     const flowDirection = (cluster.netFlow24h || 0) > 0 ? '⬆️' : '⬇️';
     const flowAmount = Math.abs((cluster.netFlow24h || 0) / 1000000).toFixed(1);
     const addressCount = cluster.addressesCount || 0;

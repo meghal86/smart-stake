@@ -54,7 +54,7 @@ export const EnterpriseFeatures = ({ whales, onTriggerAlert }: EnterpriseProps) 
     }
   ]);
 
-  const shareWithTeam = (data: any, title: string) => {
+  const shareWithTeam = (data: unknown, title: string) => {
     const shareData = {
       title: `WhalePlus: ${title}`,
       text: `High-risk whale analysis from WhalePlus`,

@@ -166,6 +166,6 @@ function BetaBadge() {
   return <span className="badge beta">Beta</span>;
 }
 
-function MainContent({ flags }: { flags: any }) {
+function MainContent({ flags }: { flags: unknown}) {
   return <div>Main Content (flags: {JSON.stringify(flags)})</div>;
 }

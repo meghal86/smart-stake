@@ -28,7 +28,7 @@ export default function EntityDetail() {
       <div>
         <h2 className="text-lg font-bold mb-2">Timeline</h2>
         <div className="space-y-2">
-          {data.events.map((event: any) => (
+          {data.events.map((event: unknown) => (
             <Card key={event.id} className="p-2">
               <div>{event.type} - {event.ts}</div>
               <div>Impact: {event.impactUsd}</div>

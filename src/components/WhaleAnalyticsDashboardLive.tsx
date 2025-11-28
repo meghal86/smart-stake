@@ -438,7 +438,7 @@ const WhaleAnalyticsDashboard: React.FC = () => {
         if (whaleData.length === 0) {
           setError('No whale data found in database');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(`Failed to load data: ${err.message}`);
       } finally {
         setLoading(false);

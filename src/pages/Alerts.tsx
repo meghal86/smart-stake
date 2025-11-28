@@ -101,14 +101,14 @@ function AlertsContent() {
   useEffect(() => {
     if (!whaleData?.transactions) return;
 
-    const transformedAlerts: AlertItem[] = whaleData.transactions.map((tx: any, index: number) => {
+    const transformedAlerts: AlertItem[] = whaleData.transactions.map((tx: unknown, index: number) => {
       const amountUSD = Number(tx.amount_usd || tx.amount) || 0;
       const severity = amountUSD >= 50000000 ? 'Critical' : 
                       amountUSD >= 10000000 ? 'High' : 
                       amountUSD >= 5000000 ? 'Medium' : 'Low';
       
       // Match transaction to cluster if possible
-      const matchedCluster = clusterData?.clusters?.find((cluster: any) => {
+      const matchedCluster = clusterData?.clusters?.find((cluster: unknown) => {
         const clusterAddresses = cluster.addresses || [];
         return clusterAddresses.includes(tx.from?.address) || 
                clusterAddresses.includes(tx.to?.address);

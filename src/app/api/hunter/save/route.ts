@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const identifier = `save:${user.id}`;
     try {
       await checkRateLimit(identifier, { limit: 60, window: '1 h' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
         { 
           error: { 

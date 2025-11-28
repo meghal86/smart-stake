@@ -12,7 +12,7 @@ interface ContextualActionBarProps {
     name?: string;
     address?: string;
     severity?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   onClose: () => void;
 }

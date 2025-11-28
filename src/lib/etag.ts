@@ -16,7 +16,7 @@ import { createHash } from 'crypto';
  * @param data - Data to hash (will be JSON stringified)
  * @returns ETag string (quoted hash)
  */
-export function hashETag(data: any): string {
+export function hashETag(data: unknown): string {
   const json = JSON.stringify(data);
   // Handle undefined which JSON.stringify returns as undefined (not a string)
   const jsonStr = json === undefined ? 'undefined' : json;
@@ -55,7 +55,7 @@ export function compareETags(etag1: string | null, etag2: string | null): boolea
  * @param data - Data to hash
  * @returns Weak ETag string
  */
-export function hashWeakETag(data: any): string {
+export function hashWeakETag(data: unknown): string {
   const etag = hashETag(data);
   return `W/${etag}`;
 }

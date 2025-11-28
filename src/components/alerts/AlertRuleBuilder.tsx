@@ -128,7 +128,7 @@ export function AlertRuleBuilder({ initialRule, onSave, onCancel }: AlertRuleBui
                 
                 <Select
                   value={condition.type}
-                  onValueChange={(value: any) => updateCondition(index, { type: value })}
+                  onValueChange={(value: unknown) => updateCondition(index, { type: value })}
                 >
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -209,7 +209,7 @@ export function AlertRuleBuilder({ initialRule, onSave, onCancel }: AlertRuleBui
             <Label>Logic Operator</Label>
             <Select
               value={rule.logic_operator}
-              onValueChange={(value: any) => setRule(prev => ({ ...prev, logic_operator: value }))}
+              onValueChange={(value: unknown) => setRule(prev => ({ ...prev, logic_operator: value }))}
             >
               <SelectTrigger className="w-32 mt-1">
                 <SelectValue />

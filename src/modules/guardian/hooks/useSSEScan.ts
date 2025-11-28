@@ -9,8 +9,8 @@ export interface ScanStep {
   step: 'approvals' | 'reputation' | 'mixer' | 'complete' | 'error';
   progress: number;
   message?: string;
-  data?: any;
-  error?: any;
+  data?: unknown;
+  error?: unknown;
 }
 
 export function useSSEScan() {
@@ -93,16 +93,16 @@ export function useSSEScan() {
                   lastScanRelative: 'just now',
                   flags: data.data.flags,
                   issuesBySeverity: {
-                    low: data.data.flags.filter((f: any) => f.severity === 'low').length,
-                    medium: data.data.flags.filter((f: any) => f.severity === 'medium').length,
-                    high: data.data.flags.filter((f: any) => f.severity === 'high').length,
+                    low: data.data.flags.filter((f: unknown) => f.severity === 'low').length,
+                    medium: data.data.flags.filter((f: unknown) => f.severity === 'medium').length,
+                    high: data.data.flags.filter((f: unknown) => f.severity === 'high').length,
                   },
                   hasFlags: data.data.flags.length > 0,
                   summary: `Scan completed with ${data.data.flags.length} flags`,
                   guardianScanId: data.data.guardian_scan_id,
                 };
 
-                setResult(result as any);
+                setResult(result as unknown);
               } else if (data.step === 'error') {
                 setError(data.error?.message || 'Scan failed');
               }

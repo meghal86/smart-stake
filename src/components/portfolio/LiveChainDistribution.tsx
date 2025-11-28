@@ -31,7 +31,7 @@ interface LiveChainDistributionProps {
 }
 
 export function LiveChainDistribution({ holdings = [], totalValue }: LiveChainDistributionProps) {
-  const [selectedChain, setSelectedChain] = useState<any>(null);
+  const [selectedChain, setSelectedChain] = useState<unknown>(null);
   const [showDrilldown, setShowDrilldown] = useState(false);
   // Map tokens to their chains
   const getTokenChain = (token: string): { name: string; color: string } => {
@@ -105,7 +105,7 @@ export function LiveChainDistribution({ holdings = [], totalValue }: LiveChainDi
     }));
   }, [holdings, totalValue]);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: unknown) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -162,7 +162,7 @@ export function LiveChainDistribution({ holdings = [], totalValue }: LiveChainDi
             </Pie>
             <Tooltip content={<CustomTooltip />} />
             <Legend 
-              formatter={(value, entry: any) => (
+              formatter={(value, entry: unknown) => (
                 <span style={{ color: entry.color }}>
                   {value} (${entry.payload.value.toFixed(0)})
                 </span>

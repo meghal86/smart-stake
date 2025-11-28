@@ -195,7 +195,7 @@ export default function ExplorePage() {
                   <select 
                     value={filters.sort || ''} 
                     onChange={(e) => {
-                      const newFilters = { ...filters, sort: e.target.value as any };
+                      const newFilters = { ...filters, sort: e.target.value as unknown };
                       // Update filters and URL
                     }}
                     className="text-sm border rounded px-2 py-1"

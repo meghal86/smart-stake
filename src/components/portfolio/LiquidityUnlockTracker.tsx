@@ -111,7 +111,7 @@ export function LiquidityUnlockTracker({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium">{unlock.token}</span>
-                    <Badge variant={getImpactColor(unlock.impact) as any} className="text-xs">
+                    <Badge variant={getImpactColor(unlock.impact) as unknown} className="text-xs">
                       {unlock.impact}
                     </Badge>
                     <Badge variant="outline" className="text-xs capitalize">

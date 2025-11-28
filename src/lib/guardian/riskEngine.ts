@@ -59,7 +59,7 @@ function calculateApprovalRisk(approvals: ApprovalRisk[]): number {
   if (approvals.length === 0) return 0;
   
   let riskScore = 0;
-  let totalApprovals = approvals.length;
+  const totalApprovals = approvals.length;
   
   for (const approval of approvals) {
     let approvalRisk = 0;

@@ -9,7 +9,7 @@ interface WorkingAddWalletButtonProps {
   className?: string;
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'sm' | 'default' | 'lg';
-  onWalletAdded?: (wallet: any) => void;
+  onWalletAdded?: (wallet: unknown) => void;
 }
 
 export function WorkingAddWalletButton({ 
@@ -30,7 +30,7 @@ export function WorkingAddWalletButton({
     setIsModalOpen(false);
   };
 
-  const handleWalletAdded = (wallet: any) => {
+  const handleWalletAdded = (wallet: unknown) => {
     console.log('Wallet added successfully:', wallet);
     onWalletAdded?.(wallet);
   };

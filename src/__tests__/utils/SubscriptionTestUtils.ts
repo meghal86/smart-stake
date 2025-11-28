@@ -61,7 +61,7 @@ export class SubscriptionTestUtils {
     subscriptionStatus?: string;
     currentPeriodEnd?: string;
   }): Promise<void> {
-    const updateData: any = {
+    const updateData: unknown = {
       plan,
       updated_at: new Date().toISOString(),
     };
@@ -162,7 +162,7 @@ export class SubscriptionTestUtils {
   /**
    * Simulate a Stripe webhook event
    */
-  static async simulateWebhookEvent(eventType: string, eventData: any): Promise<Response> {
+  static async simulateWebhookEvent(eventType: string, eventData: unknown): Promise<Response> {
     // This would call the actual webhook function in a real test environment
     // For now, we'll simulate the database updates that the webhook would make
     
@@ -178,7 +178,7 @@ export class SubscriptionTestUtils {
     }
   }
 
-  private static async handleCheckoutCompleted(sessionData: any): Promise<Response> {
+  private static async handleCheckoutCompleted(sessionData: unknown): Promise<Response> {
     const userId = sessionData.metadata?.user_id;
     if (!userId) {
       throw new Error('No user_id in session metadata');
@@ -213,7 +213,7 @@ export class SubscriptionTestUtils {
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   }
 
-  private static async handleSubscriptionUpdated(subscriptionData: any): Promise<Response> {
+  private static async handleSubscriptionUpdated(subscriptionData: unknown): Promise<Response> {
     const userId = subscriptionData.metadata?.user_id;
     if (!userId) {
       throw new Error('No user_id in subscription metadata');
@@ -236,7 +236,7 @@ export class SubscriptionTestUtils {
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   }
 
-  private static async handleSubscriptionDeleted(subscriptionData: any): Promise<Response> {
+  private static async handleSubscriptionDeleted(subscriptionData: unknown): Promise<Response> {
     const userId = subscriptionData.metadata?.user_id;
     if (!userId) {
       throw new Error('No user_id in subscription metadata');

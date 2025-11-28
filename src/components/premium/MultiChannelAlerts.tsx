@@ -17,7 +17,7 @@ interface AlertChannel {
   endpoint: string
   is_active: boolean
   subscription_tier_required: 'free' | 'premium' | 'enterprise'
-  settings: Record<string, any>
+  settings: Record<string, unknown>
 }
 
 export const MultiChannelAlerts = () => {
@@ -51,7 +51,7 @@ export const MultiChannelAlerts = () => {
         channel_type: (channel.channel_type as 'push' | 'email' | 'webhook' | 'sms') || 'email',
         is_active: channel.is_active ?? true,
         subscription_tier_required: (channel.subscription_tier_required as 'free' | 'premium' | 'enterprise') || 'premium',
-        settings: (typeof channel.settings === 'object' && channel.settings !== null) ? channel.settings as Record<string, any> : {}
+        settings: (typeof channel.settings === 'object' && channel.settings !== null) ? channel.settings as Record<string, unknown> : {}
       })))
     } catch (error) {
       console.error('Error fetching alert channels:', error)
@@ -78,7 +78,7 @@ export const MultiChannelAlerts = () => {
           channel_type: (data.channel_type as 'push' | 'email' | 'webhook' | 'sms') || 'email',
           is_active: data.is_active ?? true,
           subscription_tier_required: (data.subscription_tier_required as 'free' | 'premium' | 'enterprise') || 'premium',
-          settings: (typeof data.settings === 'object' && data.settings !== null) ? data.settings as Record<string, any> : {}
+          settings: (typeof data.settings === 'object' && data.settings !== null) ? data.settings as Record<string, unknown> : {}
         }, ...prev])
         setNewChannel({ channel_type: 'email', endpoint: '', subscription_tier_required: 'premium' })
         setShowAddChannel(false)
@@ -189,7 +189,7 @@ export const MultiChannelAlerts = () => {
               <Label>Channel Type</Label>
               <Select 
                 value={newChannel.channel_type} 
-                onValueChange={(value: any) => setNewChannel(prev => ({ ...prev, channel_type: value }))}
+                onValueChange={(value: unknown) => setNewChannel(prev => ({ ...prev, channel_type: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -218,7 +218,7 @@ export const MultiChannelAlerts = () => {
               <Label>Required Plan</Label>
               <Select 
                 value={newChannel.subscription_tier_required} 
-                onValueChange={(value: any) => setNewChannel(prev => ({ ...prev, subscription_tier_required: value }))}
+                onValueChange={(value: unknown) => setNewChannel(prev => ({ ...prev, subscription_tier_required: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />

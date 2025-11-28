@@ -58,7 +58,7 @@ export function GuardianUX2() {
         data.trustScorePercent || 0,
         data.confidence || 0.8,
         data.flags?.length || 0,
-        data.flags?.filter((f: any) => f.severity === 'high').length || 0,
+        data.flags?.filter((f: unknown) => f.severity === 'high').length || 0,
         duration
       );
       setScanStartTime(null);
@@ -69,7 +69,7 @@ export function GuardianUX2() {
     if (!address) return;
     setIsScanning(true);
     setScanStartTime(Date.now());
-    analytics.track('guardian_rescan_requested' as any, { wallet_address: address });
+    analytics.track('guardian_rescan_requested' as unknown, { wallet_address: address });
     try {
       await rescan();
       setTimeout(() => setIsScanning(false), 2000);
@@ -82,7 +82,7 @@ export function GuardianUX2() {
   const trustScore = data?.trustScorePercent || 87;
   const confidence = data?.confidence || 0.85;
   const flags = data?.flags?.length || 2;
-  const criticalFlags = data?.flags?.filter((f: any) => f.severity === 'high').length || 0;
+  const criticalFlags = data?.flags?.filter((f: unknown) => f.severity === 'high').length || 0;
 
   const getEmotionalMessage = (score: number, flagCount: number) => {
     if (score >= 90 && flagCount === 0) {

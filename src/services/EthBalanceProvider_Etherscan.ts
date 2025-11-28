@@ -47,8 +47,7 @@ class EthBalanceProvider_Etherscan {
   private async fetchFromEtherscan(address: string): Promise<number> {
     const response = await fetch(
       `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest&apikey=YourApiKeyToken`,
-      { timeout: 5000 } as any
-    );
+      { timeout: 5000 } as unknown);
 
     if (!response.ok) {
       throw new Error(`Etherscan API error: ${response.status}`);

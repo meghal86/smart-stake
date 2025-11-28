@@ -1,5 +1,5 @@
 export class PatternDetectionService {
-  static detectPatterns(signals: any[], asset: string) {
+  static detectPatterns(signals: unknown[], asset: string) {
     return {
       // Volume spike patterns
       volumeSpikes: this.detectVolumeSpikes(signals),
@@ -15,18 +15,18 @@ export class PatternDetectionService {
     }
   }
 
-  private static detectVolumeSpikes(signals: any[]) {
+  private static detectVolumeSpikes(signals: unknown[]) {
     const avgVolume = signals.reduce((sum, s) => sum + s.value, 0) / signals.length
     return signals.filter(s => s.value > avgVolume * 2).length
   }
 
-  private static detectExchangeFlows(signals: any[]) {
+  private static detectExchangeFlows(signals: unknown[]) {
     const deposits = signals.filter(s => s.reasons[0]?.includes('deposit')).length
     const withdrawals = signals.filter(s => s.reasons[0]?.includes('withdrawal')).length
     return { deposits, withdrawals, ratio: deposits / (withdrawals || 1) }
   }
 
-  private static detectAccumulation(signals: any[]) {
+  private static detectAccumulation(signals: unknown[]) {
     // Simple trend: more recent large transactions = accumulation
     const recent = signals.slice(0, 10)
     const older = signals.slice(10, 20)
@@ -35,7 +35,7 @@ export class PatternDetectionService {
     return recentAvg > olderAvg ? 'accumulation' : 'distribution'
   }
 
-  private static detectTimePatterns(signals: any[]) {
+  private static detectTimePatterns(signals: unknown[]) {
     // Group by hour to find timing patterns
     const hourCounts = new Array(24).fill(0)
     signals.forEach(s => {

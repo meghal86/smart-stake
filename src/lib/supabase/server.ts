@@ -12,10 +12,10 @@ export function supabaseServer() {
         get(name: string) {
           return cookieStore.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: unknown) {
           // no-op for route handlers
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: unknown) {
           // no-op for route handlers
         },
       },

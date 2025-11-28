@@ -58,7 +58,7 @@ export default function Scanner() {
   const [dailyScansUsed, setDailyScansUsed] = useState(0);
   const [walletAddress, setWalletAddress] = useState("");
   const [isScanning, setIsScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanResult, setScanResult] = useState<unknown>(null);
   const [scanProgress, setScanProgress] = useState(0);
   const { mode } = useUIMode();
   
@@ -614,7 +614,7 @@ export default function Scanner() {
                       <div>
                         <h4 className="text-sm font-medium text-muted-foreground mb-2">Risk Factors</h4>
                         <div className="space-y-1">
-                          {scanResult.flags.slice(0, 3).map((flag: any, index: number) => (
+                          {scanResult.flags.slice(0, 3).map((flag: unknown, index: number) => (
                             <div key={index} className="text-sm text-foreground flex items-center gap-2">
                               <AlertTriangle size={12} className="text-warning" />
                               <span>{typeof flag === 'string' ? flag : flag.message}</span>

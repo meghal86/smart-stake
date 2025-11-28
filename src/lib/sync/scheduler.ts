@@ -580,7 +580,7 @@ export class SyncScheduler {
     rateLimit: RateLimitState;
     retryCount: number;
   }> {
-    const states: any = {};
+    const states: unknown = {};
     
     this.configs.forEach((_, source) => {
       states[source] = {

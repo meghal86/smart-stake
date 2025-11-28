@@ -67,7 +67,7 @@ export async function scanMultipleWallets(
           result,
           success: true,
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         completed++
         onProgress?.(completed, walletAddresses.length)
 
@@ -116,7 +116,7 @@ export async function triggerBatchScan(options: BatchScanOptions = {}): Promise<
       message: data.message || 'Batch scan triggered',
       jobId: data.job_id,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to trigger batch scan:', error)
     return {
       success: false,
@@ -247,7 +247,7 @@ export async function importWallets(
 
       if (error) throw error
       success++
-    } catch (error: any) {
+    } catch (error: unknown) {
       failed++
       errors.push({
         address: wallet.address,

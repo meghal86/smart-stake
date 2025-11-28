@@ -69,8 +69,8 @@ class PerformanceMonitor {
     }
 
     // Send to analytics (if available)
-    if (typeof window !== 'undefined' && (window as any).analytics) {
-      (window as any).analytics.track('performance_metric', {
+    if (typeof window !== 'undefined' && (window as unknown).analytics) {
+      (window as unknown).analytics.track('performance_metric', {
         metric_name: name,
         value: Math.round(value),
         threshold,
@@ -208,7 +208,7 @@ export function measureWebVitals() {
     try {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as any;
+        const lastEntry = entries[entries.length - 1] as unknown;
         if (lastEntry) {
           performanceMonitor.recordMetric('LCP', lastEntry.renderTime || lastEntry.loadTime, 2500);
         }

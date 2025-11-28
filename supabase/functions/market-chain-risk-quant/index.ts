@@ -29,7 +29,7 @@ serve(async (req) => {
     const correlationSpikes = {};
     
     // Build chains with OTHERS bucket
-    let chains = buildChainsWithOthers(chainRiskData, window);
+    const chains = buildChainsWithOthers(chainRiskData, window);
 
     const responseTime = Date.now() - startTime;
     const response = {

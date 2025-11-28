@@ -36,7 +36,7 @@ interface SearchResult {
   type: 'asset' | 'address' | 'alert' | 'cluster';
   title: string;
   subtitle: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<unknown>;
   url: string;
   badge?: string;
 }

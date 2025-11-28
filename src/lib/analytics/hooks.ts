@@ -40,7 +40,7 @@ export function useFeedViewTracking(params: {
  */
 export function useFilterChangeTracking(walletAddress?: string) {
   return useCallback(
-    (filterType: string, filterValue: any, activeFilters: Record<string, any>) => {
+    (filterType: string, filterValue: unknown, activeFilters: Record<string, unknown>) => {
       trackFilterChange({
         filterType,
         filterValue,

@@ -6,19 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Calculator } from "lucide-react";
 
 interface YieldCalculatorProps {
-  protocol?: any;
+  protocol?: unknown;
 }
 
 export const YieldCalculator: React.FC<YieldCalculatorProps> = ({ protocol }) => {
   const [amount, setAmount] = useState('1000');
   const [timeframe, setTimeframe] = useState('365');
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<{
+    principal: number;
+    grossReturn: number;
+    fees: number;
+    riskAdjustment: number;
+    netReturn: number;
+    totalValue: number;
+    roi: number;
+    dailyReturn: number;
+  } | null>(null);
 
   const calculateYield = () => {
     const principal = parseFloat(amount) || 0;
     const days = parseInt(timeframe) || 365;
-    const apy = protocol?.apy || 10;
-    const riskScore = protocol?.risk_score || 50;
+    const apy = (protocol as { apy?: number })?.apy || 10;
+    const riskScore = (protocol as { risk_score?: number })?.risk_score || 50;
     
     // Calculate returns
     const grossReturn = principal * (apy / 100) * (days / 365);

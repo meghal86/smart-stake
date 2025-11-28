@@ -178,7 +178,7 @@ export function WhaleNotifications({ isOpen, onClose, onNotificationClick }: Wha
                   key={filterOption.value}
                   variant={filter === filterOption.value ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setFilter(filterOption.value as any)}
+                  onClick={() => setFilter(filterOption.value as unknown)}
                 >
                   {filterOption.label}
                 </Button>

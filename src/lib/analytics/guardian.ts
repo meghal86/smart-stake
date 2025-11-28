@@ -79,29 +79,29 @@ export interface GuardianEventProperties {
 
 // Analytics provider interface
 interface AnalyticsProvider {
-  track(event: string, properties?: Record<string, any>): void;
-  identify(userId: string, traits?: Record<string, any>): void;
-  page(name: string, properties?: Record<string, any>): void;
+  track(event: string, properties?: Record<string, unknown>): void;
+  identify(userId: string, traits?: Record<string, unknown>): void;
+  page(name: string, properties?: Record<string, unknown>): void;
 }
 
 // Simple console logger (development fallback)
 class ConsoleAnalytics implements AnalyticsProvider {
-  track(event: string, properties?: Record<string, any>) {
+  track(event: string, properties?: Record<string, unknown>) {
     console.log('[Analytics]', event, properties);
   }
 
-  identify(userId: string, traits?: Record<string, any>) {
+  identify(userId: string, traits?: Record<string, unknown>) {
     console.log('[Analytics] Identify:', userId, traits);
   }
 
-  page(name: string, properties?: Record<string, any>) {
+  page(name: string, properties?: Record<string, unknown>) {
     console.log('[Analytics] Page:', name, properties);
   }
 }
 
 // Segment/Mixpanel/Amplitude adapter (production)
 class ProductionAnalytics implements AnalyticsProvider {
-  track(event: string, properties?: Record<string, any>) {
+  track(event: string, properties?: Record<string, unknown>) {
     // @ts-ignore - window.analytics is loaded by Segment snippet
     if (typeof window !== 'undefined' && window.analytics) {
       window.analytics.track(event, properties);
@@ -111,21 +111,21 @@ class ProductionAnalytics implements AnalyticsProvider {
     this.sendToMetrics(event, properties);
   }
 
-  identify(userId: string, traits?: Record<string, any>) {
+  identify(userId: string, traits?: Record<string, unknown>) {
     // @ts-ignore
     if (typeof window !== 'undefined' && window.analytics) {
       window.analytics.identify(userId, traits);
     }
   }
 
-  page(name: string, properties?: Record<string, any>) {
+  page(name: string, properties?: Record<string, unknown>) {
     // @ts-ignore
     if (typeof window !== 'undefined' && window.analytics) {
       window.analytics.page(name, properties);
     }
   }
 
-  private sendToMetrics(event: string, properties?: Record<string, any>) {
+  private sendToMetrics(event: string, properties?: Record<string, unknown>) {
     // Send to internal metrics endpoint for aggregation
     if (typeof window === 'undefined') return;
 
@@ -248,8 +248,8 @@ export const guardianAnalytics = {
    */
   riskCardClicked(riskType: string, severity: string) {
     this.track(GuardianEvent.RISK_CARD_CLICKED, {
-      risk_type: riskType as any,
-      severity: severity as any,
+      risk_type: riskType as unknown,
+      severity: severity as unknown,
     });
   },
 
@@ -292,7 +292,7 @@ export const guardianAnalytics = {
   /**
    * Track page view
    */
-  page(pageName: string, properties?: Record<string, any>) {
+  page(pageName: string, properties?: Record<string, unknown>) {
     const analytics = getAnalytics();
     analytics.page(pageName, {
       ...properties,

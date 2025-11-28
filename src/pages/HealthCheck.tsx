@@ -132,61 +132,74 @@ export default function HealthCheck() {
         };
         
         switch (service.name) {
-          case 'Supabase Database':
+          case 'Supabase Database': {
             const dbResponse = await fetch(`${baseUrl}?service=database`, { headers });
             isHealthy = dbResponse.ok;
             break;
+          }
           case 'Supabase Auth':
             isHealthy = true;
             break;
-          case 'Stripe API':
+          case 'Stripe API': {
             const stripeResponse = await fetch(`${baseUrl}?service=stripe`, { headers });
             isHealthy = stripeResponse.ok;
             break;
-          case 'Resend Email':
+          }
+          case 'Resend Email': {
             const emailResponse = await fetch(`${baseUrl}?service=email`, { headers });
             isHealthy = emailResponse.ok;
             break;
-          case 'Whale Alert API':
+          }
+          case 'Whale Alert API': {
             const whaleResponse = await fetch(`${baseUrl}?service=whale-alert`, { headers });
             isHealthy = whaleResponse.ok;
             break;
-          case 'Alchemy API':
+          }
+          case 'Alchemy API': {
             const alchemyResponse = await fetch(`${baseUrl}?service=alchemy`, { headers });
             isHealthy = alchemyResponse.ok;
             break;
-          case 'Moralis API':
+          }
+          case 'Moralis API': {
             const moralisResponse = await fetch(`${baseUrl}?service=moralis`, { headers });
             isHealthy = moralisResponse.ok;
             break;
-          case 'Etherscan API':
+          }
+          case 'Etherscan API': {
             const etherscanResponse = await fetch(`${baseUrl}?service=etherscan`, { headers });
             isHealthy = etherscanResponse.ok;
             break;
-          case 'OpenAI API':
+          }
+          case 'OpenAI API': {
             const openaiResponse = await fetch(`${baseUrl}?service=openai`, { headers });
             isHealthy = openaiResponse.ok;
             break;
-          case 'CoinGecko API':
+          }
+          case 'CoinGecko API': {
             const geckoResponse = await fetch('https://api.coingecko.com/api/v3/ping');
             isHealthy = geckoResponse.ok;
             break;
-          case 'DefiLlama API':
+          }
+          case 'DefiLlama API': {
             const llamaResponse = await fetch('https://api.llama.fi/protocols');
             isHealthy = llamaResponse.ok;
             break;
-          case 'Risk Scanner':
+          }
+          case 'Risk Scanner': {
             const riskResponse = await fetch(`${baseUrl}?service=risk-scanner`, { headers });
             isHealthy = riskResponse.ok;
             break;
-          case 'Notification System':
+          }
+          case 'Notification System': {
             const notifResponse = await fetch(`${baseUrl}?service=notifications`, { headers });
             isHealthy = notifResponse.ok;
             break;
-          case 'Edge Functions':
+          }
+          case 'Edge Functions': {
             const funcResponse = await fetch(`${baseUrl}`, { headers });
             isHealthy = funcResponse.ok;
             break;
+          }
         }
 
         return {

@@ -21,14 +21,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 // Mobile-First Overview - Clean Design
-export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loading, timeWindow }: any) {
+export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loading, timeWindow }: unknown) {
   const navigate = useNavigate();
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [digestItems, setDigestItems] = useState([]);
 
   useEffect(() => {
     if (marketSummary?.topAlerts) {
-      const items = marketSummary.topAlerts.slice(0, 3).map((alert: any, i: number) => ({
+      const items = marketSummary.topAlerts.slice(0, 3).map((alert: unknown, i: number) => ({
         id: `alert-${i}`,
         title: alert.title || `${alert.chain || 'ETH'} whale activity`,
         severity: i === 0 ? 'High' : 'Medium',
@@ -114,7 +114,7 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
             </Card>
           ) : (
             <div className="space-y-2">
-              {whaleClusters.slice(0, 5).map((cluster: any) => (
+              {whaleClusters.slice(0, 5).map((cluster: unknown) => (
                 <ClusterCard
                   key={cluster.id}
                   cluster={cluster}
@@ -144,7 +144,7 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
                 Back
               </button>
               <h3 className="font-semibold text-center flex-1 truncate px-4">
-                {whaleClusters?.find((c: any) => c.id === selectedCluster)?.name || 'Cluster Details'}
+                {whaleClusters?.find((c: unknown) => c.id === selectedCluster)?.name || 'Cluster Details'}
               </h3>
               <div className="w-16" />
             </div>
@@ -152,7 +152,7 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
             {/* Modal Content */}
             <div className="flex-1 overflow-y-auto pb-20">
               <ClusterDetail
-                cluster={whaleClusters?.find((c: any) => c.id === selectedCluster)}
+                cluster={whaleClusters?.find((c: unknown) => c.id === selectedCluster)}
                 onClose={() => setSelectedCluster(null)}
               />
             </div>
@@ -164,7 +164,7 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
       <AlertsDigest 
         items={digestItems}
         onViewCluster={(id) => {
-          const cluster = whaleClusters?.find((c: any) => c.id === id);
+          const cluster = whaleClusters?.find((c: unknown) => c.id === id);
           if (cluster) {
             navigate(`/alerts?cluster=${id}&name=${encodeURIComponent(cluster.name)}&source=cluster`);
           }
@@ -177,14 +177,14 @@ export function MobileOverview({ marketSummary, whaleClusters, chainRisk, loadin
 }
 
 // Desktop Overview - Clean Professional Layout
-export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loading, timeWindow }: any) {
+export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loading, timeWindow }: unknown) {
   const navigate = useNavigate();
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
   const [digestItems, setDigestItems] = useState([]);
 
   useEffect(() => {
     if (marketSummary?.topAlerts) {
-      const items = marketSummary.topAlerts.slice(0, 8).map((alert: any, i: number) => ({
+      const items = marketSummary.topAlerts.slice(0, 8).map((alert: unknown, i: number) => ({
         id: `alert-${i}`,
         title: alert.title || `${alert.chain || 'ETH'} whale movement`,
         severity: i < 2 ? 'High' : i < 5 ? 'Medium' : 'Low',
@@ -294,7 +294,7 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
             </Card>
           ) : (
             <div className="space-y-3">
-              {whaleClusters.map((cluster: any) => (
+              {whaleClusters.map((cluster: unknown) => (
                 <ClusterCard
                   key={cluster.id}
                   cluster={cluster}
@@ -309,7 +309,7 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
           {selectedCluster && (
             <div className="mt-6 border-t pt-6">
               <ClusterDetail
-                cluster={whaleClusters?.find((c: any) => c.id === selectedCluster)}
+                cluster={whaleClusters?.find((c: unknown) => c.id === selectedCluster)}
                 onClose={() => setSelectedCluster(null)}
               />
             </div>
@@ -347,7 +347,7 @@ export function DesktopOverview({ marketSummary, whaleClusters, chainRisk, loadi
               <AlertsDigest 
                 items={digestItems}
                 onViewCluster={(id) => {
-                  const cluster = whaleClusters?.find((c: any) => c.id === id);
+                  const cluster = whaleClusters?.find((c: unknown) => c.id === id);
                   if (cluster) {
                     navigate(`/alerts?cluster=${id}&name=${encodeURIComponent(cluster.name)}&source=cluster`);
                   }

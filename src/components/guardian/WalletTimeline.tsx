@@ -154,7 +154,7 @@ export function WalletTimeline({
         </div>
 
         {/* Type Filter */}
-        <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+        <Select value={filterType} onValueChange={(v) => setFilterType(v as unknown)}>
           <SelectTrigger className="w-[140px] bg-slate-800/50 border-slate-700">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
@@ -169,7 +169,7 @@ export function WalletTimeline({
         </Select>
 
         {/* Status Filter */}
-        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as any)}>
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as unknown)}>
           <SelectTrigger className="w-[140px] bg-slate-800/50 border-slate-700">
             <SelectValue placeholder="Status" />
           </SelectTrigger>

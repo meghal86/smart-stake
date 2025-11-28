@@ -136,7 +136,7 @@ function MultiCoinSentimentComponent() {
       
       setCoins(coinData);
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch multi-coin sentiment:', error);
       setError(`Failed to load sentiment data: ${error.message || 'Unknown error'}`);
     } finally {
@@ -290,7 +290,7 @@ function MultiCoinSentimentComponent() {
           />
         </div>
         
-        <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+        <Select value={sortBy} onValueChange={(value) => setSortBy(value as unknown)}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -301,7 +301,7 @@ function MultiCoinSentimentComponent() {
           </SelectContent>
         </Select>
         
-        <Select value={filterSentiment} onValueChange={(value) => setFilterSentiment(value as any)}>
+        <Select value={filterSentiment} onValueChange={(value) => setFilterSentiment(value as unknown)}>
           <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="Filter" />
           </SelectTrigger>

@@ -236,7 +236,7 @@ export function MarketIntelligenceHub() {
                   setSelectedCluster(cluster.id);
                   track('whale_cluster_selected', { clusterId: cluster.id, type: cluster.type });
                 }}
-                onWhaleSelect={(whale: any) => {
+                onWhaleSelect={(whale: unknown) => {
                   track('whale_selected', { address: whale.address });
                 }}
               />

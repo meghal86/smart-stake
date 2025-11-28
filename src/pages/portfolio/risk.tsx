@@ -19,7 +19,7 @@ export default function Risk() {
   const [timeRange, setTimeRange] = useState('24h');
   const [searchQuery, setSearchQuery] = useState('');
   const [isDarkTheme, setIsDarkTheme] = useState(true);
-  const [userMode, setUserMode] = useState<'novice' | 'pro' | 'sim'>(mode as any);
+  const [userMode, setUserMode] = useState<'novice' | 'pro' | 'sim'>(mode as unknown);
   const [activeWallet, setActiveWallet] = useState('1');
 
   // Mock wallet data

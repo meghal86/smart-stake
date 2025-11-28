@@ -88,7 +88,7 @@ export function useSavedOpportunities() {
       setSavedOpportunities(data || []);
       setSavedIds(new Set((data || []).map(s => s.opportunity_id)));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch saved opportunities:', err);
       setError(err);
     } finally {

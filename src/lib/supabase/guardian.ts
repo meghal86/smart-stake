@@ -27,7 +27,7 @@ export interface RiskFactor {
   impact: number;
   severity: 'low' | 'medium' | 'high';
   description: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 export interface ScanMeta {
@@ -95,8 +95,8 @@ export async function insertScan(scan: Omit<Scan, 'id' | 'created_at'>): Promise
       target_address: scan.target_address.toLowerCase(),
       trust_score: scan.trust_score,
       grade: scan.grade,
-      risk_factors: scan.risk_factors as any,
-      meta: scan.meta as any,
+      risk_factors: scan.risk_factors as unknown,
+      meta: scan.meta as unknown,
     })
     .select()
     .single();

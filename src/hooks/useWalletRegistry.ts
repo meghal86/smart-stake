@@ -21,7 +21,7 @@ export interface UserWallet {
   verified: boolean
   last_scan?: string
   trust_score?: number
-  risk_flags?: any[]
+  risk_flags?: unknown[]
   created_at: string
   updated_at: string
 }

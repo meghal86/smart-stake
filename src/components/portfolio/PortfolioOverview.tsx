@@ -116,7 +116,7 @@ export function PortfolioOverview({ mode }: PortfolioOverviewProps) {
 
           {activeTab === "assets" && (
             <div className="space-y-4">
-              {portfolioData?.assets?.map((asset: any, index: number) => (
+              {portfolioData?.assets?.map((asset: unknown, index: number) => (
                 <div
                   key={asset.symbol}
                   className="p-4 bg-gray-800/50 rounded-lg border border-gray-700/50"

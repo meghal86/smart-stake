@@ -60,7 +60,7 @@ export function ConcentrationRiskCard({
             </TooltipContent>
           </Tooltip>
         </div>
-        <Badge variant={risk.color as any}>{risk.level} Risk</Badge>
+        <Badge variant={risk.color as unknown}>{risk.level} Risk</Badge>
       </div>
 
       {/* Concentration Alert */}

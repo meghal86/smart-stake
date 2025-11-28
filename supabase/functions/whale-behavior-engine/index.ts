@@ -44,7 +44,7 @@ class WhaleClassificationEngine {
     // Classification logic
     let type: 'trader' | 'hodler' | 'liquidity_provider' = 'hodler';
     let confidence = 0.5;
-    let signals: string[] = [];
+    const signals: string[] = [];
     let riskScore = 5;
 
     // Trader classification

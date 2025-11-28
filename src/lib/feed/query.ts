@@ -80,7 +80,7 @@ export async function getFeedPage(params: FeedQueryParams): Promise<FeedPageResu
   const limit = params.limit ?? DEFAULT_PAGE_SIZE;
   
   // Fetch wallet history for personalized ranking if wallet provided
-  let walletHistory: any = null;
+  let walletHistory: unknown = null;
   let usePersonalizedRanking = false;
   
   if (params.walletAddress && params.sort === 'recommended') {
@@ -354,7 +354,7 @@ function applySponsoredCapping(
  * @param row - Database row from opportunities table
  * @returns Transformed Opportunity object
  */
-function transformRowToOpportunity(row: any): Opportunity {
+function transformRowToOpportunity(row: unknown): Opportunity {
   // Build badges array
   const badges = [];
   if (row.featured) {

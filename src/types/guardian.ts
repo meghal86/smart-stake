@@ -26,7 +26,7 @@ export interface RiskFactor {
   severity: 'low' | 'medium' | 'high' | 'unknown';
   description: string;
   evidence?: Evidence;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 export interface TrustScoreResult {
@@ -103,7 +103,7 @@ export interface ApiErrorShape {
     code: string;
     message: string;
     retryAfterSec?: number;
-    details?: any;
+    details?: unknown;
   };
   requestId?: string;
 }

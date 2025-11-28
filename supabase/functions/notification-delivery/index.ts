@@ -23,7 +23,7 @@ serve(async (req) => {
 
     // Get user preferences - handle missing users table
     let user = null;
-    let userEmail = null;
+    const userEmail = null;
     
     try {
       const { data } = await supabaseClient

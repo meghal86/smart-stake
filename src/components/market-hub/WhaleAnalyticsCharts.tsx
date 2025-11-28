@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 interface WhaleAnalyticsChartsProps {
-  whaleData: any;
+  whaleData: unknown;
   selectedTimeframe: string;
   onTimeframeChange: (timeframe: string) => void;
 }

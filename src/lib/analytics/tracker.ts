@@ -88,7 +88,7 @@ export async function trackFeedView(params: {
 export async function trackFilterChange(params: {
   filterType: string;
   filterValue: string | string[] | number | boolean;
-  activeFilters: Record<string, any>;
+  activeFilters: Record<string, unknown>;
   walletAddress?: string;
 }): Promise<void> {
   const walletIdHash = await getUserIdHash(params.walletAddress);

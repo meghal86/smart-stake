@@ -104,7 +104,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ReportRespons
         limit: 3,
         window: '1 m',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
         {
           error: {

@@ -349,6 +349,6 @@ export interface AnalyticsEvent {
   event_type: AnalyticsEventType;
   user_id_hash?: string;
   opportunity_id?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
 }

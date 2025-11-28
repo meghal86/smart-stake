@@ -259,7 +259,7 @@ function PersonalPicks() {
  * Shows user's saved opportunities
  */
 interface SavedItemsProps {
-  savedOpportunities: any[];
+  savedOpportunities: unknown[];
   isLoading: boolean;
 }
 

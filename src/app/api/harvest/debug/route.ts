@@ -8,7 +8,7 @@ import { createClient } from '@/integrations/supabase/server';
 export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
-  const diagnostics: any = {
+  const diagnostics: unknown = {
     timestamp: new Date().toISOString(),
     checks: {},
   };
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
     };
 
     // Overall status
-    const hasErrors = Object.values(diagnostics.checks).some((check: any) => check.status === 'ERROR');
+    const hasErrors = Object.values(diagnostics.checks).some((check: unknown) => check.status === 'ERROR');
     diagnostics.overallStatus = hasErrors ? 'FAILED' : 'OK';
 
     return NextResponse.json(diagnostics, { 

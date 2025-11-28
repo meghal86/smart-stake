@@ -25,7 +25,7 @@ interface MobileWhaleClustersProps {
   timeWindow?: string;
   onClusterSelect?: (clusterId: string) => void;
   selectedCluster?: string | null;
-  alerts?: any[];
+  alerts?: unknown[];
 }
 
 interface ClusterCategory {
@@ -297,7 +297,7 @@ interface MobileClusterCardProps {
   };
   isSelected: boolean;
   onSelect: () => void;
-  alerts: any[];
+  alerts: unknown[];
 }
 
 function MobileClusterCard({ cluster, isSelected, onSelect, alerts }: MobileClusterCardProps) {

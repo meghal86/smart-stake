@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics';
 
 interface ExportReportButtonsProps {
-  predictions: any[];
+  predictions: unknown[];
 }
 
 export function ExportReportButtons({ predictions }: ExportReportButtonsProps) {

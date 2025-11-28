@@ -13,14 +13,14 @@ import { supabase } from '@/integrations/supabase/client';
 interface ScenarioHistoryItem {
   id: string;
   name: string;
-  inputs: any;
-  last_result: any;
+  inputs: unknown;
+  last_result: unknown;
   created_at: string;
   updated_at: string;
 }
 
 interface ScenarioHistoryProps {
-  onRerun: (inputs: any) => void;
+  onRerun: (inputs: unknown) => void;
   onCompare: (scenarios: ScenarioHistoryItem[]) => void;
 }
 

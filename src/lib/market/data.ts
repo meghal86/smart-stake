@@ -14,7 +14,7 @@ export async function getClusterBundle(clusterId: string, window: Window): Promi
   // Step 1: Try tx_events for metrics + samples
   let txSamples: TxSample[] = [];
   let metrics: ClusterMetrics | null = null;
-  let topMovers: TopMover[] = [];
+  const topMovers: TopMover[] = [];
   
   try {
     // Use the same alerts table that's working on the Alerts page
@@ -135,21 +135,21 @@ export async function getClusterBundle(clusterId: string, window: Window): Promi
   return result;
 }
 
-function getVenueFromAlert(alert: any): "CEX" | "DEX" | "Bridge" | "Unknown" {
-  const toAddr = alert.to_addr?.toLowerCase() || '';
-  const fromAddr = alert.from_addr?.toLowerCase() || '';
+function getVenueFromAlert(alert: Record<string, unknown>): "CEX" | "DEX" | "Bridge" | "Unknown" {
+  const toAddr = (alert.to_addr as string)?.toLowerCase() || '';
+  const fromAddr = (alert.from_addr as string)?.toLowerCase() || '';
   
   // Check for known CEX addresses or patterns
   if (toAddr.includes('binance') || fromAddr.includes('binance')) return 'CEX';
   if (toAddr.includes('coinbase') || fromAddr.includes('coinbase')) return 'CEX';
-  if (alert.chain === 'ETH' && alert.amount_usd > 1000000) return 'DEX';
+  if (alert.chain === 'ETH' && (alert.amount_usd as number) > 1000000) return 'DEX';
   
   // Random assignment for demo
   const venues: ("CEX" | "DEX" | "Bridge" | "Unknown")[] = ['CEX', 'DEX', 'Bridge', 'Unknown'];
   return venues[Math.floor(Math.random() * venues.length)];
 }
 
-function filterAlertsByCluster(alerts: any[], clusterId: string): any[] {
+function filterAlertsByCluster(alerts: Array<Record<string, unknown>>, clusterId: string): Array<Record<string, unknown>> {
   console.log('🎯 Filtering alerts for cluster:', clusterId, 'from', alerts.length, 'total alerts');
   
   if (!alerts || alerts.length === 0) {
@@ -191,8 +191,8 @@ function filterAlertsByCluster(alerts: any[], clusterId: string): any[] {
   return filtered;
 }
 
-function getVenue(labels: any): "CEX" | "DEX" | "Bridge" | "Unknown" {
-  const entity = labels?.to_entity?.toLowerCase() || '';
+function getVenue(labels: Record<string, unknown>): "CEX" | "DEX" | "Bridge" | "Unknown" {
+  const entity = ((labels?.to_entity as string) || '').toLowerCase();
   if (['binance', 'coinbase', 'okx', 'kraken'].some(ex => entity.includes(ex))) return 'CEX';
   if (entity.includes('uniswap') || entity.includes('dex')) return 'DEX';
   if (entity.includes('bridge')) return 'Bridge';
@@ -210,8 +210,8 @@ function getClusterName(clusterId: string): string {
   return names[clusterId] || 'Emerging Cluster';
 }
 
-function getClusterKind(clusterId: string): any {
-  const kinds: Record<string, any> = {
+function getClusterKind(clusterId: string): string {
+  const kinds: Record<string, unknown> = {
     'dormant_waking': 'Dormant',
     'cex_inflow': 'CEXInflow',
     'defi_activity': 'Defi',

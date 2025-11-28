@@ -142,7 +142,7 @@ export function ScenariosPage() {
     setActiveView('builder');
   };
 
-  const handleCompare = (scenarios: any[]) => {
+  const handleCompare = (scenarios: unknown[]) => {
     toast({
       title: "Comparison Ready",
       description: `Comparing ${scenarios.length} scenarios.`,
