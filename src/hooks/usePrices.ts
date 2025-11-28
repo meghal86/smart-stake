@@ -135,7 +135,7 @@ export function usePrice(asset: string = 'ETH', refreshMs: number = 30000) {
 
 // Hook for price health monitoring
 export function usePriceHealth() {
-  const [health, setHealth] = useState<any>(null);
+  const [health, setHealth] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

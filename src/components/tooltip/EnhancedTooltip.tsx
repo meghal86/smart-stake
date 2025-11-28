@@ -119,7 +119,11 @@ export function EnhancedTooltip({
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            isOpen ? hideTooltip() : showTooltip();
+            if (isOpen) {
+              hideTooltip();
+            } else {
+              showTooltip();
+            }
           }
         }}
         className="inline-block"
