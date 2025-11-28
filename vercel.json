@@ -6,7 +6,7 @@
   "devCommand": "npm run dev",
   "headers": [
     {
-      "source": "/(.*\.(js|css|woff2|png|jpg|jpeg|gif|svg|webp|ico))",
+      "source": "/(.*\\.(js|css|woff2|png|jpg|jpeg|gif|svg|webp|ico))",
       "headers": [
         {
           "key": "Cache-Control",
