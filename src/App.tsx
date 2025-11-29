@@ -7,6 +7,7 @@ import "@/theme/ocean.css";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
+import AlphaWhaleHome from "./pages/AlphaWhaleHome";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SignupNew from "./pages/SignupNew";
@@ -140,6 +141,8 @@ const App = () => {
         <BrowserRouter>
           <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/home" element={<AlphaWhaleHome />} />
+                  <Route path="/whale-alerts" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup-old" element={<Signup />} />
                   <Route path="/signup" element={<SignupNew />} />

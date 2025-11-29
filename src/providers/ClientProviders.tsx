@@ -9,6 +9,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { CompactViewProvider } from '@/contexts/CompactViewContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { HomeAuthProvider } from '@/lib/context/HomeAuthContext';
 import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 import { UserModeProvider } from '@/contexts/UserModeContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -51,22 +52,24 @@ export function ClientProviders({ children }: { children: ReactNode }) {
           <RainbowKitThemeWrapper>
             <CompactViewProvider>
               <AuthProvider>
-                <GuardianWalletProvider>
-                  <SubscriptionProvider>
-                    <UserModeProvider>
-                      <NotificationProvider>
-                        <DemoModeProvider>
-                          <TooltipProvider>
-                            <Toaster />
-                            <Sonner />
-                            <DevInfo />
-                            {children}
-                          </TooltipProvider>
-                        </DemoModeProvider>
-                      </NotificationProvider>
-                    </UserModeProvider>
-                  </SubscriptionProvider>
-                </GuardianWalletProvider>
+                <HomeAuthProvider>
+                  <GuardianWalletProvider>
+                    <SubscriptionProvider>
+                      <UserModeProvider>
+                        <NotificationProvider>
+                          <DemoModeProvider>
+                            <TooltipProvider>
+                              <Toaster />
+                              <Sonner />
+                              <DevInfo />
+                              {children}
+                            </TooltipProvider>
+                          </DemoModeProvider>
+                        </NotificationProvider>
+                      </UserModeProvider>
+                    </SubscriptionProvider>
+                  </GuardianWalletProvider>
+                </HomeAuthProvider>
               </AuthProvider>
             </CompactViewProvider>
           </RainbowKitThemeWrapper>

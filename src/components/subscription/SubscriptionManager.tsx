@@ -87,7 +87,7 @@ export const SubscriptionManager: React.FC = () => {
       const result = await callStripeFunction('get_details');
       setSubscription(result.subscription);
     } catch (err: unknown) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +98,7 @@ export const SubscriptionManager: React.FC = () => {
       const result = await callStripeFunction('get_invoices');
       setInvoices(result.invoices || []);
     } catch (err: unknown) {
-      console.error('Failed to fetch invoices:', err);
+      console.error('Failed to fetch invoices:', err instanceof Error ? err.message : err);
     }
   };
 
@@ -117,7 +117,7 @@ export const SubscriptionManager: React.FC = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: err.message,
+        description: err instanceof Error ? err.message : 'Failed to cancel subscription',
       });
     } finally {
       setIsUpdating(false);
@@ -139,7 +139,7 @@ export const SubscriptionManager: React.FC = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: err.message,
+        description: err instanceof Error ? err.message : 'Failed to reactivate subscription',
       });
     } finally {
       setIsUpdating(false);
@@ -155,7 +155,7 @@ export const SubscriptionManager: React.FC = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: err.message,
+        description: err instanceof Error ? err.message : 'Failed to open billing portal',
       });
     } finally {
       setIsUpdating(false);
