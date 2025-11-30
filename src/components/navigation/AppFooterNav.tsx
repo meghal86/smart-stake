@@ -2,16 +2,24 @@
 
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Home, Search, Bell, Eye, Brain } from 'lucide-react'
+import { Shield, Compass, Leaf, Briefcase } from 'lucide-react'
+// import { Home, Search, Bell, Eye, Brain } from 'lucide-react'
 import { trackEvent } from '@/lib/telemetry'
 import { useGate } from '@/hooks/useGate'
 
 const tabs = [
-  { id: 'home', label: 'Home', icon: Home, href: '/', gated: undefined },
-  { id: 'predictions', label: 'Predictions', icon: Brain, href: '/hub2/predictions', gated: undefined },
-  { id: 'explore', label: 'Explore', icon: Search, href: '/signals', gated: undefined },
-  { id: 'alerts', label: 'Alerts', icon: Bell, href: '/alerts', gated: 'alerts_advanced' },
-  { id: 'watch', label: 'Watch', icon: Eye, href: '/portfolio', gated: 'watchlist' }
+  // COMMENTED OUT - Can be restored later if needed
+  // { id: 'home', label: 'Home', icon: Home, href: '/', gated: undefined },
+  // { id: 'predictions', label: 'Predictions', icon: Brain, href: '/hub2/predictions', gated: undefined },
+  // { id: 'explore', label: 'Explore', icon: Search, href: '/signals', gated: undefined },
+  // { id: 'alerts', label: 'Alerts', icon: Bell, href: '/alerts', gated: 'alerts_advanced' },
+  // { id: 'watch', label: 'Watch', icon: Eye, href: '/portfolio', gated: 'watchlist' }
+  
+  // NEW: 4 Core Features
+  { id: 'guardian', label: 'Guardian', icon: Shield, href: '/guardian', gated: undefined },
+  { id: 'hunter', label: 'Hunter', icon: Compass, href: '/hunter', gated: undefined },
+  { id: 'harvestpro', label: 'HarvestPro', icon: Leaf, href: '/harvestpro', gated: undefined },
+  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, href: '/portfolio', gated: undefined }
 ] as const
 
 export function AppFooterNav() {
@@ -39,9 +47,8 @@ export function AppFooterNav() {
   }
 
   const isActive = (tab: typeof tabs[number]) => {
-    if (tab.id === 'home') return pathname === '/'
-    if (tab.id === 'explore') return pathname === '/signals'
-    return pathname.startsWith(tab.href.split('#')[0])
+    // Check if current path matches the tab's href
+    return pathname === tab.href || pathname.startsWith(tab.href + '/')
   }
 
   return (

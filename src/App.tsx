@@ -140,8 +140,8 @@ const App = () => {
         )}
         <BrowserRouter>
           <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/home" element={<AlphaWhaleHome />} />
+                  <Route path="/" element={<AlphaWhaleHome />} />
+                  <Route path="/lite" element={<Index />} />
                   <Route path="/whale-alerts" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup-old" element={<Signup />} />

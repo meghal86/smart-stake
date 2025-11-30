@@ -2,7 +2,7 @@
  * Harvest Feature Card Component
  * 
  * Displays the Harvest feature card with live tax benefit estimate metric.
- * Uses the Leaf icon and routes to /harvest.
+ * Uses the Leaf icon and routes to /harvestpro.
  * 
  * Requirements: 2.5
  */
@@ -60,8 +60,8 @@ export const HarvestProFeatureCard = () => {
         previewLabel="Tax Benefit"
         previewValue={formattedEstimate}
         previewDescription="Estimated tax savings"
-        primaryRoute="/harvest"
-        demoRoute="/harvest?demo=true"
+        primaryRoute="/harvestpro"
+        demoRoute="/harvestpro?demo=true"
         isLoading={isLoading}
         isDemo={isDemo}
         error={error?.message ?? null}
