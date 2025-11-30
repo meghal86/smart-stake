@@ -44,58 +44,64 @@ export function Header({
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-2">
+      <div className="max-w-screen-xl mx-auto px-4 py-3 flex flex-col gap-3">
         {/* Top Row */}
-        <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src="/header.png" alt="Logo" className="w-8 h-8" />
-          <h1 className={`text-xl font-semibold transition-colors duration-300 ${
-            isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
-          }`}>
-            Hunter
-          </h1>
-          <motion.div
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          >
-            <Brain className="w-4 h-4 text-[#00F5A0]" />
-          </motion.div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {lastUpdated && (
-            <p className={`text-xs transition-colors duration-300 ${
-              isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+        <div className="flex items-center justify-between gap-2">
+          {/* Logo and Title */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <img src="/header.png" alt="Logo" className="w-8 h-8" />
+            <h1 className={`text-lg md:text-xl font-semibold transition-colors duration-300 ${
+              isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
             }`}>
-              Updated {Math.floor((Date.now() - lastUpdated.getTime()) / 1000)}s ago
-            </p>
-          )}
+              Hunter
+            </h1>
+            <motion.div
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              className="hidden sm:block"
+            >
+              <Brain className="w-4 h-4 text-[#00F5A0]" />
+            </motion.div>
+          </div>
           
-          <div className="flex items-center gap-3">
-            {/* WalletSelector - positioned between controls and theme toggle */}
+          {/* Right Side Controls */}
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+            {/* Last Updated - Hidden on mobile */}
+            {lastUpdated && (
+              <p className={`hidden lg:block text-xs transition-colors duration-300 ${
+                isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+              }`}>
+                Updated {Math.floor((Date.now() - lastUpdated.getTime()) / 1000)}s ago
+              </p>
+            )}
+            
+            {/* WalletSelector - Hidden on mobile */}
             <WalletSelector 
               showLabel={true}
               variant="default"
-              className="hidden sm:flex"
+              className="hidden md:flex"
             />
             
+            {/* Theme Toggle */}
             <motion.button
               onClick={() => setIsDarkTheme(!isDarkTheme)}
-              className={`p-2 rounded-lg transition-all duration-200 ${
+              className={`p-2 rounded-lg transition-all duration-200 flex-shrink-0 ${
                 isDarkTheme 
                   ? 'bg-white/10 hover:bg-white/15' 
                   : 'bg-gray-100/80 hover:bg-gray-200/80'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              aria-label="Toggle theme"
             >
               {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </motion.button>
             
-            <div className="flex gap-2 text-sm">
+            {/* Demo/Live Toggle */}
+            <div className="flex gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0">
               <button
                 onClick={() => setIsDemo(true)}
-                className={`px-3 py-1 rounded-lg border transition-all duration-300 ${
+                className={`px-2 md:px-3 py-1 rounded-lg border transition-all duration-300 ${
                   isDemo
                     ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
                     : isDarkTheme
@@ -107,7 +113,7 @@ export function Header({
               </button>
               <button
                 onClick={() => setIsDemo(false)}
-                className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
+                className={`px-2 md:px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
                   !isDemo
                     ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
                     : isDarkTheme
@@ -127,17 +133,18 @@ export function Header({
               </button>
             </div>
             
+            {/* AI Digest Button - Always visible */}
             <motion.button
               onClick={() => setCopilotEnabled(!copilotEnabled)}
-              className="px-3 py-1 bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium rounded-lg shadow-sm text-sm"
+              className="px-2 md:px-3 py-1 bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium rounded-lg shadow-sm text-xs md:text-sm flex-shrink-0"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              AI Digest
+              <span className="hidden md:inline">AI Digest</span>
+              <span className="md:hidden">AI</span>
             </motion.button>
           </div>
         </div>
-      </div>
 
         {/* Bottom Row - Filter Tabs */}
         <HunterTabs

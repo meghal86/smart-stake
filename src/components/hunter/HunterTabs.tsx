@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-export type TabType = 'All' | 'Airdrops' | 'Quests' | 'Yield' | 'Points' | 'Featured';
+export type TabType = 'All' | 'Airdrops' | 'Quests' | 'Staking' | 'NFT';
 
 interface HunterTabsProps {
   activeTab: TabType;
@@ -10,7 +10,7 @@ interface HunterTabsProps {
   isDarkTheme?: boolean;
 }
 
-const TABS: TabType[] = ['All', 'Airdrops', 'Quests', 'Yield', 'Points', 'Featured'];
+const TABS: TabType[] = ['All', 'Airdrops', 'Quests', 'Staking', 'NFT'];
 
 export function HunterTabs({ activeTab, onTabChange, isDarkTheme = true }: HunterTabsProps) {
   const navigate = useNavigate();

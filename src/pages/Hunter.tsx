@@ -11,6 +11,7 @@ import { CopilotPanel } from '@/components/hunter/CopilotPanel';
 import { RightRail } from '@/components/hunter/RightRail';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useHunterFeed } from '@/hooks/useHunterFeed';
+import { TabType } from '@/components/hunter/HunterTabs';
 
 interface Opportunity {
   id: string;
@@ -27,10 +28,8 @@ interface Opportunity {
   estimatedAPY?: number;
 }
 
-const filterOptions = ['All', 'Staking', 'NFT', 'Airdrops', 'Quests'];
-
 export default function Hunter() {
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState<TabType>('All');
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDemo, setIsDemo] = useState(true);
@@ -66,9 +65,20 @@ export default function Hunter() {
     sort: 'recommended', // Use ranking by default
   });
 
-  const filteredOpportunities = opportunities.filter(opp => 
-    activeFilter === 'All' || opp.type === activeFilter
-  );
+  const filteredOpportunities = opportunities.filter((opp: Opportunity) => {
+    if (activeFilter === 'All') return true;
+    
+    // Map plural filter names to singular opportunity types
+    const filterMap: Record<string, string> = {
+      'Airdrops': 'Airdrop',
+      'Quests': 'Quest',
+      'Staking': 'Staking',
+      'NFT': 'NFT'
+    };
+    
+    const mappedFilter = filterMap[activeFilter] || activeFilter;
+    return opp.type === mappedFilter;
+  });
 
   // Infinite scroll handler
   useEffect(() => {
