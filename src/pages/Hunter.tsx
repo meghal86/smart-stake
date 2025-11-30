@@ -15,7 +15,7 @@ import { TabType } from '@/components/hunter/HunterTabs';
 
 interface Opportunity {
   id: string;
-  type: 'Airdrop' | 'Staking' | 'NFT' | 'Quest';
+  type: 'Airdrop' | 'Staking' | 'NFT' | 'Points' | 'Quest';
   title: string;
   description: string;
   reward: string;
@@ -73,7 +73,8 @@ export default function Hunter() {
       'Airdrops': 'Airdrop',
       'Quests': 'Quest',
       'Staking': 'Staking',
-      'NFT': 'NFT'
+      'NFT': 'NFT',
+      'Points': 'Points'
     };
     
     const mappedFilter = filterMap[activeFilter] || activeFilter;
