@@ -184,19 +184,21 @@ export const FeatureCard = ({
         </p>
       </motion.div>
 
-      {/* Action Button - Single, Minimal */}
+      {/* Action Button - Gradient */}
       <div className="mt-4">
         <button
           onClick={handlePrimaryClick}
           onKeyDown={(e) => handleKeyDown(e, 'primary')}
           className="
             w-full min-h-[44px] py-2
-            bg-white/5 hover:bg-white/10 active:bg-white/[0.15]
-            border border-gray-800 hover:border-gray-700
+            bg-gradient-to-r from-[#00F5A0] to-[#7B61FF]
+            hover:from-[#00E094] hover:to-[#6B51EF]
+            active:from-[#00D088] active:to-[#5B41DF]
             text-white font-medium text-sm
-            rounded-md
+            rounded-lg
+            shadow-md shadow-[#00F5A0]/20
             transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 focus:ring-offset-[#0A0F1F]
+            focus:outline-none focus:ring-2 focus:ring-[#00F5A0] focus:ring-offset-2 focus:ring-offset-[#0A0F1F]
           "
           aria-label={`View ${title}`}
           tabIndex={0}

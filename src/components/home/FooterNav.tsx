@@ -49,7 +49,7 @@ export const FooterNav = ({ currentRoute }: FooterNavProps) => {
       id: 'harvest',
       icon: Leaf,
       label: 'Harvest',
-      route: '/harvest',
+      route: '/harvestpro',
       ariaLabel: 'Navigate to Harvest tax optimization',
     },
     {
@@ -78,7 +78,7 @@ export const FooterNav = ({ currentRoute }: FooterNavProps) => {
   
   return (
     <footer 
-      className="fixed bottom-0 left-0 right-0 z-50 md:relative md:bottom-auto"
+      className="fixed bottom-0 left-0 right-0 z-50"
       role="navigation"
       aria-label="Main navigation"
     >

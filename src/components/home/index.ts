@@ -4,6 +4,7 @@
  * Central export point for all AlphaWhale Home page components.
  */
 
+export { DashboardHeader } from './DashboardHeader';
 export { HeroSection } from './HeroSection';
 export { FeatureCard } from './FeatureCard';
 export type { FeatureCardProps } from './FeatureCard';

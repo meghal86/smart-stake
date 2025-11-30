@@ -1,4 +1,5 @@
 import { HomeErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { DashboardHeader } from '@/components/home/DashboardHeader';
 import { HeroSection } from '@/components/home/HeroSection';
 import { GuardianFeatureCard } from '@/components/home/GuardianFeatureCard';
 import { HunterFeatureCard } from '@/components/home/HunterFeatureCard';
@@ -25,7 +26,31 @@ import { motion } from 'framer-motion';
 export default function AlphaWhaleHome() {
   return (
     <HomeAuthProvider>
-      <div className="min-h-screen bg-[#0A0F1F]">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0A0E1A] to-[#111827]">
+        {/* Animated Background Glow */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          animate={{
+            background: [
+              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
+              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
+              'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
+            ]
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: [0.25, 1, 0.5, 1]
+          }}
+        />
+        
+        {/* Header */}
+        <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load header</div>}>
+          <DashboardHeader />
+        </HomeErrorBoundary>
+        
         {/* Hero Section */}
         <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load hero section</div>}>
           <HeroSection />
@@ -113,6 +138,9 @@ export default function AlphaWhaleHome() {
         <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load onboarding</div>}>
           <OnboardingSection />
         </HomeErrorBoundary>
+
+        {/* Bottom Padding for Fixed Footer */}
+        <div className="h-20" aria-hidden="true" />
 
         {/* Footer Navigation */}
         <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load footer</div>}>

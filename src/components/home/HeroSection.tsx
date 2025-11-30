@@ -133,18 +133,21 @@ export const HeroSection = ({ onCtaClick }: HeroSectionProps) => {
             transition={{ duration: 0.4, delay: 0.2 }}
           />
 
-          {/* CTA Button - Minimal */}
+          {/* CTA Button - Gradient */}
           <motion.button
             onClick={handleCtaClick}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
             className="
-              bg-white hover:bg-gray-100 active:bg-gray-200
-              text-gray-900 font-medium
-              px-8 py-3 rounded-md
-              transition-colors duration-200
+              bg-gradient-to-r from-[#00F5A0] to-[#7B61FF]
+              hover:from-[#00E094] hover:to-[#6B51EF]
+              active:from-[#00D088] active:to-[#5B41DF]
+              text-white font-medium
+              px-8 py-3 rounded-lg
+              shadow-lg shadow-[#00F5A0]/20
+              transition-all duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
-              focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-[#0A0F1F]
+              focus:outline-none focus:ring-2 focus:ring-[#00F5A0] focus:ring-offset-2 focus:ring-offset-[#0A0F1F]
               text-base
             "
             aria-label={isAuthenticated ? 'Access dashboard' : 'Connect wallet to get started'}
