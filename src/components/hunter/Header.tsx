@@ -49,19 +49,28 @@ export function Header({
         <div className="flex items-center justify-between gap-2">
           {/* Logo and Title */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <img src="/header.png" alt="Logo" className="w-8 h-8" />
-            <h1 className={`text-lg md:text-xl font-semibold transition-colors duration-300 ${
-              isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
-            }`}>
-              Hunter
-            </h1>
-            <motion.div
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              className="hidden sm:block"
-            >
-              <Brain className="w-4 h-4 text-[#00F5A0]" />
-            </motion.div>
+            <div className="flex items-center gap-2">
+              <img src="/header.png" alt="Logo" className="w-8 h-8" />
+              <div className="flex flex-col">
+                <h1 className={`text-lg md:text-xl font-semibold transition-colors duration-300 ${
+                  isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
+                }`}>
+                  Hunter
+                </h1>
+                <p className={`text-xs transition-colors duration-300 ${
+                  isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
+                }`}>
+                  Discover high-confidence yield opportunities
+                </p>
+              </div>
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="hidden sm:block"
+              >
+                <Brain className="w-4 h-4 text-[#00F5A0]" />
+              </motion.div>
+            </div>
           </div>
           
           {/* Right Side Controls */}

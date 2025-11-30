@@ -46,8 +46,6 @@ export const FeatureCard = ({
   error = null,
 }: FeatureCardProps) => {
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [showMiniDemo, setShowMiniDemo] = React.useState(false);
 
   // Event handlers
   const handlePrimaryClick = () => {
@@ -75,34 +73,6 @@ export const FeatureCard = ({
   if (isLoading) {
     return <FeatureCardSkeleton />;
   }
-
-  // Feature-specific animation personalities
-  const getAnimationPersonality = () => {
-    switch (feature) {
-      case 'guardian':
-        return {
-          hover: { scale: 1.02, y: -4 },
-          transition: { duration: 0.3 }, // Calm & protective
-        };
-      case 'hunter':
-        return {
-          hover: { scale: 1.03, y: -6 },
-          transition: { duration: 0.15 }, // Fast & exciting
-        };
-      case 'harvestpro':
-        return {
-          hover: { scale: 1.02, y: -3 },
-          transition: { duration: 0.25 }, // Smart & efficient
-        };
-      default:
-        return {
-          hover: { scale: 1.02 },
-          transition: { duration: 0.2 },
-        };
-    }
-  };
-
-  const personality = getAnimationPersonality();
 
   return (
     <motion.div
@@ -200,10 +170,10 @@ export const FeatureCard = ({
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-[#00F5A0] focus:ring-offset-2 focus:ring-offset-[#0A0F1F]
           "
-          aria-label={`View ${title}`}
+          aria-label={`Explore ${title}`}
           tabIndex={0}
         >
-          {error ? 'Retry' : `View ${title}`}
+          {error ? 'Retry' : `Explore ${title}`}
         </button>
       </div>
     </motion.div>

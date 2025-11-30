@@ -89,7 +89,7 @@ export function HarvestProof() {
             {error instanceof Error ? error.message : 'An error occurred'}
           </p>
           <Button onClick={() => navigate('/harvest')}>
-            Return to HarvestPro
+            Return to Harvest
           </Button>
         </div>
       </div>

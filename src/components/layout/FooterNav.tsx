@@ -61,8 +61,8 @@ export function FooterNav() {
       href: '/harvestpro', 
       icon: Leaf, 
       path: '/harvestpro',
-      label: 'HarvestPro',
-      ariaLabel: 'Navigate to HarvestPro tax optimization'
+      label: 'Harvest',
+      ariaLabel: 'Navigate to Harvest tax optimization'
     },
     { 
       href: '/portfolio', 

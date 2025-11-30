@@ -43,7 +43,7 @@ export function NoWalletsConnected({ onConnectWallet, className }: NoWalletsConn
       {/* Description */}
       <p className="text-gray-400 mb-6 max-w-md mx-auto">
         Connect your wallet to start discovering tax-loss harvesting opportunities.
-        HarvestPro will analyze your holdings and identify potential tax savings.
+        Harvest will analyze your holdings and identify potential tax savings.
       </p>
 
       {/* Connect Wallet Button */}

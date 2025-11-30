@@ -32,17 +32,12 @@ export function HarvestProHeader({
       <div className="max-w-screen-xl mx-auto px-4 py-3">
         {/* Top Row */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/header.png" alt="Logo" className="w-8 h-8" />
-            <h1 className="text-xl font-semibold text-white">
-              HarvestPro
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              <img src="/header.png" alt="AlphaWhale Logo" className="w-8 h-8" />
+              Harvest
             </h1>
-            <motion.div
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-            >
-              <Leaf className="w-4 h-4 text-[#ed8f2d]" />
-            </motion.div>
+            <p className="text-gray-400 text-sm mt-1">Optimize your tax strategy for maximum savings</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -77,7 +72,7 @@ export function HarvestProHeader({
                   onClick={() => setIsDemo(true)}
                   className={`px-3 py-1 rounded-lg border transition-all duration-300 ${
                     isDemo
-                      ? 'bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white font-medium shadow-sm'
+                      ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
                       : 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                   }`}
                 >
@@ -87,7 +82,7 @@ export function HarvestProHeader({
                   onClick={() => setIsDemo(false)}
                   className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
                     !isDemo
-                      ? 'bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white font-medium shadow-sm'
+                      ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
                       : 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                   }`}
                 >
@@ -105,7 +100,7 @@ export function HarvestProHeader({
 
               {/* AI Digest Button */}
               <motion.button
-                className="px-3 py-1 bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white font-medium rounded-lg shadow-sm text-sm"
+                className="px-3 py-1 bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium rounded-lg shadow-sm text-sm"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
