@@ -1,5 +1,19 @@
 # PR Checklist — AlphaWhale UX Gap Improvements (SCOPE LOCK)
 
+## 🔥 HARD GATES (Reviewer must check ALL)
+
+| Gate | Pass? | Evidence |
+|------|-------|----------|
+| **Scope Lock** (no new pages/features/APIs/data) | [ ] | Diff + file list |
+| **Traceability** (Req + Design for every change) | [ ] | PR description + code headers |
+| **Tests pass** (unit/integration/e2e as applicable) | [ ] | CI link + logs |
+| **No Silent Clicks** respected | [ ] | tests or runtime validation |
+| **No new deps / no backend changes** | [ ] | lockfile + API/supabase untouched |
+
+**If any Hard Gate fails → DO NOT MERGE.**
+
+---
+
 ## 0) PR Summary (Required)
 
 **What UX gap is fixed?** (1–3 bullets)
@@ -14,10 +28,14 @@
 **Screens impacted:** (check all that apply)
 - [ ] Home Dashboard (`/`)
 - [ ] Guardian (`/guardian`)
-- [ ] Hunter (`/hunter`) 
+- [ ] Hunter (`/hunter`)
 - [ ] HarvestPro (`/harvestpro`)
 - [ ] Portfolio (`/portfolio`)
 - [ ] Settings (`/settings`)
+
+**Required labels:**
+- [ ] `ux-gap` label added to PR
+- [ ] (Optional) `needs-evidence` label removed before merge
 
 ---
 
@@ -32,6 +50,7 @@
 - [ ] ✅ No new dashboards/widgets/analytics UI sections
 - [ ] ✅ No renaming/restructuring of existing product concepts
 - [ ] ✅ No new demo data added (only labeling existing demo states)
+- [ ] ✅ No new dependencies added (see Section 14)
 
 **If ANY box above is false → PR must be split or rejected.**
 
@@ -41,14 +60,21 @@
 
 **Every changed file must trace to requirements + design.**
 
-- [ ] Each PR description includes Requirement IDs and Design sections
-- [ ] Each commit message includes at least one Requirement ID (ex: `R3.GAS.NONZERO`)
-- [ ] Each changed module/file includes a short comment header with:
+- [ ] PR description includes Requirement IDs + Design sections (explicit mapping)
+- [ ] Each commit message includes ≥1 Requirement ID (ex: `R3.GAS.NONZERO`)
+- [ ] Each changed module/file includes a short comment header:
   ```typescript
   // Req: R?.?.?
-  // Design: <path> (ex: Design → Data Integrity → Gas Oracle Rules)
+  // Design: Design → <section>
   ```
-- [ ] No "nice-to-have" changes without explicit Requirement + Design mapping
+- [ ] No "nice-to-have" edits without explicit Requirement + Design mapping
+
+**Traceability Map (Required):**
+A short table is present in the PR description:
+
+| File | Change | Requirement | Design |
+|------|--------|-------------|--------|
+|      |        |             |        |
 
 ---
 
@@ -65,9 +91,12 @@
 - [ ] Invalid tabs canonicalize with user feedback (toast), no crashes
 - [ ] Active nav state updates immediately and persists across refresh
 
+**Mechanical "Route Diff Proof" (Required if nav touched):**
+Paste the exact git diff snippet showing updated `href`/router calls for nav items in PR description
+
 **Evidence required:**
-- [ ] Screenshot/GIF of each nav click landing correctly (or Playwright video)
-- [ ] Test(s) asserting URL + active state (not internal return values)
+- [ ] Screenshot/GIF (or Playwright video) showing each nav click landing correctly
+- [ ] Test(s) asserting URL + active state (observable behavior)
 
 ---
 
@@ -80,7 +109,7 @@
 
 **Evidence required:**
 - [ ] Video/GIF showing navigation with shell persistent
-- [ ] Test(s) checking loading indicator appears quickly (observable behavior)
+- [ ] Test(s) checking loading UI appears quickly (observable behavior)
 
 ---
 
@@ -104,11 +133,11 @@
 - [ ] Primary buttons: press scale to 0.98 (~120ms) and return smoothly
 - [ ] Cards: hover lift ~4px with smooth shadow transition (~200ms)
 - [ ] Reduced motion preference respected (animations reduced/disabled)
-- [ ] No Silent Clicks: every clickable element results in navigation/modal/toast/tooltip/loading/disabled explanation
+- [ ] **No Silent Clicks**: every clickable element results in navigation/modal/toast/tooltip/loading/disabled explanation
 
 **Evidence required:**
 - [ ] Short GIF showing press + hover micro-interactions
-- [ ] Dev-only runtime validation enabled (if implemented) OR test coverage proving no dead clicks
+- [ ] Runtime validation in dev OR tests proving no dead clicks
 
 ---
 
@@ -129,14 +158,14 @@
 ## 8) Trust Signals & Proof (R10 + R14)
 
 - [ ] "Click for proof" / trust badges never dead-end
-- [ ] If proof destination doesn't exist, UI shows an honest unavailable state (not fake links)
+- [ ] If proof destination doesn't exist, UI shows honest unavailable state (not fake links)
 - [ ] Metrics show "How it's calculated" or methodology modal (only if element already exists)
 - [ ] Any external proof link opens in new tab (preserve context)
 - [ ] "Last updated" timestamp present when applicable (or clearly unavailable)
 
 **Evidence required:**
 - [ ] Screenshot of proof interaction (modal/open tab/fallback)
-- [ ] Test(s) that clickable proof elements actually trigger something observable
+- [ ] Test(s) verifying proof element triggers observable result
 
 ---
 
@@ -155,14 +184,12 @@
 
 ## 10) Tests & Quality Gates (Hard Gate)
 
-**All required checks must pass.**
-
-- [ ] Unit tests pass (`npm test` or `yarn test`)
-- [ ] Integration tests pass
-- [ ] E2E tests pass for critical paths (navigation, wallet connect UI state, settings save)
+- [ ] Unit tests pass
+- [ ] Integration tests pass (if applicable)
+- [ ] E2E tests pass for critical paths (nav, wallet connect UI state, settings save)
 - [ ] Property-based tests (if included) run with ≥100 iterations
 - [ ] Accessibility: axe checks pass (WCAG AA)
-- [ ] Performance: Lighthouse ≥90 performance, ≥95 accessibility (or documented baseline deltas)
+- [ ] Performance: Lighthouse ≥90 performance, ≥95 accessibility (or baseline deltas documented)
 
 **Attach CI links / screenshots:**
 - [ ] CI run link: 
@@ -171,108 +198,81 @@
 
 ---
 
-## 11) File Change Review (Mechanical)
+## 11) File Change Review (Hard Gate)
 
-**Allowed file patterns for UX Gap improvements:**
+**Allowlist-only file patterns**
 
 ✅ **ALLOWED:**
-- `src/components/**/*.tsx` - UI component improvements
-- `src/pages/**/*.tsx` - Page component improvements  
-- `src/app/**/*.tsx` - App Router page improvements
-- `src/hooks/**/*.ts` - Custom hooks for UX logic
-- `src/lib/**/*.ts` - Utility functions (no business logic)
-- `src/styles/**/*.css` - Styling improvements
-- `src/__tests__/**/*` - Test files
-- `tests/e2e/**/*` - E2E test files
-- `*.md` - Documentation updates
+- `src/components/**/*.tsx`
+- `src/pages/**/*.tsx`
+- `src/app/**/*.tsx`
+- `src/hooks/**/*.ts`
+- `src/lib/**/*.ts` (UX utilities only; no business logic)
+- `src/styles/**/*.css`
+- `src/__tests__/**/*`
+- `tests/e2e/**/*`
+- `*.md`
 
 ❌ **FORBIDDEN:**
-- `src/app/api/**/*` - No new API routes
-- `supabase/functions/**/*` - No new Edge Functions
-- `supabase/migrations/**/*` - No database changes
-- `*.sql` - No database scripts
-- `src/schemas/**/*` - No schema changes (unless validation only)
-- `src/types/**/*` - No new data models
-
-**Reviewer must explicitly confirm:**
-- [ ] No files changed outside UX scope (list unexpected files below)
-- [ ] No invented abstractions (new router framework, new state machine not needed)
-- [ ] No backend changes (routes, schema, API)
-- [ ] Every change maps to Requirement + Design
-- [ ] PR is minimal: no formatting-only sweeping changes unless required
+- `src/app/api/**/*`
+- `supabase/functions/**/*`
+- `supabase/migrations/**/*`
+- `*.sql`
+- `src/schemas/**/*` (unless strictly UI validation, no new domain models)
+- `package.json`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json` (see Section 14)
 
 **Unexpected files changed (must justify):**
-1. 
-2. 
+- File: _______ Reason: ______________________
+- File: _______ Reason: ______________________
+
+**Reviewer must explicitly confirm:**
+- [ ] No files changed outside allowlist (or justified above)
+- [ ] No backend changes (routes/schema/API)
+- [ ] PR is minimal: no sweeping formatting-only diffs
 
 ---
 
 ## 12) Component Standardization Check (R13)
 
-**If this PR touches buttons, skeletons, or toasts:**
+**If PR touches buttons/skeletons/toasts:**
 
-- [ ] Uses single `PrimaryButton` component (not custom `<button>` elements)
-- [ ] Uses unified `Skeleton` system with consistent shimmer
-- [ ] Uses standardized `Toast` system (success=green, error=red, info=blue)
-- [ ] CSS uses custom properties (`--aw-primary`, `--aw-secondary`) not hardcoded hex
-
-**Component locations to verify:**
-- PrimaryButton: `src/components/ui/` or `src/components/ux/`
-- Skeleton: `src/components/ui/` or `src/components/ux/`
-- Toast: `src/components/ui/` or `src/components/ux/`
+- [ ] Uses single `PrimaryButton` (no ad-hoc primary `<button>`)
+- [ ] Uses unified `Skeleton` system
+- [ ] Uses standardized `Toast` system
+- [ ] Uses CSS custom props (`--aw-primary`, `--aw-secondary`) not hardcoded hex
 
 ---
 
 ## 13) AlphaWhale-Specific Checks
 
-**Navigation Components:**
-- [ ] Bottom nav component updated (if nav changes)
-- [ ] Header component maintains consistency
-- [ ] Route changes use Next.js router correctly
-
-**Feature-Specific Screens:**
-- [ ] Hunter: `src/pages/Hunter.tsx` or `src/app/hunter/page.tsx`
-- [ ] Guardian: Navigation to `/guardian` works correctly
-- [ ] Settings: Form improvements in settings pages
-- [ ] Home: Metrics and trust signals work correctly
-
-**Supabase Integration:**
-- [ ] No new Supabase client calls (unless replacing existing)
-- [ ] Auth state handling remains consistent
-- [ ] No new database queries (unless optimizing existing)
+- [ ] Navigation uses Next.js primitives only (no new routing framework)
+- [ ] Supabase: no new queries/clients unless replacing existing call sites (UX-only)
+- [ ] No new "live data wiring" that requires new backend infrastructure (fallback states instead)
 
 ---
 
-## 14) Performance Impact Check
+## 14) Dependency & Bundle Guard (Hard Gate)
 
-- [ ] Bundle size impact measured (if significant changes)
-- [ ] No new heavy dependencies added
-- [ ] Animations use CSS transforms (not layout-triggering properties)
-- [ ] Images optimized via Next.js Image component
-- [ ] No memory leaks in event listeners or intervals
+- [ ] No new dependencies added
+- [ ] No lockfile changes (unless explicitly approved for UX tooling)
+- [ ] No new heavy UI libs (animation frameworks, charting libs, state mgmt frameworks)
+- [ ] Any new dependency MUST map to a Requirement ID and be justified in PR description
+
+**If lockfile changed, list why:**
+- Lockfile changed because: ___________________________
+- Requirement ID: ___________________________
 
 ---
 
 ## 15) Reviewer Sign-off (Required)
 
-**Reviewer must verify:**
 - [ ] I verified scope lock compliance
 - [ ] I verified traceability (Req + Design) for all changed modules
 - [ ] I verified observable UX behavior matches requirements
 - [ ] I verified tests + a11y + perf gates passed
-- [ ] I tested the changes locally or reviewed sufficient evidence
+- [ ] I tested locally OR reviewed sufficient evidence
 
 **Reviewer name:** _______________
-
----
-
-## 16) Deployment Checklist
-
-**Before merge:**
-- [ ] Feature flags configured (if applicable)
-- [ ] Rollback plan documented
-- [ ] No breaking changes to existing functionality
-- [ ] Environment variables updated (if needed)
 
 ---
 
@@ -285,8 +285,6 @@
 4. **Micro-interactions:** GIF of button press and card hover animations
 5. **Error States:** Screenshot of error handling with retry options
 6. **Test Results:** CI pipeline results and test coverage
-7. **Accessibility:** axe-core results or accessibility test evidence
-8. **Performance:** Lighthouse scores before/after
 
 **Upload evidence here or link to external hosting:**
 - 
