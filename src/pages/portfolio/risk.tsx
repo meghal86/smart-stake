@@ -7,6 +7,7 @@ import { useUIMode } from '@/store/uiMode';
 import { AlertTriangle, TrendingUp, TrendingDown, Shield, Target, Droplets, Link2, HelpCircle, ArrowLeft } from 'lucide-react';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { GlassCard } from '@/components/guardian/GlassUI';
+import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
 
 export default function Risk() {
   const navigate = useNavigate();
@@ -114,7 +115,7 @@ export default function Risk() {
           <div className="max-w-screen-xl mx-auto px-4 py-3">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/portfolio')}
+                onClick={() => NavigationRouter.navigateToCanonical('portfolio', navigate)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -137,7 +138,7 @@ export default function Risk() {
             className="flex gap-2 flex-wrap"
           >
             <button
-              onClick={() => navigate('/portfolio')}
+              onClick={() => NavigationRouter.navigateToCanonical('portfolio', navigate)}
               className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors text-sm"
             >
               Overview
@@ -154,7 +155,7 @@ export default function Risk() {
               Stress Test
             </button>
             <button
-              onClick={() => navigate('/portfolio/guardian')}
+              onClick={() => NavigationRouter.navigateToCanonical('guardian', navigate)}
               className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors text-sm"
             >
               Guardian

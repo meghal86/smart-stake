@@ -8,6 +8,7 @@ import { FooterNav } from '@/components/home/FooterNav';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useHomeMetrics } from '@/hooks/useHomeMetrics';
 import { useNavigate } from 'react-router-dom';
+import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
 
 /**
  * AlphaWhale Home Page
@@ -38,7 +39,7 @@ function HomePageContent() {
   const handleHeroCtaClick = () => {
     // Navigate to Guardian if authenticated, otherwise trigger wallet connect
     if (metrics && !metrics.isDemo) {
-      navigate('/guardian');
+      NavigationRouter.navigateToCanonical('guardian', navigate);
     } else {
       // Wallet connect will be triggered by HeroSection component
     }
@@ -46,11 +47,11 @@ function HomePageContent() {
 
   const handleStartOnboarding = () => {
     // Navigate to Guardian as the first step of onboarding
-    navigate('/guardian');
+    NavigationRouter.navigateToCanonical('guardian', navigate);
   };
 
   const handleSkipOnboarding = () => {
-    navigate('/hunter');
+    NavigationRouter.navigateToCanonical('hunter', navigate);
   };
 
   return (

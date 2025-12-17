@@ -61,7 +61,7 @@ Tests must validate observable UI behavior (URL, active nav state, banners, toas
 
 Each task includes integrated PR checklist requirements. When completing a task, use the embedded checklist items for your PR.
 
-- [ ] 1. Navigation Router & Route Canonicalization
+- [x] 1. Navigation Router & Route Canonicalization
   - NavigationRouter MUST be a thin helper around existing Next.js router utilities. No new routing framework.
   - Implement canonical route enforcement using existing Next.js routing
   - Add route canonicalization for missing/invalid tabs with user feedback
@@ -72,16 +72,16 @@ Each task includes integrated PR checklist requirements. When completing a task,
   **PR Checklist for Task 1:**
   - [ ] Bottom nav routes exactly to canonical paths (Home→`/`, Guardian→`/guardian`, Hunter→`/hunter`, etc.)
   - [ ] Deep links restore deterministically (back/forward works)
-  - [ ] Invalid tabs canonicalize with user feedback (toast), no crashes
+  - [x] Invalid tabs canonicalize with user feedback (toast), no crashes
   - [ ] Active nav state updates immediately and persists across refresh
   - [ ] **Evidence Required:** Screenshot/GIF showing each nav click landing correctly + Route diff proof in PR description
   - [ ] **Tests Required:** Assert URL + active state (observable behavior)
 
-- [ ] 1.1 Write property test for navigation route consistency
+- [x] 1.1 Write property test for navigation route consistency
   - **Property 1: Navigation Route Consistency**
   - **Validates: R1.ROUTING.CANONICAL, R1.ROUTING.DETERMINISTIC, R1.ROUTING.INVALID_PARAMS**
 
-- [ ] 2. Universal Loading State System
+- [x] 2. Universal Loading State System
   - Create LoadingStateManager for consistent 100ms feedback
   - Implement AppShell persistence to prevent white flash during navigation
   - Add descriptive loading messages for different operation types

@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Zap, Search } from 'lucide-react';
+import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
+import { toast } from 'sonner';
 
 interface OnboardingSectionProps {
   onStartOnboarding?: () => void;
@@ -45,8 +47,8 @@ export const OnboardingSection = ({
     if (onStartOnboarding) {
       onStartOnboarding();
     } else {
-      // Navigate to Guardian as the first step of onboarding
-      navigate('/guardian');
+      // Navigate to Guardian as the first step of onboarding using canonical routing
+      NavigationRouter.navigateToCanonical('guardian', navigate, toast);
     }
   };
 
@@ -54,7 +56,7 @@ export const OnboardingSection = ({
     if (onSkip) {
       onSkip();
     } else {
-      navigate('/hunter');
+      NavigationRouter.navigateToCanonical('hunter', navigate, toast);
     }
   };
 

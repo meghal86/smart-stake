@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NavigationRouter } from "@/lib/navigation/NavigationRouter";
 import { 
   User, 
   Mail, 
@@ -21,6 +22,7 @@ import {
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FooterNav } from "@/components/layout/FooterNav";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -217,7 +219,7 @@ export default function ProfilePage() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => navigate('/settings')}
+                  onClick={() => NavigationRouter.navigateToCanonical('settings', navigate)}
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
@@ -235,6 +237,8 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      
+      <FooterNav />
     </div>
   );
 }

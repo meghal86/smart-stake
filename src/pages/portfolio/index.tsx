@@ -14,6 +14,7 @@ import { GuardianInsightCard } from '@/components/portfolio/GuardianInsightCard'
 import { PortfolioTabs } from '@/components/portfolio/PortfolioTabs';
 import { PortfolioTabContent } from '@/components/portfolio/PortfolioTabContent';
 import { GlassCard } from '@/components/guardian/GlassUI';
+import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
 
 // Mock wallet data for multi-wallet support
 const mockWallets = [
@@ -90,7 +91,7 @@ export default function Overview() {
   );
 
   const handleViewGuardian = () => {
-    navigate('/guardian');
+    NavigationRouter.navigateToCanonical('guardian', navigate);
   };
 
   const renderLoading = () => (

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useHomeAuth } from '@/lib/context/HomeAuthContext';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
+import { toast } from 'sonner';
 
 interface HeroSectionProps {
   onCtaClick?: () => void;
@@ -25,7 +27,7 @@ export const HeroSection = ({ onCtaClick }: HeroSectionProps) => {
     if (!isAuthenticated) {
       openConnectModal?.();
     } else {
-      navigate('/guardian');
+      NavigationRouter.navigateToCanonical('guardian', navigate, toast);
     }
   };
 

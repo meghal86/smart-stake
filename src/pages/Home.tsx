@@ -374,7 +374,8 @@ export default function Home() {
   };
 
   const handleTabChange = (tab: string) => {
-    navigate(`/${tab}`);
+    // Navigation is handled by BottomNavigation component
+    // This is just for state management
   };
 
   return (
@@ -988,7 +989,7 @@ export default function Home() {
         {/* Spotlight Carousel */}
         <SpotlightCarousel />
       </div>
-      <BottomNavigation activeTab="whales" onTabChange={handleTabChange} />
+      <BottomNavigation activeTab="home" onTabChange={handleTabChange} />
     </TooltipProvider>
   );
 }

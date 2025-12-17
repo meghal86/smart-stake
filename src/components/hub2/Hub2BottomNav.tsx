@@ -14,18 +14,20 @@ import {
   Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NavigationRouter } from "@/lib/navigation/NavigationRouter";
+import { toast } from "sonner";
 
 const navItems = [
-  { id: 'pulse', label: 'Pulse', icon: Activity, path: '/hub2/pulse' },
-  { id: 'predictions', label: 'Predictions', icon: Zap, path: '/hub2/predictions' },
-  { id: 'explore', label: 'Explore', icon: Search, path: '/hub2/explore' },
-  { id: 'alerts', label: 'Alerts', icon: Bell, path: '/hub2/alerts' },
-  { id: 'watchlist', label: 'Watch', icon: Star, path: '/hub2/watchlist' },
-  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced' },
-  { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner' },
-  { id: 'guardian', label: 'Guardian', icon: Shield, path: '/guardian' },
-  { id: 'hunter', label: 'Hunter', icon: Target, path: '/hunter' },
-  { id: 'copilot', label: 'AI', icon: Bot, path: '/hub2/copilot' },
+  { id: 'pulse', label: 'Pulse', icon: Activity, path: '/hub2/pulse', useCanonical: false },
+  { id: 'predictions', label: 'Predictions', icon: Zap, path: '/hub2/predictions', useCanonical: false },
+  { id: 'explore', label: 'Explore', icon: Search, path: '/hub2/explore', useCanonical: false },
+  { id: 'alerts', label: 'Alerts', icon: Bell, path: '/hub2/alerts', useCanonical: false },
+  { id: 'watchlist', label: 'Watch', icon: Star, path: '/hub2/watchlist', useCanonical: false },
+  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced', useCanonical: false },
+  { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner', useCanonical: false },
+  { id: 'guardian', label: 'Guardian', icon: Shield, navId: 'guardian', useCanonical: true },
+  { id: 'hunter', label: 'Hunter', icon: Target, navId: 'hunter', useCanonical: true },
+  { id: 'copilot', label: 'AI', icon: Bot, path: '/hub2/copilot', useCanonical: false },
 ];
 
 interface Hub2BottomNavProps {
@@ -98,10 +100,20 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
           const isActive = activeTab === item.id;
           const Icon = item.icon;
           
+          const handleClick = () => {
+            if (item.useCanonical && item.navId) {
+              // Use NavigationRouter for canonical routes
+              NavigationRouter.navigateToCanonical(item.navId, navigate, toast);
+            } else {
+              // Use direct navigation for Hub2-specific routes
+              navigate(item.path);
+            }
+          };
+          
           return (
             <motion.button
               key={item.id}
-              onClick={() => navigate(item.path)}
+              onClick={handleClick}
               className={cn(
                 "flex flex-col items-center justify-center",
                 "px-3 py-2 rounded-lg transition-all duration-200",

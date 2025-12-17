@@ -25,6 +25,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NavigationRouter } from "@/lib/navigation/NavigationRouter";
+import { toast } from "sonner";
 
 interface UserMenuProps {
   user: unknown;
@@ -133,7 +135,7 @@ export default function UserMenu({ user, tier }: UserMenuProps) {
           </DropdownMenuItem>
         )}
         
-        <DropdownMenuItem onClick={() => navigate('/settings')}>
+        <DropdownMenuItem onClick={() => NavigationRouter.navigateToCanonical('settings', navigate, toast)}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

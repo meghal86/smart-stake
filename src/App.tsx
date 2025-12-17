@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
+import { BrowserNavigationProvider } from "@/components/navigation/BrowserNavigationProvider";
+import { toast } from "@/hooks/use-toast";
 import "@/theme/ocean.css";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -139,7 +141,8 @@ const App = () => {
           <SplashScreen onComplete={handleSplashComplete} duration={5000} />
         )}
         <BrowserRouter>
-          <Routes>
+          <BrowserNavigationProvider showToast={(message) => toast({ description: message })}>
+            <Routes>
                   <Route path="/" element={<AlphaWhaleHome />} />
                   <Route path="/lite" element={<Index />} />
                   <Route path="/whale-alerts" element={<Home />} />
@@ -213,7 +216,8 @@ const App = () => {
                   <Route path="/whale-alerts" element={<SignalsPage />} />
                   <Route path="/pro-signals" element={<SignalsPage />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </BrowserNavigationProvider>
         </BrowserRouter>
       </ClientProviders>
     </ErrorBoundary>

@@ -645,10 +645,9 @@ export default function Alerts() {
       
       {/* Bottom Navigation */}
       <BottomNavigation 
-        activeTab="alerts" 
+        activeTab="home" 
         onTabChange={(tab) => {
-          if (tab === 'alerts') return;
-          navigate(`/${tab}`);
+          // Navigation is handled by BottomNavigation component
         }} 
       />
     </div>

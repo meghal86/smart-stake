@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Home, Activity, Fish, TrendingUp, Shield, Users, Brain, Twitter, Briefcase, ChevronUp, FileText, Zap, Bell, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
@@ -5,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { FloatingSocial } from "@/components/ui/FloatingSocial";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { NavigationRouter } from "@/lib/navigation/NavigationRouter";
+import { toast } from "sonner";
 
 interface NavigationItem {
   id: string;
@@ -15,11 +17,11 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { id: "whales", label: "Home", icon: Home },
-  { id: "signals", label: "Signals", icon: Activity, isPremium: true },
-  { id: "market", label: "Market", icon: TrendingUp },
-  { id: "hub", label: "Hub", icon: Zap, isPremium: true },
-  { id: "portfolio", label: "Portfolio", icon: Briefcase, isPremium: true },
+  { id: "home", label: "Home", icon: Home },
+  { id: "guardian", label: "Guardian", icon: Shield },
+  { id: "hunter", label: "Hunter", icon: Target },
+  { id: "harvestpro", label: "HarvestPro", icon: Briefcase, isPremium: true },
+  { id: "settings", label: "Settings", icon: Users },
 ];
 
 interface BottomNavigationProps {
@@ -32,6 +34,12 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const [showUtilities, setShowUtilities] = useState(false);
+
+  const handleNavigation = (navItemId: string) => {
+    // Use NavigationRouter to ensure canonical routing
+    NavigationRouter.navigateToCanonical(navItemId, navigate, toast);
+    onTabChange(navItemId);
+  };
 
   return (
     <>
@@ -50,7 +58,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
               size="xs" 
               showText={true} 
               clickable={true}
-              onClick={() => navigate('/')}
+              onClick={() => NavigationRouter.navigateToCanonical('home', navigate)}
               src="/hero_logo_512.png"
               textClassName="text-xs font-medium" 
             />
@@ -79,7 +87,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
         <div className="md:hidden px-3 py-1.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <Logo size="xs" showText={false} clickable onClick={() => navigate('/')} src="/hero_logo_512.png" />
+              <Logo size="xs" showText={false} clickable onClick={() => NavigationRouter.navigateToCanonical('home', navigate)} src="/hero_logo_512.png" />
               <span className="text-muted-foreground text-[10px]">© {currentYear}</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -126,7 +134,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
             return (
               <button
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
+                onClick={() => handleNavigation(item.id)}
                 title={`${item.label}${item.isPremium ? ' (Premium)' : ''}`}
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-1.5 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all duration-200 min-w-0 flex-1 max-w-[70px] sm:max-w-[100px]",

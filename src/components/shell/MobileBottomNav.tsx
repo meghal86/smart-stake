@@ -86,6 +86,7 @@ export default function MobileBottomNav({ className }: MobileBottomNavProps) {
       return;
     }
     
+    // This component is for Hub2-specific routes, so use direct navigation
     navigate(item.path);
   };
 
