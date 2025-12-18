@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { 
   Home, 
   // Activity, 
@@ -8,7 +9,8 @@ import {
   // User,
   Leaf
 } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
 
 /**
  * Unified FooterNav Component for AlphaWhale
@@ -31,9 +33,20 @@ import { useLocation, Link } from 'react-router-dom';
  */
 export function FooterNav() {
   const location = useLocation();
-  const currentPath = location.pathname;
+  const navigate = useNavigate();
+  const currentPath = location.pathname + location.search;
 
-  const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
+  // Initialize browser navigation handling - Requirement R9.NAV.BROWSER_SYNC
+  useEffect(() => {
+    NavigationRouter.initializeBrowserNavigation(navigate);
+  }, [navigate]);
+
+  // Use NavigationRouter for consistent active state detection
+  const isActive = (path: string) => {
+    const currentRoute = NavigationRouter.canonicalize(currentPath);
+    const targetRoute = NavigationRouter.canonicalize(path);
+    return currentRoute.id === targetRoute.id;
+  };
 
   const navItems = [
     { 
@@ -119,33 +132,53 @@ export function FooterNav() {
                 aria-label={ariaLabel}
                 aria-current={active ? 'page' : undefined}
                 className={`
-                  flex flex-col items-center justify-center 
-                  transition-all duration-200 
+                  relative flex flex-col items-center justify-center 
+                  transition-all duration-150 ease-out
                   flex-1 py-2
                   min-h-[44px] min-w-[44px]
                   focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900
-                  ${active ? 'text-white' : 'hover:text-white'}
+                  ${active 
+                    ? 'text-white opacity-100' 
+                    : 'text-gray-400 opacity-60 hover:text-white hover:opacity-80'
+                  }
                 `}
               >
+                {/* 2px top border for active items - Requirement R9.NAV.ACTIVE_VISUAL */}
+                {active && (
+                  <div 
+                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] rounded-full"
+                    aria-hidden="true"
+                  />
+                )}
+                
                 <div 
                   className={`
-                    p-3 rounded-xl transition-all duration-200 
+                    p-3 rounded-xl transition-all duration-150 ease-out
                     ${active 
-                      ? 'bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] shadow-lg' 
-                      : 'hover:bg-white/10'
+                      ? 'bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] shadow-lg transform scale-105' 
+                      : 'hover:bg-white/10 hover:scale-102'
                     }
                   `} 
                   style={active ? { boxShadow: '0 0 20px rgba(0, 201, 167, 0.4)' } : {}}
                 >
                   <Icon 
-                    className={`w-6 h-6 ${active ? 'stroke-white stroke-2' : ''}`}
+                    className={`w-6 h-6 transition-all duration-150 ease-out ${
+                      active 
+                        ? 'stroke-white stroke-2 fill-white/20' 
+                        : 'stroke-current'
+                    }`}
                     aria-hidden="true"
                   />
                 </div>
+                
+                {/* Bold text for active items - Requirement R9.NAV.ACTIVE_VISUAL */}
                 <span 
                   className={`
-                    text-xs mt-1 font-medium
-                    ${active ? 'text-cyan-400' : 'text-gray-400'}
+                    text-xs mt-1 transition-all duration-150 ease-out
+                    ${active 
+                      ? 'text-cyan-400 font-bold' 
+                      : 'text-gray-400 font-medium'
+                    }
                   `}
                 >
                   {label}
