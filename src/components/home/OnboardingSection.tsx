@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Zap, Search } from 'lucide-react';
 import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
 import { toast } from 'sonner';
+import { OnboardingStepsSkeleton } from '@/components/ui/Skeletons';
 
 interface OnboardingSectionProps {
   onStartOnboarding?: () => void;
   onSkip?: () => void;
+  isLoading?: boolean;
 }
 
 interface OnboardingStep {
@@ -40,6 +42,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
 export const OnboardingSection = ({
   onStartOnboarding,
   onSkip,
+  isLoading = false,
 }: OnboardingSectionProps) => {
   const navigate = useNavigate();
 
@@ -88,62 +91,68 @@ export const OnboardingSection = ({
           </p>
         </div>
 
-        {/* Steps Container */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8 md:mb-12">
-          {ONBOARDING_STEPS.map((step) => {
-            const IconComponent = step.icon;
-            
-            return (
-              <div
-                key={step.number}
-                className="
-                  relative
-                  bg-white/5 backdrop-blur-md
-                  border border-white/10
-                  rounded-lg
-                  p-4 md:p-6
-                  text-center
-                  transition-transform duration-150
-                  hover:scale-105
-                "
-                role="article"
-                aria-label={`Step ${step.number}: ${step.title}`}
-              >
-                {/* Step Number Badge */}
+        {/* Steps Container - Progressive Loading */}
+        {isLoading ? (
+          <div className="mb-8 md:mb-12">
+            <OnboardingStepsSkeleton />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-8 md:mb-12">
+            {ONBOARDING_STEPS.map((step) => {
+              const IconComponent = step.icon;
+              
+              return (
                 <div
+                  key={step.number}
                   className="
-                    absolute -top-4 left-1/2 -translate-x-1/2
-                    w-8 h-8
-                    bg-cyan-500
-                    rounded-full
-                    flex items-center justify-center
-                    text-white font-bold text-sm
+                    relative
+                    bg-white/5 backdrop-blur-md
+                    border border-white/10
+                    rounded-lg
+                    p-4 md:p-6
+                    text-center
+                    transition-transform duration-150
+                    hover:scale-105
                   "
-                  aria-label={`Step ${step.number}`}
+                  role="article"
+                  aria-label={`Step ${step.number}: ${step.title}`}
                 >
-                  {step.number}
-                </div>
-
-                {/* Icon */}
-                <div className="flex justify-center mb-4 mt-2">
-                  <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center">
-                    <IconComponent className="w-8 h-8 text-cyan-400" aria-hidden="true" />
+                  {/* Step Number Badge */}
+                  <div
+                    className="
+                      absolute -top-4 left-1/2 -translate-x-1/2
+                      w-8 h-8
+                      bg-cyan-500
+                      rounded-full
+                      flex items-center justify-center
+                      text-white font-bold text-sm
+                    "
+                    aria-label={`Step ${step.number}`}
+                  >
+                    {step.number}
                   </div>
+
+                  {/* Icon */}
+                  <div className="flex justify-center mb-4 mt-2">
+                    <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                      <IconComponent className="w-8 h-8 text-cyan-400" aria-hidden="true" />
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {step.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-400 text-sm">
+                    {step.description}
+                  </p>
                 </div>
-
-                {/* Title */}
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  {step.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-gray-400 text-sm">
-                  {step.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

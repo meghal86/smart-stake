@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Info, ChevronDown, Download, Lock, Sparkles, ExternalLink, Clock } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { LivePriceDisplay } from './LivePriceDisplay';
+import { formatRelativeTime } from '@/lib/ux/timestampUtils';
 
 interface ProductionPrediction {
   id: string;
@@ -291,7 +292,7 @@ export function ProductionPredictionCard({ prediction }: ProductionPredictionCar
           <div className="mt-4 pt-3 border-t text-xs text-muted-foreground flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3" />
-              Data freshness: {Math.floor((Date.now() - new Date(prediction.provenance.queried_at).getTime()) / 60000)}m ago • Block #{prediction.provenance.block_number}
+              Data freshness: {formatRelativeTime(prediction.provenance.queried_at)} • Block #{prediction.provenance.block_number}
             </div>
             {prediction.context && (
               <div>

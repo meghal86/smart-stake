@@ -3,6 +3,7 @@ import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatRelativeTime } from '@/lib/ux/timestampUtils';
 
 interface LiveDataIndicatorProps {
   isLive: boolean;
@@ -23,19 +24,7 @@ export function LiveDataIndicator({
     if (!lastUpdated) return;
 
     const updateTimeAgo = () => {
-      const now = new Date();
-      const updated = new Date(lastUpdated);
-      const diffMs = now.getTime() - updated.getTime();
-      const diffSeconds = Math.floor(diffMs / 1000);
-      const diffMinutes = Math.floor(diffSeconds / 60);
-
-      if (diffSeconds < 60) {
-        setTimeAgo(`${diffSeconds}s ago`);
-      } else if (diffMinutes < 60) {
-        setTimeAgo(`${diffMinutes}m ago`);
-      } else {
-        setTimeAgo(`${Math.floor(diffMinutes / 60)}h ago`);
-      }
+      setTimeAgo(formatRelativeTime(lastUpdated));
     };
 
     updateTimeAgo();

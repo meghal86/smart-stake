@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Wifi, WifiOff, Clock } from 'lucide-react';
+import { formatRelativeTime } from '@/lib/ux/timestampUtils';
 
 interface FreshnessBadgeProps {
   isLive: boolean;
@@ -9,13 +10,7 @@ interface FreshnessBadgeProps {
 
 export function FreshnessBadge({ isLive, lastUpdate, provider }: FreshnessBadgeProps) {
   const getTimeAgo = (timestamp: string) => {
-    const now = Date.now();
-    const then = new Date(timestamp).getTime();
-    const diffSeconds = Math.floor((now - then) / 1000);
-    
-    if (diffSeconds < 60) return `${diffSeconds}s ago`;
-    if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
-    return `${Math.floor(diffSeconds / 3600)}h ago`;
+    return formatRelativeTime(timestamp);
   };
 
   if (isLive) {

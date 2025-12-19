@@ -11,6 +11,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { GlassNav, GlassButton } from '@/components/guardian/GlassUI';
+import { formatUpdatedTime } from '@/lib/ux/timestampUtils';
 
 interface TimeRange {
   label: string;
@@ -183,7 +184,7 @@ export function PortfolioHeader({
               {lastUpdated && (
                 <div className="text-xs text-gray-400 flex items-center gap-1">
                   <Activity className="w-3 h-3" />
-                  Updated {Math.floor((Date.now() - lastUpdated.getTime()) / 1000)}s ago
+                  {formatUpdatedTime(lastUpdated)}
                 </div>
               )}
 

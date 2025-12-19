@@ -87,7 +87,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - **Property 2: Loading State Responsiveness**
   - **Validates: R2.LOADING.100MS, R2.LOADING.DESCRIPTIVE, R2.LOADING.SUCCESS_FAILURE**
 
-- [ ] 3. Demo Mode & Data Integrity System
+- [x] 3. Demo Mode & Data Integrity System
   - Create `src/lib/ux/DemoModeManager.ts` with automatic mode switching based on wallet connection
   - Add persistent demo banner component with "Connect Wallet for Live Data" CTA
   - Integrate existing `useNetworkStatus` hook for gas validation (already prevents "0 gwei")
@@ -96,15 +96,15 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - _Requirements: R3.DEMO.BANNER_PERSISTENT, R3.GAS.NONZERO, R3.GAS.FALLBACK, R3.DEMO.AUTO_SWITCHING_
   
   **PR Checklist for Task 3:**
-  - [ ] Demo banner appears when wallet not connected: "Demo Mode — Data is simulated"
-  - [ ] Live mode only when readiness conditions satisfied (no guessing)
-  - [ ] Gas never displays "0 gwei" (already handled by useNetworkStatus)
-  - [ ] On gas failure, shows "Gas unavailable" + telemetry event
-  - [ ] Timestamps avoid "0s ago" (use "Just now" under 1s)
-  - [ ] **Evidence Required:** Screenshot of Demo banner + CTA, Screenshot of gas fallback state
-  - [ ] **Tests Required:** Assert display text never equals "0 gwei"
+  - [-] Demo banner appears when wallet not connected: "Demo Mode — Data is simulated"
+  - [x] Live mode only when readiness conditions satisfied (no guessing)
+  - [x] Gas never displays "0 gwei" (already handled by useNetworkStatus)
+  - [x] On gas failure, shows "Gas unavailable" + telemetry event
+  - [x] Timestamps avoid "0s ago" (use "Just now" under 1s)
+  - [x] **Evidence Required:** Screenshot of Demo banner + CTA, Screenshot of gas fallback state
+  - [x] **Tests Required:** Assert display text never equals "0 gwei"
 
-- [ ] 3.1 Write property test for data integrity validation
+- [x] 3.1 Write property test for data integrity validation
   - **Property 3: Data Integrity Validation**
   - **Validates: R3.GAS.NONZERO, R3.GAS.FALLBACK, R3.DEMO.LABELING**
 
@@ -119,23 +119,37 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - ✅ **Property 4: Animation Consistency**
   - ✅ **Validates: R4.ANIMATION.BUTTON_SCALE, R4.ANIMATION.CARD_LIFT, R4.ANIMATION.TIMING**
 
-- [ ] 5. Settings & Form Quality Fixes
+- [x] 5. Settings & Form Quality Fixes
   - Create or enhance Settings page to fix "Invalid Date" placeholders and disabled email fields
   - Add clear explanations for disabled form fields with tooltips or help text
   - Implement immediate save confirmation and error feedback using existing Toast system
   - Ensure all form fields have proper default values or "Not set" indicators
   - Use React Hook Form + Zod validation as per harvestpro-stack.md standards
   - _Requirements: R5.SETTINGS.NO_INVALID_PLACEHOLDERS, R5.SETTINGS.CLEAR_EXPLANATIONS_
+  
+  **PR Checklist for Task 5:**
+  - [x] No "Invalid Date" placeholders anywhere
+  - [x] Disabled fields have explanations (tooltip/help text)
+  - [x] Save success toast: "Changes saved ✓" / error toast with specific message
+  - [-] **Evidence Required:** Screenshot showing "Not set" instead of invalid placeholder
+  - [x] **Tests Required:** Test(s) for validation messaging + disabled/enabled Save state
 
-- [ ] 6. Comprehensive Form Validation System
+- [x] 6. Comprehensive Form Validation System
   - Create `src/lib/ux/FormValidation.ts` with real-time validation using Zod schemas
   - Add immediate feedback on blur using React Hook Form integration
   - Implement character counters and helpful error messages for all form fields
   - Create disabled button states until forms are valid and modified
   - Add success toast notifications for form submissions using existing Toast system
   - _Requirements: R6.VALIDATION.IMMEDIATE, R6.VALIDATION.CLEAR_MESSAGES, R6.VALIDATION.SAVE_STATES_
+  
+  **PR Checklist for Task 6:**
+  - [x] Validation on blur with clear messages
+  - [ ] Save button disabled until valid + modified
+  - [ ] Save success toast: "Changes saved ✓" / error toast with specific message
+  - [ ] **Evidence Required:** Test(s) for validation messaging + disabled/enabled Save state
+  - [ ] **Tests Required:** Form validation immediacy and clear error messages
 
-- [ ] 6.1 Write property test for form validation immediacy
+- [x] 6.1 Write property test for form validation immediacy
   - **Property 5: Form Validation Immediacy**
   - **Validates: R6.VALIDATION.IMMEDIATE, R6.VALIDATION.CLEAR_MESSAGES, R6.VALIDATION.SAVE_STATES**
 
@@ -152,6 +166,14 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Create loading states for button actions with "Executing..." text
   - Add progress indicators for multi-step operations
   - _Requirements: R8.GATING.DISABLED_TOOLTIPS, R8.GATING.WALLET_REQUIRED, R8.GATING.LOADING_STATES_
+  
+  **PR Checklist for Task 8:**
+  - [ ] Disabled buttons have explanatory tooltips
+  - [ ] Wallet connection requirements clearly communicated
+  - [ ] Loading states show "Executing..." text for button actions
+  - [ ] Progress indicators for multi-step operations
+  - [ ] **Evidence Required:** Screenshot of disabled states with tooltips
+  - [ ] **Tests Required:** Test disabled/enabled states and tooltip content
 
 - [x] 9. Active Navigation State System
   - Fix bottom navigation active states with proper visual indicators
@@ -159,6 +181,21 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Ensure active states update correctly with browser navigation
   - Implement smooth transitions for navigation state changes
   - _Requirements: R9.NAV.ACTIVE_VISUAL, R9.NAV.BROWSER_SYNC, R9.NAV.SMOOTH_TRANSITIONS_
+  
+  **🧪 E2E Tests Available:**
+  - **Quick Test:** `npm run test:e2e:navigation`
+  - **Visual Test:** `npm run test:e2e:navigation:headed`
+  - **Script:** `./scripts/test-active-navigation.sh --headed`
+  - **Manual Test Runner:** Open `tests/e2e/active-navigation-test-runner.html` in browser
+  
+  **Test Coverage:**
+  - ✅ Visual indicators (2px border, bold text, opacity)
+  - ✅ Browser navigation sync (back/forward, refresh)
+  - ✅ Smooth transitions (150ms ease-out)
+  - ✅ Route-specific active states
+  - ✅ Accessibility (ARIA, keyboard navigation)
+  - ✅ Performance and responsiveness
+  - ✅ Error handling and edge cases
 
 - [ ] 10. Trust Signal Verification System
   - Link trust badges to actual audit reports and methodology pages
@@ -166,6 +203,15 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Add "How it's calculated" links for platform metrics
   - Ensure all trust signals have verification timestamps
   - _Requirements: R10.TRUST.AUDIT_LINKS, R10.TRUST.METHODOLOGY, R10.TRUST.TIMESTAMPS_
+  
+  **PR Checklist for Task 10:**
+  - [ ] "Click for proof" / trust badges never dead-end
+  - [ ] If proof destination doesn't exist, UI shows honest unavailable state (not fake links)
+  - [ ] Metrics show "How it's calculated" or methodology modal (only if element already exists)
+  - [ ] Any external proof link opens in new tab (preserve context)
+  - [ ] "Last updated" timestamp present when applicable (or clearly unavailable)
+  - [ ] **Evidence Required:** Screenshot of proof interaction (modal/open tab/fallback)
+  - [ ] **Tests Required:** Test(s) verifying proof element triggers observable result
 
 - [ ] 10.1 Write property test for trust signal verification
   - **Property 7: Trust Signal Verification**
@@ -226,6 +272,14 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Create user-friendly error messages with retry functionality
   - Ensure cached data is shown during network connectivity issues
   - _Requirements: R15.ERROR.BOUNDARIES, R15.ERROR.GRACEFUL_DEGRADATION, R15.ERROR.CLEAR_MESSAGES_
+  
+  **PR Checklist for Task 15:**
+  - [ ] API failures show human-friendly messages + Retry
+  - [ ] Error boundaries prevent whole-app crash
+  - [ ] Rate limit / network errors have actionable copy
+  - [ ] Telemetry logs errors without sensitive data
+  - [ ] **Evidence Required:** Screenshot of error state with Retry
+  - [ ] **Tests Required:** Test(s) simulating failure + asserting recovery UI shows
 
 - [ ] 15.1 Write property test for error message humanization
   - **Property 8: Error Message Humanization**

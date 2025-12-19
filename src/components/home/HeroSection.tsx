@@ -90,8 +90,8 @@ export const HeroSection = ({ onCtaClick }: HeroSectionProps) => {
                 <div className="w-px h-4 bg-gray-700" />
                 
                 {/* Gas Price */}
-                <span className="text-sm text-gray-400">
-                  Gas: {networkStatus.gasPrice} gwei
+                <span className={`text-sm ${networkStatus.gasColorClass || 'text-gray-400'}`}>
+                  {networkStatus.formattedGasPrice}
                 </span>
               </>
             ) : (

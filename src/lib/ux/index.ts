@@ -13,6 +13,13 @@ export type {
   LoadingStateListener 
 } from './LoadingStateManager';
 
+// Demo Mode Manager
+export { DemoModeManager, useDemoMode, demoModeManager } from './DemoModeManager';
+export type { 
+  DataSourceStatus, 
+  DemoModeState 
+} from './DemoModeManager';
+
 // React Hooks
 export { 
   useLoadingState, 
@@ -42,3 +49,34 @@ export type {
   LoadingWrapperProps,
   LoadingButtonProps
 } from '../../components/ux/LoadingSystem';
+
+// Demo Banner Components
+export { DemoBanner, DemoBannerSpacer } from '../../components/ux/DemoBanner';
+export type { DemoBannerProps } from '../../components/ux/DemoBanner';
+
+// Timestamp utilities that ensure "Just now" is used instead of "0s ago"
+export { 
+  formatRelativeTime, 
+  formatUpdatedTime, 
+  formatAbsoluteTime,
+  formatTimestampWithTooltip,
+  validateTimestampFormat 
+} from './timestampUtils';
+
+// Form Validation System
+export {
+  useFormValidation,
+  formatCharacterCounter,
+  commonValidationSchemas,
+  validationMessages,
+  createFieldValidation,
+  createOptionalField,
+  formValidationUtils
+} from './FormValidation';
+export type {
+  FormValidationConfig,
+  CharacterCounterConfig,
+  FieldValidationState,
+  FormValidationState,
+  CharacterCounterProps
+} from './FormValidation';

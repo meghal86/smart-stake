@@ -71,7 +71,13 @@ export const FeatureCard = ({
 
   // Show skeleton during loading
   if (isLoading) {
-    return <FeatureCardSkeleton />;
+    const loadingMessages = {
+      guardian: "Loading security analysis...",
+      hunter: "Scanning for opportunities...", 
+      harvestpro: "Calculating tax benefits..."
+    };
+    
+    return <FeatureCardSkeleton loadingMessage={loadingMessages[feature]} />;
   }
 
   return (

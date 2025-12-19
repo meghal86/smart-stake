@@ -1,0 +1,6 @@
+# Add these scripts to your package.json "scripts" section:
+
+"test:e2e:navigation": "playwright test tests/e2e/active-navigation-states.spec.ts --project=chromium",
+"test:e2e:navigation:headed": "playwright test tests/e2e/active-navigation-states.spec.ts --project=chromium --headed",
+"test:e2e:navigation:debug": "playwright test tests/e2e/active-navigation-states.spec.ts --project=chromium --debug",
+"test:e2e:navigation:all": "playwright test tests/e2e/active-navigation-states.spec.ts"

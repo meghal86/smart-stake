@@ -14,6 +14,7 @@ import { UserHeader } from '@/components/layout/UserHeader';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { Skeleton } from '@/components/ux/Skeleton';
+import { DemoBanner, DemoBannerSpacer } from '@/components/ux/DemoBanner';
 import { cn } from '@/lib/utils';
 
 export interface AppShellProps {
@@ -125,9 +126,14 @@ export const AppShell = ({
 
   return (
     <div className={cn('min-h-screen flex flex-col bg-background', className)}>
+      {/* Demo Banner - Persistent across all pages */}
+      <DemoBanner dismissible={false} position="top" />
+      
       {/* Persistent Header - Never unmounts */}
       {shouldShowHeader && (
         <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
+          {/* Spacer to prevent content from being hidden behind demo banner */}
+          <DemoBannerSpacer position="top" />
           <div className="flex justify-end p-4">
             <UserHeader />
           </div>
@@ -136,6 +142,8 @@ export const AppShell = ({
 
       {/* Main Content Area - Only this transitions */}
       <MainContent isLoading={isLoading && !globalLoading}>
+        {/* Spacer for demo banner when no header is shown */}
+        {!shouldShowHeader && <DemoBannerSpacer position="top" />}
         {children}
       </MainContent>
 

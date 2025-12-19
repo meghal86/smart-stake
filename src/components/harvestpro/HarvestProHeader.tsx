@@ -6,6 +6,7 @@
 import { motion } from 'framer-motion';
 import { Leaf, Activity, RefreshCw } from 'lucide-react';
 import { WalletSelector } from '@/components/hunter/WalletSelector';
+import { formatUpdatedTime } from '@/lib/ux/timestampUtils';
 
 interface HarvestProHeaderProps {
   isDemo: boolean;
@@ -43,7 +44,7 @@ export function HarvestProHeader({
           <div className="flex items-center gap-3">
             {lastUpdated && (
               <p className="text-xs text-gray-400">
-                Updated {Math.floor((Date.now() - lastUpdated.getTime()) / 1000)}s ago
+                {formatUpdatedTime(lastUpdated)}
               </p>
             )}
 

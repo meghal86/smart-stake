@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Lock, Link2, CheckCircle, X, ExternalLink } from 'lucide-react';
+import { TrustStatsSkeleton } from '@/components/ui/Skeletons';
 
 /**
  * TrustBuilders Component
@@ -9,9 +10,18 @@ import { Shield, Lock, Link2, CheckCircle, X, ExternalLink } from 'lucide-react'
  * Shows 4 trust badges (Non-custodial, No KYC, On-chain, Guardian-vetted)
  * with interactive proof modals.
  * 
- * Requirements: 4.1, 4.2, 4.3, 4.4
+ * Requirements: 4.1, 4.2, 4.3, 4.4, R7.LOADING.PROGRESSIVE, R7.LOADING.SKELETON_CONSISTENCY
  */
-export const TrustBuilders = () => {
+interface TrustBuildersProps {
+  metrics?: {
+    totalWalletsProtected: number;
+    totalYieldOptimizedUsd: number;
+    averageGuardianScore: number;
+  };
+  isLoading?: boolean;
+}
+
+export const TrustBuilders = ({ metrics, isLoading = false }: TrustBuildersProps) => {
   const [selectedBadge, setSelectedBadge] = useState<number | null>(null);
 
   // Trust badges configuration with proof
@@ -92,6 +102,36 @@ export const TrustBuilders = () => {
         >
           Trusted by the DeFi Community
         </h2>
+
+        {/* Platform Statistics - Progressive Loading */}
+        {isLoading ? (
+          <div className="mb-8">
+            <TrustStatsSkeleton />
+          </div>
+        ) : metrics && (
+          <div className="mb-8 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <p className="text-2xl md:text-3xl font-bold text-white">
+                  {metrics.totalWalletsProtected.toLocaleString()}+
+                </p>
+                <p className="text-sm text-gray-400">Wallets Protected</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-2xl md:text-3xl font-bold text-white">
+                  ${metrics.totalYieldOptimizedUsd.toLocaleString()}M+
+                </p>
+                <p className="text-sm text-gray-400">Yield Optimized</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-2xl md:text-3xl font-bold text-white">
+                  {metrics.averageGuardianScore}/100
+                </p>
+                <p className="text-sm text-gray-400">Avg Security Score</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Trust Badges */}
         <div

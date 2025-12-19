@@ -116,6 +116,7 @@ function HomePageContent() {
           <OnboardingSection
             onStartOnboarding={handleStartOnboarding}
             onSkip={handleSkipOnboarding}
+            isLoading={isLoading}
           />
         </ErrorBoundary>
       </main>

@@ -31,7 +31,7 @@ const Skeleton = ({ className = '', 'aria-label': ariaLabel }: SkeletonProps) =>
         ${className}
       `}
       aria-label={ariaLabel || 'Loading...'}
-      role="status"
+      aria-hidden="true"
     />
   );
 };
@@ -39,17 +39,31 @@ const Skeleton = ({ className = '', 'aria-label': ariaLabel }: SkeletonProps) =>
 /**
  * Feature Card Skeleton
  * Matches dimensions of FeatureCard component
+ * Requirements: R7.LOADING.PROGRESSIVE, R7.LOADING.SKELETON_CONSISTENCY
  */
-export const FeatureCardSkeleton = () => {
+interface FeatureCardSkeletonProps {
+  loadingMessage?: string;
+}
+
+export const FeatureCardSkeleton = ({ 
+  loadingMessage = "Loading feature data..." 
+}: FeatureCardSkeletonProps) => {
   return (
     <div
       className="
         bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-6
         flex flex-col gap-4
       "
-      aria-label="Loading feature card"
+      aria-label={loadingMessage}
       role="status"
     >
+      {/* Loading message */}
+      <div className="mb-2">
+        <p className="text-xs text-gray-400 animate-pulse">
+          {loadingMessage}
+        </p>
+      </div>
+      
       {/* Icon placeholder */}
       <Skeleton className="w-12 h-12 rounded-lg" aria-label="Loading icon" />
       
@@ -78,14 +92,28 @@ export const FeatureCardSkeleton = () => {
 /**
  * Trust Stats Skeleton
  * Matches dimensions of TrustBuilders stats section
+ * Requirements: R7.LOADING.PROGRESSIVE, R7.LOADING.SKELETON_CONSISTENCY
  */
-export const TrustStatsSkeleton = () => {
+interface TrustStatsSkeletonProps {
+  loadingMessage?: string;
+}
+
+export const TrustStatsSkeleton = ({ 
+  loadingMessage = "Loading platform statistics..." 
+}: TrustStatsSkeletonProps) => {
   return (
     <div
       className="grid grid-cols-1 md:grid-cols-3 gap-6"
-      aria-label="Loading trust statistics"
+      aria-label={loadingMessage}
       role="status"
     >
+      {/* Loading message */}
+      <div className="col-span-full mb-4">
+        <p className="text-xs text-gray-400 animate-pulse text-center">
+          {loadingMessage}
+        </p>
+      </div>
+      
       {/* Stat 1 */}
       <div className="text-center space-y-2">
         <Skeleton className="h-8 w-24 mx-auto" aria-label="Loading stat value" />
@@ -110,14 +138,28 @@ export const TrustStatsSkeleton = () => {
 /**
  * Onboarding Steps Skeleton
  * Matches dimensions of OnboardingSection steps
+ * Requirements: R7.LOADING.PROGRESSIVE, R7.LOADING.SKELETON_CONSISTENCY
  */
-export const OnboardingStepsSkeleton = () => {
+interface OnboardingStepsSkeletonProps {
+  loadingMessage?: string;
+}
+
+export const OnboardingStepsSkeleton = ({ 
+  loadingMessage = "Loading onboarding steps..." 
+}: OnboardingStepsSkeletonProps) => {
   return (
     <div
       className="flex flex-col md:flex-row gap-6 md:gap-8"
-      aria-label="Loading onboarding steps"
+      aria-label={loadingMessage}
       role="status"
     >
+      {/* Loading message */}
+      <div className="w-full mb-4">
+        <p className="text-xs text-gray-400 animate-pulse text-center">
+          {loadingMessage}
+        </p>
+      </div>
+      
       {/* Step 1 */}
       <div className="flex-1 space-y-3">
         <Skeleton className="w-8 h-8 rounded-full" aria-label="Loading step number" />

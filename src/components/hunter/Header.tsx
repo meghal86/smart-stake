@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Brain, Activity, Sun, Moon } from 'lucide-react';
 import { HunterTabs, TabType } from './HunterTabs';
 import { WalletSelector } from './WalletSelector';
+import { formatUpdatedTime } from '@/lib/ux/timestampUtils';
 
 interface HeaderProps {
   isDemo: boolean;
@@ -80,7 +81,7 @@ export function Header({
               <p className={`hidden lg:block text-xs transition-colors duration-300 ${
                 isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
               }`}>
-                Updated {Math.floor((Date.now() - lastUpdated.getTime()) / 1000)}s ago
+                {formatUpdatedTime(lastUpdated)}
               </p>
             )}
             

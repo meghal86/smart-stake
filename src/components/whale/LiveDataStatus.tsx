@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Wifi, WifiOff, Activity, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { formatRelativeTime } from '@/lib/ux/timestampUtils';
 
 interface LiveDataStatusProps {
   lastUpdate?: string;
@@ -19,18 +20,7 @@ export function LiveDataStatus({
     if (!lastUpdate) return;
 
     const updateTimer = () => {
-      const now = new Date();
-      const updateTime = new Date(lastUpdate);
-      const diffMs = now.getTime() - updateTime.getTime();
-      const diffSeconds = Math.floor(diffMs / 1000);
-      
-      if (diffSeconds < 60) {
-        setTimeSinceUpdate(`${diffSeconds}s ago`);
-      } else if (diffSeconds < 3600) {
-        setTimeSinceUpdate(`${Math.floor(diffSeconds / 60)}m ago`);
-      } else {
-        setTimeSinceUpdate(`${Math.floor(diffSeconds / 3600)}h ago`);
-      }
+      setTimeSinceUpdate(formatRelativeTime(lastUpdate));
     };
 
     updateTimer();

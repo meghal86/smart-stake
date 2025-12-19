@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Wifi, WifiOff, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatRelativeTime } from '@/lib/ux/timestampUtils';
 
 interface RealtimeIndicatorProps {
   isConnected: boolean;
@@ -28,10 +29,7 @@ export function RealtimeIndicator({
   const getTimeSinceLastEvent = () => {
     if (!lastEventTime) return 'No events yet';
     
-    const seconds = Math.floor((Date.now() - lastEventTime.getTime()) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    return `${Math.floor(seconds / 3600)}h ago`;
+    return formatRelativeTime(lastEventTime);
   };
 
   if (!isConnected) {

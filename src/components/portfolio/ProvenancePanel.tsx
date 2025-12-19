@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CheckCircle, Activity, Zap, Clock, ExternalLink } from 'lucide-react';
+import { formatRelativeTime } from '@/lib/ux/timestampUtils';
 
 interface ProvenancePanelProps {
   etherscanStatus: {
@@ -45,12 +46,7 @@ export function ProvenancePanel({
   };
 
   const formatTimeAgo = (date: Date) => {
-    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ago`;
+    return formatRelativeTime(date);
   };
 
   return (
