@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTier } from "@/hooks/useTier";
 import { useUserMetadata } from "@/hooks/useUserMetadata";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/ui/disabled-tooltip-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -138,10 +139,14 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <Button onClick={handleSave} disabled={isSaving}>
+                <DisabledTooltipButton 
+                  onClick={handleSave} 
+                  disabled={isSaving}
+                  disabledTooltip={isSaving ? 'Saving changes...' : undefined}
+                >
                   <Save className="w-4 h-4 mr-2" />
                   {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
+                </DisabledTooltipButton>
               </CardContent>
             </Card>
           </div>

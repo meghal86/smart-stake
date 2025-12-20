@@ -160,7 +160,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - ✅ Skeleton states match final content layout dimensions
   - _Requirements: R7.LOADING.PROGRESSIVE, R7.LOADING.SKELETON_CONSISTENCY_
 
-- [ ] 8. Action Gating & Prerequisites System
+- [x] 8. Action Gating & Prerequisites System
   - Implement disabled button states with explanatory tooltips
   - Add wallet connection requirements with clear messaging
   - Create loading states for button actions with "Executing..." text
@@ -304,7 +304,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - **Property 12: Celebration State Consistency**
   - **Validates: R16.MICROCOPY.CELEBRATIONS, R16.MICROCOPY.HUMANIZED_ERRORS**
 
-- [ ] 23.1 Write property test for action gating completeness
+- [x] 23.1 Write property test for action gating completeness
   - **Property 13: Action Gating Completeness**
   - **Validates: R8.GATING.DISABLED_TOOLTIPS, R8.GATING.WALLET_REQUIRED, R8.GATING.LOADING_STATES**
 

@@ -14,6 +14,8 @@ import { useTier } from "@/hooks/useTier";
 import { useUserMetadata } from "@/hooks/useUserMetadata";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/ui/disabled-tooltip-button";
+import { useFormButtonTooltip } from "@/hooks/useFormButtonTooltip";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -461,14 +463,23 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        <Button 
+                        <DisabledTooltipButton 
                           type="submit" 
                           disabled={profileForm.formState.isSubmitting || !profileForm.formState.isDirty || !profileForm.formState.isValid}
+                          disabledTooltip={
+                            profileForm.formState.isSubmitting 
+                              ? 'Saving changes...'
+                              : !profileForm.formState.isDirty 
+                                ? 'Make changes to enable save'
+                                : !profileForm.formState.isValid
+                                  ? 'Fix validation errors to save'
+                                  : undefined
+                          }
                           className="w-full md:w-auto"
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {profileForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
-                        </Button>
+                        </DisabledTooltipButton>
                       </form>
                     </Form>
                   </CardContent>
@@ -610,14 +621,23 @@ export default function SettingsPage() {
                           )}
                         />
 
-                        <Button 
+                        <DisabledTooltipButton 
                           type="submit" 
                           disabled={notificationForm.formState.isSubmitting || !notificationForm.formState.isDirty || !notificationForm.formState.isValid}
+                          disabledTooltip={
+                            notificationForm.formState.isSubmitting 
+                              ? 'Saving preferences...'
+                              : !notificationForm.formState.isDirty 
+                                ? 'Make changes to enable save'
+                                : !notificationForm.formState.isValid
+                                  ? 'Fix validation errors to save'
+                                  : undefined
+                          }
                           className="w-full md:w-auto"
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {notificationForm.formState.isSubmitting ? 'Saving...' : 'Save Preferences'}
-                        </Button>
+                        </DisabledTooltipButton>
                       </form>
                     </Form>
                   </CardContent>
@@ -722,14 +742,23 @@ export default function SettingsPage() {
                           )}
                         />
 
-                        <Button 
+                        <DisabledTooltipButton 
                           type="submit" 
                           disabled={privacyForm.formState.isSubmitting || !privacyForm.formState.isDirty || !privacyForm.formState.isValid}
+                          disabledTooltip={
+                            privacyForm.formState.isSubmitting 
+                              ? 'Saving settings...'
+                              : !privacyForm.formState.isDirty 
+                                ? 'Make changes to enable save'
+                                : !privacyForm.formState.isValid
+                                  ? 'Fix validation errors to save'
+                                  : undefined
+                          }
                           className="w-full md:w-auto"
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {privacyForm.formState.isSubmitting ? 'Saving...' : 'Save Settings'}
-                        </Button>
+                        </DisabledTooltipButton>
                       </form>
                     </Form>
                   </CardContent>

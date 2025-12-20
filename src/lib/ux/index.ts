@@ -80,3 +80,11 @@ export type {
   FormValidationState,
   CharacterCounterProps
 } from './FormValidation';
+
+// Action Gating & Prerequisites System
+export { ActionGatingManager, actionGatingManager, useActionGating } from './ActionGatingManager';
+export type {
+  ActionPrerequisite,
+  ActionGatingState,
+  ActionGatingConfig
+} from './ActionGatingManager';

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disabled Button Tooltips Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: #ffffff;
+        }
+        
+        .demo-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .demo-button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .demo-button:enabled {
+            background: #00D4FF;
+            color: #000;
+        }
+        
+        .demo-button:enabled:hover {
+            background: #00B8E6;
+            transform: scale(0.98);
+        }
+        
+        .demo-button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            margin-bottom: 5px;
+            z-index: 1000;
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #333;
+        }
+        
+        .demo-button:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .form-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+        }
+        
+        .form-demo input {
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .form-demo input:focus {
+            outline: none;
+            border-color: #00D4FF;
+        }
+        
+        .status {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        h1, h2 {
+            color: #00D4FF;
+        }
+        
+        .success {
+            color: #4CAF50;
+        }
+        
+        .error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚫 Disabled Button Tooltips Demo</h1>
+    <p>This demo shows how disabled buttons provide explanatory tooltips according to <strong>Requirement 8: Action Gating & Prerequisites</strong></p>
+
+    <div class="demo-section">
+        <h2>💰 Wallet Connection Gating</h2>
+        <p>Buttons that require wallet connection:</p>
+        
+        <button class="demo-button" disabled>
+            Execute Transaction
+            <div class="tooltip">Connect your wallet to continue</div>
+        </button>
+        
+        <button class="demo-button" disabled>
+            Approve Token
+            <div class="tooltip">Connect your wallet to continue</div>
+        </button>
+        
+        <div class="status">Status: <span class="error">❌ Wallet not connected</span></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>💸 Balance Requirements</h2>
+        <p>Buttons that require sufficient balance:</p>
+        
+        <button class="demo-button" disabled>
+            Send 0.1 ETH
+            <div class="tooltip">Insufficient balance. Need at least 0.1 ETH</div>
+        </button>
+        
+        <button class="demo-button" disabled>
+            Stake Tokens
+            <div class="tooltip">Insufficient balance</div>
+        </button>
+        
+        <div class="status">Status: <span class="error">❌ Balance: 0.05 ETH (need 0.1 ETH)</span></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>✅ Token Approvals</h2>
+        <p>Buttons that require token approvals:</p>
+        
+        <button class="demo-button" disabled>
+            Swap USDC
+            <div class="tooltip">Approve USDC spend to continue</div>
+        </button>
+        
+        <button class="demo-button" disabled>
+            Add Liquidity
+            <div class="tooltip">Approve token spend to continue</div>
+        </button>
+        
+        <div class="status">Status: <span class="error">❌ USDC approval required</span></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>📝 Form Validation</h2>
+        <p>Save buttons that depend on form state:</p>
+        
+        <div class="form-demo">
+            <input type="text" placeholder="Enter your name" id="nameInput">
+            <input type="email" placeholder="Enter your email" id="emailInput">
+            
+            <button class="demo-button" disabled id="saveButton">
+                Save Changes
+                <div class="tooltip" id="saveTooltip">Make changes to enable save</div>
+            </button>
+            
+            <div class="status" id="formStatus">Status: <span class="error">❌ No changes made</span></div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🌍 Geographic Restrictions</h2>
+        <p>Buttons restricted by location:</p>
+        
+        <button class="demo-button" disabled>
+            Access Feature
+            <div class="tooltip">Not available in your region</div>
+        </button>
+        
+        <div class="status">Status: <span class="error">❌ Restricted in US</span></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>⏰ Time Constraints</h2>
+        <p>Buttons with time-based restrictions:</p>
+        
+        <button class="demo-button" disabled>
+            Join Event
+            <div class="tooltip">Event has expired</div>
+        </button>
+        
+        <button class="demo-button" disabled>
+            Claim Rewards
+            <div class="tooltip">Available from January 1, 2025</div>
+        </button>
+        
+        <div class="status">Status: <span class="error">❌ Outside valid time window</span></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>✨ Enabled State (for comparison)</h2>
+        <p>When all prerequisites are met:</p>
+        
+        <button class="demo-button">
+            Execute Action
+        </button>
+        
+        <button class="demo-button">
+            Save Changes
+        </button>
+        
+        <div class="status">Status: <span class="success">✅ All prerequisites met</span></div>
+    </div>
+
+    <script>
+        // Simple form validation demo
+        const nameInput = document.getElementById('nameInput');
+        const emailInput = document.getElementById('emailInput');
+        const saveButton = document.getElementById('saveButton');
+        const saveTooltip = document.getElementById('saveTooltip');
+        const formStatus = document.getElementById('formStatus');
+        
+        let isDirty = false;
+        let isValid = false;
+        
+        function updateFormState() {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            
+            isDirty = name !== '' || email !== '';
+            isValid = name.length >= 2 && email.includes('@');
+            
+            if (!isDirty) {
+                saveButton.disabled = true;
+                saveTooltip.textContent = 'Make changes to enable save';
+                formStatus.innerHTML = 'Status: <span class="error">❌ No changes made</span>';
+            } else if (!isValid) {
+                saveButton.disabled = true;
+                saveTooltip.textContent = 'Fix validation errors to save';
+                formStatus.innerHTML = 'Status: <span class="error">❌ Validation errors present</span>';
+            } else {
+                saveButton.disabled = false;
+                saveTooltip.textContent = '';
+                formStatus.innerHTML = 'Status: <span class="success">✅ Ready to save</span>';
+            }
+        }
+        
+        nameInput.addEventListener('input', updateFormState);
+        emailInput.addEventListener('input', updateFormState);
+        
+        // Initialize
+        updateFormState();
+    </script>
+</body>
+</html>
