@@ -27,6 +27,7 @@ import {
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useHarvestFilters } from '@/hooks/useHarvestFilters';
 import { useHarvestOpportunities } from '@/hooks/useHarvestOpportunities';
+import { useWallet } from '@/contexts/WalletContext';
 import type { OpportunitiesSummary, HarvestOpportunity, HarvestSession } from '@/types/harvestpro';
 
 type ViewState = 'loading' | 'no-wallet' | 'no-opportunities' | 'all-harvested' | 'error' | 'normal';
@@ -36,6 +37,10 @@ export default function HarvestPro() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('normal');
+  
+  // Wallet connection status
+  const { connectedWallets, activeWallet } = useWallet();
+  const isConnected = connectedWallets.length > 0 && !!activeWallet;
   
   // Modal and flow state
   const [selectedOpportunity, setSelectedOpportunity] = useState<HarvestOpportunity | null>(null);
@@ -358,7 +363,7 @@ export default function HarvestPro() {
                     onSave={(id) => console.log('Save:', id)}
                     onShare={(id) => console.log('Share:', id)}
                     onReport={(id) => console.log('Report:', id)}
-                    isConnected={true}
+                    isConnected={isConnected}
                   />
                 ))
               ) : (
@@ -479,6 +484,7 @@ export default function HarvestPro() {
           setSelectedOpportunity(null);
         }}
         onExecute={handleExecute}
+        isConnected={isConnected}
       />
 
       {/* Success Screen */}

@@ -42,7 +42,7 @@ describe('LoadingStateManager Unit Tests', () => {
         { type: 'data-fetch' as const, expectedPattern: /loading|data/i },
         { type: 'wallet-connect' as const, expectedPattern: /connect|wallet/i },
         { type: 'form-submit' as const, expectedPattern: /sav|submit/i },
-        { type: 'async-action' as const, expectedPattern: /process|loading/i }
+        { type: 'async-action' as const, expectedPattern: /execut|action/i }
       ];
 
       operations.forEach(({ type, expectedPattern }) => {

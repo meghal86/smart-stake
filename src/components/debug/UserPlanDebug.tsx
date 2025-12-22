@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Card } from '@/components/ui/card';
 import { syncSubscriptionStatus } from '@/utils/syncSubscription';
 
@@ -68,12 +69,23 @@ export const UserPlanDebug = () => {
     <Card className="p-4 mb-4 bg-yellow-50 border-yellow-200">
       <h3 className="font-semibold mb-2">User Plan Debug</h3>
       <div className="flex gap-2 mb-2">
-        <Button onClick={fetchUserData} disabled={loading} size="sm">
+        <DisabledTooltipButton 
+          onClick={fetchUserData} 
+          disabled={loading} 
+          size="sm"
+          disabledTooltip={loading ? "Loading user data..." : undefined}
+        >
           {loading ? 'Loading...' : 'Refresh User Data'}
-        </Button>
-        <Button onClick={handleSync} disabled={syncing} size="sm" variant="outline">
+        </DisabledTooltipButton>
+        <DisabledTooltipButton 
+          onClick={handleSync} 
+          disabled={syncing} 
+          size="sm" 
+          variant="outline"
+          disabledTooltip={syncing ? "Syncing to premium..." : undefined}
+        >
           {syncing ? 'Syncing...' : 'Sync to Premium'}
-        </Button>
+        </DisabledTooltipButton>
       </div>
       <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
         {JSON.stringify(userData, null, 2)}

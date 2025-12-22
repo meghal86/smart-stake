@@ -1,21 +1,29 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Shield, DollarSign } from 'lucide-react';
+import { TrendingUp, Shield, DollarSign, Clock } from 'lucide-react';
+import { InlineMetricsProof } from '@/components/ux/MetricsProof';
+import { useHomeMetrics, getFreshnessMessage, getFreshnessColor } from '@/hooks/useHomeMetrics';
 
 /**
  * ImpactStats Component
  * 
- * Displays high-impact statistics with expandable breakdowns.
+ * Displays high-impact statistics with expandable breakdowns and "Last updated" timestamps.
  * Fixed Tailwind dynamic class issue with inline styles.
  * 
- * Requirements: 4.5 (Platform Statistics)
+ * Requirements: 
+ * - 4.5 (Platform Statistics)
+ * - R14.TRUST.METRICS_PROOF (Methodology explanation modals)
+ * - R10.TRUST.METHODOLOGY (How it's calculated links)
+ * - R14.TRUST.TIMESTAMPS ("Last updated" timestamps for platform statistics)
  */
 export const ImpactStats = () => {
+  const { metrics, isLoading, error, freshnessStatus, dataAge, isDemo } = useHomeMetrics();
   const stats = [
     {
       icon: Shield,
-      value: '$142M',
+      value: isDemo ? '$142M' : `$${metrics?.totalWalletsProtected ? (metrics.totalWalletsProtected / 1000000).toFixed(0) : '142'}M`,
       label: 'Assets Protected',
+      metricType: 'assets_protected' as const,
       breakdown: [
         { label: 'Flash loan attacks', value: '$89M' },
         { label: 'Rug pulls detected', value: '$38M' },
@@ -29,8 +37,9 @@ export const ImpactStats = () => {
     },
     {
       icon: TrendingUp,
-      value: '10,000+',
+      value: isDemo ? '10,000+' : `${metrics?.totalWalletsProtected ? (metrics.totalWalletsProtected / 1000).toFixed(0) : '10'}K+`,
       label: 'Active Users',
+      metricType: 'wallets_protected' as const,
       breakdown: [
         { label: 'Daily active users', value: '2,400' },
         { label: 'Institutional clients', value: '47' },
@@ -44,8 +53,9 @@ export const ImpactStats = () => {
     },
     {
       icon: DollarSign,
-      value: '$12.4K',
+      value: isDemo ? '$12.4K' : `$${metrics?.totalYieldOptimizedUsd ? (metrics.totalYieldOptimizedUsd / 1000).toFixed(1) : '12.4'}K`,
       label: 'Avg Annual Savings',
+      metricType: 'yield_optimized' as const,
       breakdown: [
         { label: 'Harvest opportunities', value: '847' },
         { label: 'Total tax saved', value: '$24.8M' },
@@ -84,6 +94,27 @@ export const ImpactStats = () => {
           <p className="text-base text-gray-500 max-w-2xl mx-auto font-light">
             Click to view detailed breakdown
           </p>
+          
+          {/* Last Updated Timestamp - R14.TRUST.TIMESTAMPS */}
+          <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-gray-500" data-testid="clock-icon" />
+            {isLoading ? (
+              <span className="text-gray-500">Loading...</span>
+            ) : error ? (
+              <span className="text-red-400">Data unavailable</span>
+            ) : metrics?.lastUpdated ? (
+              <span className={`${getFreshnessColor(freshnessStatus)}`}>
+                {getFreshnessMessage(freshnessStatus, dataAge)}
+              </span>
+            ) : (
+              <span className="text-gray-500">Timestamp unavailable</span>
+            )}
+            {isDemo && (
+              <span className="text-cyan-400 text-xs ml-2 px-2 py-1 bg-cyan-400/10 rounded">
+                Demo Mode
+              </span>
+            )}
+          </div>
         </motion.div>
 
         {/* Stats Grid - CLICK TO REVEAL */}
@@ -163,6 +194,16 @@ export const ImpactStats = () => {
                           </span>
                         </div>
                       ))}
+                      
+                      {/* How it's calculated link */}
+                      <div className="pt-3 border-t border-gray-800">
+                        <InlineMetricsProof 
+                          metricType={stat.metricType}
+                          className="text-xs"
+                        >
+                          How it's calculated
+                        </InlineMetricsProof>
+                      </div>
                     </div>
                   </motion.div>
                 </motion.div>

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Badge } from '@/components/ui/badge';
 import { StandardBadge } from '@/components/ui/StandardBadge';
 import { Lock, Eye, Zap, Crown } from 'lucide-react';
@@ -97,10 +98,15 @@ export function TieredPredictionCard({ children, prediction }: TieredPredictionC
           <StandardBadge type="impact" value="Medium" level="medium" />
           <StandardBadge type="confidence" value={Math.round(prediction.confidence * 100)} />
         </div>
-        <Button size="sm" variant="outline" disabled={!canUsePredictions()}>
+        <DisabledTooltipButton 
+          size="sm" 
+          variant="outline" 
+          disabled={!canUsePredictions()}
+          disabledTooltip={!canUsePredictions() ? "Upgrade to access prediction alerts" : undefined}
+        >
           <Eye className="h-4 w-4 mr-1" />
           {canUsePredictions() ? 'Create Alert' : 'Quota Exceeded'}
-        </Button>
+        </DisabledTooltipButton>
       </div>
 
       {/* Basic Features */}

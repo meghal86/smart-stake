@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Search, Star, Bell, BellOff, Trash2, Edit, Eye } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -75,10 +76,14 @@ export function WatchlistManager() {
             Monitor wallets and receive real-time alerts
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} disabled={loading}>
+        <DisabledTooltipButton 
+          onClick={() => setShowAddForm(true)} 
+          disabled={loading}
+          disabledTooltip={loading ? "Loading watchlist..." : undefined}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Wallet
-        </Button>
+        </DisabledTooltipButton>
       </div>
 
       {/* Statistics */}
@@ -156,9 +161,13 @@ export function WatchlistManager() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleAddWallet} disabled={loading}>
+              <DisabledTooltipButton 
+                onClick={handleAddWallet} 
+                disabled={loading}
+                disabledTooltip={loading ? "Adding wallet..." : undefined}
+              >
                 {loading ? 'Adding...' : 'Add Wallet'}
-              </Button>
+              </DisabledTooltipButton>
               <Button variant="outline" onClick={() => setShowAddForm(false)}>
                 Cancel
               </Button>

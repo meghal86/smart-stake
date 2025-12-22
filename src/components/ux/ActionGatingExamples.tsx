@@ -263,7 +263,7 @@ export const MultiStepActionExample: React.FC = () => {
             gatingConfig={{ requireWallet: true }}
             onClick={handleExecuteMultiStep}
             loading={gatedAction.loading}
-            loadingText="Processing..."
+            loadingText="Executing..."
             showProgress={true}
             className="flex-1"
           >

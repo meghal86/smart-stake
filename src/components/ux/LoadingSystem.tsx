@@ -369,7 +369,7 @@ export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonPr
         return (
           <>
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            {loadingText || 'Loading...'}
+            {loadingText || 'Executing...'}
           </>
         );
       }

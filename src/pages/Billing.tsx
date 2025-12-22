@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTier } from "@/hooks/useTier";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/ui/disabled-tooltip-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -187,9 +188,13 @@ export default function BillingPage() {
                 </ul>
                 
                 {plan.current ? (
-                  <Button disabled className="w-full">
+                  <DisabledTooltipButton 
+                    disabled 
+                    className="w-full"
+                    disabledTooltip="This is your current plan"
+                  >
                     Current Plan
-                  </Button>
+                  </DisabledTooltipButton>
                 ) : (
                   <Button 
                     onClick={() => handleUpgrade(plan.name)}
@@ -197,7 +202,7 @@ export default function BillingPage() {
                     className="w-full"
                     variant={plan.popular ? "default" : "outline"}
                   >
-                    {isLoading ? "Processing..." : `Upgrade to ${plan.name}`}
+                    {isLoading ? "Executing..." : `Upgrade to ${plan.name}`}
                   </Button>
                 )}
               </CardContent>

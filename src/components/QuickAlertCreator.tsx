@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Bell, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -99,9 +100,14 @@ export const QuickAlertCreator = ({ whaleAddress, currentBalance, riskScore, onC
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={createAlert} disabled={loading} className="flex-1">
+          <DisabledTooltipButton 
+            onClick={createAlert} 
+            disabled={loading} 
+            className="flex-1"
+            disabledTooltip={loading ? "Creating alert..." : undefined}
+          >
             {loading ? 'Creating...' : 'Create Alert'}
-          </Button>
+          </DisabledTooltipButton>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

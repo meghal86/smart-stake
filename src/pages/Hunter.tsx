@@ -11,6 +11,7 @@ import { CopilotPanel } from '@/components/hunter/CopilotPanel';
 import { RightRail } from '@/components/hunter/RightRail';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useHunterFeed } from '@/hooks/useHunterFeed';
+import { useWallet } from '@/contexts/WalletContext';
 import { TabType } from '@/components/hunter/HunterTabs';
 
 interface Opportunity {
@@ -37,6 +38,10 @@ export default function Hunter() {
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
   const [showCopilotToast, setShowCopilotToast] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+
+  // Wallet connection status
+  const { connectedWallets, activeWallet } = useWallet();
+  const isConnected = connectedWallets.length > 0 && !!activeWallet;
 
   // Show Copilot toast occasionally
   useEffect(() => {
@@ -219,6 +224,7 @@ export default function Hunter() {
                     index={index}
                     onJoinQuest={handleJoinQuest}
                     isDarkTheme={isDarkTheme}
+                    isConnected={isConnected}
                   />
                 </motion.div>
               ))}
@@ -268,6 +274,7 @@ export default function Hunter() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         opportunity={selectedOpportunity}
+        isConnected={isConnected}
       />
       
       <CopilotPanel

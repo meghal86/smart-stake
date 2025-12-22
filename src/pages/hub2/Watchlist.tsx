@@ -5,6 +5,7 @@ import { WatchItem } from "@/types/hub2";
 import Hub2Layout from "@/components/hub2/Hub2Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/ui/disabled-tooltip-button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
@@ -134,12 +135,24 @@ export default function WatchlistPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!watchlist || watchlist.length === 0}>
+            <DisabledTooltipButton 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportCSV} 
+              disabled={!watchlist || watchlist.length === 0}
+              disabledTooltip={!watchlist || watchlist.length === 0 ? "No items to export" : undefined}
+            >
               <Download className="w-4 h-4 mr-2" /> Export CSV
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleRemoveSelected} disabled={selectedItems.length === 0}>
+            </DisabledTooltipButton>
+            <DisabledTooltipButton 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleRemoveSelected} 
+              disabled={selectedItems.length === 0}
+              disabledTooltip={selectedItems.length === 0 ? "Select items to remove" : undefined}
+            >
               <Trash2 className="w-4 h-4 mr-2" /> Remove Selected
-            </Button>
+            </DisabledTooltipButton>
           </div>
         </div>
 

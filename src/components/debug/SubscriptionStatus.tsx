@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { testDatabaseConnection } from '@/utils/databaseTest';
@@ -86,12 +87,23 @@ export const SubscriptionStatus = () => {
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Subscription Debug</h3>
         <div className="flex gap-2">
-          <Button onClick={fetchData} disabled={loading} size="sm">
+          <DisabledTooltipButton 
+            onClick={fetchData} 
+            disabled={loading} 
+            size="sm"
+            disabledTooltip={loading ? "Loading subscription data..." : undefined}
+          >
             {loading ? 'Loading...' : 'Refresh'}
-          </Button>
-          <Button onClick={handleSync} disabled={syncing} size="sm" variant="outline">
+          </DisabledTooltipButton>
+          <DisabledTooltipButton 
+            onClick={handleSync} 
+            disabled={syncing} 
+            size="sm" 
+            variant="outline"
+            disabledTooltip={syncing ? "Syncing pro plan..." : undefined}
+          >
             {syncing ? 'Syncing...' : 'Sync Pro Plan'}
-          </Button>
+          </DisabledTooltipButton>
         </div>
       </div>
       

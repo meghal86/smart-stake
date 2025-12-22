@@ -34,7 +34,7 @@ class LoadingStateManagerClass {
   // Default messages for different operation types
   private readonly DEFAULT_MESSAGES = {
     'navigation': 'Loading page...',
-    'async-action': 'Processing...',
+    'async-action': 'Executing...',
     'data-fetch': 'Loading data...',
     'wallet-connect': 'Connecting wallet...',
     'form-submit': 'Saving changes...'

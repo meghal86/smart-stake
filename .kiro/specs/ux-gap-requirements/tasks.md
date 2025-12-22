@@ -168,12 +168,12 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - _Requirements: R8.GATING.DISABLED_TOOLTIPS, R8.GATING.WALLET_REQUIRED, R8.GATING.LOADING_STATES_
   
   **PR Checklist for Task 8:**
-  - [ ] Disabled buttons have explanatory tooltips
-  - [ ] Wallet connection requirements clearly communicated
-  - [ ] Loading states show "Executing..." text for button actions
-  - [ ] Progress indicators for multi-step operations
-  - [ ] **Evidence Required:** Screenshot of disabled states with tooltips
-  - [ ] **Tests Required:** Test disabled/enabled states and tooltip content
+  - [-] Disabled buttons have explanatory tooltips
+  - [x] Wallet connection requirements clearly communicated
+  - [x] Loading states show "Executing..." text for button actions
+  - [x] Progress indicators for multi-step operations
+  - [x] **Evidence Required:** Screenshot of disabled states with tooltips
+  - [x] **Tests Required:** Test disabled/enabled states and tooltip content
 
 - [x] 9. Active Navigation State System
   - Fix bottom navigation active states with proper visual indicators
@@ -197,7 +197,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - ✅ Performance and responsiveness
   - ✅ Error handling and edge cases
 
-- [ ] 10. Trust Signal Verification System
+- [x] 10. Trust Signal Verification System
   - Link trust badges to actual audit reports and methodology pages
   - Create proof link system with modal/page format standardization
   - Add "How it's calculated" links for platform metrics
@@ -206,18 +206,18 @@ Each task includes integrated PR checklist requirements. When completing a task,
   
   **PR Checklist for Task 10:**
   - [ ] "Click for proof" / trust badges never dead-end
-  - [ ] If proof destination doesn't exist, UI shows honest unavailable state (not fake links)
-  - [ ] Metrics show "How it's calculated" or methodology modal (only if element already exists)
-  - [ ] Any external proof link opens in new tab (preserve context)
-  - [ ] "Last updated" timestamp present when applicable (or clearly unavailable)
+  - [x] If proof destination doesn't exist, UI shows honest unavailable state (not fake links)
+  - [x] Metrics show "How it's calculated" or methodology modal (only if element already exists)
+  - [x] Any external proof link opens in new tab (preserve context)
+  - [x] "Last updated" timestamp present when applicable (or clearly unavailable)
   - [ ] **Evidence Required:** Screenshot of proof interaction (modal/open tab/fallback)
   - [ ] **Tests Required:** Test(s) verifying proof element triggers observable result
 
-- [ ] 10.1 Write property test for trust signal verification
+- [x] 10.1 Write propertybt test for trust signal verification
   - **Property 7: Trust Signal Verification**
   - **Validates: R10.TRUST.AUDIT_LINKS, R10.TRUST.METHODOLOGY, R14.TRUST.METRICS_PROOF**
 
-- [ ] 11. Actionable Empty States
+- [x] 11. Actionable Empty States
   - Create helpful empty state messages with clear next steps
   - Add relevant call-to-action buttons for empty states
   - Include checklists of items scanned when no results found
@@ -259,11 +259,11 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - **Property 10: Interaction Feedback Completeness**
   - **Validates: R13.NO_SILENT_CLICKS, R2.LOADING.CTA_FEEDBACK, R8.GATING.DISABLED_TOOLTIPS**
 
-- [ ] 14. Home Page Metrics & Trust Indicators
-  - If live sources already exist, wire them. If not, only label as demo + add proof modal skeleton + telemetry (no new APIs)
-  - Add methodology explanation modals for "Assets Protected" and similar metrics
-  - Link security partner logos to verified partnerships
-  - Include "Last updated" timestamps for all platform statistics
+- [x] 14. Home Page Metrics & Trust Indicators
+  - ✅ If live sources already exist, wire them. If not, only label as demo + add proof modal skeleton + telemetry (no new APIs)
+  - ✅ Add methodology explanation modals for "Assets Protected" and similar metrics
+  - ✅ Link security partner logos to verified partnerships
+  - ✅ Include "Last updated" timestamps for all platform statistics
   - _Requirements: R14.TRUST.METRICS_PROOF, R14.TRUST.LIVE_DATA, R14.TRUST.TIMESTAMPS_
 
 - [ ] 15. Cross-Application Error Handling
@@ -312,7 +312,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - **Property 14: Progressive Disclosure Behavior**
   - **Validates: R12.DISCLOSURE.EXPANDABLE_CARDS, R12.DISCLOSURE.SMOOTH_ANIMATIONS**
 
-- [ ] 25.1 Write property test for empty state actionability
+- [x] 25.1 Write property test for empty state actionability
   - **Property 15: Empty State Actionability**
   - **Validates: R11.EMPTY.HELPFUL_MESSAGES, R11.EMPTY.CLEAR_ACTIONS, R11.EMPTY.ACCESSIBILITY**
 

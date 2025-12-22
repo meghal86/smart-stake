@@ -21,6 +21,8 @@ import {
   Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWalletButtonTooltip } from '@/hooks/useFormButtonTooltip';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import type { HarvestOpportunity } from '@/types/harvestpro';
 
 interface HarvestOpportunityCardProps {
@@ -182,6 +184,9 @@ export function HarvestOpportunityCard({
     }).format(value);
   };
 
+  // Wallet connection tooltip
+  const walletTooltip = useWalletButtonTooltip(isConnected);
+
   return (
     <motion.div
       className={cn(
@@ -306,46 +311,51 @@ export function HarvestOpportunityCard({
         <div className="w-full h-px bg-gradient-to-r from-transparent via-white/8 to-transparent my-6" />
 
         {/* CTA Button */}
-        <motion.button
+        <DisabledTooltipButton
           onClick={() => onStartHarvest(opportunity.id)}
-          disabled={!isConnected}
+          disabled={walletTooltip.isDisabled}
+          disabledTooltip={walletTooltip.tooltipContent}
           className={cn(
             'relative w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 overflow-hidden',
             'bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white shadow-lg',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
-          whileHover={
-            isConnected
-              ? {
-                  scale: 1.02,
-                  y: -1,
-                  boxShadow: '0 8px 25px rgba(237,143,45,0.3)',
-                }
-              : {}
-          }
-          whileTap={isConnected ? { scale: 0.98 } : {}}
-          transition={{
-            type: 'spring',
-            stiffness: 400,
-            damping: 25,
-          }}
+          asChild
         >
-          {/* Ripple Effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0"
-            initial={{ x: '-100%' }}
-            whileHover={{ x: '100%' }}
-            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
-          />
-          <span className="relative z-10">Start Harvest</span>
-          <motion.div
-            className="relative z-10"
-            animate={{ x: [0, 4, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: [0.25, 1, 0.5, 1] }}
+          <motion.button
+            whileHover={
+              isConnected
+                ? {
+                    scale: 1.02,
+                    y: -1,
+                    boxShadow: '0 8px 25px rgba(237,143,45,0.3)',
+                  }
+                : {}
+            }
+            whileTap={isConnected ? { scale: 0.98 } : {}}
+            transition={{
+              type: 'spring',
+              stiffness: 400,
+              damping: 25,
+            }}
           >
-            <ChevronRight className="w-5 h-5" />
-          </motion.div>
-        </motion.button>
+            {/* Ripple Effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0"
+              initial={{ x: '-100%' }}
+              whileHover={{ x: '100%' }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
+            />
+            <span className="relative z-10">Start Harvest</span>
+            <motion.div
+              className="relative z-10"
+              animate={{ x: [0, 4, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: [0.25, 1, 0.5, 1] }}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </motion.div>
+          </motion.button>
+        </DisabledTooltipButton>
       </div>
     </motion.div>
   );

@@ -210,13 +210,13 @@ describe('GatedButton', () => {
         <GatedButton 
           gatingConfig={{ requireWallet: true }}
           loading={true}
-          loadingText="Processing..."
+          loadingText="Executing..."
         >
           Execute Action
         </GatedButton>
       );
 
-      expect(screen.getByText('Processing...')).toBeInTheDocument();
+      expect(screen.getByText('Executing...')).toBeInTheDocument();
     });
   });
 

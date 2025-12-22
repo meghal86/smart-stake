@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honest Unavailable State Demo - AlphaWhale</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0A0F1F 0%, #1A1F2E 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00D4FF 0%, #00A8CC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            color: #94A3B8;
+            font-size: 1.1rem;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section h2 {
+            color: #00D4FF;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #94A3B8;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .proof-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .proof-link.available {
+            color: #00D4FF;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        
+        .proof-link.available:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .proof-link.unavailable {
+            color: #FCD34D;
+            border: 1px solid rgba(252, 211, 77, 0.3);
+        }
+        
+        .proof-link.unavailable:hover {
+            background: rgba(252, 211, 77, 0.1);
+        }
+        
+        .icon {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .trust-badges {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .trust-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .trust-badge:hover {
+            border-color: rgba(252, 211, 77, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .trust-badge.available:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+        
+        .badge-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 10px;
+            background: rgba(252, 211, 77, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .badge-icon.available {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .badge-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .badge-description {
+            color: #94A3B8;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .badge-status {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .status-available {
+            color: #00D4FF;
+        }
+        
+        .status-unavailable {
+            color: #FCD34D;
+        }
+        
+        .explanation {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .explanation h3 {
+            color: #60A5FA;
+            margin-bottom: 15px;
+        }
+        
+        .explanation ul {
+            color: #CBD5E1;
+            line-height: 1.6;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1E293B;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-title {
+            color: #FCD34D;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-body {
+            color: #CBD5E1;
+            line-height: 1.6;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #FCD34D;
+            color: #1E293B;
+        }
+        
+        .btn-primary:hover {
+            background: #F59E0B;
+        }
+        
+        .btn-secondary {
+            background: #374151;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4B5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Honest Unavailable State Demo</h1>
+            <p>Task 1: If proof destination doesn't exist, UI shows honest unavailable state (not fake links)</p>
+        </div>
+        
+        <div class="demo-section">
+            <h2>📊 Platform Metrics with Proof Links</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$2.4B</div>
+                    <div class="metric-label">Assets Protected</div>
+                    <a href="#" class="proof-link available" onclick="showModal('available-modal')">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        How it's calculated
+                    </a>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value">45,231</div>
+                    <div class="metric-label">Wallets Protected</div>
+                    <a href="#" class="proof-link unavailable" onclick="showModal('unavailable-modal')">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Documentation unavailable
+                    </a>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value">$892M</div>
+                    <div class="metric-label">Yield Optimized</div>
+                    <a href="#" class="proof-link unavailable" onclick="showModal('unavailable-modal')">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Documentation unavailable
+                    </a>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value">1.2M</div>
+                    <div class="metric-label">Security Scans</div>
+                    <a href="#" class="proof-link available" onclick="showModal('available-modal')">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        How it's calculated
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>🛡️ Trust Badges with Verification</h2>
+            <div class="trust-badges">
+                <div class="trust-badge available" onclick="showModal('available-modal')">
+                    <div class="badge-icon available">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #00D4FF;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="badge-title">CertiK Audit</div>
+                    <div class="badge-description">Smart contract security audit</div>
+                    <div class="badge-status status-available">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Click for proof →
+                    </div>
+                </div>
+                
+                <div class="trust-badge" onclick="showModal('unavailable-modal')">
+                    <div class="badge-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #FCD34D;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="badge-title">ConsenSys Audit</div>
+                    <div class="badge-description">Protocol security review</div>
+                    <div class="badge-status status-unavailable">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Proof temporarily unavailable
+                    </div>
+                </div>
+                
+                <div class="trust-badge" onclick="showModal('unavailable-modal')">
+                    <div class="badge-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #FCD34D;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="badge-title">Insurance Coverage</div>
+                    <div class="badge-description">Protocol insurance details</div>
+                    <div class="badge-status status-unavailable">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Proof temporarily unavailable
+                    </div>
+                </div>
+                
+                <div class="trust-badge available" onclick="showModal('available-modal')">
+                    <div class="badge-icon available">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #00D4FF;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="badge-title">Security Partners</div>
+                    <div class="badge-description">Verified security partnerships</div>
+                    <div class="badge-status status-available">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Click for proof →
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="explanation">
+            <h3>✅ Implementation Complete: Honest Unavailable States</h3>
+            <ul>
+                <li><strong>No Dead-End Links:</strong> When proof destinations don't exist, we show honest "Documentation unavailable" instead of fake "Click for proof" links</li>
+                <li><strong>Transparent Messaging:</strong> Users see clear status indicators (warning icons, yellow text) for unavailable content</li>
+                <li><strong>Meaningful Actions:</strong> Clicking unavailable items opens explanatory modals instead of broken links</li>
+                <li><strong>URL Verification:</strong> System checks if proof URLs actually exist before showing "How it's calculated" links</li>
+                <li><strong>Fallback States:</strong> Different messages for planned content vs. network errors vs. missing documentation</li>
+                <li><strong>User Trust:</strong> Honest communication builds more trust than fake links that lead nowhere</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Available Content Modal -->
+    <div id="available-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideModal('available-modal')">&times;</button>
+            <h3 class="modal-title">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #00D4FF;">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Verification Available
+            </h3>
+            <div class="modal-body">
+                <p>This proof content is available and verified. The documentation includes:</p>
+                <ul>
+                    <li>Detailed calculation methodology</li>
+                    <li>Data sources and update frequency</li>
+                    <li>Verification timestamps</li>
+                    <li>External audit reports</li>
+                </ul>
+                <p><strong>Last Updated:</strong> December 15, 2024</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="alert('Would open proof documentation')">View Full Documentation</button>
+                <button class="btn btn-secondary" onclick="hideModal('available-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Unavailable Content Modal -->
+    <div id="unavailable-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="hideModal('unavailable-modal')">&times;</button>
+            <h3 class="modal-title">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #FCD34D;">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                Proof Temporarily Unavailable
+            </h3>
+            <div class="modal-body">
+                <p>The verification documentation for this item is temporarily unavailable.</p>
+                <p>This may be due to:</p>
+                <ul>
+                    <li>Documentation being updated or reviewed</li>
+                    <li>External verification systems under maintenance</li>
+                    <li>Content being prepared for publication</li>
+                </ul>
+                <p><strong>We maintain transparency by showing this honest status rather than broken links.</strong></p>
+                <p>Our team is working to make this verification content available. Please check back later or contact support if you need immediate assistance.</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="alert('Would check status or contact support')">Check Status</button>
+                <button class="btn btn-secondary" onclick="hideModal('unavailable-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

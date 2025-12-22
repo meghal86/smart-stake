@@ -214,7 +214,7 @@ describe('Subscription Component', () => {
     fireEvent.click(premiumButtons[0]);
 
     // Should show loading state
-    expect(screen.getByText('Processing...')).toBeInTheDocument();
+    expect(screen.getByText('Executing...')).toBeInTheDocument();
   });
 
   test('handles network errors gracefully', async () => {

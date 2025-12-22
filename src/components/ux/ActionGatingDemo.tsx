@@ -277,7 +277,7 @@ export const ActionGatingDemo: React.FC = () => {
               }}
               onClick={handleMultiStepAction}
               loading={isExecuting}
-              loadingText="Processing..."
+              loadingText="Executing..."
               showProgress={true}
               className="w-full"
             >

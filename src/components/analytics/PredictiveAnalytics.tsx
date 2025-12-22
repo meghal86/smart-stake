@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -388,7 +389,12 @@ export const PredictiveAnalytics = () => {
                   </Select>
                 </div>
                 <div className="flex items-end">
-                  <Button onClick={runAdvancedSimulation} className="w-full" disabled={simulationLoading}>
+                  <DisabledTooltipButton 
+                    onClick={runAdvancedSimulation} 
+                    className="w-full" 
+                    disabled={simulationLoading}
+                    disabledTooltip={simulationLoading ? "Simulation in progress..." : undefined}
+                  >
                     {simulationLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -397,7 +403,7 @@ export const PredictiveAnalytics = () => {
                     ) : (
                       'Run Simulation'
                     )}
-                  </Button>
+                  </DisabledTooltipButton>
                 </div>
               </div>
 

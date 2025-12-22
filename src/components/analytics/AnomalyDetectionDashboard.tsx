@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -149,7 +150,11 @@ export function AnomalyDetectionDashboard() {
               Advanced ML pattern recognition for whale behavior
             </p>
           </div>
-          <Button onClick={runDetection} disabled={scanning}>
+          <DisabledTooltipButton 
+            onClick={runDetection} 
+            disabled={scanning}
+            disabledTooltip={scanning ? "Anomaly detection in progress..." : undefined}
+          >
             {scanning ? (
               <>
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -161,7 +166,7 @@ export function AnomalyDetectionDashboard() {
                 Run Detection
               </>
             )}
-          </Button>
+          </DisabledTooltipButton>
         </div>
 
         {/* Statistics Cards */}

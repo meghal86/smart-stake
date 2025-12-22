@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Bell, Mail, Smartphone, Plus, Trash2, Edit } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -190,9 +191,13 @@ export function AlertIntegration() {
               </div>
               
               <div className="flex gap-2">
-                <Button onClick={createAlert} disabled={!newAlert.name.trim()}>
+                <DisabledTooltipButton 
+                  onClick={createAlert} 
+                  disabled={!newAlert.name.trim()}
+                  disabledTooltip={!newAlert.name.trim() ? "Enter an alert name to continue" : undefined}
+                >
                   Create Alert
-                </Button>
+                </DisabledTooltipButton>
                 <Button variant="outline" onClick={() => setShowCreateForm(false)}>
                   Cancel
                 </Button>

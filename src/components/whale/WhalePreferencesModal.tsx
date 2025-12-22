@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Settings, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -107,10 +108,15 @@ export function WhalePreferencesModal() {
             <Label>Enable notifications</Label>
           </div>
 
-          <Button onClick={handleSave} className="w-full" disabled={isLoading}>
+          <DisabledTooltipButton 
+            onClick={handleSave} 
+            className="w-full" 
+            disabled={isLoading}
+            disabledTooltip={isLoading ? "Saving preferences..." : undefined}
+          >
             <Save className="h-4 w-4 mr-2" />
             Save Preferences
-          </Button>
+          </DisabledTooltipButton>
         </div>
       </DialogContent>
     </Dialog>

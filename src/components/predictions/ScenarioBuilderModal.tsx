@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play, Loader2, BarChart3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -93,7 +94,12 @@ export function ScenarioBuilderModal({ open, onOpenChange }: ScenarioBuilderModa
               </div>
             </div>
             
-            <Button onClick={handleRunSimulation} disabled={loading} className="w-full">
+            <DisabledTooltipButton 
+              onClick={handleRunSimulation} 
+              disabled={loading} 
+              className="w-full"
+              disabledTooltip={loading ? "Running simulation..." : undefined}
+            >
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -105,7 +111,7 @@ export function ScenarioBuilderModal({ open, onOpenChange }: ScenarioBuilderModa
                   Run Simulation
                 </>
               )}
-            </Button>
+            </DisabledTooltipButton>
           </div>
           
           {/* Results */}

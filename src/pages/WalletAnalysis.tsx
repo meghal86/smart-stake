@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -76,7 +77,11 @@ export default function WalletAnalysis() {
                 className="text-sm font-mono"
               />
             </div>
-            <Button onClick={handleAnalyze} disabled={isAnalyzing}>
+            <DisabledTooltipButton 
+              onClick={handleAnalyze} 
+              disabled={isAnalyzing}
+              disabledTooltip={isAnalyzing ? "Analysis in progress..." : undefined}
+            >
               {isAnalyzing ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -88,7 +93,7 @@ export default function WalletAnalysis() {
                   Analyze Wallet
                 </>
               )}
-            </Button>
+            </DisabledTooltipButton>
           </div>
         </Card>
 

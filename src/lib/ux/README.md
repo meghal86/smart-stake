@@ -130,7 +130,7 @@ LoadingStateManager.hideLoading('wallet-connect');
 The system supports different operation types with contextual default messages:
 
 - **navigation**: "Loading page..."
-- **async-action**: "Processing..."
+- **async-action**: "Executing..."
 - **data-fetch**: "Loading data..."
 - **wallet-connect**: "Connecting wallet..."
 - **form-submit**: "Saving changes..."

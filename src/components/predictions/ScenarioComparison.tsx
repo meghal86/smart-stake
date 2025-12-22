@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Save, Copy, Trash2, Play, BarChart3 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -164,14 +165,23 @@ export function ScenarioComparison() {
             onChange={(e) => setScenarioName(e.target.value)}
             className="flex-1"
           />
-          <Button onClick={runScenario} disabled={isRunning}>
+          <DisabledTooltipButton 
+            onClick={runScenario} 
+            disabled={isRunning}
+            disabledTooltip={isRunning ? "Scenario running..." : undefined}
+          >
             <Play className="h-4 w-4 mr-1" />
             {isRunning ? 'Running...' : 'Run'}
-          </Button>
-          <Button onClick={saveScenario} variant="outline" disabled={!scenarioName.trim()}>
+          </DisabledTooltipButton>
+          <DisabledTooltipButton 
+            onClick={saveScenario} 
+            variant="outline" 
+            disabled={!scenarioName.trim()}
+            disabledTooltip={!scenarioName.trim() ? "Enter a scenario name to save" : undefined}
+          >
             <Save className="h-4 w-4 mr-1" />
             Save
-          </Button>
+          </DisabledTooltipButton>
         </div>
       </Card>
 
