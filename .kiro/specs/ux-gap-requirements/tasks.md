@@ -94,6 +94,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Add data source validation for live mode readiness using existing infrastructure
   - Create demo banner component that appears across all pages when in demo mode
   - _Requirements: R3.DEMO.BANNER_PERSISTENT, R3.GAS.NONZERO, R3.GAS.FALLBACK, R3.DEMO.AUTO_SWITCHING_
+  - **📋 Detailed Spec Available**: [demo-mode-data-integrity.md](./demo-mode-data-integrity.md)
   
   **PR Checklist for Task 3:**
   - [-] Demo banner appears when wallet not connected: "Demo Mode — Data is simulated"
@@ -224,7 +225,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Use appropriate icons and maintain WCAG AA contrast
   - _Requirements: R11.EMPTY.HELPFUL_MESSAGES, R11.EMPTY.CLEAR_ACTIONS, R11.EMPTY.ACCESSIBILITY_
 
-- [ ] 12. Progressive Information Disclosure
+- [x] 12. Progressive Information Disclosure
   - Implement expandable opportunity cards with key info first
   - Add "See breakdown" functionality for portfolio overview
   - Create smooth expand/collapse animations (300ms ease-out)
@@ -238,6 +239,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - Create "No Silent Clicks" enforcement with runtime validation in development mode
   - Add CSS custom properties for consistent theming (`--aw-primary`, `--aw-secondary`)
   - _Requirements: R13.COMPONENTS.SINGLE_BUTTON, R13.COMPONENTS.SINGLE_SKELETON, R13.NO_SILENT_CLICKS_
+  - **📋 Detailed Spec Available**: [component-standardization.md](./component-standardization.md)
   
   **PR Checklist for Task 13:**
   - [ ] Primary buttons: press scale to 0.98 (~120ms) and return smoothly
@@ -308,7 +310,7 @@ Each task includes integrated PR checklist requirements. When completing a task,
   - **Property 13: Action Gating Completeness**
   - **Validates: R8.GATING.DISABLED_TOOLTIPS, R8.GATING.WALLET_REQUIRED, R8.GATING.LOADING_STATES**
 
-- [ ] 24.1 Write property test for progressive disclosure behavior
+- [x] 24.1 Write property test for progressive disclosure behavior
   - **Property 14: Progressive Disclosure Behavior**
   - **Validates: R12.DISCLOSURE.EXPANDABLE_CARDS, R12.DISCLOSURE.SMOOTH_ANIMATIONS**
 
