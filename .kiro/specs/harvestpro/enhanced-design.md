@@ -2,11 +2,11 @@
 
 ## Overview
 
-HarvestPro is a tax-loss harvesting module within AlphaWhale that helps users identify unrealized losses, estimate tax benefits, and prepare transactions through the Action Center. This design document outlines the system architecture, components, and implementation approach for the enhanced App Store-compliant version.
+HarvestPro is a tax-loss harvesting module within AlphaWhale that helps users identify unrealized losses, estimate tax impact (informational only), and prepare transactions through the Action Center. HarvestPro produces tax-preparer-friendly exports and integrity records; it does not provide filing, submission, or guarantees. This design document outlines the system architecture, components, and implementation approach for the enhanced App Store-compliant version.
 
 ### Key Design Principles
 
-1. **UI is Presentation Only**: All business logic resides in Supabase Edge Functions
+1. **UI is Presentation-First**: All authoritative calculations, eligibility policy, and risk gating run in Supabase Edge Functions; UI may perform non-authoritative formatting and client-side filtering
 2. **Apple App Store Compliance**: Safe language, no tax advice claims, clear disclaimers
 3. **Trinity-Correct Flow**: Hunter → Action Center → Guardian integration
 4. **Demo Mode First**: Full functionality without wallet connection
@@ -51,7 +51,7 @@ HarvestPro is a tax-loss harvesting module within AlphaWhale that helps users id
 
 **Read Operations (Dashboard, Opportunities):**
 ```
-UI Component → Next.js API Route → Supabase DB → Response
+UI Component → Next.js API Route → Edge Function → Supabase DB → Response
 ```
 
 **Heavy Compute Operations (Opportunity Detection, Net Benefit Calculation):**
@@ -74,13 +74,15 @@ supabase/functions/
 ├── harvest-sync-cex/              # CEX API integration, update lots
 ├── harvest-recompute-opportunities/ # Heavy optimization engine
 ├── harvest-notify/                # Scheduled notifications
+└── _shared/harvestpro/            # Shared utilities
+
+## Future Addendum (v2/v3 - Separate Document)
 ├── harvest-economic-substance/    # v2: Pattern detection
 ├── harvest-mev-protection/        # v2: Private RPC routing
 ├── harvest-kyt-screen/            # v3: Sanctions screening
 ├── webhook-fireblocks/            # v3: Custody webhooks
 ├── webhook-copper/                # v3: Custody webhooks
-├── harvest-twap-worker/           # v3: TWAP execution
-└── _shared/harvestpro/            # Shared utilities
+└── harvest-twap-worker/           # v3: TWAP execution
 ```
 
 ## Components and Interfaces
@@ -422,6 +424,29 @@ CREATE TABLE harvest_execution_steps (
 );
 ```
 
+#### harvest_session_opportunities
+```sql
+CREATE TABLE harvest_session_opportunities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID NOT NULL REFERENCES harvest_sessions(session_id) ON DELETE CASCADE,
+  opportunity_id UUID NOT NULL REFERENCES harvest_opportunities(id),
+  snapshot JSONB NOT NULL, -- immutable snapshot used for proof + export
+  selected_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_hso_session ON harvest_session_opportunities(session_id);
+CREATE INDEX idx_hso_opportunity ON harvest_session_opportunities(opportunity_id);
+ALTER TABLE harvest_session_opportunities ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only see their session opportunities" ON harvest_session_opportunities FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM harvest_sessions s
+    WHERE s.session_id = harvest_session_opportunities.session_id
+      AND s.user_id = auth.uid()
+  )
+);
+```
+
 #### harvest_user_settings
 ```sql
 CREATE TABLE harvest_user_settings (
@@ -463,6 +488,41 @@ CREATE POLICY "Users can only see steps for their sessions" ON harvest_execution
 ALTER TABLE harvest_user_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can only see their own settings" ON harvest_user_settings FOR ALL USING (auth.uid() = user_id);
 ```
+
+## Asset/Event Type Classification (Data Quality)
+
+### Event Type Categories
+
+Each lot must be labeled with an event type to ensure proper cost basis calculation and data quality:
+
+- **trade**: Standard buy/sell transactions
+- **transfer**: Wallet-to-wallet transfers (preserve lot continuity)
+- **bridge**: Cross-chain transfers (may affect cost basis)
+- **airdrop**: Free token distributions (zero cost basis)
+- **staking_reward**: Staking income (fair market value at receipt)
+- **wrap/unwrap**: Token wrapping (e.g., ETH ↔ WETH, preserve cost basis)
+- **lp_deposit**: Liquidity pool deposits (complex cost basis)
+- **lp_withdraw**: Liquidity pool withdrawals (complex cost basis)
+- **unknown**: Unclassified events (requires manual review)
+
+### Data Quality Rules
+
+- Unknown/complex types default to `costBasisConfidence=LOW` and excluded from "Recommended"
+- Provide explanation chips in UI for data quality flags
+- Export includes `event_type` and `data_quality_flags` columns
+- Users can override classification with warnings
+
+### Required Export Columns
+
+**Enhanced CSV Export Format:**
+- `description` (asset + symbol)
+- `date_acquired`, `date_disposed`
+- `proceeds_usd`, `cost_basis_usd`, `gain_or_loss_usd`
+- `source` (wallet/cex + address/exchange name)
+- `tx_hash_or_trade_id`
+- `quantity`, `term` (SHORT|LONG), `network`
+- `fee_usd` (if known)
+- `event_type`, `data_quality_flags`
 
 ## Correctness Properties
 
@@ -597,13 +657,13 @@ test('eligibility filters are order-independent', () => {
 });
 ```
 
-#### Property 6: Net Benefit Calculation
+#### Property 6: Net Tax Impact Calculation
 **Requirement:** 4
-**Property:** Net benefit must equal tax savings minus all costs.
+**Property:** Net tax impact must equal estimated tax savings minus all costs.
 ```typescript
-// Feature: harvestpro, Property 6: Net Benefit Calculation
+// Feature: harvestpro, Property 6: Net Tax Impact Calculation
 // Validates: Requirements 4.1, 4.2, 4.3, 4.4
-test('net benefit equals tax savings minus costs', () => {
+test('net tax impact equals estimated tax savings minus costs', () => {
   fc.assert(
     fc.property(
       fc.record({
@@ -614,11 +674,11 @@ test('net benefit equals tax savings minus costs', () => {
         tradingFees: fc.float({ min: 0, max: 1000 })
       }),
       (params) => {
-        const result = calculateNetBenefit(params);
+        const result = calculateNetTaxImpact(params);
         const expectedTaxSavings = Math.abs(params.unrealizedLoss) * params.taxRate;
         const expectedCosts = params.gasEstimate + params.slippageEstimate + params.tradingFees;
-        const expectedNetBenefit = expectedTaxSavings - expectedCosts;
-        expect(Math.abs(result.netBenefit - expectedNetBenefit)).toBeLessThan(0.01);
+        const expectedNetImpact = expectedTaxSavings - expectedCosts;
+        expect(Math.abs(result.netTaxImpact - expectedNetImpact)).toBeLessThan(0.01);
       }
     ),
     { numRuns: 1000 }
@@ -628,20 +688,20 @@ test('net benefit equals tax savings minus costs', () => {
 
 #### Property 7: Not Recommended Classification
 **Requirement:** 4
-**Property:** Opportunities with net benefit ≤ 0 must be marked as not recommended.
+**Property:** Opportunities with net tax impact ≤ 0 must be marked as not recommended.
 ```typescript
 // Feature: harvestpro, Property 7: Not Recommended Classification
 // Validates: Requirements 4.5
-test('opportunities with net benefit <= 0 are not recommended', () => {
+test('opportunities with net tax impact <= 0 are not recommended', () => {
   fc.assert(
     fc.property(
       fc.array(fc.record({
-        netTaxBenefit: fc.float({ min: -1000, max: 1000 })
+        netTaxImpact: fc.float({ min: -1000, max: 1000 })
       })),
       (opportunities) => {
         const classified = classifyRecommendations(opportunities);
         classified.forEach(opp => {
-          if (opp.netTaxBenefit <= 0) {
+          if (opp.netTaxImpact <= 0) {
             expect(opp.recommended).toBe(false);
           }
         });
@@ -662,12 +722,12 @@ test('filter application preserves data integrity', () => {
   fc.assert(
     fc.property(
       fc.array(fc.record({
-        netTaxBenefit: fc.float({ min: -1000, max: 1000 }),
+        netTaxImpact: fc.float({ min: -1000, max: 1000 }),
         holdingPeriodDays: fc.integer({ min: 1, max: 3650 }),
         walletAddress: fc.constantFrom('wallet1', 'wallet2', 'wallet3')
       })),
       (opportunities) => {
-        const filtered = applyFilters(opportunities, { minBenefit: 100 });
+        const filtered = applyFilters(opportunities, { minImpact: 100 });
         const unfiltered = applyFilters(opportunities, {});
         
         // All filtered items should be in original set
@@ -1011,7 +1071,7 @@ test('user settings applied consistently to calculations', () => {
 
 #### Property 20: Notification Threshold
 **Requirement:** 13, 20
-**Property:** Notifications must only be sent when net benefit exceeds user threshold.
+**Property:** Notifications must only be sent when net tax impact exceeds user threshold.
 ```typescript
 // Feature: harvestpro, Property 20: Notification Threshold
 // Validates: Requirements 13.1, 20.3
@@ -1021,14 +1081,14 @@ test('notifications only sent above threshold', () => {
       fc.record({
         threshold: fc.float({ min: 0, max: 1000 }),
         opportunities: fc.array(fc.record({
-          netTaxBenefit: fc.float({ min: -100, max: 2000 })
+          netTaxImpact: fc.float({ min: -100, max: 2000 })
         }))
       }),
       (data) => {
         const notifications = generateNotifications(data.opportunities, data.threshold);
         
         notifications.forEach(notification => {
-          expect(notification.opportunity.netTaxBenefit).toBeGreaterThan(data.threshold);
+          expect(notification.opportunity.netTaxImpact).toBeGreaterThan(data.threshold);
         });
       }
     ),
@@ -1359,6 +1419,14 @@ src/lib/harvestpro/
 - TWAP execution engine
 
 ## Security Considerations
+
+### Wallet Handoff & Link Safety (Mandatory)
+
+- Only WalletConnect v2 + verified universal links are allowed for wallet handoffs
+- Maintain an allowlist of wallet identifiers/domains/schemes
+- Show an interstitial confirmation modal: wallet name + network + action summary
+- Block unknown deep-link schemes/domains by default
+- Log: handoff method + WC session id (never log addresses beyond necessary)
 
 ### Data Protection
 - All CEX credentials encrypted at rest using KMS
