@@ -13,46 +13,46 @@
  */
 export const ERROR_MESSAGES = {
   // API Errors
-  API_FAILED: 'Unable to load metrics. Please refresh the page.',
-  API_TIMEOUT: 'Request took too long. Please try again.',
-  API_UNAUTHORIZED: 'Session expired. Please reconnect your wallet.',
-  API_RATE_LIMITED: 'Too many requests. Please wait a moment.',
-  API_SERVER_ERROR: 'Server error. Please try again later.',
-  API_NETWORK_ERROR: 'Network error. Please check your connection.',
+  API_FAILED: 'Having trouble loading your data. Please refresh the page and we\'ll try again.',
+  API_TIMEOUT: 'This is taking longer than usual. Please try again in a moment.',
+  API_UNAUTHORIZED: 'Your session has expired. Please reconnect your wallet to continue.',
+  API_RATE_LIMITED: 'Whoa, slow down there! Please wait a moment before trying again.',
+  API_SERVER_ERROR: 'Our servers are having a moment. Please try again in a few minutes.',
+  API_NETWORK_ERROR: 'Connection hiccup detected. Please check your internet and try again.',
   
   // Wallet Errors
-  WALLET_CONNECTION_FAILED: 'Failed to connect wallet. Please try again.',
-  WALLET_NOT_INSTALLED: 'Please install a Web3 wallet (MetaMask, etc.)',
-  WALLET_WRONG_NETWORK: 'Please switch to Ethereum Mainnet.',
-  WALLET_SIGNATURE_REJECTED: 'You declined the signature request.',
-  WALLET_USER_CANCELLED: 'Connection cancelled.',
-  WALLET_ALREADY_CONNECTED: 'Wallet is already connected.',
-  WALLET_DISCONNECTION_FAILED: 'Failed to disconnect wallet.',
+  WALLET_CONNECTION_FAILED: 'Wallet connection didn\'t work out. Please try connecting again or refresh the page.',
+  WALLET_NOT_INSTALLED: 'You\'ll need a Web3 wallet like MetaMask to get started. Please install one and try again.',
+  WALLET_WRONG_NETWORK: 'Please switch to Ethereum Mainnet to continue.',
+  WALLET_SIGNATURE_REJECTED: 'No worries! Please try again when you\'re ready to continue.',
+  WALLET_USER_CANCELLED: 'Connection cancelled. You can try again anytime.',
+  WALLET_ALREADY_CONNECTED: 'Good news - your wallet is already connected! You can proceed with your actions or refresh if needed.',
+  WALLET_DISCONNECTION_FAILED: 'Having trouble disconnecting. Please refresh the page and try again.',
   
   // Component Errors
-  COMPONENT_ERROR: 'Something went wrong. Please refresh the page.',
-  NAVIGATION_ERROR: 'Navigation failed. Please try again.',
-  RENDER_ERROR: 'Failed to render component. Please refresh.',
+  COMPONENT_ERROR: 'Something unexpected happened. Please refresh the page to get back on track.',
+  NAVIGATION_ERROR: 'Navigation hiccup! Please try again or refresh the page.',
+  RENDER_ERROR: 'Display issue detected. Please refresh the page to fix this.',
   
   // Network Errors
-  NETWORK_OFFLINE: 'You appear to be offline. Showing cached data.',
-  NETWORK_SLOW: 'Your connection is slow. Data may be outdated.',
-  NETWORK_UNREACHABLE: 'Cannot reach server. Please check your connection.',
+  NETWORK_OFFLINE: 'You appear to be offline. Don\'t worry - we\'re showing your cached data. Please check your connection.',
+  NETWORK_SLOW: 'Your connection seems slow. Please wait while we load your data.',
+  NETWORK_UNREACHABLE: 'Can\'t reach our servers right now. Please check your connection and try again.',
   
   // Data Errors
-  DATA_FETCH_FAILED: 'Failed to load data. Please try again.',
-  DATA_PARSE_ERROR: 'Invalid data format received.',
-  DATA_STALE: 'Data is outdated. Refreshing...',
-  DATA_UNAVAILABLE: 'Data temporarily unavailable.',
+  DATA_FETCH_FAILED: 'Couldn\'t load your data this time. Please try refreshing.',
+  DATA_PARSE_ERROR: 'Data format looks unusual. Please refresh and try again.',
+  DATA_STALE: 'Your data is a bit outdated. Please wait while we refresh it for you.',
+  DATA_UNAVAILABLE: 'Data is temporarily unavailable. Please try again in a moment.',
   
   // Authentication Errors
-  AUTH_REQUIRED: 'Please connect your wallet to continue.',
-  AUTH_EXPIRED: 'Your session has expired. Please reconnect.',
-  AUTH_INVALID: 'Invalid authentication. Please reconnect.',
+  AUTH_REQUIRED: 'Please connect your wallet to unlock this feature. Try again after connecting.',
+  AUTH_EXPIRED: 'Your session has expired. Please reconnect your wallet to continue.',
+  AUTH_INVALID: 'Authentication issue detected. Please reconnect your wallet.',
   
   // Generic Errors
-  UNKNOWN_ERROR: 'An unexpected error occurred.',
-  TRY_AGAIN: 'Please try again.',
+  UNKNOWN_ERROR: 'Something unexpected happened. Please try refreshing the page.',
+  TRY_AGAIN: 'Please try again in a moment.',
 } as const;
 
 /**
@@ -140,7 +140,17 @@ export const WARNING_MESSAGES = {
  * @returns {string} Error message
  */
 export const getErrorMessage = (code: string): string => {
-  return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES] || ERROR_MESSAGES.UNKNOWN_ERROR;
+  // Handle special property names and invalid codes safely
+  if (typeof code !== 'string' || code.length === 0) {
+    return ERROR_MESSAGES.UNKNOWN_ERROR;
+  }
+  
+  // Check if the code exists in ERROR_MESSAGES using hasOwnProperty for safety
+  if (Object.prototype.hasOwnProperty.call(ERROR_MESSAGES, code)) {
+    return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES];
+  }
+  
+  return ERROR_MESSAGES.UNKNOWN_ERROR;
 };
 
 /**

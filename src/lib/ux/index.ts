@@ -88,3 +88,69 @@ export type {
   ActionGatingState,
   ActionGatingConfig
 } from './ActionGatingManager';
+// Human Microcopy & Delight Moments System
+export {
+  MicrocopyManager,
+  microcopyManager,
+  celebrateWalletConnection,
+  celebrateQuestJoined,
+  celebrateScanComplete,
+  showWelcomeMessage,
+  getEmptyStateMessage,
+  humanizeError,
+  celebrateAchievement,
+  celebrateMilestone
+} from './MicrocopyManager';
+export type {
+  CelebrationConfig,
+  WelcomeMessageConfig,
+  EmptyStateConfig
+} from './MicrocopyManager';
+
+// Humanized Error Handler
+export {
+  HumanizedErrorHandler,
+  humanizedErrorHandler,
+  handleHumanizedApiError,
+  handleHumanizedFormError,
+  handleHumanizedWalletError,
+  showRetryEncouragement,
+  showRecoverySuccess,
+  HUMANIZED_ERROR_MESSAGES
+} from './HumanizedErrorHandler';
+export type {
+  HumanizedErrorConfig
+} from './HumanizedErrorHandler';
+
+// Celebration Messages Constants
+export {
+  CELEBRATION_MESSAGES,
+  MILESTONE_MESSAGES,
+  WELCOME_MESSAGES,
+  EMPTY_STATE_MESSAGES,
+  getCelebrationMessage,
+  getMilestoneMessage,
+  getWelcomeMessage,
+  getEmptyStateMessage as getEmptyStateMessageConstant
+} from '../constants/celebrationMessages';
+
+// UX Components for Microcopy & Celebrations
+export { 
+  CelebrationToast, 
+  showCelebrationToast, 
+  ConfettiCelebration, 
+  celebrationPresets 
+} from '../../components/ux/CelebrationToast';
+export type { CelebrationToastProps } from '../../components/ux/CelebrationToast';
+
+export { 
+  EncouragingEmptyState 
+} from '../../components/ux/EncouragingEmptyState';
+export type { EncouragingEmptyStateProps } from '../../components/ux/EncouragingEmptyState';
+
+export { 
+  WelcomeMessage, 
+  showWelcomeToast, 
+  useWelcomeMessage 
+} from '../../components/ux/WelcomeMessage';
+export type { WelcomeMessageProps } from '../../components/ux/WelcomeMessage';

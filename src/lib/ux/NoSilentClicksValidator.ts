@@ -1,516 +1,307 @@
 /**
  * No Silent Clicks Validator
  * 
- * Requirements: R13.NO_SILENT_CLICKS, R10.TRUST.AUDIT_LINKS
+ * Enforces the "No Silent Clicks" rule in development mode by validating
+ * that all clickable elements provide appropriate feedback.
  * 
- * Runtime validation system to prevent dead-end clicks on trust badges
- * and other interactive elements.
+ * Requirements: R13.NO_SILENT_CLICKS
  */
 
 export interface ClickableElement {
   element: HTMLElement;
-  type: 'trust-badge' | 'proof-link' | 'methodology-link' | 'audit-link' | 'button' | 'link';
-  hasValidDestination: boolean;
-  destinationUrl?: string;
-  fallbackAction?: () => void;
-  errorMessage?: string;
+  hasValidAction: boolean;
+  actionType: 'navigation' | 'modal' | 'toast' | 'tooltip' | 'loading' | 'disabled' | 'none';
+  reason?: string;
+  violation?: string;
 }
 
-export interface ValidationResult {
-  isValid: boolean;
-  hasDestination: boolean;
-  hasFallback: boolean;
-  errorMessage?: string;
-  recommendedAction: 'allow' | 'show-fallback' | 'show-error' | 'prevent';
-}
-
-/**
- * No Silent Clicks Validator
- * 
- * Ensures all clickable elements have meaningful actions and never dead-end
- */
 export class NoSilentClicksValidator {
-  private static instance: NoSilentClicksValidator;
-  private validatedElements: Map<HTMLElement, ValidationResult> = new Map();
-  private isDevelopmentMode: boolean;
+  private violations: ClickableElement[] = [];
+  private isEnabled: boolean;
 
-  private constructor() {
-    this.isDevelopmentMode = process.env.NODE_ENV === 'development';
-    this.initializeGlobalValidation();
-  }
-
-  static getInstance(): NoSilentClicksValidator {
-    if (!NoSilentClicksValidator.instance) {
-      NoSilentClicksValidator.instance = new NoSilentClicksValidator();
-    }
-    return NoSilentClicksValidator.instance;
+  constructor() {
+    // Only enable in development mode
+    this.isEnabled = process.env.NODE_ENV === 'development';
   }
 
   /**
-   * Initialize global click validation in development mode
+   * Validates all clickable elements on the page
    */
-  private initializeGlobalValidation(): void {
-    if (!this.isDevelopmentMode) return;
-
-    // Add global click listener to catch potential dead-end clicks
-    document.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
-      if (this.isClickableElement(target)) {
-        const validation = this.validateClickableElement(target);
-        if (validation.recommendedAction === 'prevent') {
-          event.preventDefault();
-          event.stopPropagation();
-          this.showValidationError(target, validation);
-        }
-      }
-    }, true);
-  }
-
-  /**
-   * Validate a clickable element to ensure it has a meaningful action
-   */
-  validateClickableElement(element: HTMLElement): ValidationResult {
-    // Check cache first
-    const cached = this.validatedElements.get(element);
-    if (cached) {
-      return cached;
+  validateClickableElements(): ClickableElement[] {
+    if (!this.isEnabled) {
+      return [];
     }
 
-    const clickableInfo = this.analyzeClickableElement(element);
-    const validation = this.performValidation(clickableInfo);
+    this.violations = [];
+    const clickableSelectors = [
+      'button',
+      'a',
+      '[role="button"]',
+      '[role="menuitem"]',
+      '[role="menuitemradio"]',
+      '[role="tab"]',
+      '[onclick]',
+      '[data-testid*="button"]',
+      '[data-testid*="click"]',
+      '.cursor-pointer'
+    ];
+
+    const elements = document.querySelectorAll(clickableSelectors.join(', '));
     
-    // Cache the result
-    this.validatedElements.set(element, validation);
-    
-    return validation;
-  }
-
-  /**
-   * Analyze a clickable element to determine its properties
-   */
-  private analyzeClickableElement(element: HTMLElement): ClickableElement {
-    const type = this.determineElementType(element);
-    const hasValidDestination = this.hasValidDestination(element);
-    const destinationUrl = this.getDestinationUrl(element);
-    const fallbackAction = this.getFallbackAction(element);
-    const errorMessage = this.getErrorMessage(element);
-
-    return {
-      element,
-      type,
-      hasValidDestination,
-      destinationUrl,
-      fallbackAction,
-      errorMessage
-    };
-  }
-
-  /**
-   * Perform validation logic
-   */
-  private performValidation(clickable: ClickableElement): ValidationResult {
-    // Trust badges and proof links have special validation
-    if (clickable.type === 'trust-badge' || clickable.type === 'proof-link') {
-      return this.validateTrustElement(clickable);
-    }
-
-    // General clickable element validation
-    if (clickable.hasValidDestination) {
-      return {
-        isValid: true,
-        hasDestination: true,
-        hasFallback: false,
-        recommendedAction: 'allow'
-      };
-    }
-
-    if (clickable.fallbackAction) {
-      return {
-        isValid: true,
-        hasDestination: false,
-        hasFallback: true,
-        recommendedAction: 'show-fallback'
-      };
-    }
-
-    return {
-      isValid: false,
-      hasDestination: false,
-      hasFallback: false,
-      errorMessage: clickable.errorMessage || 'This element has no meaningful action',
-      recommendedAction: 'prevent'
-    };
-  }
-
-  /**
-   * Special validation for trust elements
-   */
-  private validateTrustElement(clickable: ClickableElement): ValidationResult {
-    // Check if it's a trust badge with proof content
-    if (clickable.element.hasAttribute('data-proof-available')) {
-      const proofAvailable = clickable.element.getAttribute('data-proof-available') === 'true';
+    elements.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      const analysis = this.analyzeElement(htmlElement);
       
-      if (proofAvailable) {
-        return {
-          isValid: true,
-          hasDestination: true,
-          hasFallback: false,
-          recommendedAction: 'allow'
-        };
-      } else {
-        // Has fallback for unavailable proof
-        return {
-          isValid: true,
-          hasDestination: false,
-          hasFallback: true,
-          recommendedAction: 'show-fallback'
-        };
+      if (!analysis.hasValidAction) {
+        this.violations.push(analysis);
       }
-    }
-
-    // Check for "Click for proof" text without actual proof
-    const textContent = clickable.element.textContent?.toLowerCase() || '';
-    if (textContent.includes('click for proof') || textContent.includes('view proof')) {
-      if (!clickable.hasValidDestination && !clickable.fallbackAction) {
-        return {
-          isValid: false,
-          hasDestination: false,
-          hasFallback: false,
-          errorMessage: 'Trust badge claims to have proof but no valid destination or fallback',
-          recommendedAction: 'prevent'
-        };
-      }
-    }
-
-    return {
-      isValid: true,
-      hasDestination: clickable.hasValidDestination,
-      hasFallback: !!clickable.fallbackAction,
-      recommendedAction: 'allow'
-    };
-  }
-
-  /**
-   * Determine the type of clickable element
-   */
-  private determineElementType(element: HTMLElement): ClickableElement['type'] {
-    // Check data attributes first
-    if (element.hasAttribute('data-trust-badge')) return 'trust-badge';
-    if (element.hasAttribute('data-proof-link')) return 'proof-link';
-    if (element.hasAttribute('data-methodology-link')) return 'methodology-link';
-    if (element.hasAttribute('data-audit-link')) return 'audit-link';
-
-    // Check class names
-    const className = element.className.toLowerCase();
-    if (className.includes('trust-badge')) return 'trust-badge';
-    if (className.includes('proof-link')) return 'proof-link';
-    if (className.includes('methodology')) return 'methodology-link';
-    if (className.includes('audit')) return 'audit-link';
-
-    // Check text content
-    const textContent = element.textContent?.toLowerCase() || '';
-    if (textContent.includes('click for proof') || textContent.includes('view proof')) {
-      return 'trust-badge';
-    }
-    if (textContent.includes('methodology') || textContent.includes('how it\'s calculated')) {
-      return 'methodology-link';
-    }
-    if (textContent.includes('audit') || textContent.includes('security report')) {
-      return 'audit-link';
-    }
-
-    // Default types
-    if (element.tagName === 'A') return 'link';
-    if (element.tagName === 'BUTTON' || element.getAttribute('role') === 'button') return 'button';
-
-    return 'button';
-  }
-
-  /**
-   * Check if element has a valid destination
-   */
-  private hasValidDestination(element: HTMLElement): boolean {
-    // Check for href attribute
-    const href = element.getAttribute('href');
-    if (href && href !== '#' && href !== 'javascript:void(0)' && href !== '') {
-      return this.isValidUrl(href);
-    }
-
-    // Check for onclick handler
-    const onclick = element.getAttribute('onclick');
-    if (onclick && onclick.trim() !== '') {
-      return true;
-    }
-
-    // Check for React event handlers (data attributes)
-    if (element.hasAttribute('data-has-click-handler')) {
-      return element.getAttribute('data-has-click-handler') === 'true';
-    }
-
-    // Check for modal triggers
-    if (element.hasAttribute('data-modal-trigger') || 
-        element.hasAttribute('data-opens-modal') ||
-        element.hasAttribute('aria-haspopup')) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Get destination URL if available
-   */
-  private getDestinationUrl(element: HTMLElement): string | undefined {
-    const href = element.getAttribute('href');
-    if (href && href !== '#') {
-      return href;
-    }
-
-    const dataUrl = element.getAttribute('data-url');
-    if (dataUrl) {
-      return dataUrl;
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Get fallback action if available
-   */
-  private getFallbackAction(element: HTMLElement): (() => void) | undefined {
-    // Check if element has a fallback action defined
-    if (element.hasAttribute('data-fallback-action')) {
-      return () => {
-        const action = element.getAttribute('data-fallback-action');
-        if (action === 'show-unavailable-modal') {
-          this.showUnavailableModal(element);
-        }
-      };
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Get error message for invalid elements
-   */
-  private getErrorMessage(element: HTMLElement): string | undefined {
-    return element.getAttribute('data-error-message') || undefined;
-  }
-
-  /**
-   * Check if element is clickable
-   */
-  private isClickableElement(element: HTMLElement): boolean {
-    // Check tag names
-    if (['A', 'BUTTON'].includes(element.tagName)) {
-      return true;
-    }
-
-    // Check role attribute
-    if (element.getAttribute('role') === 'button') {
-      return true;
-    }
-
-    // Check for cursor pointer
-    const computedStyle = window.getComputedStyle(element);
-    if (computedStyle.cursor === 'pointer') {
-      return true;
-    }
-
-    // Check for click-related attributes
-    if (element.hasAttribute('onclick') || 
-        element.hasAttribute('data-clickable') ||
-        element.hasAttribute('tabindex')) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Validate URL format
-   */
-  private isValidUrl(url: string): boolean {
-    // Relative URLs are valid
-    if (url.startsWith('/')) {
-      return true;
-    }
-
-    // Check absolute URLs
-    try {
-      const parsedUrl = new URL(url);
-      return ['http:', 'https:'].includes(parsedUrl.protocol);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Show validation error in development mode
-   */
-  private showValidationError(element: HTMLElement, validation: ValidationResult): void {
-    if (!this.isDevelopmentMode) return;
-
-    console.error('🚫 No Silent Clicks Violation:', {
-      element,
-      validation,
-      elementText: element.textContent?.trim(),
-      elementHTML: element.outerHTML
     });
 
-    // Highlight the problematic element
-    element.style.outline = '3px solid red';
-    element.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
-    
-    // Show tooltip with error
-    const tooltip = document.createElement('div');
-    tooltip.textContent = validation.errorMessage || 'This element has no meaningful action';
-    tooltip.style.cssText = `
-      position: absolute;
-      background: red;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      z-index: 10000;
-      pointer-events: none;
-    `;
-    
-    const rect = element.getBoundingClientRect();
-    tooltip.style.top = `${rect.top - 30}px`;
-    tooltip.style.left = `${rect.left}px`;
-    
-    document.body.appendChild(tooltip);
-    
-    setTimeout(() => {
-      document.body.removeChild(tooltip);
-      element.style.outline = '';
-      element.style.backgroundColor = '';
-    }, 3000);
+    return this.violations;
   }
 
   /**
-   * Show unavailable modal for elements with fallback
+   * Analyzes a single element to determine if it follows No Silent Clicks rule
    */
-  private showUnavailableModal(element: HTMLElement): void {
-    const modal = document.createElement('div');
-    modal.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-      ">
-        <div style="
-          background: #1e293b;
-          color: white;
-          padding: 24px;
-          border-radius: 12px;
-          max-width: 400px;
-          text-align: center;
-        ">
-          <h3 style="margin: 0 0 16px 0; color: #fbbf24;">Content Temporarily Unavailable</h3>
-          <p style="margin: 0 0 16px 0; color: #d1d5db;">
-            The verification content for this element is temporarily unavailable. 
-            We show this honest status instead of a broken link.
-          </p>
-          <button onclick="this.closest('div').remove()" style="
-            background: #0891b2;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-          ">
-            Close
-          </button>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-  }
-
-  /**
-   * Clear validation cache
-   */
-  clearCache(): void {
-    this.validatedElements.clear();
-  }
-
-  /**
-   * Get validation statistics
-   */
-  getValidationStats(): {
-    totalValidated: number;
-    validElements: number;
-    invalidElements: number;
-    elementsWithFallbacks: number;
-  } {
-    const results = Array.from(this.validatedElements.values());
-    
-    return {
-      totalValidated: results.length,
-      validElements: results.filter(r => r.isValid).length,
-      invalidElements: results.filter(r => !r.isValid).length,
-      elementsWithFallbacks: results.filter(r => r.hasFallback).length
+  private analyzeElement(element: HTMLElement): ClickableElement {
+    const analysis: ClickableElement = {
+      element,
+      hasValidAction: false,
+      actionType: 'none'
     };
-  }
-}
 
-/**
- * Hook for using no silent clicks validation
- */
-export function useNoSilentClicksValidation() {
-  const validator = NoSilentClicksValidator.getInstance();
-
-  return {
-    validateElement: (element: HTMLElement) => validator.validateClickableElement(element),
-    clearCache: () => validator.clearCache(),
-    getStats: () => validator.getValidationStats()
-  };
-}
-
-/**
- * React component wrapper to ensure no silent clicks
- */
-interface NoSilentClicksWrapperProps {
-  children: React.ReactNode;
-  fallbackAction?: () => void;
-  errorMessage?: string;
-}
-
-export const NoSilentClicksWrapper = ({ 
-  children, 
-  fallbackAction, 
-  errorMessage 
-}: NoSilentClicksWrapperProps) => {
-  // Import React dynamically to avoid issues
-  const React = require('react');
-  const ref = React.useRef<HTMLDivElement>(null);
-  const validator = NoSilentClicksValidator.getInstance();
-
-  React.useEffect(() => {
-    if (ref.current) {
-      // Add data attributes for validation
-      if (fallbackAction) {
-        ref.current.setAttribute('data-fallback-action', 'show-unavailable-modal');
-      }
-      if (errorMessage) {
-        ref.current.setAttribute('data-error-message', errorMessage);
+    // Check if element is disabled
+    if (element.hasAttribute('disabled') || element.getAttribute('aria-disabled') === 'true') {
+      const hasExplanation = 
+        element.hasAttribute('title') ||
+        element.hasAttribute('aria-label') ||
+        element.hasAttribute('aria-describedby');
+      
+      if (hasExplanation) {
+        analysis.hasValidAction = true;
+        analysis.actionType = 'disabled';
+        analysis.reason = element.getAttribute('title') || 
+                         element.getAttribute('aria-label') || 
+                         'Disabled with explanation';
+      } else {
+        analysis.violation = 'Disabled element lacks explanation (title, aria-label, or aria-describedby)';
       }
       
-      // Validate the element
-      validator.validateClickableElement(ref.current);
+      return analysis;
     }
-  }, [validator, fallbackAction, errorMessage]);
 
-  return React.createElement('div', { ref }, children);
-};
+    // Check for navigation action
+    if (element.hasAttribute('href')) {
+      const href = element.getAttribute('href');
+      if (href && href !== '#' && href !== 'javascript:void(0)') {
+        analysis.hasValidAction = true;
+        analysis.actionType = 'navigation';
+        analysis.reason = `Navigates to: ${href}`;
+        return analysis;
+      } else {
+        analysis.violation = 'Link has empty or placeholder href';
+      }
+    }
+
+    // Check for click handler
+    if (element.onclick || element.hasAttribute('onclick')) {
+      analysis.hasValidAction = true;
+      analysis.actionType = 'loading'; // Assume click handlers trigger some action
+      analysis.reason = 'Has click handler';
+      return analysis;
+    }
+
+    // Check for React event handlers (data attributes or class patterns)
+    const hasReactHandler = 
+      element.className.includes('cursor-pointer') ||
+      Array.from(element.attributes).some(attr => 
+        attr.name.startsWith('data-') && attr.name.includes('click')
+      );
+
+    if (hasReactHandler) {
+      analysis.hasValidAction = true;
+      analysis.actionType = 'loading';
+      analysis.reason = 'Appears to have React click handler';
+      return analysis;
+    }
+
+    // Check for form submission
+    if (element.type === 'submit' || element.getAttribute('type') === 'submit') {
+      analysis.hasValidAction = true;
+      analysis.actionType = 'loading';
+      analysis.reason = 'Form submission button';
+      return analysis;
+    }
+
+    // Check for modal triggers (common patterns)
+    const modalTriggerPatterns = [
+      'data-modal',
+      'data-dialog',
+      'data-popup',
+      'aria-haspopup',
+      'data-bs-toggle', // Bootstrap
+      'data-toggle'     // Generic
+    ];
+
+    const isModalTrigger = modalTriggerPatterns.some(pattern => 
+      element.hasAttribute(pattern)
+    );
+
+    if (isModalTrigger) {
+      analysis.hasValidAction = true;
+      analysis.actionType = 'modal';
+      analysis.reason = 'Modal trigger';
+      return analysis;
+    }
+
+    // Check for tooltip triggers
+    if (element.hasAttribute('title') && element.hasAttribute('aria-describedby')) {
+      analysis.hasValidAction = true;
+      analysis.actionType = 'tooltip';
+      analysis.reason = 'Tooltip trigger';
+      return analysis;
+    }
+
+    // If we reach here, it's likely a silent click violation
+    analysis.violation = 'Clickable element provides no observable feedback';
+    return analysis;
+  }
+
+  /**
+   * Highlights violations on the page for visual debugging
+   */
+  highlightViolations(): void {
+    if (!this.isEnabled) {
+      return;
+    }
+
+    this.violations.forEach((violation) => {
+      const element = violation.element;
+      
+      // Add visual indicator
+      element.style.outline = '2px solid red';
+      element.style.outlineOffset = '2px';
+      
+      // Add tooltip with violation details
+      element.title = `Silent Click Violation: ${violation.violation}`;
+      
+      // Add data attribute for testing
+      element.setAttribute('data-silent-click-violation', 'true');
+    });
+  }
+
+  /**
+   * Logs violations to console for debugging
+   */
+  logViolations(): void {
+    if (!this.isEnabled || this.violations.length === 0) {
+      return;
+    }
+
+    console.group('🚨 No Silent Clicks Violations');
+    console.warn(`Found ${this.violations.length} violations:`);
+    
+    this.violations.forEach((violation, index) => {
+      console.group(`Violation ${index + 1}:`);
+      console.log('Element:', violation.element);
+      console.log('Issue:', violation.violation);
+      console.log('Tag:', violation.element.tagName);
+      console.log('Classes:', violation.element.className);
+      console.log('Text:', violation.element.textContent?.trim());
+      console.groupEnd();
+    });
+    
+    console.groupEnd();
+  }
+
+  /**
+   * Removes all violation highlights
+   */
+  clearHighlights(): void {
+    const violationElements = document.querySelectorAll('[data-silent-click-violation]');
+    violationElements.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      htmlElement.style.outline = '';
+      htmlElement.style.outlineOffset = '';
+      htmlElement.removeAttribute('data-silent-click-violation');
+      
+      // Only remove title if it was added by us (contains "Silent Click Violation")
+      if (htmlElement.title?.includes('Silent Click Violation')) {
+        htmlElement.title = '';
+      }
+    });
+  }
+
+  /**
+   * Runs a complete validation cycle
+   */
+  validate(): ClickableElement[] {
+    if (!this.isEnabled) {
+      return [];
+    }
+
+    this.clearHighlights();
+    const violations = this.validateClickableElements();
+    
+    if (violations.length > 0) {
+      this.highlightViolations();
+      this.logViolations();
+    } else {
+      console.log('✅ No Silent Clicks validation passed - all clickable elements provide feedback');
+    }
+
+    return violations;
+  }
+
+  /**
+   * Sets up automatic validation on DOM changes (for development)
+   */
+  enableAutoValidation(): void {
+    if (!this.isEnabled) {
+      return;
+    }
+
+    // Debounced validation function
+    let validationTimeout: NodeJS.Timeout;
+    const debouncedValidate = () => {
+      clearTimeout(validationTimeout);
+      validationTimeout = setTimeout(() => {
+        this.validate();
+      }, 500);
+    };
+
+    // Watch for DOM changes
+    const observer = new MutationObserver(debouncedValidate);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['onclick', 'href', 'disabled', 'aria-disabled']
+    });
+
+    // Initial validation
+    setTimeout(() => {
+      this.validate();
+    }, 1000);
+
+    // Expose validator to window for manual testing
+    if (typeof window !== 'undefined') {
+      (window as any).noSilentClicksValidator = this;
+    }
+  }
+}
+
+// Create singleton instance
+export const noSilentClicksValidator = new NoSilentClicksValidator();
+
+// Auto-enable in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      noSilentClicksValidator.enableAutoValidation();
+    });
+  } else {
+    noSilentClicksValidator.enableAutoValidation();
+  }
+}

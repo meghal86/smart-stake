@@ -29,6 +29,31 @@
   /* Shadows */
   --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.4);
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.2);
+  
+  /* AlphaWhale UX Component Standards */
+  --aw-primary: hsl(var(--primary));
+  --aw-primary-foreground: hsl(var(--primary-foreground));
+  --aw-secondary: hsl(var(--secondary));
+  --aw-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  /* Animation timing for consistent micro-interactions */
+  --aw-animation-fast: 120ms;
+  --aw-animation-normal: 200ms;
+  --aw-animation-slow: 300ms;
+  
+  /* Component spacing and sizing */
+  --aw-button-padding-x: 1rem;
+  --aw-button-padding-y: 0.5rem;
+  --aw-button-border-radius: 0.375rem;
+  --aw-button-scale-press: 0.98;
+  
+  /* Skeleton animation */
+  --aw-skeleton-shimmer-duration: 2s;
+  
+  /* Toast timing */
+  --aw-toast-duration-success: 3000ms;
+  --aw-toast-duration-error: 5000ms;
+  --aw-toast-duration-info: 4000ms;
 }
 
 * {

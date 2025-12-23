@@ -1,10 +1,46 @@
 # Requirements Document
 
+## Version History
+
+- **v1 (Requirements 1-20)**: Core tax-loss harvesting for retail users
+  - Wallet and CEX integration
+  - Opportunity detection and net benefit calculation
+  - Guided execution through Action Engine
+  - Compliance-ready exports with cryptographic proof
+
+- **v2 (Requirements 21-25)**: Institutional-grade enhancements
+  - MEV-aware execution and private RPC routing
+  - Economic substance validation
+  - Proxy asset selection for exposure maintenance
+  - Institutional guardrails and audit-quality reporting
+
+- **v3 (Requirements 26-29)**: Enterprise features
+  - Institutional custody integration (Fireblocks, Copper)
+  - Maker/checker governance workflows
+  - Pre-trade sanctions screening (KYT/AML)
+  - Intelligent order routing (TWAP/VWAP)
+
 ## Introduction
 
-HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to identify, optimize, and execute cryptocurrency tax-loss harvesting opportunities across connected wallets and centralized exchange (CEX) accounts. The system detects unrealized losses, calculates net tax benefits after accounting for gas and slippage, executes harvesting transactions through the Action Engine, and generates compliance-ready export files with cryptographic proof of execution.
+HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to identify, optimize, and execute cryptocurrency tax-loss harvesting opportunities across connected wallets and centralized exchange (CEX) accounts.
+
+In **v1**, the focus is on accurate detection of unrealized losses, net tax benefit calculation (after gas and slippage), guided execution through the Action Engine, and compliance-ready export files with cryptographic proof of execution.
+
+In **v2 (Institutional Grade)**, HarvestPro is extended for high-net-worth individuals (HNWIs) and funds with:
+- MEV-aware execution and private RPC routing
+- Economic-substance-aware policies
+- Proxy asset selection to maintain exposure
+- Institutional guardrails and audit-quality Proof-of-Harvest
+
+In **v3 (Enterprise)**, HarvestPro adds capabilities for regulated funds and large institutions:
+- Institutional custody integration (Fireblocks, Copper)
+- Maker/checker governance workflows
+- Pre-trade sanctions screening (KYT/AML)
+- Intelligent order routing (TWAP/VWAP)
 
 ## Glossary
+
+### Core Terms (v1)
 
 - **HarvestPro System**: The tax-loss harvesting module within AlphaWhale
 - **User**: An AlphaWhale account holder with connected wallets or CEX accounts
@@ -22,6 +58,26 @@ HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to 
 - **Liquidity Score**: Metric indicating ease of selling a token without price impact
 - **Slippage**: Price difference between expected and actual execution price
 
+### Institutional Terms (v2)
+
+- **Proxy Asset**: A correlated token used to maintain market exposure without triggering "wash sale" or "substantially identical" issues (e.g., ETH → stETH)
+- **MEV (Maximal Extractable Value)**: Value that block producers or validators can extract by reordering or sandwiching transactions in the mempool
+- **Private RPC**: A transaction submission endpoint (e.g., Flashbots) that bypasses the public mempool to reduce MEV risk
+- **Economic Substance**: Legal and financial concept requiring that transactions have real economic risk or impact beyond tax optimization
+- **Dust**: Token balances with negligible value that clutter tax reporting and are uneconomical to trade
+- **Guardrails**: Configurable risk limits that prevent execution beyond user-defined thresholds (e.g., max daily loss, max position size)
+
+### Enterprise Terms (v3)
+
+- **MPC Custodian**: Multi-Party Computation custody provider (e.g., Fireblocks, Copper) that manages private keys through distributed key shares
+- **Co-Signing**: Process where custody provider requires API credentials to approve and sign transactions without exposing private keys
+- **Maker/Checker**: Governance pattern requiring dual authorization where one party creates a transaction and another approves it
+- **OFAC**: Office of Foreign Assets Control - US Treasury department that maintains sanctions lists
+- **KYT (Know Your Transaction)**: Real-time transaction monitoring to detect interactions with sanctioned addresses or high-risk entities
+- **TWAP (Time-Weighted Average Price)**: Order execution strategy that splits large orders into smaller chunks executed at regular intervals
+- **VWAP (Volume-Weighted Average Price)**: Order execution strategy that splits orders based on historical volume patterns
+- **Iceberg Order**: Large order split into smaller visible portions to minimize market impact
+
 ## Data Models
 
 ### Lot
@@ -30,15 +86,26 @@ HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to 
   lotId: string                    // Unique identifier for this lot
   token: string                    // Token symbol (e.g., "ETH", "BTC")
   walletOrCex: string             // Source identifier (wallet address or CEX name)
+  
+  // v2 additions
+  chainId?: number                 // EVM chain id or chain identifier
+  venueType?: "WALLET" | "CEX" | "DEFI"
+  venueName?: string               // e.g. "Aave", "Uniswap", "Binance"
+  
   acquiredAt: string              // ISO 8601 timestamp of acquisition
   acquiredQty: number             // Quantity of tokens acquired
   acquiredPriceUsd: number        // Price per token at acquisition in USD
   currentPriceUsd: number         // Current market price per token in USD
   unrealizedPnl: number           // (currentPrice - acquiredPrice) * quantity
   holdingPeriodDays: number       // Days between acquisition and now
+  longTerm: boolean               // True if holdingPeriodDays > 365
   riskLevel: "LOW" | "MEDIUM" | "HIGH"
   liquidityScore: number          // 0-100 scale
   guardianScore: number           // 0-10 scale
+  
+  // v2 additions
+  mevRiskScore?: number            // 0-10 scale for MEV exposure
+  
   eligibleForHarvest: boolean     // Passes all eligibility criteria
 }
 ```
@@ -49,15 +116,26 @@ HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to 
   id: string                      // Unique opportunity identifier
   lotId: string                   // Reference to source Lot
   token: string                   // Token symbol
+  tokenLogoUrl: string            // URL to token logo image (required for Hunter-style cards)
   riskLevel: "LOW" | "MEDIUM" | "HIGH"
   unrealizedLoss: number          // Absolute value of loss in USD
   gasEstimate: number             // Estimated gas cost in USD
   slippageEstimate: number        // Estimated slippage in USD
   tradingFees: number             // Estimated trading fees in USD
+  
+  // v2 additions
+  taxRateUsed?: number             // Effective tax rate applied
+  mevRiskCostUsd?: number          // Optional haircut for MEV risk
+  
   netTaxBenefit: number           // Tax savings minus all costs
   guardianScore: number           // 0-10 risk score
   executionTimeEstimate: string   // Human-readable estimate (e.g., "5-10 min")
   confidence: number              // 0-100 confidence in estimates
+  
+  // v2 additions
+  economicSubstanceFlag?: "PASS" | "WARN" | "BLOCKED"
+  proxyAssetSymbol?: string        // If a proxy is part of the plan
+  
   metadata: {
     walletName: string
     venue: string                 // Exchange or DEX name
@@ -73,10 +151,17 @@ HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to 
   userId: string                  // User who initiated harvest
   createdAt: string               // ISO 8601 timestamp
   updatedAt: string               // ISO 8601 timestamp
-  status: "draft" | "executing" | "completed" | "failed" | "cancelled"
+  status: "draft" | "executing" | "completed" | "failed" | "cancelled" | "awaiting_approval"  // v3: added awaiting_approval
   opportunitiesSelected: HarvestOpportunity[]
   realizedLossesTotal: number     // Sum of all harvested losses
   netBenefitTotal: number         // Sum of all net benefits
+  
+  // v2 additions
+  executionStrategy?: "IMMEDIATE" | "TWAP" | "MANUAL"
+  mevProtectionMode?: "REQUIRED" | "PREFERRED" | "DISABLED"
+  jurisdictionCode?: string        // e.g. "US", "EU"
+  economicSubstanceStatus?: "PASS" | "WARN" | "BLOCKED"
+  
   executionSteps: ExecutionStep[]
   exportUrl: string | null        // URL to CSV export
   proofHash: string | null        // Cryptographic proof hash
@@ -91,9 +176,18 @@ HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to 
   type: "on-chain" | "cex-manual"
   status: "pending" | "executing" | "completed" | "failed"
   transactionHash: string | null  // For on-chain steps
+  cexPlatform?: string            // e.g., "Binance", "Coinbase" (for cex-manual type)
+  
+  // v2 additions
+  privateRpcUsed?: boolean
+  mevProtectionProvider?: string   // e.g. "Flashbots"
+  gasPaidUsd?: number
+  slippageRealizedBps?: number
+  
   errorMessage: string | null     // If failed
   guardianScore: number           // Risk score for this step
   timestamp: string | null        // When step completed
+  durationMs?: number             // Execution duration in milliseconds (for progress tracking)
 }
 ```
 
@@ -106,6 +200,23 @@ HarvestPro is a tax-loss harvesting module for AlphaWhale that enables users to 
   notificationThreshold: number   // Minimum net benefit in USD
   preferredWallets: string[]      // Prioritized wallet addresses
   riskTolerance: "conservative" | "moderate" | "aggressive"
+  
+  // v2 additions - institutional guardrails
+  maxDailyRealizedLossUsd?: number
+  maxSingleTradeNotionalUsd?: number
+  maxSlippageBps?: number
+  requirePrivateRpc?: boolean
+  allowCexAutoTrade?: boolean
+  
+  // v3 additions - enterprise features
+  custodyProvider?: "FIREBLOCKS" | "COPPER" | "NONE"
+  custodyApiCredentials?: string   // Encrypted co-signing credentials
+  approvalThresholdUsd?: number    // Maker/checker threshold
+  approverRole?: string            // User role required for approval
+  sanctionsScreeningEnabled?: boolean
+  orderRoutingStrategy?: "IMMEDIATE" | "TWAP" | "VWAP"
+  twapDurationMinutes?: number
+  limitPriceFloor?: number         // Safety floor for TWAP execution
 }
 ```
 
@@ -141,7 +252,8 @@ cancelled  failed
 
 ### Execution & Results
 - `GET /api/harvest/sessions/:id/status` - Poll execution status
-- `GET /api/harvest/sessions/:id/export` - Download CSV export
+- `GET /api/harvest/sessions/:id/export?type=csv` - Download CSV export (Form 8949)
+- `GET /api/harvest/sessions/:id/export?type=pdf` - Download PDF export
 - `GET /api/harvest/sessions/:id/proof` - Get proof-of-harvest page data
 
 ### User Configuration
@@ -394,3 +506,110 @@ cancelled  failed
 3. WHEN a user sets notification preferences THEN the HarvestPro System SHALL store the minimum threshold for harvest opportunity notifications
 4. WHEN a user enables or disables notifications THEN the HarvestPro System SHALL respect the preference for all future notifications
 5. WHEN a user saves settings THEN the HarvestPro System SHALL persist the settings and apply them immediately to all calculations
+
+---
+
+## v2 Institutional Requirements
+
+### Requirement 21
+
+**User Story:** As an institutional user, I want my on-chain harvests to be protected from MEV and routed via private RPC when possible, so that I minimize invisible execution costs and frontrunning risk.
+
+#### Acceptance Criteria
+
+1. WHEN a user has `requirePrivateRpc` enabled in settings THEN the HarvestPro System SHALL route all on-chain harvest transactions through a configured private RPC provider where available
+2. WHEN a harvest transaction is sent via private RPC THEN the HarvestPro System SHALL record `privateRpcUsed = true` and the provider name on the corresponding `ExecutionStep`
+3. WHEN private RPC is unavailable or fails AND `requirePrivateRpc` is enabled THEN the HarvestPro System SHALL block execution and display an error banner instead of silently falling back to public RPC
+4. WHEN private RPC is optional AND private RPC fails THEN the HarvestPro System MAY fall back to public RPC and SHALL mark the step as `privateRpcUsed = false`
+
+### Requirement 22
+
+**User Story:** As a compliance-conscious user, I want HarvestPro to apply an economic substance check to my sessions, so that I avoid patterns that could be interpreted as purely tax-motivated.
+
+#### Acceptance Criteria
+
+1. WHEN a user creates a harvest session THEN the HarvestPro System SHALL evaluate economic substance and set `economicSubstanceStatus` to `PASS`, `WARN`, or `BLOCKED`
+2. WHEN `economicSubstanceStatus` is `BLOCKED` THEN the HarvestPro System SHALL prevent execution and show a clear explanation of why the session is blocked
+3. WHEN `economicSubstanceStatus` is `WARN` THEN the HarvestPro System SHALL require explicit user confirmation before allowing execution to start
+4. WHEN generating Proof-of-Harvest THEN the HarvestPro System SHALL include the economic substance status and a short explanation in the proof payload used to generate the `proofHash`
+
+### Requirement 23
+
+**User Story:** As a user, I want the option to use proxy assets to maintain market exposure after harvesting, so that I can lock in tax benefits without fully exiting my market view.
+
+#### Acceptance Criteria
+
+1. WHEN a token has one or more approved proxy assets in the HarvestPro System THEN the opportunity detail modal SHALL show a "Maintain Exposure with Proxy Asset" option
+2. WHEN a user enables the proxy option for an opportunity THEN the HarvestPro System SHALL add a `Sell base token → Buy proxy token` execution plan and update the `ExecutionStep` list accordingly
+3. WHEN a proxy asset is marked as blocked by policy THEN the HarvestPro System SHALL not offer it in the UI and SHALL not use it in any execution plans
+4. WHEN a session uses proxy assets THEN the HarvestPro System SHALL record the chosen proxy symbol on the corresponding `HarvestOpportunity` and include it in Proof-of-Harvest exports
+
+### Requirement 24
+
+**User Story:** As an institutional user, I want configurable guardrails (max daily realized loss, max position size, max slippage), so that HarvestPro never exceeds my risk or mandate limits.
+
+#### Acceptance Criteria
+
+1. WHEN a user configures `maxDailyRealizedLossUsd` in settings THEN the HarvestPro System SHALL prevent execution of any session that would exceed this limit based on estimated realized losses
+2. WHEN a user configures `maxSingleTradeNotionalUsd` THEN the HarvestPro System SHALL split or reject execution steps that exceed this limit
+3. WHEN a user configures `maxSlippageBps` THEN the HarvestPro System SHALL block any opportunity where estimated slippage exceeds this threshold
+4. WHEN a session is blocked by any of these guardrails THEN the HarvestPro System SHALL display a clear explanation and highlight which limit was hit
+
+### Requirement 25
+
+**User Story:** As a fund manager, I want an audit-grade Proof-of-Harvest record, so that I can defend my process to regulators, LPs, and auditors.
+
+#### Acceptance Criteria
+
+1. WHEN a harvest session reaches `completed` status THEN the HarvestPro System SHALL create a canonical proof payload including all selected opportunities, all execution steps, user settings snapshot relevant to risk and policy, economic substance status, and MEV protection mode and provider details
+2. WHEN generating the proof hash THEN the HarvestPro System SHALL use a deterministic cryptographic hash function such that identical input always produces identical output
+3. WHEN a user or admin views the Proof-of-Harvest page THEN the HarvestPro System SHALL display both the human-readable summary and the raw proof hash value
+4. WHEN exporting proof as CSV or PDF THEN the HarvestPro System SHALL include a reference to the proof hash and session ID so that external systems can correlate records
+
+---
+
+## v3 Enterprise Requirements
+
+### Requirement 26
+
+**User Story:** As a fund manager using Fireblocks or Copper, I want HarvestPro to push transaction payloads to my custody vault for approval, so that I do not have to expose private keys.
+
+#### Acceptance Criteria
+
+1. WHEN a user connects an MPC Custodian THEN the HarvestPro System SHALL NOT ask for private keys but instead require API co-signing credentials
+2. WHEN executing a harvest THEN the Action Engine SHALL NOT broadcast the transaction directly
+3. WHEN executing a harvest with custody integration THEN the Action Engine SHALL construct the unsigned transaction payload and push it to the Custodian's API with a note containing the session identifier
+4. WHEN a transaction is sent to custody THEN the HarvestPro System SHALL poll the Custodian status until the external approver signs the transaction
+
+### Requirement 27
+
+**User Story:** As a CFO, I want to approve any harvest session over a configured threshold, so that junior traders cannot accidentally trigger massive tax events.
+
+#### Acceptance Criteria
+
+1. WHEN a HarvestSession has a net benefit exceeding the approval threshold THEN the HarvestPro System SHALL transition the status to `awaiting_approval` instead of `executing`
+2. WHEN a session requires approval THEN the HarvestPro System SHALL notify users with the APPROVER role via email and push notification
+3. WHEN a session is awaiting approval THEN the HarvestPro System SHALL NOT proceed with execution until an APPROVER cryptographically signs the session approval
+4. WHEN an approver rejects a session THEN the HarvestPro System SHALL transition the status to `cancelled` and notify the session creator
+
+### Requirement 28
+
+**User Story:** As a compliance officer, I want to block any harvest path that interacts with sanctioned entities, so that our fund remains compliant with OFAC and AML laws.
+
+#### Acceptance Criteria
+
+1. WHEN proposing a swap route THEN the HarvestPro System SHALL screen the pool contract addresses against the OFAC Sanctions List
+2. WHEN a route interacts with a high-risk address THEN the HarvestPro System SHALL block that route and find a compliant alternative
+3. WHEN no compliant route is available THEN the HarvestPro System SHALL mark the opportunity as ineligible and display a compliance warning
+4. WHEN sanctions screening is enabled THEN the HarvestPro System SHALL log all screening results for audit purposes
+
+### Requirement 29
+
+**User Story:** As a whale moving large positions, I do not want to dump everything in one block; I want to split the order over time to minimize price impact.
+
+#### Acceptance Criteria
+
+1. WHEN harvest size exceeds the liquidity threshold THEN the Action Engine SHALL offer TWAP execution as an option
+2. WHEN TWAP is selected THEN the HarvestPro System SHALL slice the parent order into child iceberg orders and execute them over a user-defined duration
+3. WHEN executing TWAP orders THEN the HarvestPro System SHALL dynamically pause execution if the price drops below a limit price safety floor
+4. WHEN TWAP execution completes THEN the HarvestPro System SHALL display the actual average execution price compared to the initial estimate
