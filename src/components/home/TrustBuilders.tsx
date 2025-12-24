@@ -6,7 +6,7 @@ import { TrustBadge } from '@/components/ux/ProofModal';
 import { TrustBadgeWithFallback } from '@/components/ux/TrustBadgeWithFallback';
 import { MetricsProof } from '@/components/ux/MetricsProof';
 import { TrustSignalVerificationManager, DEFAULT_TRUST_SIGNALS, TrustSignal } from '@/lib/ux/TrustSignalVerification';
-import { NoSilentClicksWrapper } from '@/lib/ux/NoSilentClicksValidator';
+import { NoSilentClicksWrapper } from '@/lib/ux/NoSilentClicksWrapper';
 import { useHomeMetrics, getFreshnessMessage, getFreshnessColor } from '@/hooks/useHomeMetrics';
 
 /**

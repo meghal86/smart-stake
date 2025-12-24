@@ -19,8 +19,6 @@ import { X, AlertTriangle, CheckCircle2, Clock, TrendingDown, Shield, Fuel, Zap 
 import { cn } from '@/lib/utils';
 import type { HarvestOpportunity } from '@/types/harvestpro';
 import { Button } from '@/components/ui/button';
-import { useWalletButtonTooltip } from '@/hooks/useFormButtonTooltip';
-import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 
 // ============================================================================
 // TYPES
@@ -32,7 +30,6 @@ export interface HarvestDetailModalProps {
   onClose: () => void;
   onExecute: (opportunityId: string) => void;
   isExecuting?: boolean;
-  isConnected?: boolean;
 }
 
 interface ExecutionStep {
@@ -148,16 +145,12 @@ export function HarvestDetailModal({
   onClose,
   onExecute,
   isExecuting = false,
-  isConnected = true,
 }: HarvestDetailModalProps) {
   console.log('🎭 HarvestDetailModal render:', { 
     opportunity: opportunity?.id, 
     isOpen, 
     hasOpportunity: !!opportunity 
   });
-  
-  // Wallet connection tooltip
-  const walletTooltip = useWalletButtonTooltip(isConnected);
   
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -387,19 +380,12 @@ export function HarvestDetailModal({
             >
               Cancel
             </Button>
-            <DisabledTooltipButton
+            <Button
               onClick={() => onExecute(opportunity.id)}
-              disabled={isExecuting || opportunity.netTaxBenefit <= 0 || walletTooltip.isDisabled}
-              disabledTooltip={
-                walletTooltip.isDisabled 
-                  ? walletTooltip.tooltipContent 
-                  : (opportunity.netTaxBenefit <= 0 
-                    ? 'Net benefit must be positive to execute' 
-                    : (isExecuting ? 'Executing harvest...' : undefined))
-              }
+              disabled={isExecuting || opportunity.netTaxBenefit <= 0}
               className={cn(
                 'flex-1 font-semibold',
-                opportunity.netTaxBenefit > 0 && isConnected
+                opportunity.netTaxBenefit > 0
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
                   : 'bg-gray-600 cursor-not-allowed',
                 'text-white border-0'
@@ -420,7 +406,7 @@ export function HarvestDetailModal({
                   Execute Harvest
                 </>
               )}
-            </DisabledTooltipButton>
+            </Button>
           </div>
           
           {opportunity.netTaxBenefit <= 0 && (

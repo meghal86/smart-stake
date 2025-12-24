@@ -10,8 +10,6 @@ import {
   Zap,
   Sparkles
 } from 'lucide-react';
-import { useWalletButtonTooltip } from '@/hooks/useFormButtonTooltip';
-import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 
 interface Opportunity {
   id: string;
@@ -46,9 +44,6 @@ export function ExecuteQuestModal({ isOpen, onClose, opportunity, isConnected = 
   const [currentStep, setCurrentStep] = useState(0);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-
-  // Wallet connection tooltip
-  const walletTooltip = useWalletButtonTooltip(isConnected);
 
   if (!opportunity) return null;
 
@@ -272,38 +267,33 @@ export function ExecuteQuestModal({ isOpen, onClose, opportunity, isConnected = 
 
             {/* Action Button */}
             {!isComplete && (
-              <DisabledTooltipButton
+              <motion.button
                 onClick={handleExecute}
-                disabled={isExecuting || walletTooltip.isDisabled}
-                disabledTooltip={walletTooltip.isDisabled ? walletTooltip.tooltipContent : (isExecuting ? 'Executing quest...' : undefined)}
+                disabled={isExecuting}
                 className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-200 ${
-                  isExecuting || walletTooltip.isDisabled
-                    ? 'bg-gray-600 cursor-not-allowed'
+                  isExecuting
+                    ? 'bg-gray-600 cursor-not-allowed opacity-50'
                     : 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] hover:shadow-lg'
                 }`}
-                asChild
+                whileHover={!isExecuting ? { scale: 1.02 } : {}}
+                whileTap={!isExecuting ? { scale: 0.98 } : {}}
               >
-                <motion.button
-                  whileHover={!isExecuting && isConnected ? { scale: 1.02 } : {}}
-                  whileTap={!isExecuting && isConnected ? { scale: 0.98 } : {}}
-                >
-                  {isExecuting ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                      />
-                      Executing...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      Execute Quest
-                      <ArrowRight className="w-5 h-5" />
-                    </div>
-                  )}
-                </motion.button>
-              </DisabledTooltipButton>
+                {isExecuting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                    />
+                    Executing...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    Execute Quest
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
+                )}
+              </motion.button>
             )}
 
             {/* Success State */}

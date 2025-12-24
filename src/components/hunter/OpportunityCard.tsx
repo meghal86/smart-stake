@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -13,8 +12,6 @@ import {
   Brain,
   Timer
 } from 'lucide-react';
-import { useWalletButtonTooltip } from '@/hooks/useFormButtonTooltip';
-import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
 
 interface Opportunity {
   id: string;
@@ -36,7 +33,6 @@ interface OpportunityCardProps {
   index: number;
   onJoinQuest: (opportunity: Opportunity) => void;
   isDarkTheme?: boolean;
-  isConnected?: boolean;
 }
 
 const typeIcons = {
@@ -65,12 +61,9 @@ const riskIcons = {
   High: AlertTriangle
 };
 
-export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme = true, isConnected = true }: OpportunityCardProps) {
+export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme = true }: OpportunityCardProps) {
   const TypeIcon = typeIcons[opportunity.type];
   const RiskIcon = riskIcons[opportunity.riskLevel];
-  
-  // Wallet connection tooltip
-  const walletTooltip = useWalletButtonTooltip(isConnected);
   
   return (
     <motion.div
@@ -234,53 +227,47 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
         </div>
 
         {/* CTA Button with Subtle Ripple */}
-        <DisabledTooltipButton
+        <motion.button
           onClick={() => onJoinQuest(opportunity)}
-          disabled={walletTooltip.isDisabled}
-          disabledTooltip={walletTooltip.tooltipContent}
           className={`relative w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 overflow-hidden ${
             isDarkTheme
               ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white shadow-lg'
               : 'bg-gradient-to-r from-[#FBBF24] to-[#14B8A6] text-white shadow-[0_2px_8px_rgba(251,191,36,0.25)]'
           }`}
-          asChild
+          whileHover={{ 
+            scale: 1.02, 
+            y: -1,
+            boxShadow: isDarkTheme
+              ? '0 8px 25px rgba(0,245,160,0.3)'
+              : '0 4px 16px rgba(251,191,36,0.4)'
+          }}
+          whileTap={{ scale: 0.98 }}
+          transition={{
+            type: "spring",
+            stiffness: 400,
+            damping: 25
+          }}
         >
-          <motion.button
-            whileHover={{ 
-              scale: isConnected ? 1.02 : 1, 
-              y: isConnected ? -1 : 0,
-              boxShadow: isConnected ? (isDarkTheme
-                ? '0 8px 25px rgba(0,245,160,0.3)'
-                : '0 4px 16px rgba(251,191,36,0.4)') : undefined
-            }}
-            whileTap={{ scale: isConnected ? 0.98 : 1 }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 25
-            }}
+          {/* Subtle Ripple Effect */}
+          <motion.div
+            className={`absolute inset-0 ${
+              isDarkTheme
+                ? 'bg-gradient-to-r from-white/0 via-white/10 to-white/0'
+                : 'bg-gradient-to-r from-white/0 via-white/20 to-white/0'
+            }`}
+            initial={{ x: '-100%' }}
+            whileHover={{ x: '100%' }}
+            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
+          />
+          <span className="relative z-10">Join Quest</span>
+          <motion.div
+            className="relative z-10"
+            animate={{ x: [0, 4, 0] }}
+            transition={{ repeat: Infinity, duration: 2, ease: [0.25, 1, 0.5, 1] }}
           >
-            {/* Subtle Ripple Effect */}
-            <motion.div
-              className={`absolute inset-0 ${
-                isDarkTheme
-                  ? 'bg-gradient-to-r from-white/0 via-white/10 to-white/0'
-                  : 'bg-gradient-to-r from-white/0 via-white/20 to-white/0'
-              }`}
-              initial={{ x: '-100%' }}
-              whileHover={{ x: isConnected ? '100%' : '-100%' }}
-              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
-            />
-            <span className="relative z-10">Join Quest</span>
-            <motion.div
-              className="relative z-10"
-              animate={{ x: isConnected ? [0, 4, 0] : 0 }}
-              transition={{ repeat: isConnected ? Infinity : 0, duration: 2, ease: [0.25, 1, 0.5, 1] }}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </motion.div>
-          </motion.button>
-        </DisabledTooltipButton>
+            <ChevronRight className="w-5 h-5" />
+          </motion.div>
+        </motion.button>
       </div>
     </motion.div>
   );
