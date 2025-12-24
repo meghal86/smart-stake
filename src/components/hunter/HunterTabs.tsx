@@ -42,7 +42,7 @@ export function HunterTabs({ activeTab, onTabChange, isDarkTheme = true }: Hunte
 
   return (
     <nav
-      className={`flex items-center gap-6 overflow-x-auto scrollbar-none text-sm transition-colors duration-300 ${
+      className={`relative flex items-center gap-6 overflow-x-auto scrollbar-none text-sm transition-colors duration-300 ${
         isDarkTheme ? 'text-gray-300' : 'text-[#444C56]'
       }`}
       role="tablist"
@@ -64,6 +64,9 @@ export function HunterTabs({ activeTab, onTabChange, isDarkTheme = true }: Hunte
           {tab}
         </button>
       ))}
+      
+      {/* Scroll indicator gradient */}
+      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0A0E1A] to-transparent pointer-events-none" />
     </nav>
   );
 }

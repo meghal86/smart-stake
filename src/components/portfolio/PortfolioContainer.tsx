@@ -2,6 +2,8 @@ import { useState } from "react";
 import { BottomNav } from "./shared/BottomNav";
 import { PortfolioOverview } from "./PortfolioOverview";
 import { RiskAnalysis } from "./RiskAnalysis";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/ui/PullToRefreshIndicator";
 
 interface PortfolioContainerProps {
   initialMode?: "novice" | "pro" | "institutional";
@@ -11,6 +13,16 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
   const [activeSection, setActiveSection] = useState("portfolio");
   const [activeScreen, setActiveScreen] = useState("overview");
   const [mode, setMode] = useState(initialMode);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handlePullRefresh = async () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+    threshold: 80,
+  });
 
   const portfolioScreens = {
     overview: PortfolioOverview,
@@ -36,6 +48,12 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        threshold={threshold}
+      />
       {/* Portfolio Tabs */}
       <div className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-xl border-b border-gray-700/50">
         <div className="flex overflow-x-auto p-2">
@@ -74,7 +92,7 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
         </select>
       </div>
 
-      <CurrentScreen mode={mode} />
+      <CurrentScreen mode={mode} key={refreshKey} />
       
       <BottomNav 
         activeSection={activeSection}

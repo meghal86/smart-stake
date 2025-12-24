@@ -89,6 +89,7 @@ export const FooterNav = ({ currentRoute }: FooterNavProps) => {
         h-16
         flex items-center justify-around
         px-4
+        pb-[calc(0.5rem+var(--safe-area-inset-bottom))]
       ">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -123,7 +124,7 @@ export const FooterNav = ({ currentRoute }: FooterNavProps) => {
               />
               <span 
                 className={`
-                  text-xs mt-1 font-medium
+                  text-[13px] mt-1 font-medium
                   ${active ? 'text-cyan-400' : 'text-gray-400'}
                 `}
               >

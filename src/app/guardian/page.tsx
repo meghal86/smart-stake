@@ -7,39 +7,43 @@ import { WorkingAddWalletButton } from '@/components/guardian/WorkingAddWalletBu
 import MultiWalletDashboard from '@/components/guardian/MultiWalletDashboard';
 import { WalletProvider, useWallet as useWalletContext } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 function GuardianContent() {
-  const { wallets, isLoading } = useWalletContext();
+  const { wallets, isLoading, refetch } = useWalletContext();
   const [isScanning, setIsScanning] = useState(false);
+
+  const handlePullRefresh = async () => {
+    await refetch?.();
+  };
+
+  const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+    threshold: 80,
+  });
 
   const handleScanWallet = async (address: string) => {
     setIsScanning(true);
-    // Simulate scan
     await new Promise(resolve => setTimeout(resolve, 2000));
     setIsScanning(false);
   };
 
   const handleScanAll = async () => {
     setIsScanning(true);
-    // Simulate scan all
     await new Promise(resolve => setTimeout(resolve, 3000));
     setIsScanning(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <Shield className="w-12 h-12 mx-auto mb-4 text-[#00C9A7] animate-pulse" />
-          <p className="text-gray-400">Loading Guardian...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        threshold={threshold}
+      />
+      <div className="max-w-7xl mx-auto px-4 py-8 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
