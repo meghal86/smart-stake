@@ -260,20 +260,25 @@ export const getFreshnessMessage = (
   
   switch (status) {
     case 'current':
-      if (dataAge < 1) {
+      if (dataAge < 0.083) { // Less than 5 seconds
         return 'Just now';
       }
-      return `Updated ${Math.floor(dataAge)} minute${Math.floor(dataAge) === 1 ? '' : 's'} ago`;
+      if (dataAge < 1) { // Less than 1 minute
+        const seconds = Math.floor(dataAge * 60);
+        return `${seconds}s ago`;
+      }
+      const minutes = Math.floor(dataAge);
+      return `${minutes}m ago`;
     
     case 'stale':
-      return `Updated ${Math.floor(dataAge)} minutes ago`;
+      return `${Math.floor(dataAge)}m ago`;
     
     case 'outdated': {
       if (dataAge < 60) {
-        return `Updated ${Math.floor(dataAge)} minutes ago (outdated)`;
+        return `${Math.floor(dataAge)}m ago (outdated)`;
       }
       const hours = Math.floor(dataAge / 60);
-      return `Updated ${hours} hour${hours === 1 ? '' : 's'} ago (outdated)`;
+      return `${hours}h ago (outdated)`;
     }
     
     default:

@@ -9,6 +9,9 @@ import { TrustBuilders } from '@/components/home/TrustBuilders';
 import { OnboardingSection } from '@/components/home/OnboardingSection';
 import { FooterNav } from '@/components/home/FooterNav';
 import { HomeAuthProvider } from '@/lib/context/HomeAuthContext';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { useHomeMetrics } from '@/hooks/useHomeMetrics';
 import { motion } from 'framer-motion';
 
 /**
@@ -24,8 +27,21 @@ import { motion } from 'framer-motion';
  * This page works in both demo mode (unauthenticated) and live mode (authenticated).
  */
 export default function AlphaWhaleHome() {
+  const { manualRefresh } = useHomeMetrics();
+
+  const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
+    onRefresh: manualRefresh,
+    threshold: 80,
+  });
+
   return (
     <HomeAuthProvider>
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        threshold={threshold}
+      />
       <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0A0E1A] to-[#111827]">
         {/* Animated Background Glow */}
         <motion.div

@@ -13,6 +13,8 @@ import { FooterNav } from '@/components/layout/FooterNav';
 import { useHunterFeed } from '@/hooks/useHunterFeed';
 import { useWallet } from '@/contexts/WalletContext';
 import { TabType } from '@/components/hunter/HunterTabs';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 interface Opportunity {
   id: string;
@@ -42,6 +44,17 @@ export default function Hunter() {
   // Wallet connection status
   const { connectedWallets, activeWallet } = useWallet();
   const isConnected = connectedWallets.length > 0 && !!activeWallet;
+
+  // Pull-to-refresh
+  const handleRefresh = async () => {
+    await refetch();
+  };
+
+  const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    disabled: isModalOpen || copilotEnabled,
+  });
 
   // Show Copilot toast occasionally
   useEffect(() => {
@@ -114,6 +127,12 @@ export default function Hunter() {
         ? 'bg-gradient-to-br from-[#0A0E1A] to-[#111827]' 
         : 'bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]'
     }`}>
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        threshold={threshold}
+      />
       {/* Serene Light Theme Background - Top Glow */}
       <motion.div
         className="absolute inset-0 pointer-events-none"

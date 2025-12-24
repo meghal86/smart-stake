@@ -91,9 +91,6 @@ export const ImpactStats = () => {
           >
             Platform Metrics
           </h2>
-          <p className="text-base text-gray-500 max-w-2xl mx-auto font-light">
-            Click to view detailed breakdown
-          </p>
           
           {/* Last Updated Timestamp - R14.TRUST.TIMESTAMPS */}
           <div className="mt-3 flex items-center justify-center gap-2 text-sm">
@@ -155,13 +152,6 @@ export const ImpactStats = () => {
                   <p className="text-base font-medium text-white mb-2">
                     {stat.label}
                   </p>
-                  
-                  {/* Click hint */}
-                  {!isExpanded && (
-                    <p className="text-xs text-gray-600">
-                      Click to view
-                    </p>
-                  )}
 
                   {/* Breakdown (Expanded State) - SHOWS VALUE + DETAILS */}
                   <motion.div

@@ -186,8 +186,8 @@ export const MetricsProof = ({ metricType, value, label, className = '' }: Metri
   const getButtonProps = () => {
     if (isVerifying) {
       return {
-        text: 'Verifying...',
-        className: 'text-yellow-400 hover:text-yellow-300',
+        text: 'Documentation coming soon',
+        className: 'text-gray-400 hover:text-gray-300',
         icon: HelpCircle,
         disabled: false
       };
@@ -203,8 +203,8 @@ export const MetricsProof = ({ metricType, value, label, className = '' }: Metri
     }
 
     return {
-      text: 'Documentation unavailable',
-      className: 'text-yellow-400 hover:text-yellow-300',
+      text: 'Documentation coming soon',
+      className: 'text-gray-400 hover:text-gray-300',
       icon: AlertTriangle,
       disabled: false
     };

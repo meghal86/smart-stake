@@ -33,7 +33,7 @@ export const getDemoMetrics = (): HomeMetrics => {
     
     // Trust metrics - Platform-wide statistics
     totalWalletsProtected: 50000,
-    totalYieldOptimizedUsd: 12400000,
+    totalYieldOptimizedUsd: 12.4,
     averageGuardianScore: 85,
     
     // Metadata

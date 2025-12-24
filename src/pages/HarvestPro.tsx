@@ -28,6 +28,8 @@ import { FooterNav } from '@/components/layout/FooterNav';
 import { useHarvestFilters } from '@/hooks/useHarvestFilters';
 import { useHarvestOpportunities } from '@/hooks/useHarvestOpportunities';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import type { OpportunitiesSummary, HarvestOpportunity, HarvestSession } from '@/types/harvestpro';
 
 type ViewState = 'loading' | 'no-wallet' | 'no-opportunities' | 'all-harvested' | 'error' | 'normal';
@@ -47,6 +49,17 @@ export default function HarvestPro() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [completedSession, setCompletedSession] = useState<HarvestSession | null>(null);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+
+  // Pull-to-refresh
+  const handlePullRefresh = async () => {
+    await handleRefresh();
+  };
+
+  const { isPulling, isRefreshing: isPullRefreshing, pullDistance, threshold } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+    threshold: 80,
+    disabled: isModalOpen || showSuccessScreen,
+  });
 
   // Fetch real opportunities from API (disabled in demo mode)
   const {
@@ -425,6 +438,12 @@ export default function HarvestPro() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0A0E1A] to-[#111827]">
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isPullRefreshing}
+        pullDistance={pullDistance}
+        threshold={threshold}
+      />
       {/* Background Effects */}
       <motion.div
         className="absolute inset-0 pointer-events-none"

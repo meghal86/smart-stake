@@ -74,8 +74,8 @@ export const TrustBuilders = ({ metrics: propMetrics, isLoading: propIsLoading =
       type: 'audit',
       label: 'On-chain',
       description: 'Transparent & verifiable',
-      proofUrl: 'https://certik.com/projects/alphawhale',
-      verified: true,
+      proofUrl: '',  // Empty URL to trigger unavailable state
+      verified: false,
       lastUpdated: new Date(),
       metadata: {
         auditFirm: 'CertiK'

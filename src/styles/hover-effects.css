@@ -1,0 +1,25 @@
+/* Global Hover Transitions - FIX #7 */
+
+/* Button hover effects */
+button:not(:disabled),
+.btn {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+button:not(:disabled):hover,
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Card hover effects */
+.card,
+[class*="rounded-"][class*="border"],
+[class*="bg-white/"][class*="border"] {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover,
+[class*="rounded-"][class*="border"]:hover,
+[class*="bg-white/"][class*="border"]:hover {
+  transform: translateY(-4px);
+}
