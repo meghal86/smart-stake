@@ -100,7 +100,7 @@ export function CEXExecutionPanel({
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white">Trade Details</p>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                Execute this exact order on {cexPlatform}
+                Prepare this exact order on {cexPlatform}
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ export function CEXExecutionPanel({
           <div className="text-sm text-blue-900 dark:text-blue-100">
             <p className="font-medium">Important</p>
             <p className="mt-1">
-              Check each step as you complete it. Make sure to execute the exact quantities shown above.
+              Check each step as you complete it. Make sure to prepare the exact quantities shown above.
             </p>
           </div>
         </div>
@@ -348,9 +348,9 @@ function getOrderInstructions(platform: string, orderType?: string): string {
 function getConfirmationInstructions(platform: string): string {
   const instructions: Record<string, string> = {
     Binance: 'Check "Order History" to verify the order was filled. Note the average execution price.',
-    Coinbase: 'View "Recent Activity" to confirm the order executed. Record the fill price for your records.',
+    Coinbase: 'View "Recent Activity" to confirm the order prepared. Record the fill price for your records.',
     Kraken: 'Go to "Orders" → "Order History" to verify completion. Save the execution details.',
-    'Binance.US': 'Check "Order History" under "Orders" to confirm the trade executed successfully.',
+    'Binance.US': 'Check "Order History" under "Orders" to confirm the trade prepared successfully.',
   };
   return instructions[platform] || 'Verify the order was filled successfully in your order history';
 }

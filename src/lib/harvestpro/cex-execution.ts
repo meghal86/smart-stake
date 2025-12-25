@@ -73,7 +73,7 @@ export function generateCEXExecutionSteps(
       timestamp: null,
       createdAt: timestamp,
       metadata: {
-        instruction: 'Execute a market sell order at current market price',
+        instruction: 'Prepare a market sell order at current market price',
         orderType: 'Market Sell',
         token,
         quantity,

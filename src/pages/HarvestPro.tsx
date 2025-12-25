@@ -477,17 +477,9 @@ export default function HarvestPro() {
         <FilterChipRow className="mb-6" />
 
         {/* Content Area */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewState}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
+        <div>
+          {renderContent()}
+        </div>
       </div>
 
       {/* Footer Navigation */}

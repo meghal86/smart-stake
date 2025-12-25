@@ -4,8 +4,9 @@
  */
 
 import { motion } from 'framer-motion';
-import { TrendingDown, DollarSign, Coins, Zap, AlertTriangle } from 'lucide-react';
+import { TrendingDown, DollarSign, Coins, Zap, AlertTriangle, TestTube } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDemoMode } from '@/lib/ux/DemoModeManager';
 import type { OpportunitiesSummary } from '@/types/harvestpro';
 
 interface HarvestSummaryCardProps {
@@ -19,6 +20,8 @@ export function HarvestSummaryCard({
   hasHighRiskOpportunities = false,
   className,
 }: HarvestSummaryCardProps) {
+  const { isDemo } = useDemoMode();
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -54,6 +57,19 @@ export function HarvestSummaryCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
     >
+      {/* Demo Mode Badge */}
+      {isDemo && (
+        <motion.div
+          className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <TestTube className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-medium text-blue-300">Demo Data</span>
+        </motion.div>
+      )}
+      
       {/* Warning Banner */}
       {hasHighRiskOpportunities && (
         <motion.div

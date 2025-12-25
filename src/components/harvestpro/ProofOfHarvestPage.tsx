@@ -8,6 +8,7 @@
 import React from 'react';
 import { Download, Share2, Copy, CheckCircle2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Card } from '@/components/ui/card';
 import type { ProofOfHarvest } from '@/types/harvestpro';
 
@@ -97,13 +98,13 @@ export function ProofOfHarvestPage({
                 Execution Time
               </div>
               <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                {formatDate(new Date(proof.executedAt))}
+                {formatDate(new Date(proof.preparedAt))}
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Executed Steps - Requirement 12.3 */}
+        {/* Prepared Steps - Requirement 12.3 */}
         <Card className="p-6 mb-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             Harvested Lots ({proof.lots.length})
@@ -202,14 +203,16 @@ export function ProofOfHarvestPage({
 
         {/* Export Buttons - Requirement 12.5 */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button
+          <PrimaryButton
             onClick={onDownloadPDF}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            variant="primary"
+            className="flex-1"
             disabled={!onDownloadPDF}
+            disabledTooltip={!onDownloadPDF ? "PDF download not available" : undefined}
           >
             <Download className="w-4 h-4 mr-2" />
             Download PDF
-          </Button>
+          </PrimaryButton>
           <Button
             onClick={onShare}
             variant="outline"
@@ -234,7 +237,7 @@ export function ProofOfHarvestPage({
           <p className="text-sm text-amber-900 dark:text-amber-100">
             <strong>Note:</strong> This proof is for your records. Please consult
             with a tax professional before filing your tax return. AlphaWhale does
-            not provide tax advice.
+            not provide tax information.
           </p>
         </div>
       </div>

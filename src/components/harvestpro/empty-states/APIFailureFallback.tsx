@@ -59,7 +59,7 @@ export function APIFailureFallback({
           disabled={isRetrying}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white font-semibold shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
           whileHover={!isRetrying ? { scale: 1.05 } : {}}
-          whileTap={!isRetrying ? { scale: 0.95 } : {}}
+          whileTap={!isRetrying ? { scale: 0.98 } : {}}
         >
           <RefreshCw className={cn('w-5 h-5', isRetrying && 'animate-spin')} />
           {isRetrying ? 'Retrying...' : 'Retry'}

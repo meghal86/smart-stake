@@ -153,7 +153,7 @@ export function FilterChipRow({
               : 'bg-transparent border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.2)]'
           )}
           whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.98 }}
         >
           {filter}
         </motion.button>
@@ -175,7 +175,7 @@ export function FilterChipRow({
                   : 'bg-transparent border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.2)]'
               )}
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.98 }}
             >
               {wallet.slice(0, 6)}...{wallet.slice(-4)}
             </motion.button>

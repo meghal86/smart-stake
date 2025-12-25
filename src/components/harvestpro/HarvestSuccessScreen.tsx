@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { useLoadingState } from '@/hooks/useLoadingState';
 import type { HarvestSession } from '@/types/harvestpro';
 
 // ============================================================================
@@ -118,6 +120,11 @@ export function HarvestSuccessScreen({
   isDownloading = false,
 }: HarvestSuccessScreenProps) {
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
+  
+  // Loading state management
+  const { getLoadingState } = useLoadingState();
+  const csvDownloadState = getLoadingState('csv-download');
+  const isDownloadingCSV = csvDownloadState?.isLoading || isDownloading;
   const [showConfetti, setShowConfetti] = useState(true);
   
   // Generate confetti on mount
@@ -335,48 +342,38 @@ export function HarvestSuccessScreen({
             transition={{ delay: 0.6 }}
             className="flex flex-col sm:flex-row gap-3"
           >
-            <Button
+            <PrimaryButton
               onClick={() => onDownloadCSV(session.sessionId)}
-              disabled={isDownloading}
+              isLoading={isDownloadingCSV}
+              loadingText={csvDownloadState?.message || 'Generating CSV...'}
+              variant="primary"
               className={cn(
                 'flex-1 h-12 font-semibold text-base',
-                'bg-gradient-to-r from-blue-500 to-blue-600',
-                'hover:from-blue-600 hover:to-blue-700',
-                'text-white border-0',
-                'transition-all duration-200',
                 'shadow-lg shadow-blue-500/25'
               )}
             >
-              {isDownloading ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
-                  />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5 mr-2" />
-                  Download 8949 CSV
-                </>
-              )}
-            </Button>
+              <Download className="w-5 h-5 mr-2" />
+              Download 8949 CSV
+            </PrimaryButton>
             
-            <Button
-              onClick={() => onViewProof(session.sessionId)}
-              className={cn(
-                'flex-1 h-12 font-semibold text-base',
-                'bg-white/10 hover:bg-white/15',
-                'text-white border border-white/20',
-                'transition-all duration-200'
-              )}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <FileText className="w-5 h-5 mr-2" />
-              View Proof-of-Harvest
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+              <Button
+                onClick={() => onViewProof(session.sessionId)}
+                className={cn(
+                  'flex-1 h-12 font-semibold text-base',
+                  'bg-white/10 hover:bg-white/15',
+                  'text-white border border-white/20',
+                  'transition-all duration-200'
+                )}
+              >
+                <FileText className="w-5 h-5 mr-2" />
+                View Proof-of-Harvest
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </motion.div>
           </motion.div>
           
           {/* Close Button (Optional) */}

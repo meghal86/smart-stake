@@ -82,7 +82,7 @@ export function AllOpportunitiesHarvested({
             onClick={onDownloadCSV}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white font-semibold shadow-lg hover:shadow-xl transition-shadow"
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Download className="w-5 h-5" />
             Download Form 8949 CSV
@@ -94,7 +94,7 @@ export function AllOpportunitiesHarvested({
             onClick={onViewProof}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 transition-colors"
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Eye className="w-5 h-5" />
             View Proof-of-Harvest

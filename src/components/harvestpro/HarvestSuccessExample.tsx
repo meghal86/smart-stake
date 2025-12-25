@@ -127,7 +127,7 @@ export function HarvestSuccessExample() {
         id: 'step-3',
         sessionId: 'session-123',
         stepNumber: 3,
-        description: 'Execute swap',
+        description: 'Prepare swap',
         type: 'on-chain',
         status: 'completed',
         transactionHash: '0x789...',

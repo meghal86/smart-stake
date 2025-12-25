@@ -5,24 +5,32 @@
 
 import { motion } from 'framer-motion';
 import { Leaf, Activity, RefreshCw } from 'lucide-react';
-import { WalletSelector } from '@/components/hunter/WalletSelector';
+import WalletSelector from '@/components/hunter/WalletSelector';
 import { formatUpdatedTime } from '@/lib/ux/timestampUtils';
+import { useLoadingState } from '@/hooks/useLoadingState';
+import { LoadingIndicator } from '@/components/ux/LoadingSystem';
+import { useDemoMode } from '@/lib/ux/DemoModeManager';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
 
 interface HarvestProHeaderProps {
-  isDemo: boolean;
-  setIsDemo: (value: boolean) => void;
   lastUpdated?: Date;
   onRefresh: () => void;
   isRefreshing?: boolean;
 }
 
 export function HarvestProHeader({
-  isDemo,
-  setIsDemo,
   lastUpdated,
   onRefresh,
   isRefreshing = false,
 }: HarvestProHeaderProps) {
+  // Demo mode management - use centralized demo mode manager
+  const { isDemo, setDemoMode } = useDemoMode();
+  
+  // Loading state management
+  const { getLoadingState } = useLoadingState();
+  const refreshState = getLoadingState('harvest-refresh');
+  const isRefreshLoading = refreshState?.isLoading || isRefreshing;
+  
   return (
     <motion.header
       className="sticky top-0 z-50 backdrop-blur-md border-b bg-[rgba(16,18,30,0.75)] border-[rgba(255,255,255,0.08)]"
@@ -43,9 +51,18 @@ export function HarvestProHeader({
 
           <div className="flex items-center gap-3">
             {lastUpdated && (
-              <p className="text-xs text-gray-400">
-                {formatUpdatedTime(lastUpdated)}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-gray-400">
+                  {formatUpdatedTime(lastUpdated)}
+                </p>
+                {isRefreshLoading && (
+                  <LoadingIndicator
+                    size="sm"
+                    variant="spinner"
+                    className="text-gray-400"
+                  />
+                )}
+              </div>
             )}
 
             <div className="flex items-center gap-3">
@@ -57,20 +74,22 @@ export function HarvestProHeader({
               />
 
               {/* Refresh Button */}
-              <motion.button
+              <PrimaryButton
                 onClick={onRefresh}
-                disabled={isRefreshing}
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/15 transition-all duration-200 disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                disabled={isRefreshLoading}
+                isLoading={isRefreshLoading}
+                loadingText="Refreshing..."
+                disabledTooltip={refreshState?.message || 'Refresh opportunities'}
+                variant="ghost"
+                className="p-2 rounded-lg"
               >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </motion.button>
+                <RefreshCw className="w-4 h-4" />
+              </PrimaryButton>
 
               {/* Demo/Live Toggle */}
               <div className="flex gap-2 text-sm">
                 <button
-                  onClick={() => setIsDemo(true)}
+                  onClick={() => setDemoMode(true)}
                   className={`px-3 py-1 rounded-lg border transition-all duration-300 ${
                     isDemo
                       ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
@@ -80,7 +99,7 @@ export function HarvestProHeader({
                   Demo
                 </button>
                 <button
-                  onClick={() => setIsDemo(false)}
+                  onClick={() => setDemoMode(false)}
                   className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
                     !isDemo
                       ? 'bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-sm'
@@ -100,13 +119,12 @@ export function HarvestProHeader({
               </div>
 
               {/* AI Digest Button */}
-              <motion.button
-                className="px-3 py-1 bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium rounded-lg shadow-sm text-sm"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <PrimaryButton
+                className="px-3 py-1 text-sm"
+                variant="primary"
               >
                 AI Digest
-              </motion.button>
+              </PrimaryButton>
             </div>
           </div>
         </div>

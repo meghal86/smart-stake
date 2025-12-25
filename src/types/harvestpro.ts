@@ -230,6 +230,10 @@ export interface HarvestedLot {
   costBasis: number;
   proceeds: number;
   gainLoss: number;
+  term: 'Short-term' | 'Long-term';
+  source: string;
+  txHash: string | null;
+  feeUsd: number;
 }
 
 export interface UpdateSettingsRequest {

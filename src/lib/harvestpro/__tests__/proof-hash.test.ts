@@ -31,7 +31,7 @@ const harvestedLotArbitrary = fc.record({
 const proofOfHarvestArbitrary = fc.record({
   sessionId: fc.uuid(),
   userId: fc.uuid(),
-  executedAt: validDateArbitrary.map(d => d.toISOString()),
+  preparedAt: validDateArbitrary.map(d => d.toISOString()),
   lots: fc.array(harvestedLotArbitrary, { minLength: 1, maxLength: 10 }),
   totalLoss: fc.double({ min: -1000000, max: 0, noNaN: true }),
   netBenefit: fc.double({ min: 0, max: 100000, noNaN: true }),
@@ -158,7 +158,7 @@ describe('Proof Hash Generation - Property-Based Tests', () => {
           netBenefit: proofData.netBenefit,
           totalLoss: proofData.totalLoss,
           lots: proofData.lots,
-          executedAt: proofData.executedAt,
+          preparedAt: proofData.preparedAt,
           userId: proofData.userId,
           sessionId: proofData.sessionId,
         };

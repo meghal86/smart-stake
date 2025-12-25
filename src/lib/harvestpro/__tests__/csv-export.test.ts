@@ -17,6 +17,11 @@ import {
 } from '../csv-export';
 import type { HarvestSession, HarvestOpportunity } from '@/types/harvestpro';
 
+// Helper to generate valid hex strings for transaction hashes
+const hexStringArbitrary = fc.string({ minLength: 64, maxLength: 66 }).map(s => 
+  '0x' + s.replace(/[^0-9a-f]/gi, '0').substring(0, 64)
+);
+
 describe('CSV Export - Property Tests', () => {
   /**
    * Property 10: CSV Export Completeness
@@ -40,12 +45,16 @@ describe('CSV Export - Property Tests', () => {
             costBasis: fc.float({ min: Math.fround(1), max: Math.fround(100000), noNaN: true }),
             proceeds: fc.float({ min: Math.fround(1), max: Math.fround(100000), noNaN: true }),
             gainLoss: fc.float({ min: Math.fround(-100000), max: Math.fround(100000), noNaN: true }),
+            term: fc.constantFrom('Short-term', 'Long-term') as fc.Arbitrary<'Short-term' | 'Long-term'>,
+            source: fc.constantFrom('Uniswap', 'SushiSwap', 'Binance', 'Coinbase'),
+            txHash: fc.option(hexStringArbitrary, { nil: null }),
+            feeUsd: fc.float({ min: Math.fround(0), max: Math.fround(1000), noNaN: true }),
           }),
           { minLength: 1, maxLength: 20 }
         ),
         (lots) => {
           // Generate CSV from lots
-          const csv = generateCSVFromLots(lots as HarvestedLotForExport[]);
+          const csv = generateCSVFromLots(lots as HarvestedLotForExport[], false);
           
           // Parse CSV back
           const rows = parseCSV(csv);
@@ -53,7 +62,7 @@ describe('CSV Export - Property Tests', () => {
           // Part 1: Verify row count matches lot count (Requirement 11.4)
           expect(rows.length).toBe(lots.length);
           
-          // Part 2: Verify all required columns are present (Requirement 11.2)
+          // Part 2: Verify all required columns are present (Requirement 11.2 + Enhanced Req 21 AC1)
           const requiredColumns = [
             'Description',
             'Date Acquired',
@@ -61,6 +70,11 @@ describe('CSV Export - Property Tests', () => {
             'Proceeds',
             'Cost Basis',
             'Gain or Loss',
+            'Term',
+            'Quantity',
+            'Source',
+            'Tx Hash',
+            'Fee USD',
           ];
           
           rows.forEach((row) => {
@@ -85,6 +99,14 @@ describe('CSV Export - Property Tests', () => {
             expect(row.Proceeds).toBeTruthy();
             expect(row['Cost Basis']).toBeTruthy();
             expect(row['Gain or Loss']).toBeTruthy();
+            
+            // Check new columns (Enhanced Req 21 AC1)
+            expect(row.Term).toMatch(/^(Short-term|Long-term)$/);
+            expect(row.Quantity).toBeTruthy();
+            expect(row.Source).toBeTruthy();
+            expect(row['Fee USD']).toBeTruthy();
+            // Tx Hash can be empty
+            expect(row).toHaveProperty('Tx Hash');
           });
           
           return true;
@@ -116,12 +138,16 @@ describe('CSV Export - Property Tests', () => {
             costBasis: fc.float({ min: Math.fround(0.01), max: Math.fround(100000), noNaN: true }),
             proceeds: fc.float({ min: Math.fround(0.01), max: Math.fround(100000), noNaN: true }),
             gainLoss: fc.float({ min: Math.fround(-100000), max: Math.fround(100000), noNaN: true }),
+            term: fc.constantFrom('Short-term', 'Long-term') as fc.Arbitrary<'Short-term' | 'Long-term'>,
+            source: fc.constantFrom('Uniswap', 'SushiSwap', 'Binance', 'Coinbase'),
+            txHash: fc.option(hexStringArbitrary, { nil: null }),
+            feeUsd: fc.float({ min: Math.fround(0), max: Math.fround(1000), noNaN: true }),
           }),
           { minLength: 1, maxLength: 20 }
         ),
         (lots) => {
           // Generate CSV
-          const csv = generateCSVFromLots(lots as HarvestedLotForExport[]);
+          const csv = generateCSVFromLots(lots as HarvestedLotForExport[], false);
           
           // Parse CSV
           const rows = parseCSV(csv);
@@ -145,6 +171,11 @@ describe('CSV Export - Property Tests', () => {
             expect(row['Gain or Loss']).toMatch(/^\-?\d+\.\d{2}$/);
             const gainLossValue = parseFloat(row['Gain or Loss']);
             expect(Math.abs(gainLossValue - lot.gainLoss)).toBeLessThanOrEqual(0.01);
+            
+            // Check Fee USD format (Enhanced Req 21 AC1)
+            expect(row['Fee USD']).toMatch(/^\-?\d+\.\d{2}$/);
+            const feeValue = parseFloat(row['Fee USD']);
+            expect(Math.abs(feeValue - lot.feeUsd)).toBeLessThanOrEqual(0.01);
           });
           
           return true;
@@ -196,12 +227,16 @@ describe('CSV Export - Property Tests', () => {
             costBasis: fc.float({ min: Math.fround(1), max: Math.fround(100000), noNaN: true }),
             proceeds: fc.float({ min: Math.fround(1), max: Math.fround(100000), noNaN: true }),
             gainLoss: fc.float({ min: Math.fround(-100000), max: Math.fround(100000), noNaN: true }),
+            term: fc.constantFrom('Short-term', 'Long-term') as fc.Arbitrary<'Short-term' | 'Long-term'>,
+            source: fc.constantFrom('Uniswap', 'SushiSwap', 'Binance', 'Coinbase'),
+            txHash: fc.option(hexStringArbitrary, { nil: null }),
+            feeUsd: fc.float({ min: Math.fround(0), max: Math.fround(1000), noNaN: true }),
           }),
           { minLength: 1, maxLength: 10 }
         ),
         (lots) => {
           // Generate CSV
-          const csv = generateCSVFromLots(lots as HarvestedLotForExport[]);
+          const csv = generateCSVFromLots(lots as HarvestedLotForExport[], false);
           
           // Parse it back
           const rows = parseCSV(csv);
@@ -225,6 +260,13 @@ describe('CSV Export - Property Tests', () => {
             expect(Math.abs(parseFloat(row.Proceeds) - lot.proceeds)).toBeLessThanOrEqual(0.01);
             expect(Math.abs(parseFloat(row['Cost Basis']) - lot.costBasis)).toBeLessThanOrEqual(0.01);
             expect(Math.abs(parseFloat(row['Gain or Loss']) - lot.gainLoss)).toBeLessThanOrEqual(0.01);
+            expect(Math.abs(parseFloat(row['Fee USD']) - lot.feeUsd)).toBeLessThanOrEqual(0.01);
+            
+            // New columns should match (Enhanced Req 21 AC1)
+            expect(row.Term).toBe(lot.term);
+            expect(parseFloat(row.Quantity)).toBeCloseTo(lot.quantity, 8);
+            expect(row.Source).toBe(lot.source);
+            expect(row['Tx Hash']).toBe(lot.txHash || '');
           });
           
           return true;
@@ -238,17 +280,73 @@ describe('CSV Export - Property Tests', () => {
    * Property: Empty session produces valid CSV with header only
    */
   it('Property: Empty lots array produces valid CSV with headers', () => {
-    const csv = generateCSVFromLots([]);
+    const csv = generateCSVFromLots([], false);
     const lines = csv.split('\n');
     
-    // Should have header line
-    expect(lines.length).toBeGreaterThanOrEqual(1);
-    expect(lines[0]).toContain('Description');
-    expect(lines[0]).toContain('Date Acquired');
-    expect(lines[0]).toContain('Date Sold');
-    expect(lines[0]).toContain('Proceeds');
-    expect(lines[0]).toContain('Cost Basis');
-    expect(lines[0]).toContain('Gain or Loss');
+    // Should have metadata header, empty line, and header line
+    expect(lines.length).toBeGreaterThanOrEqual(3);
+    
+    // Check metadata header (Enhanced Req 21 AC2)
+    expect(lines[0]).toBe('Accounting: FIFO, Not a tax filing');
+    expect(lines[1]).toBe(''); // Empty line
+    
+    // Check column headers
+    const headerLine = lines[2];
+    expect(headerLine).toContain('Description');
+    expect(headerLine).toContain('Date Acquired');
+    expect(headerLine).toContain('Date Sold');
+    expect(headerLine).toContain('Proceeds');
+    expect(headerLine).toContain('Cost Basis');
+    expect(headerLine).toContain('Gain or Loss');
+    expect(headerLine).toContain('Term');
+    expect(headerLine).toContain('Quantity');
+    expect(headerLine).toContain('Source');
+    expect(headerLine).toContain('Tx Hash');
+    expect(headerLine).toContain('Fee USD');
+  });
+
+  /**
+   * Property: Demo mode CSV includes watermark and disclaimer
+   * Enhanced Req 30 AC5: Demo export watermark
+   */
+  it('Property: Demo mode CSV includes watermark and disclaimer', () => {
+    const csv = generateCSVFromLots([], true);
+    const lines = csv.split('\n');
+    
+    // Should have demo watermark, disclaimer, empty line, and header line
+    expect(lines.length).toBeGreaterThanOrEqual(4);
+    
+    // Check demo watermark (Enhanced Req 30 AC5)
+    expect(lines[0]).toBe('DEMO DATA - NOT FOR TAX FILING');
+    expect(lines[1]).toBe('Sample data for demonstration only');
+    expect(lines[2]).toBe(''); // Empty line
+    
+    // Check column headers are still present
+    const headerLine = lines[3];
+    expect(headerLine).toContain('Description');
+    expect(headerLine).toContain('Date Acquired');
+    expect(headerLine).toContain('Date Sold');
+    expect(headerLine).toContain('Proceeds');
+    expect(headerLine).toContain('Cost Basis');
+    expect(headerLine).toContain('Gain or Loss');
+    expect(headerLine).toContain('Term');
+    expect(headerLine).toContain('Quantity');
+    expect(headerLine).toContain('Source');
+    expect(headerLine).toContain('Tx Hash');
+    expect(headerLine).toContain('Fee USD');
+  });
+
+  /**
+   * Property: Live mode CSV has standard metadata header
+   */
+  it('Property: Live mode CSV has standard metadata header', () => {
+    const csv = generateCSVFromLots([], false);
+    const lines = csv.split('\n');
+    
+    // Should have standard metadata header
+    expect(lines[0]).toBe('Accounting: FIFO, Not a tax filing');
+    expect(lines[1]).toBe(''); // Empty line
+    expect(lines[2]).toContain('Description'); // Header line
   });
 
   /**
@@ -267,23 +365,27 @@ describe('CSV Export - Property Tests', () => {
             costBasis: fc.float({ min: Math.fround(1), max: Math.fround(100000), noNaN: true }),
             proceeds: fc.float({ min: Math.fround(1), max: Math.fround(100000), noNaN: true }),
             gainLoss: fc.float({ min: Math.fround(-100000), max: Math.fround(100000), noNaN: true }),
+            term: fc.constantFrom('Short-term', 'Long-term') as fc.Arbitrary<'Short-term' | 'Long-term'>,
+            source: fc.constantFrom('Uniswap', 'SushiSwap', 'Binance', 'Coinbase'),
+            txHash: fc.option(hexStringArbitrary, { nil: null }),
+            feeUsd: fc.float({ min: Math.fround(0), max: Math.fround(1000), noNaN: true }),
           }),
           { minLength: 1, maxLength: 5 }
         ),
         (lots) => {
           // Generate CSV
-          const csv = generateCSVFromLots(lots as HarvestedLotForExport[]);
+          const csv = generateCSVFromLots(lots as HarvestedLotForExport[], false);
           
           // CSV should be valid (no unescaped special characters breaking structure)
           const lines = csv.split('\n');
           
-          // Should have header + data rows
-          expect(lines.length).toBe(lots.length + 1);
+          // Should have metadata header + empty line + header + data rows
+          expect(lines.length).toBe(lots.length + 3);
           
-          // Each line should have the correct number of commas (5 commas = 6 fields)
+          // Each data line should have the correct structure
           // Note: This is a simplified check; proper CSV parsing handles quoted fields
           lines.forEach((line, index) => {
-            if (index === 0 || line.trim()) {
+            if (index >= 2 && line.trim()) { // Skip metadata and header lines
               // Line should not be empty
               expect(line.length).toBeGreaterThan(0);
             }
@@ -328,7 +430,9 @@ describe('CSV Export - Integration with HarvestSession', () => {
               executionTimeEstimate: fc.constant('5-10 min'),
               confidence: fc.float({ min: Math.fround(0), max: Math.fround(100), noNaN: true }),
               recommendationBadge: fc.constant('recommended' as const),
-              metadata: fc.constant({}),
+              metadata: fc.record({
+                venue: fc.constantFrom('Uniswap', 'SushiSwap', 'Binance', 'Coinbase'),
+              }),
               createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2024-06-30') }).map(d => d.toISOString()),
               updatedAt: fc.date({ min: new Date('2024-07-01'), max: new Date('2024-12-31') }).map(d => d.toISOString()),
             }),
@@ -336,7 +440,22 @@ describe('CSV Export - Integration with HarvestSession', () => {
           ),
           realizedLossesTotal: fc.float({ min: Math.fround(100), max: Math.fround(100000), noNaN: true }),
           netBenefitTotal: fc.float({ min: Math.fround(50), max: Math.fround(50000), noNaN: true }),
-          executionSteps: fc.constant([]),
+          executionSteps: fc.array(
+            fc.record({
+              id: fc.uuid(),
+              sessionId: fc.uuid(),
+              stepNumber: fc.integer({ min: 1, max: 10 }),
+              description: fc.constant('Test step'),
+              type: fc.constantFrom('on-chain', 'cex-manual') as fc.Arbitrary<'on-chain' | 'cex-manual'>,
+              status: fc.constant('completed' as const),
+              transactionHash: fc.option(hexStringArbitrary, { nil: null }),
+              errorMessage: fc.constant(null),
+              guardianScore: fc.option(fc.float({ min: Math.fround(0), max: Math.fround(10), noNaN: true }), { nil: null }),
+              timestamp: fc.option(fc.date().map(d => d.toISOString()), { nil: null }),
+              createdAt: fc.date().map(d => d.toISOString()),
+            }),
+            { minLength: 0, maxLength: 3 }
+          ),
           exportUrl: fc.constant(null),
           proofHash: fc.constant(null),
         }),
@@ -355,6 +474,12 @@ describe('CSV Export - Integration with HarvestSession', () => {
             expect(lot.dateSold).toBeInstanceOf(Date);
             expect(typeof lot.costBasis).toBe('number');
             expect(typeof lot.proceeds).toBe('number');
+            
+            // Check new fields (Enhanced Req 21 AC1)
+            expect(lot.term).toMatch(/^(Short-term|Long-term)$/);
+            expect(typeof lot.source).toBe('string');
+            expect(lot.txHash === null || typeof lot.txHash === 'string').toBe(true);
+            expect(typeof lot.feeUsd).toBe('number');
           });
           
           return true;

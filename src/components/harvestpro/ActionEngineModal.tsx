@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import type { ExecutionStep, HarvestSession } from '@/types/harvestpro';
 import { simulateSessionExecution, type SimulationConfig } from '@/lib/harvestpro/action-engine-simulator';
 
@@ -45,7 +46,7 @@ export function ActionEngineModal({
     setLogs([]);
   }, [session.sessionId]);
 
-  const handleExecute = async () => {
+  const handlePrepare = async () => {
     setIsExecuting(true);
     setHasStarted(true);
     setCurrentStepIndex(0);
@@ -130,9 +131,9 @@ export function ActionEngineModal({
     // Continue execution from failed step
     try {
       if (useSimulator) {
-        const stepsToExecute = resetSteps.slice(failedStepIndex);
+        const stepsToPrepare = resetSteps.slice(failedStepIndex);
         const result = await simulateSessionExecution(
-          stepsToExecute,
+          stepsToPrepare,
           { ...simulatorConfig, verbose: true, failureProbability: 0.05 }, // Lower failure rate on retry
           (updatedStep, relativeIndex) => {
             const absoluteIndex = failedStepIndex + relativeIndex;
@@ -182,7 +183,7 @@ export function ActionEngineModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-              Execute Harvest
+              Prepare Harvest
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {session.opportunitiesSelected.length} opportunit{session.opportunitiesSelected.length === 1 ? 'y' : 'ies'} • {executionSteps.length} steps
@@ -255,34 +256,37 @@ export function ActionEngineModal({
             {allCompleted && '✓ All steps completed'}
             {hasFailedStep && !isExecuting && '⚠ Execution failed'}
             {isExecuting && `Executing step ${currentStepIndex + 1} of ${executionSteps.length}...`}
-            {!hasStarted && !allCompleted && 'Ready to execute'}
+            {!hasStarted && !allCompleted && 'Ready to prepare'}
           </div>
           <div className="flex gap-3">
             {!hasStarted && !allCompleted && (
-              <button
-                onClick={handleExecute}
-                disabled={isExecuting}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              <PrimaryButton
+                onClick={handlePrepare}
+                isLoading={isExecuting}
+                loadingText="Preparing..."
+                variant="primary"
+                className="px-6 py-2 font-medium"
               >
-                {isExecuting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Execute Harvest
-              </button>
+                Prepare Harvest
+              </PrimaryButton>
             )}
             {hasFailedStep && !isExecuting && (
-              <button
+              <PrimaryButton
                 onClick={handleRetry}
-                className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                variant="secondary"
+                className="px-6 py-2 font-medium bg-orange-600 hover:bg-orange-700"
               >
                 Retry Failed Step
-              </button>
+              </PrimaryButton>
             )}
             {allCompleted && (
-              <button
+              <PrimaryButton
                 onClick={onClose}
-                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                variant="primary"
+                className="px-6 py-2 font-medium bg-green-600 hover:bg-green-700"
               >
                 Done
-              </button>
+              </PrimaryButton>
             )}
           </div>
         </div>

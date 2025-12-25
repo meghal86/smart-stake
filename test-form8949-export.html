@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form 8949 CSV Export Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            color: #444;
+            margin-top: 0;
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+        button:hover {
+            background: #0056CC;
+        }
+        .demo-button {
+            background: #FF9500;
+        }
+        .demo-button:hover {
+            background: #CC7700;
+        }
+        .requirements {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .requirements h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .requirements ul {
+            margin-bottom: 0;
+        }
+        .csv-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Form 8949 CSV Export Test</h1>
+        <p class="subtitle">Task 0.3: Form 8949 Export Columns (MANDATORY)</p>
+
+        <div class="requirements">
+            <h3>Requirements (Enhanced Req 21 AC1-5):</h3>
+            <ul>
+                <li>✅ Add <code>term</code>, <code>quantity</code>, <code>source</code>, <code>tx_hash</code>, <code>fee_usd</code> columns</li>
+                <li>✅ Add metadata header: "Accounting: FIFO, Not a tax filing"</li>
+                <li>🧪 Test opens correctly in Excel/Sheets/Numbers</li>
+                <li>✅ Demo mode watermark: "DEMO DATA - NOT FOR TAX FILING"</li>
+                <li>✅ Demo disclaimer: "Sample data for demonstration only"</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>Live Mode CSV Export</h2>
+            <p>Standard Form 8949-compatible CSV with proper metadata header.</p>
+            <button onclick="downloadLiveCSV()">Download Live Mode CSV</button>
+            <div id="live-status"></div>
+            <div id="live-preview" class="csv-preview" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Demo Mode CSV Export</h2>
+            <p>Demo CSV with watermark and disclaimer to prevent accidental tax filing use.</p>
+            <button class="demo-button" onclick="downloadDemoCSV()">Download Demo Mode CSV</button>
+            <div id="demo-status"></div>
+            <div id="demo-preview" class="csv-preview" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Compatibility Test Instructions</h2>
+            <p>After downloading the CSV files, test them in:</p>
+            <ul>
+                <li><strong>Microsoft Excel:</strong> File → Open → Select CSV → Verify columns display correctly</li>
+                <li><strong>Google Sheets:</strong> File → Import → Upload CSV → Verify formatting</li>
+                <li><strong>Apple Numbers:</strong> File → Open → Select CSV → Check data integrity</li>
+            </ul>
+            <p><strong>Expected columns:</strong> Description, Date Acquired, Date Sold, Proceeds, Cost Basis, Gain or Loss, Term, Quantity, Source, Tx Hash, Fee USD</p>
+        </div>
+    </div>
+
+    <script>
+        // Mock harvest session data for testing
+        const mockSession = {
+            sessionId: 'session-test-123',
+            userId: 'user-test',
+            createdAt: '2024-01-15T10:00:00Z',
+            updatedAt: '2024-12-24T15:30:00Z',
+            status: 'completed',
+            opportunitiesSelected: [
+                {
+                    id: '1',
+                    lotId: 'lot-1',
+                    userId: 'user-test',
+                    token: 'ETH',
+                    tokenLogoUrl: null,
+                    riskLevel: 'LOW',
+                    unrealizedLoss: -2500.75,
+                    remainingQty: 1.5,
+                    gasEstimate: 45.50,
+                    slippageEstimate: 22.25,
+                    tradingFees: 15.00,
+                    netTaxBenefit: 600.18,
+                    guardianScore: 8.5,
+                    executionTimeEstimate: '5-8 min',
+                    confidence: 92,
+                    recommendationBadge: 'recommended',
+                    metadata: {
+                        walletName: 'Main Wallet',
+                        venue: 'Uniswap'
+                    },
+                    createdAt: '2023-06-15T10:00:00Z',
+                    updatedAt: '2024-12-24T15:30:00Z'
+                },
+                {
+                    id: '2',
+                    lotId: 'lot-2',
+                    userId: 'user-test',
+                    token: 'BTC',
+                    tokenLogoUrl: null,
+                    riskLevel: 'MEDIUM',
+                    unrealizedLoss: -5000.00,
+                    remainingQty: 0.1,
+                    gasEstimate: 35.75,
+                    slippageEstimate: 45.50,
+                    tradingFees: 12.25,
+                    netTaxBenefit: 1200.00,
+                    guardianScore: 7.2,
+                    executionTimeEstimate: '8-12 min',
+                    confidence: 85,
+                    recommendationBadge: 'high-benefit',
+                    metadata: {
+                        walletName: 'Trading Wallet',
+                        venue: 'Coinbase'
+                    },
+                    createdAt: '2022-12-01T14:30:00Z',
+                    updatedAt: '2024-12-24T15:30:00Z'
+                }
+            ],
+            realizedLossesTotal: -7500.75,
+            netBenefitTotal: 1800.18,
+            executionSteps: [
+                {
+                    id: 'step-1',
+                    sessionId: 'session-test-123',
+                    stepNumber: 1,
+                    description: 'Approve token swap',
+                    type: 'on-chain',
+                    status: 'completed',
+                    transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+                    errorMessage: null,
+                    guardianScore: 8.5,
+                    timestamp: '2024-12-24T15:25:00Z',
+                    createdAt: '2024-12-24T15:25:00Z'
+                }
+            ],
+            exportUrl: null,
+            proofHash: null
+        };
+
+        // Simplified CSV generation for testing (mimics the actual implementation)
+        function generateTestCSV(session, isDemo = false) {
+            const lots = session.opportunitiesSelected.map(opp => {
+                const acquiredDate = new Date(opp.createdAt);
+                const soldDate = new Date(session.updatedAt);
+                const holdingPeriodDays = Math.floor((soldDate.getTime() - acquiredDate.getTime()) / (1000 * 60 * 60 * 24));
+                const term = holdingPeriodDays > 365 ? 'Long-term' : 'Short-term';
+                
+                // Calculate cost basis and proceeds
+                const costBasis = Math.abs(opp.unrealizedLoss) + (opp.remainingQty * 100); // Simplified calculation
+                const proceeds = costBasis + opp.unrealizedLoss;
+                
+                const totalFees = opp.gasEstimate + opp.slippageEstimate + opp.tradingFees;
+                
+                return {
+                    token: opp.token,
+                    dateAcquired: acquiredDate.toISOString().split('T')[0],
+                    dateSold: soldDate.toISOString().split('T')[0],
+                    quantity: opp.remainingQty.toFixed(8),
+                    costBasis: costBasis.toFixed(2),
+                    proceeds: proceeds.toFixed(2),
+                    gainLoss: opp.unrealizedLoss.toFixed(2),
+                    term: term,
+                    source: opp.metadata.venue,
+                    txHash: session.executionSteps.find(s => s.transactionHash)?.transactionHash || '',
+                    feeUsd: totalFees.toFixed(2)
+                };
+            });
+
+            // Build CSV
+            const lines = [];
+            
+            // Metadata header
+            if (isDemo) {
+                lines.push('DEMO DATA - NOT FOR TAX FILING');
+                lines.push('Sample data for demonstration only');
+            } else {
+                lines.push('Accounting: FIFO, Not a tax filing');
+            }
+            lines.push(''); // Empty line
+            
+            // Headers
+            const headers = [
+                'Description',
+                'Date Acquired',
+                'Date Sold',
+                'Proceeds',
+                'Cost Basis',
+                'Gain or Loss',
+                'Term',
+                'Quantity',
+                'Source',
+                'Tx Hash',
+                'Fee USD'
+            ];
+            lines.push(headers.join(','));
+            
+            // Data rows
+            lots.forEach(lot => {
+                const row = [
+                    `${lot.quantity} ${lot.token}`,
+                    lot.dateAcquired,
+                    lot.dateSold,
+                    lot.proceeds,
+                    lot.costBasis,
+                    lot.gainLoss,
+                    lot.term,
+                    lot.quantity,
+                    lot.source,
+                    lot.txHash,
+                    lot.feeUsd
+                ];
+                lines.push(row.join(','));
+            });
+            
+            return lines.join('\n');
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+        }
+
+        function showStatus(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        function showPreview(elementId, content) {
+            const element = document.getElementById(elementId);
+            element.textContent = content.substring(0, 500) + (content.length > 500 ? '\n...' : '');
+            element.style.display = 'block';
+        }
+
+        function downloadLiveCSV() {
+            try {
+                const csv = generateTestCSV(mockSession, false);
+                downloadCSV(csv, 'harvest-session-live-test.csv');
+                showStatus('live-status', '✅ Live mode CSV downloaded successfully! Check that it opens correctly in Excel/Sheets/Numbers.');
+                showPreview('live-preview', csv);
+            } catch (error) {
+                showStatus('live-status', `❌ Error generating live CSV: ${error.message}`, false);
+            }
+        }
+
+        function downloadDemoCSV() {
+            try {
+                const csv = generateTestCSV(mockSession, true);
+                downloadCSV(csv, 'harvest-session-demo-test.csv');
+                showStatus('demo-status', '✅ Demo mode CSV downloaded successfully! Verify it has watermark and disclaimer.');
+                showPreview('demo-preview', csv);
+            } catch (error) {
+                showStatus('demo-status', `❌ Error generating demo CSV: ${error.message}`, false);
+            }
+        }
+
+        // Auto-generate previews on page load
+        window.onload = function() {
+            try {
+                const liveCSV = generateTestCSV(mockSession, false);
+                showPreview('live-preview', liveCSV);
+                
+                const demoCSV = generateTestCSV(mockSession, true);
+                showPreview('demo-preview', demoCSV);
+            } catch (error) {
+                console.error('Error generating previews:', error);
+            }
+        };
+    </script>
+</body>
+</html>

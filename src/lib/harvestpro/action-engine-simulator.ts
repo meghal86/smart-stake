@@ -319,7 +319,7 @@ export function createCEXExecutionSteps(
       timestamp: null,
       createdAt: new Date().toISOString(),
       metadata: {
-        instruction: 'Execute a market sell order at current market price',
+        instruction: 'Prepare a market sell order at current market price',
         orderType: 'Market Sell',
         token,
         quantity: qty,

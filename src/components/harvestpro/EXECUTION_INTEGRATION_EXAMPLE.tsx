@@ -20,7 +20,7 @@ export function HarvestDetailModalWithExecution() {
   const [session, setSession] = useState<HarvestSession | null>(null);
   const [opportunity, setOpportunity] = useState<HarvestOpportunity | null>(null);
 
-  const handleExecuteHarvest = async () => {
+  const handlePrepareHarvest = async () => {
     if (!opportunity) return;
 
     // Create a harvest session
@@ -59,10 +59,10 @@ export function HarvestDetailModalWithExecution() {
     <div>
       {/* Your HarvestDetailModal content */}
       <button
-        onClick={handleExecuteHarvest}
+        onClick={handlePrepareHarvest}
         className="px-6 py-3 bg-blue-600 text-white rounded-lg"
       >
-        Execute Harvest
+        Prepare Harvest
       </button>
 
       {/* Action Engine Modal */}
@@ -96,7 +96,7 @@ export function CustomExecutionFlow() {
     currentStepIndex,
     logs,
     error,
-    executeSession,
+    prepareSession,
     retryExecution,
     clearError,
     generateMockSteps,
@@ -118,7 +118,7 @@ export function CustomExecutionFlow() {
 
   const handleStartExecution = async () => {
     if (!session) return;
-    await executeSession(session);
+    await prepareSession(session);
   };
 
   const handleRetry = async () => {
@@ -230,7 +230,7 @@ export function MixedExecutionExample() {
   const [showActionEngine, setShowActionEngine] = useState(false);
   const [showCEXPanel, setShowCEXPanel] = useState(false);
 
-  const handleExecute = () => {
+  const handlePrepare = () => {
     if (!session) return;
 
     // Check if session has CEX steps
@@ -265,7 +265,7 @@ export function MixedExecutionExample() {
 
   return (
     <div>
-      <button onClick={handleExecute}>Execute Harvest</button>
+      <button onClick={handlePrepare}>Prepare Harvest</button>
 
       {/* On-Chain Execution */}
       {session && (

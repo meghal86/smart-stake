@@ -7,3 +7,4 @@ export { SummaryCardSkeleton } from './SummaryCardSkeleton';
 export { OpportunityCardSkeleton, OpportunityCardSkeletonGrid } from './OpportunityCardSkeleton';
 export { DetailModalSkeleton } from './DetailModalSkeleton';
 export { ExecutionFlowSkeleton } from './ExecutionFlowSkeleton';
+export { EnhancedLoadingSkeleton } from './EnhancedLoadingSkeleton';

@@ -82,7 +82,7 @@ export function DetailModalSkeleton({ onClose, className }: DetailModalSkeletonP
           ))}
         </div>
 
-        {/* Execute Button */}
+        {/* Prepare Button */}
         <div className="h-12 w-full bg-gray-700 rounded-xl" />
       </motion.div>
     </motion.div>

@@ -15,6 +15,10 @@ export interface HarvestedLotForExport {
   costBasis: number;
   proceeds: number;
   gainLoss: number;
+  term: 'Short-term' | 'Long-term';
+  source: string;
+  txHash: string | null;
+  feeUsd: number;
 }
 
 export interface CSVRow {
@@ -24,6 +28,11 @@ export interface CSVRow {
   Proceeds: string;
   'Cost Basis': string;
   'Gain or Loss': string;
+  Term: string;
+  Quantity: string;
+  Source: string;
+  'Tx Hash': string;
+  'Fee USD': string;
 }
 
 /**
@@ -48,14 +57,31 @@ export function sessionToHarvestedLots(session: HarvestSession): HarvestedLotFor
     // proceeds = costBasis + gainLoss (where gainLoss is negative for losses)
     const proceeds = costBasis + opp.unrealizedLoss;
     
+    // Determine term based on holding period (assuming > 365 days is long-term)
+    const acquiredDate = new Date(opp.createdAt);
+    const holdingPeriodDays = Math.floor((soldDate.getTime() - acquiredDate.getTime()) / (1000 * 60 * 60 * 24));
+    const term = holdingPeriodDays > 365 ? 'Long-term' : 'Short-term';
+    
+    // Find transaction hash from execution steps
+    const onChainStep = session.executionSteps.find(step => 
+      step.type === 'on-chain' && step.transactionHash
+    );
+    
+    // Calculate total fees (gas + slippage + trading fees)
+    const totalFees = opp.gasEstimate + opp.slippageEstimate + opp.tradingFees;
+    
     return {
       token: opp.token,
-      dateAcquired: new Date(opp.createdAt), // This should come from lot data
+      dateAcquired: acquiredDate,
       dateSold: soldDate,
       quantity: opp.remainingQty,
       costBasis: costBasis,
       proceeds: proceeds,
       gainLoss: opp.unrealizedLoss, // Negative for losses
+      term: term,
+      source: opp.metadata.venue || 'Unknown',
+      txHash: onChainStep?.transactionHash || null,
+      feeUsd: totalFees,
     };
   });
 }
@@ -69,11 +95,24 @@ export function sessionToHarvestedLots(session: HarvestSession): HarvestedLotFor
  * - 11.3: Format monetary values with 2 decimal places
  * - 11.4: Include a row for each harvested lot
  * - 11.5: Ensure compatibility with Excel, Google Sheets, Numbers
+ * - Enhanced Req 21 AC1-5: Add term, quantity, source, tx_hash, fee_usd columns and metadata header
+ * - Enhanced Req 30 AC5: Demo export watermark for demo data
  */
-export function generateForm8949CSV(session: HarvestSession): string {
+export function generateForm8949CSV(session: HarvestSession, isDemo: boolean = false): string {
   const lots = sessionToHarvestedLots(session);
   
-  // Requirement 11.2: Include all required columns
+  // Enhanced Req 21 AC2: Add metadata header
+  // Enhanced Req 30 AC5: Demo export watermark for demo data
+  const metadataHeader = isDemo 
+    ? 'DEMO DATA - NOT FOR TAX FILING'
+    : 'Accounting: FIFO, Not a tax filing';
+  
+  // Enhanced Req 30 AC5: Additional disclaimer for demo exports
+  const disclaimerLine = isDemo 
+    ? 'Sample data for demonstration only'
+    : '';
+  
+  // Enhanced Req 21 AC1: Include all required columns including new ones
   const headers = [
     'Description',
     'Date Acquired',
@@ -81,6 +120,11 @@ export function generateForm8949CSV(session: HarvestSession): string {
     'Proceeds',
     'Cost Basis',
     'Gain or Loss',
+    'Term',
+    'Quantity',
+    'Source',
+    'Tx Hash',
+    'Fee USD',
   ];
   
   // Build CSV rows
@@ -94,12 +138,29 @@ export function generateForm8949CSV(session: HarvestSession): string {
     Proceeds: formatMonetaryValue(lot.proceeds),
     'Cost Basis': formatMonetaryValue(lot.costBasis),
     'Gain or Loss': formatMonetaryValue(lot.gainLoss),
+    // Enhanced Req 21 AC1: New columns
+    Term: lot.term,
+    Quantity: lot.quantity.toFixed(8),
+    Source: lot.source,
+    'Tx Hash': lot.txHash || '',
+    'Fee USD': formatMonetaryValue(lot.feeUsd),
   }));
   
   // Convert to CSV string
   // Requirement 11.5: Ensure compatibility with Excel, Google Sheets, Numbers
   // Using standard CSV format with proper escaping
   const csvLines: string[] = [];
+  
+  // Enhanced Req 21 AC2: Add metadata header as first line
+  // Enhanced Req 30 AC5: Demo watermark for demo exports
+  csvLines.push(metadataHeader);
+  
+  // Enhanced Req 30 AC5: Add disclaimer for demo exports
+  if (isDemo && disclaimerLine) {
+    csvLines.push(disclaimerLine);
+  }
+  
+  csvLines.push(''); // Empty line for separation
   
   // Add header row
   csvLines.push(headers.join(','));
@@ -123,7 +184,15 @@ export function generateForm8949CSV(session: HarvestSession): string {
 /**
  * Generate CSV from an array of harvested lots (for testing)
  */
-export function generateCSVFromLots(lots: HarvestedLotForExport[]): string {
+export function generateCSVFromLots(lots: HarvestedLotForExport[], isDemo: boolean = false): string {
+  const metadataHeader = isDemo 
+    ? 'DEMO DATA - NOT FOR TAX FILING'
+    : 'Accounting: FIFO, Not a tax filing';
+  
+  const disclaimerLine = isDemo 
+    ? 'Sample data for demonstration only'
+    : '';
+  
   const headers = [
     'Description',
     'Date Acquired',
@@ -131,6 +200,11 @@ export function generateCSVFromLots(lots: HarvestedLotForExport[]): string {
     'Proceeds',
     'Cost Basis',
     'Gain or Loss',
+    'Term',
+    'Quantity',
+    'Source',
+    'Tx Hash',
+    'Fee USD',
   ];
   
   const rows: CSVRow[] = lots.map((lot) => ({
@@ -140,9 +214,24 @@ export function generateCSVFromLots(lots: HarvestedLotForExport[]): string {
     Proceeds: formatMonetaryValue(lot.proceeds),
     'Cost Basis': formatMonetaryValue(lot.costBasis),
     'Gain or Loss': formatMonetaryValue(lot.gainLoss),
+    Term: lot.term,
+    Quantity: lot.quantity.toFixed(8),
+    Source: lot.source,
+    'Tx Hash': lot.txHash || '',
+    'Fee USD': formatMonetaryValue(lot.feeUsd),
   }));
   
   const csvLines: string[] = [];
+  
+  // Add metadata header
+  csvLines.push(metadataHeader);
+  
+  // Add disclaimer for demo exports
+  if (isDemo && disclaimerLine) {
+    csvLines.push(disclaimerLine);
+  }
+  
+  csvLines.push(''); // Empty line for separation
   csvLines.push(headers.join(','));
   
   rows.forEach((row) => {
@@ -164,14 +253,24 @@ export function generateCSVFromLots(lots: HarvestedLotForExport[]): string {
  */
 export function parseCSV(csv: string): CSVRow[] {
   const lines = csv.split('\n');
-  if (lines.length < 2) {
+  
+  // Skip metadata header and empty line
+  let headerLineIndex = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('Description')) {
+      headerLineIndex = i;
+      break;
+    }
+  }
+  
+  if (headerLineIndex === 0 || headerLineIndex >= lines.length - 1) {
     return [];
   }
   
-  const headers = lines[0].split(',');
+  const headers = lines[headerLineIndex].split(',');
   const rows: CSVRow[] = [];
   
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = headerLineIndex + 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
     
     const values = lines[i].split(',');
