@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Click Test - Final Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .test-section {
+            background: #1a1f2e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        .test-button {
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        .test-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(237, 143, 45, 0.3);
+        }
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .hunter-button {
+            background: linear-gradient(to right, #00F5A0, #7B61FF);
+        }
+        .hunter-button:hover {
+            box-shadow: 0 4px 12px rgba(0, 245, 160, 0.3);
+        }
+        .log-output {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .success { color: #00F5A0; }
+        .error { color: #ff6b6b; }
+        .info { color: #74c0fc; }
+        .warning { color: #ffd43b; }
+        .instructions {
+            background: #2a3441;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ed8f2d;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 8px;
+            background: #1e2329;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Button Click Test - Final Verification</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions</h3>
+        <div class="step">
+            <strong>Step 1:</strong> Start your development server: <code>npm run dev</code>
+        </div>
+        <div class="step">
+            <strong>Step 2:</strong> Open browser console (F12 → Console tab)
+        </div>
+        <div class="step">
+            <strong>Step 3:</strong> Navigate to Hunter page: <code>http://localhost:8081/hunter</code>
+        </div>
+        <div class="step">
+            <strong>Step 4:</strong> Click "Join Quest" buttons and watch console for logs
+        </div>
+        <div class="step">
+            <strong>Step 5:</strong> Navigate to HarvestPro page: <code>http://localhost:8081/harvestpro</code>
+        </div>
+        <div class="step">
+            <strong>Step 6:</strong> Click "Start Harvest" buttons and watch console for logs
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 Expected Console Logs for Hunter</h3>
+        <p>When you click "Join Quest" buttons, you should see:</p>
+        <div class="log-output">
+<span class="info">🔘 DisabledTooltipButton click: {disabled: false, hasOnClick: true}</span>
+<span class="success">✅ Executing onClick handler</span>
+<span class="info">🎯 OpportunityCard button clicked! opportunity-id "Opportunity Title"</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🚀 Expected Console Logs for HarvestPro</h3>
+        <p>When you click "Start Harvest" buttons, you should see:</p>
+        <div class="log-output">
+<span class="info">🔘 DisabledTooltipButton click: {disabled: false, hasOnClick: true}</span>
+<span class="success">✅ Executing onClick handler</span>
+<span class="info">🔥 HarvestOpportunityCard button clicked! opportunity-id</span>
+<span class="info">🚀 Start Harvest clicked! Opportunity ID: opportunity-id</span>
+<span class="info">📦 Found opportunity: {id: "opportunity-id", ...}</span>
+<span class="success">✅ Modal should open now</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Local Button Tests</h3>
+        <p>Test these buttons to verify basic click functionality:</p>
+        
+        <button class="test-button" onclick="testHarvestClick()">
+            🚀 Test Harvest Button
+        </button>
+        
+        <button class="test-button hunter-button" onclick="testHunterClick()">
+            🎯 Test Hunter Button
+        </button>
+        
+        <button class="test-button" disabled onclick="testDisabledClick()">
+            ❌ Test Disabled Button
+        </button>
+        
+        <div id="local-log" class="log-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Troubleshooting</h3>
+        <div class="step">
+            <strong>If buttons don't work:</strong>
+            <ul>
+                <li>Check browser console for JavaScript errors</li>
+                <li>Verify development server is running on correct port</li>
+                <li>Try hard refresh (Ctrl+F5 or Cmd+Shift+R)</li>
+                <li>Check if any browser extensions are blocking JavaScript</li>
+            </ul>
+        </div>
+        <div class="step">
+            <strong>If no console logs appear:</strong>
+            <ul>
+                <li>Ensure console is open and showing all log levels</li>
+                <li>Check if logs are being filtered</li>
+                <li>Try clicking multiple times</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('local-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            // Also log to browser console
+            console.log(`🧪 Local Test: ${message}`);
+        }
+
+        function testHarvestClick() {
+            log('🚀 Harvest button clicked successfully!', 'success');
+            log('This simulates the HarvestPro "Start Harvest" button', 'info');
+        }
+
+        function testHunterClick() {
+            log('🎯 Hunter button clicked successfully!', 'success');
+            log('This simulates the Hunter "Join Quest" button', 'info');
+        }
+
+        function testDisabledClick() {
+            log('❌ Disabled button click was prevented', 'warning');
+            log('This should not appear if disabled state works correctly', 'error');
+        }
+
+        // Initialize
+        log('🔧 Button test page loaded', 'info');
+        log('Click the buttons above to test functionality', 'info');
+    </script>
+</body>
+</html>

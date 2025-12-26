@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Click Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .test-button {
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .test-button:hover {
+            transform: scale(1.02) translateY(-1px);
+            box-shadow: 0 8px 25px rgba(237,143,45,0.3);
+        }
+        .test-button:active {
+            transform: scale(0.98);
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            border-left: 4px solid #ed8f2d;
+        }
+        .success {
+            border-left-color: #00F5A0;
+            background: #0a2a1a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Click Test - Hunter & HarvestPro Fix</h1>
+    
+    <p>This test simulates the button behavior after the fix:</p>
+    
+    <button class="test-button" onclick="testHarvestClick()">
+        <span>Start Harvest</span>
+        <span>→</span>
+    </button>
+    
+    <button class="test-button" onclick="testHunterClick()">
+        <span>Join Quest</span>
+        <span>→</span>
+    </button>
+    
+    <div id="results"></div>
+
+    <script>
+        function testHarvestClick() {
+            addResult('✅ HarvestPro "Start Harvest" button clicked successfully!', 'success');
+            console.log('HarvestPro button clicked - onStartHarvest would be called');
+        }
+
+        function testHunterClick() {
+            addResult('✅ Hunter "Join Quest" button clicked successfully!', 'success');
+            console.log('Hunter button clicked - onJoinQuest would be called');
+        }
+
+        function addResult(message, type = '') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `${message} <small>(${new Date().toLocaleTimeString()})</small>`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        console.log('Button test page loaded - buttons should be clickable now');
+    </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Fix Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .step {
+            background: #1a1f2e;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ed8f2d;
+        }
+        .link {
+            color: #00F5A0;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+        .expected {
+            background: #0d3d2a;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Button Fix Verification Guide</h1>
+    
+    <div class="step">
+        <h3>Step 1: Start Development Server</h3>
+        <p>Run: <code>npm run dev</code></p>
+        <p>Ensure server is running on <code>http://localhost:8081</code></p>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Open Browser Console</h3>
+        <p>Press <code>F12</code> or right-click → Inspect → Console tab</p>
+        <p>Make sure console shows all log levels (not filtered)</p>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Test Hunter Page</h3>
+        <p>Navigate to: <a href="http://localhost:8081/hunter" class="link" target="_blank">http://localhost:8081/hunter</a></p>
+        <p>Click any "Join Quest" button</p>
+        <div class="expected">
+Expected console output:
+🔘 DisabledTooltipButton click: {disabled: false, hasOnClick: true}
+✅ Executing onClick handler
+🎯 OpportunityCard button clicked! opportunity-id "Title"
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 4: Test HarvestPro Page</h3>
+        <p>Navigate to: <a href="http://localhost:8081/harvestpro" class="link" target="_blank">http://localhost:8081/harvestpro</a></p>
+        <p>Click any "Start Harvest" button</p>
+        <div class="expected">
+Expected console output:
+🔘 DisabledTooltipButton click: {disabled: false, hasOnClick: true}
+✅ Executing onClick handler
+🔥 HarvestOpportunityCard button clicked! opportunity-id
+🚀 Start Harvest clicked! Opportunity ID: opportunity-id
+📦 Found opportunity: {id: "...", ...}
+✅ Modal should open now
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 5: Verify Modal Opens</h3>
+        <p>After clicking buttons, modals should appear</p>
+        <p>If modals don't open, check for JavaScript errors in console</p>
+    </div>
+
+    <div class="step">
+        <h3>🚨 If Buttons Still Don't Work</h3>
+        <ul>
+            <li>Check for JavaScript errors in console</li>
+            <li>Try hard refresh (Ctrl+F5 or Cmd+Shift+R)</li>
+            <li>Verify development server is running</li>
+            <li>Test in different browser</li>
+            <li>Check if browser extensions are blocking JavaScript</li>
+        </ul>
+    </div>
+
+    <script>
+        console.log('🔧 Button fix verification page loaded');
+        console.log('Follow the steps above to test button functionality');
+    </script>
+</body>
+</html>

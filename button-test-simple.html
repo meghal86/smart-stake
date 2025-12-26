@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .test-button {
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            display: block;
+        }
+        .test-button:hover {
+            transform: scale(1.02);
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Button Test</h1>
+    
+    <p>Test the actual pages:</p>
+    <a href="http://localhost:8081/hunter" target="_blank" style="color: #ed8f2d;">Open Hunter Page</a><br>
+    <a href="http://localhost:8081/harvestpro" target="_blank" style="color: #ed8f2d;">Open HarvestPro Page</a>
+    
+    <h2>Instructions:</h2>
+    <ol>
+        <li>Click the links above to open Hunter and HarvestPro pages</li>
+        <li>Try clicking the "Join Quest" buttons on Hunter page</li>
+        <li>Try clicking the "Start Harvest" buttons on HarvestPro page</li>
+        <li>Open browser DevTools (F12) and check Console for errors</li>
+        <li>Check if buttons respond to clicks</li>
+    </ol>
+    
+    <h2>Expected Results:</h2>
+    <ul>
+        <li>✅ Buttons should be clickable</li>
+        <li>✅ Modals should open when buttons are clicked</li>
+        <li>✅ Console should show click events</li>
+        <li>❌ If buttons don't work, there's still an issue</li>
+    </ul>
+    
+    <div class="log" id="log">
+        Click the links above to test the actual pages...
+    </div>
+    
+    <script>
+        function logMessage(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}<br>`;
+        }
+        
+        logMessage('Test page loaded. Click the links above to test the actual pages.');
+    </script>
+</body>
+</html>

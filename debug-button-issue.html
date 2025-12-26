@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .test-button:hover {
+            transform: scale(1.02);
+        }
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Click Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Basic Button</h2>
+        <button class="test-button" onclick="logClick('Basic Button')">
+            Basic Button
+        </button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Button with Event Listener</h2>
+        <button class="test-button" id="eventButton">
+            Event Listener Button
+        </button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Nested Button Structure (Similar to DisabledTooltipButton)</h2>
+        <div class="tooltip-wrapper">
+            <button class="test-button" onclick="logClick('Nested Button')">
+                Nested Button
+            </button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Button with Disabled State</h2>
+        <button class="test-button" onclick="logClick('Disabled Button')" disabled>
+            Disabled Button
+        </button>
+        <button class="test-button" onclick="logClick('Enabled Button')">
+            Enabled Button
+        </button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: Motion-like Button (CSS Transform)</h2>
+        <button class="test-button" onclick="logClick('Motion Button')" style="transition: transform 0.2s;">
+            Motion Button
+        </button>
+    </div>
+    
+    <div class="log" id="log">
+        Click log will appear here...
+    </div>
+    
+    <script>
+        function logClick(buttonName) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${buttonName} clicked!<br>`;
+            console.log(`${buttonName} clicked at ${timestamp}`);
+        }
+        
+        // Add event listener to the second button
+        document.getElementById('eventButton').addEventListener('click', function() {
+            logClick('Event Listener Button');
+        });
+        
+        // Test if buttons are receiving events
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                console.log('Button clicked:', e.target.textContent.trim());
+                console.log('Event target:', e.target);
+                console.log('Current target:', e.currentTarget);
+            }
+        });
+        
+        // Check for any JavaScript errors
+        window.addEventListener('error', function(e) {
+            const log = document.getElementById('log');
+            log.innerHTML += `<span style="color: red;">[ERROR] ${e.message}</span><br>`;
+        });
+    </script>
+</body>
+</html>

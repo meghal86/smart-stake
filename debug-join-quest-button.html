@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Quest Button Debug</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0E1A;
+            color: #E4E8F3;
+        }
+        
+        .section {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .test-button {
+            background: linear-gradient(to right, #00F5A0, #7B61FF);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,245,160,0.3);
+        }
+        
+        .test-button:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .link {
+            color: #00F5A0;
+            text-decoration: none;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .success { background: rgba(0,245,160,0.1); border: 1px solid #00F5A0; }
+        .error { background: rgba(239,68,68,0.1); border: 1px solid #EF4444; }
+        .info { background: rgba(59,130,246,0.1); border: 1px solid #3B82F6; }
+        
+        .console-output {
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        
+        .log-success { color: #10B981; }
+        .log-error { color: #EF4444; }
+        .log-info { color: #3B82F6; }
+        .log-warn { color: #F59E0B; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Join Quest Button Debug Tool</h1>
+    
+    <div class="section">
+        <h2>Current Issue</h2>
+        <p>The "Join Quest" button on the Hunter page is not clickable and showing error messages.</p>
+        <p>This tool will help diagnose the issue step by step.</p>
+    </div>
+    
+    <div class="section">
+        <h2>Step 1: Test Basic Button Functionality</h2>
+        <p>These buttons test the basic click functionality:</p>
+        
+        <button class="test-button" onclick="testBasicClick()">
+            Basic Test Button
+        </button>
+        
+        <button class="test-button" onclick="testJoinQuestClick()" id="joinQuestTest">
+            Join Quest Test
+        </button>
+        
+        <button class="test-button" disabled onclick="testDisabledClick()">
+            Disabled Button Test
+        </button>
+    </div>
+    
+    <div class="section">
+        <h2>Step 2: Check Hunter Page</h2>
+        <p>Open the Hunter page and test the actual buttons:</p>
+        <p><a href="http://localhost:8081/hunter" class="link" target="_blank">🔗 Open Hunter Page</a></p>
+        
+        <div class="status info">
+            <strong>Instructions:</strong>
+            <ol>
+                <li>Click the link above to open the Hunter page</li>
+                <li>Open browser DevTools (F12) and go to Console tab</li>
+                <li>Try clicking any "Join Quest" button</li>
+                <li>Check the console for error messages</li>
+                <li>Come back here and report what you see</li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Step 3: Console Output</h2>
+        <p>This shows the console output from button clicks:</p>
+        <div id="consoleOutput" class="console-output">
+            <div class="log-info">Console output will appear here...</div>
+        </div>
+        <button class="test-button" onclick="clearConsole()">Clear Console</button>
+    </div>
+    
+    <div class="section">
+        <h2>Step 4: Wallet Connection Status</h2>
+        <p>Check if wallet connection is affecting the buttons:</p>
+        
+        <div id="walletStatus" class="status info">
+            <strong>Checking wallet status...</strong>
+        </div>
+        
+        <button class="test-button" onclick="checkWalletStatus()">
+            Check Wallet Status
+        </button>
+        
+        <button class="test-button" onclick="testWalletConnect()">
+            Test Wallet Connect
+        </button>
+    </div>
+    
+    <div class="section">
+        <h2>Step 5: Expected Console Messages</h2>
+        <p>When the "Join Quest" button works correctly, you should see these messages in the console:</p>
+        <div class="console-output">
+            <div class="log-info">🔘 DisabledTooltipButton click: {disabled: false, hasOnClick: true}</div>
+            <div class="log-success">✅ Executing onClick handler</div>
+            <div class="log-info">🎯 OpportunityCard button clicked! [opportunity-id] [opportunity-title]</div>
+            <div class="log-info">🎯 Join Quest clicked! Opportunity: [opportunity-id] [opportunity-title]</div>
+            <div class="log-success">✅ Hunter modal should open now</div>
+        </div>
+    </div>
+    
+    <script>
+        // Console logging system
+        let consoleEntries = [];
+        
+        function addConsoleEntry(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = { timestamp, message, type };
+            consoleEntries.push(entry);
+            updateConsoleDisplay();
+            
+            // Also log to browser console
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateConsoleDisplay() {
+            const output = document.getElementById('consoleOutput');
+            output.innerHTML = consoleEntries.map(entry => 
+                `<div class="log-entry log-${entry.type}">[${entry.timestamp}] ${entry.message}</div>`
+            ).join('');
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearConsole() {
+            consoleEntries = [];
+            updateConsoleDisplay();
+        }
+        
+        // Test functions
+        function testBasicClick() {
+            addConsoleEntry('✅ Basic button clicked successfully!', 'success');
+        }
+        
+        function testJoinQuestClick() {
+            addConsoleEntry('🎯 Join Quest test button clicked!', 'success');
+            addConsoleEntry('This simulates the Hunter Join Quest button', 'info');
+            
+            // Simulate the actual function calls
+            const mockOpportunity = {
+                id: 'test-opportunity-123',
+                title: 'Test Opportunity',
+                type: 'Quest'
+            };
+            
+            addConsoleEntry(`🔘 DisabledTooltipButton click: {disabled: false, hasOnClick: true}`, 'info');
+            addConsoleEntry('✅ Executing onClick handler', 'success');
+            addConsoleEntry(`🎯 OpportunityCard button clicked! ${mockOpportunity.id} ${mockOpportunity.title}`, 'info');
+            addConsoleEntry(`🎯 Join Quest clicked! Opportunity: ${mockOpportunity.id} ${mockOpportunity.title}`, 'info');
+            addConsoleEntry('✅ Hunter modal should open now', 'success');
+        }
+        
+        function testDisabledClick() {
+            addConsoleEntry('❌ Disabled button clicked - this should not appear!', 'error');
+        }
+        
+        function checkWalletStatus() {
+            addConsoleEntry('🔍 Checking wallet connection status...', 'info');
+            
+            // Check if window.ethereum exists
+            if (typeof window.ethereum !== 'undefined') {
+                addConsoleEntry('✅ window.ethereum detected', 'success');
+                
+                // Try to get accounts
+                window.ethereum.request({ method: 'eth_accounts' })
+                    .then(accounts => {
+                        if (accounts.length > 0) {
+                            addConsoleEntry(`✅ Wallet connected: ${accounts[0]}`, 'success');
+                            updateWalletStatus('Connected', 'success');
+                        } else {
+                            addConsoleEntry('⚠️ No wallet accounts found', 'warn');
+                            updateWalletStatus('Not Connected', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        addConsoleEntry(`❌ Error checking accounts: ${error.message}`, 'error');
+                        updateWalletStatus('Error', 'error');
+                    });
+            } else {
+                addConsoleEntry('❌ No Ethereum wallet detected', 'error');
+                updateWalletStatus('No Wallet', 'error');
+            }
+        }
+        
+        function testWalletConnect() {
+            addConsoleEntry('🔗 Testing wallet connection...', 'info');
+            
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({ method: 'eth_requestAccounts' })
+                    .then(accounts => {
+                        if (accounts.length > 0) {
+                            addConsoleEntry(`✅ Wallet connected successfully: ${accounts[0]}`, 'success');
+                            updateWalletStatus('Connected', 'success');
+                        } else {
+                            addConsoleEntry('❌ No accounts returned', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        addConsoleEntry(`❌ Wallet connection failed: ${error.message}`, 'error');
+                        updateWalletStatus('Connection Failed', 'error');
+                    });
+            } else {
+                addConsoleEntry('❌ No Ethereum wallet available', 'error');
+                updateWalletStatus('No Wallet', 'error');
+            }
+        }
+        
+        function updateWalletStatus(status, type) {
+            const statusEl = document.getElementById('walletStatus');
+            statusEl.className = `status ${type}`;
+            statusEl.innerHTML = `<strong>Wallet Status:</strong> ${status}`;
+        }
+        
+        // Initialize
+        addConsoleEntry('🚀 Debug tool initialized', 'info');
+        
+        // Check wallet status on load
+        setTimeout(checkWalletStatus, 1000);
+        
+        // Override console methods to capture logs
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.log = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('Join Quest') || message.includes('DisabledTooltipButton') || message.includes('OpportunityCard')) {
+                addConsoleEntry(message, 'info');
+            }
+            originalConsoleLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            const message = args.join(' ');
+            addConsoleEntry(`ERROR: ${message}`, 'error');
+            originalConsoleError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            const message = args.join(' ');
+            addConsoleEntry(`WARN: ${message}`, 'warn');
+            originalConsoleWarn.apply(console, args);
+        };
+    </script>
+</body>
+</html>
