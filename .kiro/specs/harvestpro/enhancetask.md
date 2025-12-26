@@ -154,7 +154,7 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
 
 **Scope:** Improve data display and trust indicators in existing components
 
-- [ ] **3.1 Add Trust Signal Integration**
+- [x] **3.1 Add Trust Signal Integration**
   - Link existing "Guardian Score" displays to methodology explanations using existing modal/tooltip components
   - Add "How it's calculated" links for summary metrics using existing components
   - Add methodology/help content using existing tooltip OR inside existing HarvestDetailModal (accordion/section). Do not create any new modal routes or modal types.

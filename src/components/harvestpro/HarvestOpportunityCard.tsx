@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HarvestOpportunity } from '@/types/harvestpro';
+import { GuardianScoreTooltip } from './GuardianScoreTooltip';
 
 interface HarvestOpportunityCardProps {
   opportunity: HarvestOpportunity;
@@ -147,9 +148,11 @@ function MetricStrip({ opportunity }: { opportunity: HarvestOpportunity }) {
 
       {/* Guardian Score */}
       <div className="flex items-center gap-2">
-        <Shield className="w-4 h-4 text-blue-400" />
-        <span className="font-semibold text-blue-400">{opportunity.guardianScore}/10</span>
-        <span className="text-gray-500 uppercase text-xs">Guardian</span>
+        <GuardianScoreTooltip 
+          score={opportunity.guardianScore} 
+          variant="inline"
+          className="flex items-center gap-2"
+        />
       </div>
 
       {/* Execution Time */}
