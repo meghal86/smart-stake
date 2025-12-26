@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Harvest Button Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0A0F1F 0%, #1a1a2e 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin: 40px 0;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(20, 184, 166, 0.2);
+            border-radius: 12px;
+        }
+        
+        .button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: all 0.2s ease;
+        }
+        
+        .button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(237,143,45,0.3);
+        }
+        
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .connected {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+        
+        .disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .explanation {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 40px;">Start Harvest Button Test</h1>
+        
+        <div class="explanation">
+            <h3>🔍 Button Behavior Explanation</h3>
+            <p>The "Start Harvest" button is controlled by the <code>isConnected</code> prop:</p>
+            <ul>
+                <li><strong>When wallet is connected:</strong> Button is enabled and clickable</li>
+                <li><strong>When wallet is NOT connected:</strong> Button is disabled (50% opacity, not clickable)</li>
+                <li><strong>In Demo Mode:</strong> Button works regardless of wallet connection status</li>
+            </ul>
+            <p><strong>✅ FIXED:</strong> Demo mode now uses centralized state management and the button works correctly!</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>✅ Wallet Connected State</h3>
+            <div class="status connected">
+                🟢 Wallet Connected: 0x1234...5678
+            </div>
+            <button class="button" onclick="alert('Harvest started! This would open the detail modal.')">
+                Start Harvest
+            </button>
+            <p style="color: #9ca3af; font-size: 14px;">
+                Button is enabled, has hover effects, and is clickable.
+            </p>
+        </div>
+        
+        <div class="test-section">
+            <h3>❌ Wallet Disconnected State</h3>
+            <div class="status disconnected">
+                🔴 No Wallet Connected
+            </div>
+            <button class="button" disabled onclick="alert('This should not fire')">
+                Start Harvest
+            </button>
+            <p style="color: #9ca3af; font-size: 14px;">
+                Button is disabled (50% opacity), no hover effects, and not clickable.
+            </p>
+        </div>
+        
+        <div class="explanation">
+            <h3>🛠️ How to Fix the "Disabled Button" Issue</h3>
+            <ol>
+                <li><strong>Connect a Wallet:</strong> Use the wallet connection feature in the app</li>
+                <li><strong>Check Wallet Context:</strong> Ensure the WalletContext is providing the correct connection state</li>
+                <li><strong>Verify Props:</strong> Make sure <code>isConnected={true}</code> is being passed to the component</li>
+            </ol>
+            
+            <h4>In the HarvestPro page, the logic is:</h4>
+            <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; font-size: 12px;">
+const { connectedWallets, activeWallet } = useWallet();
+const isConnected = connectedWallets.length > 0 && !!activeWallet;
+
+&lt;HarvestOpportunityCard
+  isConnected={isConnected}
+  // ... other props
+/&gt;</pre>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Interactive Test</h3>
+            <p>Toggle the button state to see the difference:</p>
+            <button id="toggleBtn" class="button" style="background: linear-gradient(to right, #3b82f6, #1d4ed8);">
+                Toggle Connection State
+            </button>
+            <div id="currentState" class="status connected">
+                🟢 Currently: Connected
+            </div>
+            <button id="harvestBtn" class="button">
+                Start Harvest
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isConnected = true;
+        const toggleBtn = document.getElementById('toggleBtn');
+        const harvestBtn = document.getElementById('harvestBtn');
+        const currentState = document.getElementById('currentState');
+        
+        toggleBtn.addEventListener('click', () => {
+            isConnected = !isConnected;
+            
+            if (isConnected) {
+                harvestBtn.disabled = false;
+                currentState.textContent = '🟢 Currently: Connected';
+                currentState.className = 'status connected';
+            } else {
+                harvestBtn.disabled = true;
+                currentState.textContent = '🔴 Currently: Disconnected';
+                currentState.className = 'status disconnected';
+            }
+        });
+        
+        harvestBtn.addEventListener('click', () => {
+            if (!harvestBtn.disabled) {
+                alert('Harvest started! Modal would open here.');
+            }
+        });
+    </script>
+</body>
+</html>

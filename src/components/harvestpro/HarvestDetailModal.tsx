@@ -2,24 +2,27 @@
  * HarvestDetailModal Component
  * Displays detailed information about a harvest opportunity before execution
  * 
- * Requirements: 7.1-7.5
+ * Requirements: 7.1-7.5, Enhanced Req 3 AC4-5 (gas nonzero, fallback)
+ * Design: Data Integrity → Gas Oracle Rules
  * - Full-screen on mobile, centered on desktop
  * - Header with token symbol
  * - Summary section with key metrics
  * - Guardian warning banner (conditional)
  * - Step-by-step actions list
- * - Cost breakdown table
+ * - Cost breakdown table with live gas price
  * - Net benefit summary
  * - Execute Harvest button
  */
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertTriangle, CheckCircle2, Clock, TrendingDown, Shield, Fuel, Zap } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, Clock, TrendingDown, Shield, Fuel, Zap, RotateCcw, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HarvestOpportunity } from '@/types/harvestpro';
 import { Button } from '@/components/ui/button';
 import { GuardianScoreLink } from './GuardianScoreTooltip';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { getHarvestProErrorMessage, handleHarvestProError } from '@/lib/harvestpro/humanized-errors';
 
 // ============================================================================
 // TYPES
@@ -44,6 +47,65 @@ interface ExecutionStep {
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+// Gas Price Display Component for Modal with Humanized Errors
+function GasPriceInfo() {
+  const { data: networkStatus, isLoading, error, refetch } = useNetworkStatus();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        <Zap className="w-3 h-3" />
+        <span>Fetching current gas prices...</span>
+      </div>
+    );
+  }
+
+  if (error || !networkStatus) {
+    const humanizedError = getHarvestProErrorMessage(error || 'Gas estimation failed', 'gas-price');
+    
+    return (
+      <div className="flex items-center gap-2 text-xs">
+        <Heart className="w-3 h-3 text-red-400" />
+        <span className="text-red-400">Gas prices are being shy right now</span>
+        <button
+          onClick={() => refetch()}
+          className="p-1 rounded hover:bg-red-500/20 transition-colors"
+          title={humanizedError.action}
+        >
+          <RotateCcw className="w-2 h-2 text-red-400" />
+        </button>
+      </div>
+    );
+  }
+
+  const { formattedGasPrice, gasColorClass } = networkStatus;
+  
+  if (formattedGasPrice === 'Gas unavailable') {
+    const humanizedError = getHarvestProErrorMessage('Gas unavailable', 'gas-price');
+    
+    return (
+      <div className="flex items-center gap-2 text-xs">
+        <Heart className="w-3 h-3 text-red-400" />
+        <span className="text-red-400">Gas prices taking a break</span>
+        <button
+          onClick={() => refetch()}
+          className="p-1 rounded hover:bg-red-500/20 transition-colors"
+          title={humanizedError.action}
+        >
+          <RotateCcw className="w-2 h-2 text-red-400" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <Zap className="w-3 h-3 text-gray-400" />
+      <span className={gasColorClass}>Current: {formattedGasPrice}</span>
+    </div>
+  );
+}
 
 /**
  * Generate execution steps based on opportunity metadata
@@ -219,7 +281,7 @@ export function HarvestDetailModal({
             </p>
           </div>
           
-          {/* Guardian Warning Banner (Conditional) */}
+          {/* Guardian Warning Banner (Conditional) with Humanized Language */}
           <AnimatePresence>
             {isHighRisk && (
               <motion.div
@@ -232,16 +294,21 @@ export function HarvestDetailModal({
                   'flex items-start gap-3'
                 )}
               >
-                <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Heart className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-amber-400 mb-1">
-                    High Risk Detected
+                    Heads up - elevated risk detected! 🛡️
                   </h4>
                   <p className="text-sm text-amber-200/80">
-                    This opportunity has a Guardian score of {opportunity.guardianScore}/10. 
-                    {opportunity.slippageEstimate > opportunity.unrealizedLoss * 0.05 && ' High slippage may impact net benefit.'}
-                    {' '}Proceed with caution and review all details carefully.
+                    This opportunity has a Guardian score of {opportunity.guardianScore}/10, which suggests some risk factors are present. 
+                    {opportunity.slippageEstimate > opportunity.unrealizedLoss * 0.05 && ' The higher slippage might also impact your net benefit.'}
+                    {' '}We're not saying don't do it - just that it's worth a careful look before proceeding!
                   </p>
+                  <div className="mt-3 p-2 rounded bg-amber-500/10">
+                    <p className="text-xs text-amber-300">
+                      💡 <strong>Pro tip:</strong> Higher risk doesn't always mean bad - it just means being extra careful pays off.
+                    </p>
+                  </div>
                   <div className="mt-2">
                     <GuardianScoreLink 
                       score={opportunity.guardianScore}
@@ -350,7 +417,10 @@ export function HarvestDetailModal({
                 <span className="text-green-400 font-semibold">+{formatCurrency(taxSavings)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Gas Cost</span>
+                <div className="flex flex-col">
+                  <span className="text-gray-400">Gas Cost</span>
+                  <GasPriceInfo />
+                </div>
                 <span className="text-red-400 font-semibold">-{formatCurrency(opportunity.gasEstimate)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
@@ -493,7 +563,7 @@ export function HarvestDetailModal({
           
           {opportunity.netTaxBenefit <= 0 && (
             <p className="mt-3 text-xs text-center text-amber-400">
-              ⚠️ Net benefit is negative. Execution not recommended.
+              💡 Net benefit is negative right now. We'd suggest waiting for better conditions or checking other opportunities!
             </p>
           )}
         </div>

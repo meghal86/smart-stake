@@ -25,17 +25,20 @@ import {
   APIFailureFallback,
 } from '@/components/harvestpro';
 import { FooterNav } from '@/components/layout/FooterNav';
+import { DemoBanner } from '@/components/ux/DemoBanner';
 import { useHarvestFilters } from '@/hooks/useHarvestFilters';
 import { useHarvestOpportunities } from '@/hooks/useHarvestOpportunities';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { useDemoMode } from '@/lib/ux/DemoModeManager';
 import type { OpportunitiesSummary, HarvestOpportunity, HarvestSession } from '@/types/harvestpro';
 
 type ViewState = 'loading' | 'no-wallet' | 'no-opportunities' | 'all-harvested' | 'error' | 'normal';
 
 export default function HarvestPro() {
-  const [isDemo, setIsDemo] = useState(true);
+  // Use centralized demo mode management
+  const { isDemo, setDemoMode } = useDemoMode();
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('normal');
@@ -377,6 +380,7 @@ export default function HarvestPro() {
                     onShare={(id) => console.log('Share:', id)}
                     onReport={(id) => console.log('Report:', id)}
                     isConnected={isConnected}
+                    isDemo={isDemo}
                   />
                 ))
               ) : (
@@ -464,12 +468,20 @@ export default function HarvestPro() {
 
       {/* Header */}
       <HarvestProHeader
-        isDemo={isDemo}
-        setIsDemo={setIsDemo}
         lastUpdated={lastUpdated}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
       />
+
+      {/* Demo Banner */}
+      {isDemo && (
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <DemoBanner 
+            feature="HarvestPro"
+            onExitDemo={() => setDemoMode(false)}
+          />
+        </div>
+      )}
 
       {/* Main Content - Responsive Container */}
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28">

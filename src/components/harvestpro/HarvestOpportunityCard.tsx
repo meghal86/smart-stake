@@ -6,7 +6,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  TrendingDown,
   Shield,
   Clock,
   Zap,
@@ -32,6 +31,7 @@ interface HarvestOpportunityCardProps {
   onShare?: (id: string) => void;
   onReport?: (id: string) => void;
   isConnected?: boolean;
+  isDemo?: boolean;
   userWallet?: string;
   className?: string;
 }
@@ -119,52 +119,6 @@ function RecommendationBadge({
   );
 }
 
-// Metric Strip Component
-function MetricStrip({ opportunity }: { opportunity: HarvestOpportunity }) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  return (
-    <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-      {/* Net Benefit */}
-      <div className="flex items-center gap-2">
-        <DollarSign className="w-4 h-4 text-green-400" />
-        <span className="font-bold text-green-400">{formatCurrency(opportunity.netTaxBenefit)}</span>
-        <span className="text-gray-500 uppercase text-xs">Net Benefit</span>
-      </div>
-
-      {/* Confidence */}
-      <div className="flex items-center gap-2">
-        <Shield className="w-4 h-4 text-blue-400" />
-        <span className="font-semibold text-white">{opportunity.confidence}%</span>
-        <span className="text-gray-500 uppercase text-xs">Confidence</span>
-      </div>
-
-      {/* Guardian Score */}
-      <div className="flex items-center gap-2">
-        <GuardianScoreTooltip 
-          score={opportunity.guardianScore} 
-          variant="inline"
-          className="flex items-center gap-2"
-        />
-      </div>
-
-      {/* Execution Time */}
-      <div className="flex items-center gap-2">
-        <Clock className="w-4 h-4 text-gray-400" />
-        <span className="font-semibold text-white">{opportunity.executionTimeEstimate || '5-10 min'}</span>
-        <span className="text-gray-500 uppercase text-xs">Time</span>
-      </div>
-    </div>
-  );
-}
-
 // Main Card Component
 export function HarvestOpportunityCard({
   opportunity,
@@ -174,6 +128,7 @@ export function HarvestOpportunityCard({
   onShare,
   onReport,
   isConnected = true,
+  isDemo = false,
   className,
 }: HarvestOpportunityCardProps) {
   const formatCurrency = (value: number) => {
@@ -188,7 +143,7 @@ export function HarvestOpportunityCard({
   return (
     <motion.div
       className={cn(
-        'backdrop-blur-lg rounded-[20px] py-10 px-8 cursor-pointer group transition-all duration-700 border relative transform-gpu',
+        'backdrop-blur-lg rounded-[20px] py-8 px-6 cursor-pointer group transition-all duration-700 border relative transform-gpu',
         'bg-gradient-to-br from-slate-900/80 via-blue-950/60 to-slate-900/80 border-teal-400/20',
         className
       )}
@@ -218,9 +173,18 @@ export function HarvestOpportunityCard({
         transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
       />
 
-      <div className="flex flex-col space-y-4 relative z-10">
-        {/* Header */}
-        <div className="flex items-start gap-4 mb-4">
+      {/* Demo Mode Badge */}
+      {isDemo && (
+        <div className="absolute top-4 right-4 z-20">
+          <div className="px-3 py-1 bg-blue-500/90 backdrop-blur-sm rounded-full text-xs font-semibold text-white border border-blue-400/30">
+            Demo Mode
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col relative z-10">
+        {/* Primary Information - Most Important First */}
+        <div className="flex items-start gap-4 mb-6">
           {/* Token Logo */}
           <motion.div
             className="p-3 rounded-xl bg-[#ed8f2d] shadow-lg flex-shrink-0"
@@ -229,25 +193,42 @@ export function HarvestOpportunityCard({
             <Coins className="w-6 h-6 text-white" />
           </motion.div>
 
-          {/* Title & Badges */}
+          {/* Title & Key Metrics */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <CategoryTag token={opportunity.token} />
-              <RiskChip riskLevel={opportunity.riskLevel} />
-              <RecommendationBadge badge={opportunity.recommendationBadge} />
-            </div>
-
-            <h3 className="text-xl font-bold font-display leading-tight mb-1 text-white">
+            {/* Title - Most Important */}
+            <h3 className="text-xl font-bold font-display leading-tight mb-2 text-white">
               Harvest {opportunity.token} Loss
             </h3>
 
+            {/* Key Financial Info - Second Most Important */}
+            <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-green-400" />
+                <span className="font-bold text-green-400 text-lg">{formatCurrency(opportunity.netTaxBenefit)}</span>
+                <span className="text-gray-500 text-sm">Net Benefit</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-400" />
+                <span className="font-semibold text-white">{opportunity.confidence}%</span>
+                <span className="text-gray-500 text-sm">Confidence</span>
+              </div>
+            </div>
+
+            {/* Risk & Status Badges - Third Most Important */}
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <RiskChip riskLevel={opportunity.riskLevel} />
+              <RecommendationBadge badge={opportunity.recommendationBadge} />
+              <CategoryTag token={opportunity.token} />
+            </div>
+
+            {/* Subtitle - Context Information */}
             <p className="text-sm text-gray-500">
               {opportunity.metadata.walletName || 'Wallet'} • {opportunity.metadata.venue || 'DEX'}
             </p>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Action Buttons - Compact */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             {onSave && (
               <motion.button
                 onClick={(e) => {
@@ -290,37 +271,47 @@ export function HarvestOpportunityCard({
           </div>
         </div>
 
-        {/* Description */}
-        <p className="text-sm line-clamp-2 mb-6 leading-relaxed text-gray-400">
-          Harvest <span className="text-white font-semibold">{formatCurrency(opportunity.unrealizedLoss)}</span> in losses for{' '}
-          <span className="text-green-400 font-semibold">{formatCurrency(opportunity.netTaxBenefit)}</span> net tax benefit after gas and fees.
-          {opportunity.metadata.reasons && opportunity.metadata.reasons.length > 0 && (
-            <span className="text-gray-500"> {opportunity.metadata.reasons[0]}</span>
-          )}
-        </p>
+        {/* Secondary Information - Supporting Details */}
+        <div className="space-y-4">
+          {/* Condensed Description */}
+          <p className="text-sm leading-relaxed text-gray-400">
+            Harvest <span className="text-white font-semibold">{formatCurrency(opportunity.unrealizedLoss)}</span> in losses
+            {opportunity.metadata.reasons && opportunity.metadata.reasons.length > 0 && (
+              <span className="text-gray-500"> • {opportunity.metadata.reasons[0]}</span>
+            )}
+          </p>
 
-        {/* Divider */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6" />
+          {/* Supporting Metrics - Condensed */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <GuardianScoreTooltip 
+                score={opportunity.guardianScore} 
+                variant="inline"
+                className="flex items-center gap-2"
+              />
+            </div>
+            <div className="flex items-center gap-2 text-gray-400">
+              <Clock className="w-4 h-4" />
+              <span>{opportunity.executionTimeEstimate || '5-10 min'}</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Metric Strip */}
-        <MetricStrip opportunity={opportunity} />
-
-        {/* Divider */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/8 to-transparent my-6" />
-
-        {/* CTA Button */}
+        {/* CTA Button - Prominent */}
         <motion.button
-          onClick={() => onStartHarvest(opportunity.id)}
+          onClick={() => (isConnected || isDemo) && onStartHarvest(opportunity.id)}
+          disabled={!isConnected && !isDemo}
           className={cn(
-            'relative w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 overflow-hidden',
-            'bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white shadow-lg'
+            'relative w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 overflow-hidden mt-6',
+            'bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white shadow-lg',
+            (!isConnected && !isDemo) && 'opacity-50 cursor-not-allowed'
           )}
-          whileHover={{
+          whileHover={(isConnected || isDemo) ? {
             scale: 1.02,
             y: -1,
             boxShadow: '0 8px 25px rgba(237,143,45,0.3)',
-          }}
-          whileTap={{ scale: 0.98 }}
+          } : {}}
+          whileTap={(isConnected || isDemo) ? { scale: 0.98 } : {}}
           transition={{
             type: 'spring',
             stiffness: 400,
@@ -331,7 +322,7 @@ export function HarvestOpportunityCard({
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0"
             initial={{ x: '-100%' }}
-            whileHover={{ x: '100%' }}
+            whileHover={(isConnected || isDemo) ? { x: '100%' } : {}}
             transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
           />
           <span className="relative z-10">Start Harvest</span>

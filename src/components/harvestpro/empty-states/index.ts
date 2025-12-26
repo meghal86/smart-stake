@@ -7,3 +7,4 @@ export { NoWalletsConnected } from './NoWalletsConnected';
 export { NoOpportunitiesDetected } from './NoOpportunitiesDetected';
 export { AllOpportunitiesHarvested } from './AllOpportunitiesHarvested';
 export { APIFailureFallback } from './APIFailureFallback';
+export { NoFilterResults } from './NoFilterResults';

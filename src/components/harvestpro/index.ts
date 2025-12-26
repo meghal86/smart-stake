@@ -19,6 +19,8 @@ export { HarvestSuccessScreen } from './HarvestSuccessScreen';
 export type { HarvestSuccessScreenProps } from './HarvestSuccessScreen';
 export { ProofOfHarvestPage } from './ProofOfHarvestPage';
 export { ProofOfHarvestExample } from './ProofOfHarvestExample';
+export { HarvestProSettingsForm } from './HarvestProSettingsForm';
+export { HarvestProSettingsExample } from './HarvestProSettingsExample';
 
 // Skeletons
 export * from './skeletons';

@@ -102,6 +102,44 @@ export function AllOpportunitiesHarvested({
         )}
       </div>
 
+      {/* Next Steps */}
+      <div className="mt-8 pt-6 border-t border-green-500/20">
+        <p className="text-sm font-semibold text-gray-300 mb-4">
+          What's next:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-left max-w-2xl mx-auto">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="text-lg">📊</div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Review Your Export</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Import the CSV into your tax software
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="text-lg">🔔</div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Set Notifications</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Get alerts for new opportunities
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="text-lg">📋</div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Share with CPA</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Send proof-of-harvest to tax preparer
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Summary */}
       <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-6 border-t border-green-500/20">
         <div>

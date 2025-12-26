@@ -4,11 +4,11 @@
  * Tests for the HarvestOpportunityCard component.
  * 
  * Requirements:
- * - 5.5: Display Hunter-style card layout
+ * - 5.5: Display Hunter-style card layout with progressive disclosure
  * - 5.6: Display CategoryTag component
  * - 5.7: Display RiskChip component
  * - 5.8: Display RecommendationBadge component
- * - 5.9: Display MetricStrip component
+ * - 5.9: Display key metrics prominently (Net Benefit, Confidence first)
  * - 5.10: Display CTAButton component with save, share, report actions
  */
 
@@ -71,6 +71,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -88,6 +89,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -100,6 +102,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -112,6 +115,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -124,24 +128,24 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
-      // Check net benefit
+      // Check net benefit (now prominently displayed in key financial info)
       expect(screen.getByText('$300')).toBeInTheDocument();
-      expect(screen.getByText('NET BENEFIT')).toBeInTheDocument();
+      expect(screen.getByText('Net Benefit')).toBeInTheDocument();
 
-      // Check confidence
+      // Check confidence (now prominently displayed in key financial info)
       expect(screen.getByText('85%')).toBeInTheDocument();
-      expect(screen.getByText('CONFIDENCE')).toBeInTheDocument();
+      expect(screen.getByText('Confidence')).toBeInTheDocument();
 
-      // Check Guardian score
+      // Check Guardian score (now in supporting metrics)
       expect(screen.getByText('8/10')).toBeInTheDocument();
-      expect(screen.getByText('GUARDIAN')).toBeInTheDocument();
+      expect(screen.getByText('Guardian')).toBeInTheDocument();
 
-      // Check execution time
+      // Check execution time (now in supporting metrics)
       expect(screen.getByText('5-10 min')).toBeInTheDocument();
-      expect(screen.getByText('TIME')).toBeInTheDocument();
     });
 
     it('renders Start Harvest button', () => {
@@ -150,6 +154,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -162,11 +167,13 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
-      expect(screen.getByText(/Harvest \$1,500 in losses/)).toBeInTheDocument();
-      expect(screen.getByText(/\$300 net tax benefit/)).toBeInTheDocument();
+      expect(screen.getByText((content, element) => {
+        return element?.textContent === 'Harvest $1,500 in losses • High confidence opportunity';
+      })).toBeInTheDocument();
     });
   });
 
@@ -183,6 +190,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mediumRiskOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -201,6 +209,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={highRiskOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -221,6 +230,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={notRecommendedOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -239,6 +249,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={highBenefitOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -257,6 +268,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={gasHeavyOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -275,6 +287,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={guardianFlaggedOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -289,6 +302,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -306,6 +320,7 @@ describe('HarvestOpportunityCard', () => {
           onStartHarvest={mockHandlers.onStartHarvest}
           onSave={mockHandlers.onSave}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -324,13 +339,16 @@ describe('HarvestOpportunityCard', () => {
         <HarvestOpportunityCard
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
+          onSave={mockHandlers.onSave}
           onShare={mockHandlers.onShare}
+          onReport={mockHandlers.onReport}
           isConnected={true}
+          isDemo={false}
         />
       );
 
       const buttons = screen.getAllByRole('button');
-      // Share button is the second action button
+      // Share button is the second action button (after save)
       const shareButton = buttons[1];
       
       if (shareButton) {
@@ -344,13 +362,16 @@ describe('HarvestOpportunityCard', () => {
         <HarvestOpportunityCard
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
+          onSave={mockHandlers.onSave}
+          onShare={mockHandlers.onShare}
           onReport={mockHandlers.onReport}
           isConnected={true}
+          isDemo={false}
         />
       );
 
       const buttons = screen.getAllByRole('button');
-      // Report button is the third action button
+      // Report button is the fourth button (after save, share, and before start harvest)
       const reportButton = buttons[2];
       
       if (reportButton) {
@@ -365,6 +386,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -380,10 +402,11 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={false}
+          isDemo={false}
         />
       );
 
-      const startButton = screen.getByText('Start Harvest');
+      const startButton = screen.getByRole('button', { name: /start harvest/i });
       expect(startButton).toBeDisabled();
     });
 
@@ -393,13 +416,71 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={false}
+          isDemo={false}
         />
       );
 
-      const startButton = screen.getByText('Start Harvest');
+      const startButton = screen.getByRole('button', { name: /start harvest/i });
       fireEvent.click(startButton);
 
       expect(mockHandlers.onStartHarvest).not.toHaveBeenCalled();
+    });
+
+    it('enables Start Harvest button in demo mode even when not connected', () => {
+      render(
+        <HarvestOpportunityCard
+          opportunity={mockOpportunity}
+          onStartHarvest={mockHandlers.onStartHarvest}
+          isConnected={false}
+          isDemo={true}
+        />
+      );
+
+      const startButton = screen.getByRole('button', { name: /start harvest/i });
+      expect(startButton).not.toBeDisabled();
+    });
+
+    it('calls onStartHarvest in demo mode even when not connected', () => {
+      render(
+        <HarvestOpportunityCard
+          opportunity={mockOpportunity}
+          onStartHarvest={mockHandlers.onStartHarvest}
+          isConnected={false}
+          isDemo={true}
+        />
+      );
+
+      const startButton = screen.getByRole('button', { name: /start harvest/i });
+      fireEvent.click(startButton);
+
+      expect(mockHandlers.onStartHarvest).toHaveBeenCalledWith('opp-123');
+      expect(mockHandlers.onStartHarvest).toHaveBeenCalledTimes(1);
+    });
+
+    it('displays demo badge when isDemo is true', () => {
+      render(
+        <HarvestOpportunityCard
+          opportunity={mockOpportunity}
+          onStartHarvest={mockHandlers.onStartHarvest}
+          isConnected={false}
+          isDemo={true}
+        />
+      );
+
+      expect(screen.getByText('Demo Mode')).toBeInTheDocument();
+    });
+
+    it('does not display demo badge when isDemo is false', () => {
+      render(
+        <HarvestOpportunityCard
+          opportunity={mockOpportunity}
+          onStartHarvest={mockHandlers.onStartHarvest}
+          isConnected={true}
+          isDemo={false}
+        />
+      );
+
+      expect(screen.queryByText('Demo Mode')).not.toBeInTheDocument();
     });
   });
 
@@ -416,6 +497,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={largeAmountOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -435,6 +517,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={negativeOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -449,6 +532,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
           className="custom-class"
         />
       );
@@ -464,6 +548,7 @@ describe('HarvestOpportunityCard', () => {
           index={0}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -474,6 +559,7 @@ describe('HarvestOpportunityCard', () => {
           index={5}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -489,6 +575,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -501,6 +588,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -513,6 +601,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={mockOpportunity}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -530,6 +619,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={minimalOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -550,6 +640,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={btcOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 
@@ -568,6 +659,7 @@ describe('HarvestOpportunityCard', () => {
           opportunity={lowerCaseOpp}
           onStartHarvest={mockHandlers.onStartHarvest}
           isConnected={true}
+          isDemo={false}
         />
       );
 

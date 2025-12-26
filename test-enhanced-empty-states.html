@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Empty States Demo - Task 5.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0A0F1F 0%, #1A1B3A 100%);
+            min-height: 100vh;
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Enhanced Empty States Demo</h1>
+        <p class="text-center text-gray-400 mb-12">Task 5.2: Enhanced Requirement 11 - Actionable Empty States</p>
+        
+        <!-- Demo Controls -->
+        <div class="flex justify-center gap-4 mb-8">
+            <button onclick="showState('noWallets')" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                No Wallets Connected
+            </button>
+            <button onclick="showState('noOpportunities')" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
+                No Opportunities
+            </button>
+            <button onclick="showState('allHarvested')" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+                All Harvested
+            </button>
+            <button onclick="showState('apiFailure')" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                API Failure
+            </button>
+            <button onclick="showState('noFilters')" class="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors">
+                No Filter Results
+            </button>
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="emptyStateContainer" class="max-w-2xl mx-auto">
+            <!-- Default: No Wallets Connected -->
+            <div id="noWallets" class="empty-state glassmorphism rounded-2xl border-2 p-8 text-center border-yellow-500/30">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/20 mb-4">
+                    ⚠️
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">No Wallets Connected</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">
+                    Connect your wallet to start discovering tax-loss harvesting opportunities.
+                    Harvest will analyze your holdings and identify potential tax savings.
+                </p>
+                
+                <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow mb-8">
+                    🔗 Connect Wallet
+                </button>
+
+                <!-- Enhanced: Checklist of what will be scanned -->
+                <div class="mt-8 pt-6 border-t border-yellow-500/20">
+                    <p class="text-sm font-semibold text-gray-300 mb-4">What we'll scan when you connect:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Transaction History</p>
+                                <p class="text-xs text-gray-500 mt-1">All buy/sell transactions for FIFO cost basis</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Current Holdings</p>
+                                <p class="text-xs text-gray-500 mt-1">Token balances and current market prices</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Unrealized Losses</p>
+                                <p class="text-xs text-gray-500 mt-1">Positions with potential tax benefits</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Gas & Fees</p>
+                                <p class="text-xs text-gray-500 mt-1">Execution costs and net benefit analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Opportunities Detected -->
+            <div id="noOpportunities" class="empty-state glassmorphism rounded-2xl border p-8 text-center hidden">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
+                    📈
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">No Opportunities Detected</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">
+                    Great news! Your portfolio doesn't have any eligible tax-loss harvesting opportunities at the moment.
+                    This means your holdings are performing well.
+                </p>
+
+                <!-- Enhanced: Checklist of what was scanned -->
+                <div class="mt-8 pt-6 border-t border-white/10">
+                    <p class="text-sm font-semibold text-gray-300 mb-4">✓ What we checked for you:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">All Token Holdings</p>
+                                <p class="text-xs text-gray-500 mt-1">Scanned 42 tokens across your wallets</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Loss Thresholds</p>
+                                <p class="text-xs text-gray-500 mt-1">Checked for losses >$20 with net tax benefit</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Gas Efficiency</p>
+                                <p class="text-xs text-gray-500 mt-1">Filtered out opportunities with high gas costs</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Liquidity Check</p>
+                                <p class="text-xs text-gray-500 mt-1">Verified tokens are tradeable on supported DEXs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced: Next Steps -->
+                <div class="mt-6 pt-4 border-t border-white/5">
+                    <p class="text-sm font-semibold text-gray-300 mb-3">What to do next:</p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors">
+                            🔔 Set up notifications for new opportunities
+                        </button>
+                        <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors">
+                            📊 Check back during market volatility
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Opportunities Harvested -->
+            <div id="allHarvested" class="empty-state glassmorphism rounded-2xl border-2 p-8 text-center border-green-500/30 hidden">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/30 mb-4">
+                    ✅
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">All Opportunities Harvested! 🎉</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">
+                    Congratulations! You've successfully harvested all available tax-loss opportunities.
+                    Your tax savings are ready for export.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                    <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                        📊 Download Form 8949 CSV
+                    </button>
+                    <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 transition-colors">
+                        👁️ View Proof-of-Harvest
+                    </button>
+                </div>
+
+                <!-- Enhanced: Next Steps -->
+                <div class="mt-8 pt-6 border-t border-green-500/20">
+                    <p class="text-sm font-semibold text-gray-300 mb-4">What's next:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="text-lg">📊</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Review Your Export</p>
+                                <p class="text-xs text-gray-500 mt-1">Import the CSV into your tax software</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="text-lg">🔔</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Set Notifications</p>
+                                <p class="text-xs text-gray-500 mt-1">Get alerts for new opportunities</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="text-lg">📋</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Share with CPA</p>
+                                <p class="text-xs text-gray-500 mt-1">Send proof-of-harvest to tax preparer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Failure -->
+            <div id="apiFailure" class="empty-state glassmorphism rounded-2xl border-2 p-8 text-center border-red-500/30 hidden">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/20 mb-4">
+                    ⚠️
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">Connection Error</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">
+                    Unable to load harvest opportunities. Please check your connection and try again.
+                </p>
+
+                <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow mb-8">
+                    🔄 Retry
+                </button>
+
+                <!-- Enhanced: What was attempted -->
+                <div class="mt-8 pt-6 border-t border-red-500/20">
+                    <p class="text-sm font-semibold text-gray-300 mb-4">What we tried to check:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Wallet Holdings</p>
+                                <p class="text-xs text-gray-500 mt-1">Failed to fetch current token balances</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Price Data</p>
+                                <p class="text-xs text-gray-500 mt-1">Unable to get current market prices</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Gas Estimates</p>
+                                <p class="text-xs text-gray-500 mt-1">Network issues prevented gas calculation</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 mt-2"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Opportunity Analysis</p>
+                                <p class="text-xs text-gray-500 mt-1">Could not complete harvest opportunity scan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Filter Results -->
+            <div id="noFilters" class="empty-state glassmorphism rounded-2xl border p-8 text-center hidden">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 mb-4">
+                    🔍
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">No Results for Current Filters</h3>
+                <p class="text-gray-400 mb-6 max-w-md mx-auto">
+                    Found 15 total opportunities, but none match your current filters.
+                </p>
+
+                <!-- Active Filters -->
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 mb-3">Active filters:</p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm">High Benefit</span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm">Low Risk</span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm">Short-Term</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+                    <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                        🔄 Clear All Filters
+                    </button>
+                    <button class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 transition-colors">
+                        🔍 Adjust Filters
+                    </button>
+                </div>
+
+                <!-- Enhanced: Suggestions -->
+                <div class="mt-8 pt-6 border-t border-white/10">
+                    <p class="text-sm font-semibold text-gray-300 mb-4">Try these suggestions:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="text-sm font-bold text-blue-400 flex-shrink-0 mt-0.5">📉</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Lower Risk Filter</p>
+                                <p class="text-xs text-gray-500 mt-1">Include medium and high-risk opportunities</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="text-sm font-bold text-blue-400 flex-shrink-0 mt-0.5">$</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Reduce Min Benefit</p>
+                                <p class="text-xs text-gray-500 mt-1">Lower the minimum net benefit threshold</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+                            <div class="text-sm font-bold text-blue-400 flex-shrink-0 mt-0.5">⏱</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-300">Include All Terms</p>
+                                <p class="text-xs text-gray-500 mt-1">Show both short-term and long-term losses</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requirements Summary -->
+        <div class="mt-12 p-6 glassmorphism rounded-xl">
+            <h2 class="text-xl font-semibold mb-4">Enhanced Requirement 11 - Acceptance Criteria ✅</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <h3 class="font-semibold text-green-400 mb-2">AC1-3: Helpful Messages</h3>
+                    <p class="text-gray-300">All empty states now include clear, actionable guidance explaining the situation and next steps.</p>
+                </div>
+                <div class="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                    <h3 class="font-semibold text-blue-400 mb-2">AC4-5: Clear Actions</h3>
+                    <p class="text-gray-300">Relevant call-to-action buttons provide immediate next steps for each empty state scenario.</p>
+                </div>
+                <div class="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                    <h3 class="font-semibold text-purple-400 mb-2">AC6-10: Checklists</h3>
+                    <p class="text-gray-300">Detailed checklists show what was scanned/attempted, providing transparency and trust.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showState(stateId) {
+            // Hide all empty states
+            const states = ['noWallets', 'noOpportunities', 'allHarvested', 'apiFailure', 'noFilters'];
+            states.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            
+            // Show selected state
+            document.getElementById(stateId).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

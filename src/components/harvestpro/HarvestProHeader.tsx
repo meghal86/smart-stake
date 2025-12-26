@@ -1,21 +1,89 @@
 /**
  * HarvestPro Header Component
  * Matches Hunter header styling with HarvestPro branding
+ * 
+ * Requirements: Enhanced Req 3 AC4-5 (gas nonzero, fallback)
+ * Design: Data Integrity → Gas Oracle Rules
  */
 
 import { motion } from 'framer-motion';
-import { Leaf, Activity, RefreshCw } from 'lucide-react';
+import { Activity, RefreshCw, Zap, RotateCcw } from 'lucide-react';
 import WalletSelector from '@/components/hunter/WalletSelector';
 import { formatUpdatedTime } from '@/lib/ux/timestampUtils';
 import { useLoadingState } from '@/hooks/useLoadingState';
 import { LoadingIndicator } from '@/components/ux/LoadingSystem';
 import { useDemoMode } from '@/lib/ux/DemoModeManager';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 interface HarvestProHeaderProps {
   lastUpdated?: Date;
   onRefresh: () => void;
   isRefreshing?: boolean;
+}
+
+// Gas Price Display Component
+function GasPriceDisplay() {
+  const { data: networkStatus, isLoading, error, refetch } = useNetworkStatus();
+  
+  const handleRetry = () => {
+    refetch();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5">
+        <Zap className="w-4 h-4 text-gray-400" />
+        <LoadingIndicator size="sm" variant="spinner" className="text-gray-400" />
+        <span className="text-xs text-gray-400">Loading...</span>
+      </div>
+    );
+  }
+
+  if (error || !networkStatus) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
+        <Zap className="w-4 h-4 text-red-400" />
+        <span className="text-xs text-red-400">Gas unavailable</span>
+        <button
+          onClick={handleRetry}
+          className="p-1 rounded hover:bg-red-500/20 transition-colors"
+          title="Retry gas price fetch"
+        >
+          <RotateCcw className="w-3 h-3 text-red-400" />
+        </button>
+      </div>
+    );
+  }
+
+  // Use the formatted gas price and color class from useNetworkStatus
+  const { formattedGasPrice, gasColorClass } = networkStatus;
+  
+  // Handle "Gas unavailable" state with retry option
+  if (formattedGasPrice === 'Gas unavailable') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
+        <Zap className="w-4 h-4 text-red-400" />
+        <span className="text-xs text-red-400">Gas unavailable</span>
+        <button
+          onClick={handleRetry}
+          className="p-1 rounded hover:bg-red-500/20 transition-colors"
+          title="Retry gas price fetch"
+        >
+          <RotateCcw className="w-3 h-3 text-red-400" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5">
+      <Zap className="w-4 h-4 text-gray-400" />
+      <span className={`text-xs font-medium ${gasColorClass}`}>
+        {formattedGasPrice}
+      </span>
+    </div>
+  );
 }
 
 export function HarvestProHeader({
@@ -64,6 +132,9 @@ export function HarvestProHeader({
                 )}
               </div>
             )}
+
+            {/* Gas Price Display */}
+            <GasPriceDisplay />
 
             <div className="flex items-center gap-3">
               {/* WalletSelector */}

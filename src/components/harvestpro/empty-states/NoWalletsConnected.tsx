@@ -59,8 +59,56 @@ export function NoWalletsConnected({ onConnectWallet, className }: NoWalletsConn
         </motion.button>
       )}
 
-      {/* Additional Info */}
-      <div className="mt-6 pt-6 border-t border-[rgba(245,158,11,0.2)]">
+      {/* Checklist of what will be scanned */}
+      <div className="mt-8 pt-6 border-t border-[rgba(245,158,11,0.2)]">
+        <p className="text-sm font-semibold text-gray-300 mb-4">
+          What we'll scan when you connect:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left max-w-2xl mx-auto">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Transaction History</p>
+              <p className="text-xs text-gray-500 mt-1">
+                All buy/sell transactions for FIFO cost basis
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Current Holdings</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Token balances and current market prices
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Unrealized Losses</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Positions with potential tax benefits
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-white/5">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0 mt-2"></div>
+            <div>
+              <p className="text-sm font-medium text-gray-300">Gas & Fees</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Execution costs and net benefit analysis
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Info */}
+      <div className="mt-6 pt-4 border-t border-[rgba(245,158,11,0.1)]">
         <p className="text-sm text-gray-500">
           Your wallet data is analyzed locally and securely. We never store your private keys.
         </p>

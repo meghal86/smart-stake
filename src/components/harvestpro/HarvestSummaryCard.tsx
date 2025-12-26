@@ -1,14 +1,17 @@
 /**
  * HarvestSummaryCard Component
  * Guardian-style summary card with 2x2 metrics grid
+ * 
+ * Requirements: Enhanced Req 3 AC4-5 (gas nonzero, fallback)
+ * Design: Data Integrity → Gas Oracle Rules
  */
 
 import { motion } from 'framer-motion';
-import { TrendingDown, DollarSign, Coins, Zap, AlertTriangle, TestTube, HelpCircle } from 'lucide-react';
+import { TrendingDown, DollarSign, Coins, Zap, AlertTriangle, HelpCircle, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDemoMode } from '@/lib/ux/DemoModeManager';
 import type { OpportunitiesSummary } from '@/types/harvestpro';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 interface HarvestSummaryCardProps {
   summary: OpportunitiesSummary;
@@ -28,6 +31,61 @@ interface MetricWithTrustSignalProps {
   color: string;
   methodology: string[];
   delay: number;
+}
+
+// Gas Price Status Component for Summary Card
+function GasPriceStatus() {
+  const { data: networkStatus, isLoading, error, refetch } = useNetworkStatus();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1 text-xs text-gray-400">
+        <Zap className="w-3 h-3 animate-pulse" />
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (error || !networkStatus) {
+    return (
+      <div className="flex items-center gap-1 text-xs">
+        <Zap className="w-3 h-3 text-red-400" />
+        <span className="text-red-400">Unavailable</span>
+        <button
+          onClick={() => refetch()}
+          className="p-0.5 rounded hover:bg-red-500/20 transition-colors"
+          title="Retry gas price fetch"
+        >
+          <RotateCcw className="w-2 h-2 text-red-400" />
+        </button>
+      </div>
+    );
+  }
+
+  const { formattedGasPrice, gasColorClass } = networkStatus;
+  
+  if (formattedGasPrice === 'Gas unavailable') {
+    return (
+      <div className="flex items-center gap-1 text-xs">
+        <Zap className="w-3 h-3 text-red-400" />
+        <span className="text-red-400">Unavailable</span>
+        <button
+          onClick={() => refetch()}
+          className="p-0.5 rounded hover:bg-red-500/20 transition-colors"
+          title="Retry gas price fetch"
+        >
+          <RotateCcw className="w-2 h-2 text-red-400" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 text-xs">
+      <Zap className="w-3 h-3 text-gray-400" />
+      <span className={gasColorClass}>{formattedGasPrice}</span>
+    </div>
+  );
 }
 
 function MetricWithTrustSignal({
@@ -93,8 +151,6 @@ export function HarvestSummaryCard({
   hasHighRiskOpportunities = false,
   className,
 }: HarvestSummaryCardProps) {
-  const { isDemo } = useDemoMode();
-  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -162,19 +218,6 @@ export function HarvestSummaryCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
     >
-      {/* Demo Mode Badge */}
-      {isDemo && (
-        <motion.div
-          className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <TestTube className="w-4 h-4 text-blue-400" />
-          <span className="text-sm font-medium text-blue-300">Demo Data</span>
-        </motion.div>
-      )}
-      
       {/* Warning Banner */}
       {hasHighRiskOpportunities && (
         <motion.div
@@ -223,14 +266,55 @@ export function HarvestSummaryCard({
         />
 
         {/* Gas Efficiency Score */}
-        <MetricWithTrustSignal
-          icon={Zap}
-          label="Gas Efficiency"
-          value={summary.gasEfficiencyScore}
-          color={getGasEfficiencyColor(summary.gasEfficiencyScore)}
-          methodology={methodologies.gasEfficiency}
-          delay={0.4}
-        />
+        <motion.div
+          className="space-y-2"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="flex items-center gap-2">
+            <Zap className={cn('w-5 h-5', getGasEfficiencyColor(summary.gasEfficiencyScore))} />
+            <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
+              Gas Efficiency
+            </p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="text-gray-400 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
+                    aria-label="How gas efficiency is calculated"
+                  >
+                    <HelpCircle className="w-3 h-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent 
+                  side="top" 
+                  className="max-w-sm p-4 bg-slate-800 border-slate-600 text-slate-100"
+                >
+                  <div className="space-y-2">
+                    <div className="font-semibold text-cyan-400 mb-3">
+                      Gas Efficiency Calculation
+                    </div>
+                    <div className="space-y-1 text-xs">
+                      {methodologies.gasEfficiency.map((line, index) => (
+                        <div key={index}>{line}</div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-slate-600 text-xs text-slate-400">
+                      Last updated: {new Date().toLocaleDateString()}
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className={cn('text-2xl font-bold', getGasEfficiencyColor(summary.gasEfficiencyScore))}>
+              {summary.gasEfficiencyScore}
+            </p>
+            <GasPriceStatus />
+          </div>
+        </motion.div>
       </div>
     </motion.div>
   );
