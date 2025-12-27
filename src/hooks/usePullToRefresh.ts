@@ -109,15 +109,15 @@ export const usePullToRefresh = ({
     };
 
     const target = containerRef.current ?? document;
-    target.addEventListener('touchstart', handleTouchStart as any, { passive: true });
-    target.addEventListener('touchmove', handleTouchMove as any, { passive: false });
-    target.addEventListener('touchend', handleTouchEnd as any);
+    target.addEventListener('touchstart', handleTouchStart as EventListener, { passive: true });
+    target.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false });
+    target.addEventListener('touchend', handleTouchEnd as EventListener);
 
     return () => {
       isActive.current = false;
-      target.removeEventListener('touchstart', handleTouchStart as any);
-      target.removeEventListener('touchmove', handleTouchMove as any);
-      target.removeEventListener('touchend', handleTouchEnd as any);
+      target.removeEventListener('touchstart', handleTouchStart as EventListener);
+      target.removeEventListener('touchmove', handleTouchMove as EventListener);
+      target.removeEventListener('touchend', handleTouchEnd as EventListener);
     };
   }, [disabled, isPulling, isRefreshing, onRefresh, threshold, containerId]);
 

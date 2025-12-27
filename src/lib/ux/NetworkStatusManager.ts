@@ -41,7 +41,7 @@ export interface NetworkStatusManagerConfig {
 export class NetworkStatusManager {
   private config: NetworkStatusManagerConfig;
   private status: NetworkStatus;
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private listeners: Set<(status: NetworkStatus) => void> = new Set();
   private connectionCheckInterval: NodeJS.Timeout | null = null;
   private slowConnectionTimeout: NodeJS.Timeout | null = null;
@@ -360,9 +360,11 @@ export class NetworkStatusManager {
 
   private updateConnectionInfo(): void {
     if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
-      this.status.connectionType = connection.type || 'unknown';
-      this.status.effectiveType = connection.effectiveType || 'unknown';
+      const connection = (navigator as Navigator & { connection?: { type?: string; effectiveType?: string } }).connection;
+      if (connection) {
+        this.status.connectionType = connection.type || 'unknown';
+        this.status.effectiveType = connection.effectiveType || 'unknown';
+      }
     }
   }
 
@@ -399,7 +401,7 @@ export class NetworkStatusManager {
     });
   }
 
-  private logNetworkEvent(event: string, data?: Record<string, any>): void {
+  private logNetworkEvent(event: string, data?: Record<string, unknown>): void {
     if (!this.config.enableTelemetry) return;
 
     const eventData = {
@@ -419,7 +421,7 @@ export class NetworkStatusManager {
       window.gtag('event', 'network_status', {
         event_category: 'network',
         event_label: event,
-        custom_map: eventData
+        custom_map: eventData as Record<string, unknown>
       });
     }
   }

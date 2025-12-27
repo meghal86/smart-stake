@@ -142,7 +142,7 @@ export function useSingleLoadingState(contextId: string, type: LoadingContext['t
 /**
  * Hook for async operations with automatic loading state management
  */
-export function useAsyncOperation<T = any>(
+export function useAsyncOperation<T = unknown>(
   contextId: string,
   type: LoadingContext['type'] = 'async-action'
 ) {

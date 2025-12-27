@@ -402,7 +402,7 @@ export const withEnhancedErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   options: Partial<EnhancedErrorBoundaryProps> = {}
 ) => {
-  return React.forwardRef<any, P>((props, ref) => (
+  return React.forwardRef<HTMLElement, P>((props, ref) => (
     <EnhancedErrorBoundary {...options}>
       <Component {...props} ref={ref} />
     </EnhancedErrorBoundary>

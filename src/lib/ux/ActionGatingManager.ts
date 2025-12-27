@@ -14,7 +14,7 @@ export interface ActionPrerequisite {
   required: boolean;
   met: boolean;
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export interface ActionGatingState {

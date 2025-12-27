@@ -13,7 +13,7 @@ export interface FormState {
   isSubmitting?: boolean;
   isDirty?: boolean;
   isValid?: boolean;
-  errors?: Record<string, any>;
+  errors?: Record<string, { message?: string }>;
 }
 
 export interface UseFormButtonTooltipOptions {

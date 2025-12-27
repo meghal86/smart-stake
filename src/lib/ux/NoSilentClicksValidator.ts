@@ -286,7 +286,7 @@ export class NoSilentClicksValidator {
 
     // Expose validator to window for manual testing
     if (typeof window !== 'undefined') {
-      (window as any).noSilentClicksValidator = this;
+      (window as Window & { noSilentClicksValidator?: NoSilentClicksValidator }).noSilentClicksValidator = this;
     }
   }
 }

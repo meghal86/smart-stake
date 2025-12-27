@@ -165,11 +165,11 @@ export const AppShell = ({
 /**
  * Higher-order component to wrap pages with AppShell
  */
-export const withAppShell = (
-  Component: React.ComponentType,
+export const withAppShell = <P extends Record<string, unknown>>(
+  Component: React.ComponentType<P>,
   options?: Omit<AppShellProps, 'children'>
 ) => {
-  const WrappedComponent = (props: any) => (
+  const WrappedComponent = (props: P) => (
     <AppShell {...options}>
       <Component {...props} />
     </AppShell>

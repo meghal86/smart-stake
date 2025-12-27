@@ -73,7 +73,7 @@ export function useFormValidation<T extends FieldValues>(
   
   const form = useForm<T>({
     resolver: zodResolver(config.schema),
-    defaultValues: config.defaultValues as any,
+    defaultValues: config.defaultValues as Partial<T>,
     mode: config.mode || 'onBlur',
     reValidateMode: config.reValidateMode || 'onChange',
     shouldFocusError: config.shouldFocusError ?? true,
@@ -104,8 +104,8 @@ export function useFormValidation<T extends FieldValues>(
     const fieldPath = fieldName as Path<T>;
     const fieldError = errors[fieldPath];
     const fieldValue = getValues(fieldPath);
-    const isTouched = !!(touchedFields as any)[fieldPath];
-    const isFieldDirty = !!(dirtyFields as any)[fieldPath];
+    const isTouched = !!(touchedFields as Record<string, boolean>)[fieldPath];
+    const isFieldDirty = !!(dirtyFields as Record<string, boolean>)[fieldPath];
 
     validationState.fieldStates[fieldName] = {
       isValid: !fieldError,
@@ -142,16 +142,16 @@ export function useFormValidation<T extends FieldValues>(
     const characterCount = getCharacterCount(fieldName);
     
     // Get max length from schema if available
-    const fieldSchema = (config.schema as any).shape?.[fieldName];
+    const fieldSchema = (config.schema as z.ZodObject<z.ZodRawShape>).shape?.[fieldName];
     let maxLength: number | undefined;
     
     // Try to extract max length from Zod schema
     if (fieldSchema && '_def' in fieldSchema) {
-      const def = (fieldSchema as any)._def;
-      if (def.checks) {
-        const maxCheck = def.checks.find((check: any) => check.kind === 'max');
-        if (maxCheck) {
-          maxLength = maxCheck.value;
+      const def = (fieldSchema as z.ZodString)._def;
+      if ('checks' in def && Array.isArray(def.checks)) {
+        const maxCheck = def.checks.find((check: z.ZodStringCheck) => check.kind === 'max');
+        if (maxCheck && 'value' in maxCheck) {
+          maxLength = maxCheck.value as number;
         }
       }
     }

@@ -82,7 +82,7 @@ const mockPortfolioData = {
 };
 
 export function ProgressiveDisclosureExample() {
-  const handleJoinQuest = (opportunity: any) => {
+  const handleJoinQuest = (opportunity: typeof mockOpportunity) => {
     console.log('Joining quest:', opportunity.title);
     alert(`Joining quest: ${opportunity.title}`);
   };

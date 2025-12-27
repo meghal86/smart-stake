@@ -1,6 +1,6 @@
 export const track = (name: string, props: unknown = {}) => {
   try {
-    // @ts-ignore
+    // @ts-expect-error - posthog is loaded externally
     window?.posthog?.capture?.(name, props);
     console.log(`Analytics: ${name}`, props);
   } catch (error) {

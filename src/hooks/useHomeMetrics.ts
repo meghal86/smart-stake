@@ -259,7 +259,7 @@ export const getFreshnessMessage = (
   }
   
   switch (status) {
-    case 'current':
+    case 'current': {
       if (dataAge < 0.083) { // Less than 5 seconds
         return 'Just now';
       }
@@ -269,13 +269,15 @@ export const getFreshnessMessage = (
       }
       const minutes = Math.floor(dataAge);
       return `${minutes}m ago`;
+    }
     
     case 'stale':
       return `${Math.floor(dataAge)}m ago`;
     
     case 'outdated': {
+      const minutes = Math.floor(dataAge);
       if (dataAge < 60) {
-        return `${Math.floor(dataAge)}m ago (outdated)`;
+        return `${minutes}m ago (outdated)`;
       }
       const hours = Math.floor(dataAge / 60);
       return `${hours}h ago (outdated)`;

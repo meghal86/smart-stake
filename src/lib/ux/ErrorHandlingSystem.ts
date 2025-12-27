@@ -32,7 +32,7 @@ export interface RecoveryOptions {
   retry?: () => Promise<void>;
   fallback?: () => void;
   escalate?: () => void;
-  cache?: () => any;
+  cache?: () => unknown;
 }
 
 export interface ErrorHandlingConfig {
@@ -53,7 +53,7 @@ export class ErrorHandlingSystem {
   private config: ErrorHandlingConfig;
   private errorHistory: ErrorContext[] = [];
   private offlineMode: boolean = false;
-  private cachedData: Map<string, any> = new Map();
+  private cachedData: Map<string, { data: unknown; timestamp: number; ttl: number }> = new Map();
 
   constructor(config: Partial<ErrorHandlingConfig> = {}) {
     this.config = {
@@ -145,7 +145,7 @@ export class ErrorHandlingSystem {
   handleFormError(
     error: Error,
     fieldName?: string,
-    formData?: Record<string, any>
+    formData?: Record<string, unknown>
   ): ErrorContext {
     const errorContext: ErrorContext = {
       severity: ErrorSeverity.MEDIUM,
@@ -182,7 +182,7 @@ export class ErrorHandlingSystem {
   /**
    * Cache data for offline access
    */
-  cacheData(key: string, data: any, ttl: number = 300000): void {
+  cacheData(key: string, data: unknown, ttl: number = 300000): void {
     this.cachedData.set(key, {
       data,
       timestamp: Date.now(),
@@ -193,7 +193,7 @@ export class ErrorHandlingSystem {
   /**
    * Get cached data if available and not expired
    */
-  getCachedData(key: string): any | null {
+  getCachedData(key: string): unknown | null {
     const cached = this.cachedData.get(key);
     if (!cached) return null;
 
@@ -434,7 +434,7 @@ export class ErrorHandlingSystem {
           component: errorContext.component,
           action: errorContext.action,
           severity: errorContext.severity
-        }
+        } as Record<string, unknown>
       });
     }
   }
@@ -493,7 +493,7 @@ export const handleApiCall = async <T>(
 
 export const handleFormSubmission = async <T>(
   submitFn: () => Promise<T>,
-  formData?: Record<string, any>
+  formData?: Record<string, unknown>
 ): Promise<T> => {
   try {
     return await submitFn();
@@ -520,7 +520,7 @@ declare global {
     gtag?: (
       command: string,
       action: string,
-      parameters: Record<string, any>
+      parameters: Record<string, unknown>
     ) => void;
   }
 }

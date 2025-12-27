@@ -130,7 +130,7 @@ export const GatedButton = React.forwardRef<HTMLButtonElement, GatedButtonProps>
       
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        handleClick(event as any);
+        handleClick(event as unknown as React.MouseEvent<HTMLButtonElement>);
       }
     }, [isDisabled, handleClick]);
 

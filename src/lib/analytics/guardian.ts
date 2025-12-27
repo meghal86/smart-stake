@@ -102,7 +102,7 @@ class ConsoleAnalytics implements AnalyticsProvider {
 // Segment/Mixpanel/Amplitude adapter (production)
 class ProductionAnalytics implements AnalyticsProvider {
   track(event: string, properties?: Record<string, unknown>) {
-    // @ts-ignore - window.analytics is loaded by Segment snippet
+    // @ts-expect-error - window.analytics is loaded by Segment snippet
     if (typeof window !== 'undefined' && window.analytics) {
       window.analytics.track(event, properties);
     }
@@ -112,14 +112,14 @@ class ProductionAnalytics implements AnalyticsProvider {
   }
 
   identify(userId: string, traits?: Record<string, unknown>) {
-    // @ts-ignore
+    // @ts-expect-error - window.analytics is loaded by Segment snippet
     if (typeof window !== 'undefined' && window.analytics) {
       window.analytics.identify(userId, traits);
     }
   }
 
   page(name: string, properties?: Record<string, unknown>) {
-    // @ts-ignore
+    // @ts-expect-error - window.analytics is loaded by Segment snippet
     if (typeof window !== 'undefined' && window.analytics) {
       window.analytics.page(name, properties);
     }

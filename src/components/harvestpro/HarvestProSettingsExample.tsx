@@ -59,9 +59,9 @@ const EXAMPLE_SCENARIOS = {
 export function HarvestProSettingsExample() {
   const [currentScenario, setCurrentScenario] = useState<keyof typeof EXAMPLE_SCENARIOS>('valid');
   const [saveCount, setSaveCount] = useState(0);
-  const [lastSavedData, setLastSavedData] = useState<any>(null);
+  const [lastSavedData, setLastSavedData] = useState<HarvestUserSettings | null>(null);
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: HarvestUserSettings) => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
