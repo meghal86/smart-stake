@@ -16,7 +16,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertTriangle, CheckCircle2, Clock, TrendingDown, Shield, Fuel, Zap, RotateCcw, Heart } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, Clock, TrendingDown, Shield, Fuel, Zap, RotateCcw, Heart, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HarvestOpportunity } from '@/types/harvestpro';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ export interface HarvestDetailModalProps {
   onClose: () => void;
   onExecute: (opportunityId: string) => void;
   isExecuting?: boolean;
+  isConnected?: boolean;
 }
 
 interface ExecutionStep {
@@ -220,16 +221,32 @@ export function HarvestDetailModal({
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
+      // Store original overflow value
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       console.log('🔒 Body scroll locked');
-    } else {
-      document.body.style.overflow = 'unset';
-      console.log('🔓 Body scroll unlocked');
+      
+      // Cleanup function to restore original overflow
+      return () => {
+        document.body.style.overflow = originalOverflow || 'unset';
+        console.log('🔓 Body scroll unlocked');
+      };
     }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
   }, [isOpen]);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
   
   // Don't render anything if no opportunity or not open
   if (!opportunity || !isOpen) {
@@ -252,6 +269,10 @@ export function HarvestDetailModal({
         backdropFilter: 'blur(4px)'
       }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="harvest-modal-title"
+      aria-describedby="harvest-modal-description"
     >
       {/* Modal Content */}
       <div 
@@ -263,20 +284,28 @@ export function HarvestDetailModal({
           <button
             onClick={onClose}
             className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+            aria-label="Close harvest details modal"
+            title="Close modal"
           >
-            <X className="h-4 w-4 text-white" />
-            <span className="sr-only">Close</span>
+            <X className="h-4 w-4 text-white" aria-hidden="true" />
+            <span className="sr-only">Close modal</span>
           </button>
           
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-white flex items-center gap-3">
-                <TrendingDown className="w-6 h-6 text-red-400" />
+              <h2 
+                id="harvest-modal-title"
+                className="text-2xl font-semibold text-white flex items-center gap-3"
+              >
+                <TrendingDown className="w-6 h-6 text-red-400" aria-hidden="true" />
                 Harvest {opportunity.token}
               </h2>
             </div>
-            <p className="text-gray-400 mt-2">
+            <p 
+              id="harvest-modal-description"
+              className="text-gray-400 mt-2"
+            >
               Review the execution plan and costs before proceeding
             </p>
           </div>
@@ -319,22 +348,47 @@ export function HarvestDetailModal({
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Wash Sale Warning Banner (Educational) - Enhanced Req 28 AC1 */}
+          <div className={cn(
+            'mb-6 p-4 rounded-xl border',
+            'bg-blue-500/10 border-blue-500/30',
+            'flex items-start gap-3'
+          )}>
+            <Scale className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-400 mb-1">
+                Tax Rule Reminder 📋
+              </h3>
+              <p className="text-sm text-blue-200/80">
+                <strong>Wash sale rules may apply; consult a tax professional.</strong>
+                {' '}Tax-loss harvesting involves complex regulations that can vary based on your situation. 
+                This tool provides informational outputs only and does not constitute tax advice.
+              </p>
+              <div className="mt-3 p-2 rounded bg-blue-500/10">
+                <p className="text-xs text-blue-300">
+                  💡 <strong>Important:</strong> If you plan to repurchase the same or substantially identical assets within 30 days, 
+                  wash sale rules may disallow the tax loss. Always verify with a qualified tax professional.
+                </p>
+              </div>
+            </div>
+          </div>
           
           {/* Summary Section */}
-          <div className="mb-6 p-5 rounded-xl bg-white/5 border border-white/10">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+          <div className="mb-6 p-5 rounded-xl bg-white/5 border border-white/10" role="region" aria-labelledby="summary-heading">
+            <h3 id="summary-heading" className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
               Summary
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <div className="text-xs text-gray-500 mb-1">Unrealized Loss</div>
-                <div className="text-lg font-semibold text-red-400">
+                <div className="text-lg font-semibold text-red-400" aria-label={`Unrealized loss: ${formatCurrency(opportunity.unrealizedLoss)}`}>
                   {formatCurrency(opportunity.unrealizedLoss)}
                 </div>
               </div>
               <div>
                 <div className="text-xs text-gray-500 mb-1">Net Benefit</div>
-                <div className="text-lg font-semibold text-green-400">
+                <div className="text-lg font-semibold text-green-400" aria-label={`Net benefit: ${formatCurrency(opportunity.netTaxBenefit)}`}>
                   {formatCurrency(opportunity.netTaxBenefit)}
                 </div>
               </div>
@@ -343,8 +397,8 @@ export function HarvestDetailModal({
                 <div className={cn(
                   'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border',
                   getRiskColor(opportunity.riskLevel)
-                )}>
-                  <Shield className="w-3 h-3" />
+                )} aria-label={`Risk level: ${opportunity.riskLevel.toLowerCase()}`}>
+                  <Shield className="w-3 h-3" aria-hidden="true" />
                   {opportunity.riskLevel}
                 </div>
               </div>
@@ -365,11 +419,11 @@ export function HarvestDetailModal({
           </div>
           
           {/* Step-by-Step Actions */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+          <div className="mb-6" role="region" aria-labelledby="execution-steps-heading">
+            <h3 id="execution-steps-heading" className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
               Execution Steps
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-3" role="list" aria-label="Harvest execution steps">
               {steps.map((step) => (
                 <motion.div
                   key={step.stepNumber}
@@ -381,34 +435,41 @@ export function HarvestDetailModal({
                     'bg-white/5 border-white/10',
                     'hover:bg-white/10 transition-colors'
                   )}
+                  role="listitem"
+                  aria-labelledby={`step-${step.stepNumber}-title`}
+                  aria-describedby={`step-${step.stepNumber}-description`}
                 >
                   <div className={cn(
                     'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
                     'bg-blue-500/20 border border-blue-500/30 text-blue-400 font-semibold text-sm'
-                  )}>
+                  )} aria-label={`Step ${step.stepNumber}`}>
                     {step.stepNumber}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-sm font-semibold text-white">{step.title}</h4>
+                      <h4 id={`step-${step.stepNumber}-title`} className="text-sm font-semibold text-white">
+                        {step.title}
+                      </h4>
                       {step.guardianScore !== undefined && (
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <Shield className="w-3 h-3" />
+                        <div className="flex items-center gap-1 text-xs text-gray-400" aria-label={`Guardian score: ${step.guardianScore} out of 10`}>
+                          <Shield className="w-3 h-3" aria-hidden="true" />
                           <span>{step.guardianScore}/10</span>
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-gray-400">{step.description}</p>
+                    <p id={`step-${step.stepNumber}-description`} className="text-sm text-gray-400">
+                      {step.description}
+                    </p>
                   </div>
-                  <Clock className="w-4 h-4 text-gray-500 flex-shrink-0 mt-1" />
+                  <Clock className="w-4 h-4 text-gray-500 flex-shrink-0 mt-1" aria-hidden="true" />
                 </motion.div>
               ))}
             </div>
           </div>
           
           {/* Cost Breakdown Table */}
-          <div className="mb-6 p-5 rounded-xl bg-white/5 border border-white/10">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+          <div className="mb-6 p-5 rounded-xl bg-white/5 border border-white/10" role="region" aria-labelledby="cost-breakdown-heading">
+            <h3 id="cost-breakdown-heading" className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
               Cost Breakdown
             </h3>
             <div className="space-y-3">
@@ -523,12 +584,13 @@ export function HarvestDetailModal({
           </AnimatePresence>
           
           {/* Execute Button */}
-          <div className="flex gap-3">
+          <div className="flex gap-3" role="group" aria-label="Modal actions">
             <Button
               variant="outline"
               onClick={onClose}
               disabled={isExecuting}
               className="flex-1 bg-white/5 border-white/10 hover:bg-white/10 text-white"
+              aria-label="Cancel harvest and close modal"
             >
               Cancel
             </Button>
@@ -542,6 +604,14 @@ export function HarvestDetailModal({
                   : 'bg-gray-600 cursor-not-allowed',
                 'text-white border-0'
               )}
+              aria-label={
+                isExecuting 
+                  ? 'Executing harvest, please wait'
+                  : opportunity.netTaxBenefit <= 0
+                    ? 'Cannot execute harvest - negative net benefit'
+                    : `Execute harvest for ${opportunity.token} with ${formatCurrency(opportunity.netTaxBenefit)} net benefit`
+              }
+              aria-describedby={opportunity.netTaxBenefit <= 0 ? 'negative-benefit-warning' : undefined}
             >
               {isExecuting ? (
                 <>
@@ -549,12 +619,13 @@ export function HarvestDetailModal({
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                     className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
+                    aria-hidden="true"
                   />
                   Executing...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  <CheckCircle2 className="w-4 h-4 mr-2" aria-hidden="true" />
                   Execute Harvest
                 </>
               )}
@@ -562,7 +633,7 @@ export function HarvestDetailModal({
           </div>
           
           {opportunity.netTaxBenefit <= 0 && (
-            <p className="mt-3 text-xs text-center text-amber-400">
+            <p id="negative-benefit-warning" className="mt-3 text-xs text-center text-amber-400" role="alert">
               💡 Net benefit is negative right now. We'd suggest waiting for better conditions or checking other opportunities!
             </p>
           )}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Body Scroll Lock</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .code {
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Body Scroll Lock</h1>
+    
+    <div class="warning">
+        <strong>⚠️ Body scroll is currently locked!</strong> Use the debugging steps below to identify the cause.
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 1: Check Body Element</h2>
+        <p>Open browser DevTools (F12) and run this in the Console:</p>
+        <div class="code">
+// Check if body has scroll-lock styles
+console.log('Body overflow:', getComputedStyle(document.body).overflow);
+console.log('Body position:', getComputedStyle(document.body).position);
+console.log('Body classes:', document.body.className);
+
+// Check for common scroll-lock classes
+const scrollLockClasses = [
+    'overflow-hidden',
+    'scroll-locked',
+    'modal-open',
+    'no-scroll',
+    'body-scroll-lock'
+];
+
+scrollLockClasses.forEach(cls => {
+    if (document.body.classList.contains(cls)) {
+        console.log(`🚨 Found scroll-lock class: ${cls}`);
+    }
+});
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 2: Find Modal/Overlay Elements</h2>
+        <div class="code">
+// Look for modal containers
+const modals = document.querySelectorAll('[role="dialog"], [data-modal], .modal, .overlay');
+console.log('Found modals:', modals);
+
+// Check for fixed/absolute positioned elements
+const fixedElements = Array.from(document.querySelectorAll('*')).filter(el => {
+    const style = getComputedStyle(el);
+    return style.position === 'fixed' && style.zIndex > 1000;
+});
+console.log('High z-index fixed elements:', fixedElements);
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 3: Check React Components</h2>
+        <div class="code">
+// Look for React components that might be causing this
+const reactElements = document.querySelectorAll('[data-testid*="modal"], [data-testid*="overlay"]');
+console.log('React modal elements:', reactElements);
+
+// Check for HarvestPro specific modals
+const harvestModals = document.querySelectorAll('[data-testid*="harvest"]');
+console.log('HarvestPro elements:', harvestModals);
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 4: Force Unlock (Temporary Fix)</h2>
+        <div class="code">
+// Temporarily unlock body scroll
+document.body.style.overflow = 'auto';
+document.body.style.position = 'static';
+
+// Remove common scroll-lock classes
+const lockClasses = ['overflow-hidden', 'scroll-locked', 'modal-open', 'no-scroll'];
+lockClasses.forEach(cls => document.body.classList.remove(cls));
+
+console.log('✅ Body scroll temporarily unlocked');
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Step 5: Find the Source Component</h2>
+        <p>Common components that lock body scroll:</p>
+        <ul>
+            <li><strong>HarvestDetailModal</strong> - Check if a harvest modal is open</li>
+            <li><strong>WalletConnect Modal</strong> - Check if wallet connection is in progress</li>
+            <li><strong>Error Boundaries</strong> - Check if an error overlay is showing</li>
+            <li><strong>Loading Overlays</strong> - Check if a loading screen is stuck</li>
+            <li><strong>Demo Banners</strong> - Check if demo mode banner is causing issues</li>
+        </ul>
+    </div>
+
+    <script>
+        // Auto-run basic diagnostics
+        console.log('🔍 Auto-running body scroll diagnostics...');
+        
+        // Check body styles
+        const bodyStyles = getComputedStyle(document.body);
+        console.log('Body overflow:', bodyStyles.overflow);
+        console.log('Body position:', bodyStyles.position);
+        
+        // Check for modals
+        const modals = document.querySelectorAll('[role="dialog"], .modal, [data-modal]');
+        if (modals.length > 0) {
+            console.log('🚨 Found', modals.length, 'modal(s):', modals);
+        }
+        
+        // Check for high z-index elements
+        const highZElements = Array.from(document.querySelectorAll('*')).filter(el => {
+            const zIndex = parseInt(getComputedStyle(el).zIndex);
+            return zIndex > 1000;
+        });
+        
+        if (highZElements.length > 0) {
+            console.log('🔍 High z-index elements:', highZElements);
+        }
+    </script>
+</body>
+</html>

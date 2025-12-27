@@ -130,6 +130,33 @@ export function FilterChipRow({
     }
   };
 
+  const getFilterDescription = (filter: FilterChipType): string => {
+    switch (filter) {
+      case 'All':
+        return 'Show all harvest opportunities';
+      case 'High Benefit':
+        return 'Show opportunities with net benefit over $1,000';
+      case 'Short-Term Loss':
+        return 'Show short-term capital losses only';
+      case 'Long-Term Loss':
+        return 'Show long-term capital losses only';
+      case 'CEX Holdings':
+        return 'Show centralized exchange positions';
+      case 'Gas Efficient':
+        return 'Show opportunities with grade A gas efficiency';
+      case 'Illiquid':
+        return 'Show opportunities with low liquidity';
+      case 'Safe':
+        return 'Show low risk opportunities only';
+      case 'High Risk':
+        return 'Show high risk opportunities only';
+      case 'Favorites':
+        return 'Show saved favorite opportunities';
+      default:
+        return `Filter by ${filter}`;
+    }
+  };
+
   return (
     <motion.div
       className={cn(
@@ -140,6 +167,8 @@ export function FilterChipRow({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
+      role="group"
+      aria-label="Filter harvest opportunities"
     >
       {defaultFilters.map((filter) => (
         <motion.button
@@ -148,12 +177,22 @@ export function FilterChipRow({
           className={cn(
             'flex-shrink-0 px-4 h-8 rounded-2xl border text-sm font-medium',
             'transition-all duration-200 snap-start',
+            'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900',
             isFilterActive(filter)
               ? 'bg-[#ed8f2d] border-[#ed8f2d] text-white shadow-[0_0_20px_rgba(237,143,45,0.3)]'
               : 'bg-transparent border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.2)]'
           )}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
+          aria-pressed={isFilterActive(filter)}
+          aria-label={`${filter} filter: ${getFilterDescription(filter)}`}
+          title={getFilterDescription(filter)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleFilterChange(filter);
+            }
+          }}
         >
           {filter}
         </motion.button>
@@ -162,7 +201,11 @@ export function FilterChipRow({
       {/* Wallet-specific filters */}
       {walletFilters.length > 0 && (
         <>
-          <div className="w-px h-8 bg-[rgba(255,255,255,0.1)] flex-shrink-0" />
+          <div 
+            className="w-px h-8 bg-[rgba(255,255,255,0.1)] flex-shrink-0" 
+            role="separator"
+            aria-hidden="true"
+          />
           {walletFilters.map((wallet) => (
             <motion.button
               key={wallet}
@@ -170,12 +213,22 @@ export function FilterChipRow({
               className={cn(
                 'flex-shrink-0 px-4 h-8 rounded-2xl border text-sm font-medium',
                 'transition-all duration-200 snap-start',
+                'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900',
                 wallets.includes(wallet)
                   ? 'bg-[#ed8f2d] border-[#ed8f2d] text-white shadow-[0_0_20px_rgba(237,143,45,0.3)]'
                   : 'bg-transparent border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.2)]'
               )}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
+              aria-pressed={wallets.includes(wallet)}
+              aria-label={`Filter by wallet ${wallet}: ${wallets.includes(wallet) ? 'active' : 'inactive'}`}
+              title={`Filter opportunities from wallet ${wallet}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleWallet(wallet);
+                }
+              }}
             >
               {wallet.slice(0, 6)}...{wallet.slice(-4)}
             </motion.button>

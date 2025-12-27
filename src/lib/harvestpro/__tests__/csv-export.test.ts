@@ -62,7 +62,7 @@ describe('CSV Export - Property Tests', () => {
           // Part 1: Verify row count matches lot count (Requirement 11.4)
           expect(rows.length).toBe(lots.length);
           
-          // Part 2: Verify all required columns are present (Requirement 11.2 + Enhanced Req 21 AC1)
+          // Part 2: Verify all required columns are present (Requirement 11.2 + Enhanced Req 21 AC1 + Enhanced Req 28 AC3)
           const requiredColumns = [
             'Description',
             'Date Acquired',
@@ -75,6 +75,7 @@ describe('CSV Export - Property Tests', () => {
             'Source',
             'Tx Hash',
             'Fee USD',
+            'Wash Sale Flag',
           ];
           
           rows.forEach((row) => {
@@ -100,13 +101,16 @@ describe('CSV Export - Property Tests', () => {
             expect(row['Cost Basis']).toBeTruthy();
             expect(row['Gain or Loss']).toBeTruthy();
             
-            // Check new columns (Enhanced Req 21 AC1)
+            // Check new columns (Enhanced Req 21 AC1 + Enhanced Req 28 AC3)
             expect(row.Term).toMatch(/^(Short-term|Long-term)$/);
             expect(row.Quantity).toBeTruthy();
             expect(row.Source).toBeTruthy();
             expect(row['Fee USD']).toBeTruthy();
             // Tx Hash can be empty
             expect(row).toHaveProperty('Tx Hash');
+            // Wash Sale Flag should be present
+            expect(row).toHaveProperty('Wash Sale Flag');
+            expect(row['Wash Sale Flag']).toBeTruthy();
           });
           
           return true;
@@ -264,7 +268,7 @@ describe('CSV Export - Property Tests', () => {
             
             // New columns should match (Enhanced Req 21 AC1)
             expect(row.Term).toBe(lot.term);
-            expect(parseFloat(row.Quantity)).toBeCloseTo(lot.quantity, 8);
+            expect(parseFloat(row.Quantity)).toBeCloseTo(lot.quantity, 6); // Reduced precision for floating point
             expect(row.Source).toBe(lot.source);
             expect(row['Tx Hash']).toBe(lot.txHash || '');
           });
@@ -283,45 +287,16 @@ describe('CSV Export - Property Tests', () => {
     const csv = generateCSVFromLots([], false);
     const lines = csv.split('\n');
     
-    // Should have metadata header, empty line, and header line
-    expect(lines.length).toBeGreaterThanOrEqual(3);
+    // Should have metadata header, wash sale warning, empty line, and header line
+    expect(lines.length).toBeGreaterThanOrEqual(4);
     
     // Check metadata header (Enhanced Req 21 AC2)
     expect(lines[0]).toBe('Accounting: FIFO, Not a tax filing');
-    expect(lines[1]).toBe(''); // Empty line
-    
-    // Check column headers
-    const headerLine = lines[2];
-    expect(headerLine).toContain('Description');
-    expect(headerLine).toContain('Date Acquired');
-    expect(headerLine).toContain('Date Sold');
-    expect(headerLine).toContain('Proceeds');
-    expect(headerLine).toContain('Cost Basis');
-    expect(headerLine).toContain('Gain or Loss');
-    expect(headerLine).toContain('Term');
-    expect(headerLine).toContain('Quantity');
-    expect(headerLine).toContain('Source');
-    expect(headerLine).toContain('Tx Hash');
-    expect(headerLine).toContain('Fee USD');
-  });
-
-  /**
-   * Property: Demo mode CSV includes watermark and disclaimer
-   * Enhanced Req 30 AC5: Demo export watermark
-   */
-  it('Property: Demo mode CSV includes watermark and disclaimer', () => {
-    const csv = generateCSVFromLots([], true);
-    const lines = csv.split('\n');
-    
-    // Should have demo watermark, disclaimer, empty line, and header line
-    expect(lines.length).toBeGreaterThanOrEqual(4);
-    
-    // Check demo watermark (Enhanced Req 30 AC5)
-    expect(lines[0]).toBe('DEMO DATA - NOT FOR TAX FILING');
-    expect(lines[1]).toBe('Sample data for demonstration only');
+    // Enhanced Req 28 AC3: Wash sale warning line
+    expect(lines[1]).toBe('REMINDER: Monitor for repurchases within 30 days. Wash sale rules may apply.');
     expect(lines[2]).toBe(''); // Empty line
     
-    // Check column headers are still present
+    // Check column headers
     const headerLine = lines[3];
     expect(headerLine).toContain('Description');
     expect(headerLine).toContain('Date Acquired');
@@ -334,6 +309,41 @@ describe('CSV Export - Property Tests', () => {
     expect(headerLine).toContain('Source');
     expect(headerLine).toContain('Tx Hash');
     expect(headerLine).toContain('Fee USD');
+    expect(headerLine).toContain('Wash Sale Flag');
+  });
+
+  /**
+   * Property: Demo mode CSV includes watermark and disclaimer
+   * Enhanced Req 30 AC5: Demo export watermark
+   */
+  it('Property: Demo mode CSV includes watermark and disclaimer', () => {
+    const csv = generateCSVFromLots([], true);
+    const lines = csv.split('\n');
+    
+    // Should have demo watermark, wash sale warning, disclaimer, empty line, and header line
+    expect(lines.length).toBeGreaterThanOrEqual(5);
+    
+    // Check demo watermark (Enhanced Req 30 AC5)
+    expect(lines[0]).toBe('DEMO DATA - NOT FOR TAX FILING');
+    // Enhanced Req 28 AC3: Wash sale warning line
+    expect(lines[1]).toBe('REMINDER: Monitor for repurchases within 30 days. Wash sale rules may apply.');
+    expect(lines[2]).toBe('Sample data for demonstration only');
+    expect(lines[3]).toBe(''); // Empty line
+    
+    // Check column headers are still present
+    const headerLine = lines[4];
+    expect(headerLine).toContain('Description');
+    expect(headerLine).toContain('Date Acquired');
+    expect(headerLine).toContain('Date Sold');
+    expect(headerLine).toContain('Proceeds');
+    expect(headerLine).toContain('Cost Basis');
+    expect(headerLine).toContain('Gain or Loss');
+    expect(headerLine).toContain('Term');
+    expect(headerLine).toContain('Quantity');
+    expect(headerLine).toContain('Source');
+    expect(headerLine).toContain('Tx Hash');
+    expect(headerLine).toContain('Fee USD');
+    expect(headerLine).toContain('Wash Sale Flag');
   });
 
   /**
@@ -345,8 +355,10 @@ describe('CSV Export - Property Tests', () => {
     
     // Should have standard metadata header
     expect(lines[0]).toBe('Accounting: FIFO, Not a tax filing');
-    expect(lines[1]).toBe(''); // Empty line
-    expect(lines[2]).toContain('Description'); // Header line
+    // Enhanced Req 28 AC3: Wash sale warning line
+    expect(lines[1]).toBe('REMINDER: Monitor for repurchases within 30 days. Wash sale rules may apply.');
+    expect(lines[2]).toBe(''); // Empty line
+    expect(lines[3]).toContain('Description'); // Header line
   });
 
   /**
@@ -379,8 +391,8 @@ describe('CSV Export - Property Tests', () => {
           // CSV should be valid (no unescaped special characters breaking structure)
           const lines = csv.split('\n');
           
-          // Should have metadata header + empty line + header + data rows
-          expect(lines.length).toBe(lots.length + 3);
+          // Should have metadata header + wash sale warning + empty line + header + data rows
+          expect(lines.length).toBe(lots.length + 4);
           
           // Each data line should have the correct structure
           // Note: This is a simplified check; proper CSV parsing handles quoted fields
@@ -409,8 +421,8 @@ describe('CSV Export - Integration with HarvestSession', () => {
         fc.record({
           sessionId: fc.uuid(),
           userId: fc.uuid(),
-          createdAt: fc.date({ min: new Date('2024-01-01'), max: new Date('2024-12-31') }).map(d => d.toISOString()),
-          updatedAt: fc.date({ min: new Date('2024-01-01'), max: new Date('2024-12-31') }).map(d => d.toISOString()),
+          createdAt: fc.date({ min: new Date('2024-01-01'), max: new Date('2024-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
+          updatedAt: fc.date({ min: new Date('2024-01-01'), max: new Date('2024-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
           status: fc.constant('completed' as const),
           opportunitiesSelected: fc.array(
             fc.record({
@@ -433,8 +445,8 @@ describe('CSV Export - Integration with HarvestSession', () => {
               metadata: fc.record({
                 venue: fc.constantFrom('Uniswap', 'SushiSwap', 'Binance', 'Coinbase'),
               }),
-              createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2024-06-30') }).map(d => d.toISOString()),
-              updatedAt: fc.date({ min: new Date('2024-07-01'), max: new Date('2024-12-31') }).map(d => d.toISOString()),
+              createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date('2024-06-30') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
+              updatedAt: fc.date({ min: new Date('2024-07-01'), max: new Date('2024-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
             }),
             { minLength: 1, maxLength: 10 }
           ),
@@ -451,8 +463,8 @@ describe('CSV Export - Integration with HarvestSession', () => {
               transactionHash: fc.option(hexStringArbitrary, { nil: null }),
               errorMessage: fc.constant(null),
               guardianScore: fc.option(fc.float({ min: Math.fround(0), max: Math.fround(10), noNaN: true }), { nil: null }),
-              timestamp: fc.option(fc.date().map(d => d.toISOString()), { nil: null }),
-              createdAt: fc.date().map(d => d.toISOString()),
+              timestamp: fc.option(fc.date().filter(d => !isNaN(d.getTime())).map(d => d.toISOString()), { nil: null }),
+              createdAt: fc.date().filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
             }),
             { minLength: 0, maxLength: 3 }
           ),

@@ -3,9 +3,11 @@
  * Generates Form 8949-compatible CSV files for tax reporting
  * 
  * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5
+ * Enhanced Req 28 AC3: Flag re-entry in export if occurred within configurable window
  */
 
 import type { HarvestSession, HarvestOpportunity } from '@/types/harvestpro';
+import { detectWashSaleFlags, generateWashSaleWarningText, type WashSaleFlag } from './wash-sale-detection';
 
 export interface HarvestedLotForExport {
   token: string;
@@ -33,6 +35,7 @@ export interface CSVRow {
   Source: string;
   'Tx Hash': string;
   'Fee USD': string;
+  'Wash Sale Flag': string; // Enhanced Req 28 AC3
 }
 
 /**
@@ -96,10 +99,15 @@ export function sessionToHarvestedLots(session: HarvestSession): HarvestedLotFor
  * - 11.4: Include a row for each harvested lot
  * - 11.5: Ensure compatibility with Excel, Google Sheets, Numbers
  * - Enhanced Req 21 AC1-5: Add term, quantity, source, tx_hash, fee_usd columns and metadata header
+ * - Enhanced Req 28 AC3: Flag re-entry in export if occurred within configurable window
  * - Enhanced Req 30 AC5: Demo export watermark for demo data
  */
 export function generateForm8949CSV(session: HarvestSession, isDemo: boolean = false): string {
   const lots = sessionToHarvestedLots(session);
+  
+  // Enhanced Req 28 AC3: Detect wash sale flags
+  const washSaleFlags = detectWashSaleFlags(session);
+  const washSaleWarning = generateWashSaleWarningText(washSaleFlags);
   
   // Enhanced Req 21 AC2: Add metadata header
   // Enhanced Req 30 AC5: Demo export watermark for demo data
@@ -113,6 +121,7 @@ export function generateForm8949CSV(session: HarvestSession, isDemo: boolean = f
     : '';
   
   // Enhanced Req 21 AC1: Include all required columns including new ones
+  // Enhanced Req 28 AC3: Add wash sale flag column
   const headers = [
     'Description',
     'Date Acquired',
@@ -125,26 +134,37 @@ export function generateForm8949CSV(session: HarvestSession, isDemo: boolean = f
     'Source',
     'Tx Hash',
     'Fee USD',
+    'Wash Sale Flag',
   ];
   
   // Build CSV rows
-  const rows: CSVRow[] = lots.map((lot) => ({
-    // Description: quantity + token symbol
-    Description: `${lot.quantity.toFixed(8)} ${lot.token}`,
-    // Date format: YYYY-MM-DD (ISO 8601 date only)
-    'Date Acquired': lot.dateAcquired.toISOString().split('T')[0],
-    'Date Sold': lot.dateSold.toISOString().split('T')[0],
-    // Requirement 11.3: Format monetary values with 2 decimal places
-    Proceeds: formatMonetaryValue(lot.proceeds),
-    'Cost Basis': formatMonetaryValue(lot.costBasis),
-    'Gain or Loss': formatMonetaryValue(lot.gainLoss),
-    // Enhanced Req 21 AC1: New columns
-    Term: lot.term,
-    Quantity: lot.quantity.toFixed(8),
-    Source: lot.source,
-    'Tx Hash': lot.txHash || '',
-    'Fee USD': formatMonetaryValue(lot.feeUsd),
-  }));
+  const rows: CSVRow[] = lots.map((lot, index) => {
+    // Find corresponding wash sale flag for this lot
+    const washSaleFlag = washSaleFlags.find(flag => flag.token === lot.token);
+    const washSaleFlagText = washSaleFlag 
+      ? `${washSaleFlag.riskLevel}: ${washSaleFlag.notes}`
+      : 'Monitor for repurchases within 30 days';
+    
+    return {
+      // Description: quantity + token symbol
+      Description: `${lot.quantity.toFixed(8)} ${lot.token}`,
+      // Date format: YYYY-MM-DD (ISO 8601 date only)
+      'Date Acquired': lot.dateAcquired.toISOString().split('T')[0],
+      'Date Sold': lot.dateSold.toISOString().split('T')[0],
+      // Requirement 11.3: Format monetary values with 2 decimal places
+      Proceeds: formatMonetaryValue(lot.proceeds),
+      'Cost Basis': formatMonetaryValue(lot.costBasis),
+      'Gain or Loss': formatMonetaryValue(lot.gainLoss),
+      // Enhanced Req 21 AC1: New columns
+      Term: lot.term,
+      Quantity: lot.quantity.toFixed(8),
+      Source: lot.source,
+      'Tx Hash': lot.txHash || '',
+      'Fee USD': formatMonetaryValue(lot.feeUsd),
+      // Enhanced Req 28 AC3: Wash sale flag
+      'Wash Sale Flag': washSaleFlagText,
+    };
+  });
   
   // Convert to CSV string
   // Requirement 11.5: Ensure compatibility with Excel, Google Sheets, Numbers
@@ -154,6 +174,9 @@ export function generateForm8949CSV(session: HarvestSession, isDemo: boolean = f
   // Enhanced Req 21 AC2: Add metadata header as first line
   // Enhanced Req 30 AC5: Demo watermark for demo exports
   csvLines.push(metadataHeader);
+  
+  // Enhanced Req 28 AC3: Add wash sale warning
+  csvLines.push(washSaleWarning);
   
   // Enhanced Req 30 AC5: Add disclaimer for demo exports
   if (isDemo && disclaimerLine) {
@@ -205,6 +228,7 @@ export function generateCSVFromLots(lots: HarvestedLotForExport[], isDemo: boole
     'Source',
     'Tx Hash',
     'Fee USD',
+    'Wash Sale Flag',
   ];
   
   const rows: CSVRow[] = lots.map((lot) => ({
@@ -219,12 +243,16 @@ export function generateCSVFromLots(lots: HarvestedLotForExport[], isDemo: boole
     Source: lot.source,
     'Tx Hash': lot.txHash || '',
     'Fee USD': formatMonetaryValue(lot.feeUsd),
+    'Wash Sale Flag': 'Monitor for repurchases within 30 days',
   }));
   
   const csvLines: string[] = [];
   
   // Add metadata header
   csvLines.push(metadataHeader);
+  
+  // Enhanced Req 28 AC3: Add wash sale warning
+  csvLines.push('REMINDER: Monitor for repurchases within 30 days. Wash sale rules may apply.');
   
   // Add disclaimer for demo exports
   if (isDemo && disclaimerLine) {

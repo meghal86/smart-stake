@@ -1,6 +1,7 @@
 /**
  * HarvestOpportunityCard Component
  * Hunter-style card for displaying tax-loss harvesting opportunities
+ * Enhanced with performance monitoring
  */
 
 import React from 'react';
@@ -22,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { HarvestOpportunity } from '@/types/harvestpro';
 import { GuardianScoreTooltip } from './GuardianScoreTooltip';
+import { useHarvestProPerformance } from '@/hooks/useHarvestProPerformance';
 
 interface HarvestOpportunityCardProps {
   opportunity: HarvestOpportunity;
@@ -131,6 +133,18 @@ export function HarvestOpportunityCard({
   isDemo = false,
   className,
 }: HarvestOpportunityCardProps) {
+  // Performance monitoring
+  const { measureInteraction, recordMetric } = useHarvestProPerformance({
+    componentName: 'HarvestOpportunityCard',
+    metadata: {
+      opportunityId: opportunity.id,
+      token: opportunity.token,
+      riskLevel: opportunity.riskLevel,
+      netBenefit: opportunity.netTaxBenefit,
+      isDemo,
+    },
+  });
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -140,8 +154,43 @@ export function HarvestOpportunityCard({
     }).format(value);
   };
 
+  // Measure button interactions
+  const handleStartHarvest = () => {
+    measureInteraction('start_harvest_click', () => {
+      if (isConnected || isDemo) {
+        onStartHarvest(opportunity.id);
+      }
+    }, { 
+      opportunityId: opportunity.id,
+      isConnected,
+      isDemo,
+      netBenefit: opportunity.netTaxBenefit,
+    });
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    measureInteraction('save_click', () => {
+      onSave?.(opportunity.id);
+    }, { opportunityId: opportunity.id });
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    measureInteraction('share_click', () => {
+      onShare?.(opportunity.id);
+    }, { opportunityId: opportunity.id });
+  };
+
+  const handleReport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    measureInteraction('report_click', () => {
+      onReport?.(opportunity.id);
+    }, { opportunityId: opportunity.id });
+  };
+
   return (
-    <motion.div
+    <motion.article
       className={cn(
         'backdrop-blur-lg rounded-[20px] py-8 px-6 cursor-pointer group transition-all duration-700 border relative transform-gpu',
         'bg-gradient-to-br from-slate-900/80 via-blue-950/60 to-slate-900/80 border-teal-400/20',
@@ -164,6 +213,16 @@ export function HarvestOpportunityCard({
         boxShadow: '0 30px 80px -12px rgba(0,0,0,0.75), 0 0 0 1px rgba(237,143,45,0.35)',
       }}
       whileTap={{ scale: 0.99 }}
+      role="article"
+      aria-labelledby={`opportunity-title-${opportunity.id}`}
+      aria-describedby={`opportunity-description-${opportunity.id}`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleStartHarvest();
+        }
+      }}
     >
       {/* Hover Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#ed8f2d]/0 via-[#14b8a6]/0 to-[#ed8f2d]/0 group-hover:from-[#ed8f2d]/8 group-hover:via-[#14b8a6]/6 group-hover:to-[#ed8f2d]/8 transition-all duration-700 rounded-[20px]" />
@@ -196,20 +255,27 @@ export function HarvestOpportunityCard({
           {/* Title & Key Metrics */}
           <div className="flex-1 min-w-0">
             {/* Title - Most Important */}
-            <h3 className="text-xl font-bold font-display leading-tight mb-2 text-white">
+            <h3 
+              id={`opportunity-title-${opportunity.id}`}
+              className="text-xl font-bold font-display leading-tight mb-2 text-white"
+            >
               Harvest {opportunity.token} Loss
             </h3>
 
             {/* Key Financial Info - Second Most Important */}
             <div className="flex items-center gap-4 mb-3">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-green-400" />
-                <span className="font-bold text-green-400 text-lg">{formatCurrency(opportunity.netTaxBenefit)}</span>
+                <DollarSign className="w-4 h-4 text-green-400" aria-hidden="true" />
+                <span className="font-bold text-green-400 text-lg" aria-label={`Net benefit: ${formatCurrency(opportunity.netTaxBenefit)}`}>
+                  {formatCurrency(opportunity.netTaxBenefit)}
+                </span>
                 <span className="text-gray-500 text-sm">Net Benefit</span>
               </div>
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-400" />
-                <span className="font-semibold text-white">{opportunity.confidence}%</span>
+                <Shield className="w-4 h-4 text-blue-400" aria-hidden="true" />
+                <span className="font-semibold text-white" aria-label={`Confidence: ${opportunity.confidence} percent`}>
+                  {opportunity.confidence}%
+                </span>
                 <span className="text-gray-500 text-sm">Confidence</span>
               </div>
             </div>
@@ -228,44 +294,41 @@ export function HarvestOpportunityCard({
           </div>
 
           {/* Action Buttons - Compact */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0" role="group" aria-label="Opportunity actions">
             {onSave && (
               <motion.button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSave(opportunity.id);
-                }}
+                onClick={handleSave}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label={`Save ${opportunity.token} harvest opportunity`}
+                title={`Save ${opportunity.token} harvest opportunity`}
               >
-                <Bookmark className="w-4 h-4 text-gray-400" />
+                <Bookmark className="w-4 h-4 text-gray-400" aria-hidden="true" />
               </motion.button>
             )}
             {onShare && (
               <motion.button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShare(opportunity.id);
-                }}
+                onClick={handleShare}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label={`Share ${opportunity.token} harvest opportunity`}
+                title={`Share ${opportunity.token} harvest opportunity`}
               >
-                <Share2 className="w-4 h-4 text-gray-400" />
+                <Share2 className="w-4 h-4 text-gray-400" aria-hidden="true" />
               </motion.button>
             )}
             {onReport && (
               <motion.button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReport(opportunity.id);
-                }}
+                onClick={handleReport}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label={`Report issue with ${opportunity.token} harvest opportunity`}
+                title={`Report issue with ${opportunity.token} harvest opportunity`}
               >
-                <Flag className="w-4 h-4 text-gray-400" />
+                <Flag className="w-4 h-4 text-gray-400" aria-hidden="true" />
               </motion.button>
             )}
           </div>
@@ -274,7 +337,10 @@ export function HarvestOpportunityCard({
         {/* Secondary Information - Supporting Details */}
         <div className="space-y-4">
           {/* Condensed Description */}
-          <p className="text-sm leading-relaxed text-gray-400">
+          <p 
+            id={`opportunity-description-${opportunity.id}`}
+            className="text-sm leading-relaxed text-gray-400"
+          >
             Harvest <span className="text-white font-semibold">{formatCurrency(opportunity.unrealizedLoss)}</span> in losses
             {opportunity.metadata.reasons && opportunity.metadata.reasons.length > 0 && (
               <span className="text-gray-500"> • {opportunity.metadata.reasons[0]}</span>
@@ -299,7 +365,7 @@ export function HarvestOpportunityCard({
 
         {/* CTA Button - Prominent */}
         <motion.button
-          onClick={() => (isConnected || isDemo) && onStartHarvest(opportunity.id)}
+          onClick={handleStartHarvest}
           disabled={!isConnected && !isDemo}
           className={cn(
             'relative w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 overflow-hidden mt-6',
@@ -317,6 +383,9 @@ export function HarvestOpportunityCard({
             stiffness: 400,
             damping: 25,
           }}
+          aria-label={`Start harvest for ${opportunity.token} with ${formatCurrency(opportunity.netTaxBenefit)} net benefit`}
+          aria-describedby={`opportunity-description-${opportunity.id}`}
+          title={(!isConnected && !isDemo) ? 'Connect wallet to start harvest' : `Start harvest for ${opportunity.token}`}
         >
           {/* Ripple Effect */}
           <motion.div
@@ -331,10 +400,10 @@ export function HarvestOpportunityCard({
             animate={{ x: [0, 4, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: [0.25, 1, 0.5, 1] }}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
           </motion.div>
         </motion.button>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }

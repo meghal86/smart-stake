@@ -112,7 +112,7 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
   - _Design: Loading State Manager → Universal Feedback_
 
 - [x] **1.3 Improve Demo Mode Integration**
-  - Add persistent demo banner when in demo mode: "Demo Mode — Data is simulated"
+  - Add persistent demo banner when in git add  mode: "Demo Mode — Data is simulated"
   - Include "Connect Wallet for Live Data" CTA in demo banner
   - Ensure demo data is clearly labeled and never mixed with live data
   - _Requirements: Enhanced Req 30 AC2-3 (demo badges)_
@@ -179,14 +179,14 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
 
 **Scope:** Enhance existing form interactions and validation
 
-- [x] **4.1 Add Real-Time Validation**
+- [ ] **4.1 Add Real-Time Validation**
   - Implement immediate validation feedback on form fields
   - Add character counters and helpful error messages
   - Show clear success confirmations for form submissions
   - _Requirements: Enhanced Req 6 AC1-3 (immediate validation, clear messages)_
   - _Design: Form Validation → Real-Time Feedback_
 
-- [x] **4.2 Enhance Settings Integration**
+- [ ] **4.2 Enhance Settings Integration**
   - Fix any "Invalid Date" placeholders in user settings
   - Add clear explanations for disabled form fields
   - Implement immediate save confirmation and error feedback
@@ -197,12 +197,12 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
 
 **Scope:** Enhance existing information display and empty state handling
 
-- [x] **5.1 Implement Progressive Disclosure**
+- [ ] **5.1 Implement Progressive Disclosure**
   - Reorder and condense the existing card content to show key info first (title/subtitle/benefit/confidence/risk) without introducing new card expansion state unless it already exists today. If expansion does not exist, do not add it; instead improve hierarchy and spacing.
   - _Requirements: Enhanced Req 12 AC1-3 (expandable cards, smooth animations)_
   - _Design: Progressive Disclosure → Information Layering_
 
-- [x] **5.2 Enhance Empty States**
+- [ ] **5.2 Enhance Empty States**
   - Improve existing empty state messages with helpful guidance
   - Add relevant call-to-action buttons and next steps
   - Include checklists of items scanned when no results found
@@ -213,7 +213,7 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
 
 **Scope:** Enhance existing copy and add celebration moments
 
-- [x] **6.1 Humanize Error Messages**
+- [ ] **6.1 Humanize Error Messages**
   - Replace technical error messages with encouraging, human-friendly copy
   - Add contextual help and recovery suggestions
   - Use empathetic language for error conditions
@@ -231,14 +231,14 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
 
 **Scope:** Improve existing error handling and recovery mechanisms
 
-- [ ] **7.1 Enhance Error Boundaries**
+- [x] **7.1 Enhance Error Boundaries**
   - Wrap existing components in error boundaries with recovery options
   - Add graceful degradation when external services are unavailable
   - Implement user-friendly error messages with retry functionality
   - _Requirements: Enhanced Req 15 AC1-3 (error boundaries, graceful degradation)_
   - _Design: Error Handling → Recovery Mechanisms_
 
-- [ ] **7.2 Add Performance Monitoring**
+- [x] **7.2 Add Performance Monitoring**
   - Ensure existing loading states meet performance thresholds
   - Add performance metrics for opportunity loading and CSV generation
   - Tune existing React Query cache settings only (no new caching layers)
@@ -256,14 +256,14 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
   - _Requirements: Enhanced Req 0/6/11/14/17/18/21/27/28/30 (only those touched by UX changes)_
   - _Design: Testing Strategy → Property-Based Testing_
 
-- [ ] **8.2 Integration Tests**
+- [x] **8.2 Integration Tests**
   - Test demo/live mode switching functionality
   - Validate modal interactions and state management
   - Test error recovery and retry mechanisms
   - _Requirements: Enhanced Req 17 AC4-5 (integration testing standards)_
   - _Design: Testing Strategy → Integration Testing_
 
-- [ ] **8.3 Accessibility Compliance**
+- [x] **8.3 Accessibility Compliance**
   - Ensure all interactive elements meet WCAG AA standards
   - Test keyboard navigation and screen reader compatibility
   - Validate color contrast and touch target sizes
@@ -274,7 +274,7 @@ The existing HarvestPro implementation at `src/pages/HarvestPro.tsx` is function
 
 **Scope:** Critical regulatory warnings and demo data protection
 
-- [ ] **9.1 Wash Sale Warning System (MANDATORY)**
+- [x] **9.1 Wash Sale Warning System (MANDATORY)**
   - When the UI presents any existing 'rebuy' / 're-entry' action or suggestion, display the wash sale warning copy and default toggles to OFF.
   - If no rebuy/re-entry UI exists, only add a static educational warning in the existing detail modal (no detection engine).
   - Display: "Wash sale rules may apply; consult a tax professional"

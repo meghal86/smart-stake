@@ -22,6 +22,11 @@ export { ProofOfHarvestExample } from './ProofOfHarvestExample';
 export { HarvestProSettingsForm } from './HarvestProSettingsForm';
 export { HarvestProSettingsExample } from './HarvestProSettingsExample';
 
+// Error Handling
+export { HarvestProErrorBoundary } from './HarvestProErrorBoundary';
+export type { HarvestProErrorBoundaryProps, HarvestProErrorFallbackProps } from './HarvestProErrorBoundary';
+export { withHarvestProErrorBoundary, useHarvestProErrorHandler } from './HarvestProErrorBoundary';
+
 // Skeletons
 export * from './skeletons';
 

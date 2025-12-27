@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form 8949 Export Demo Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .demo-button {
+            background: #f59e0b;
+        }
+        .demo-button:hover {
+            background: #d97706;
+        }
+        pre {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .success {
+            color: #059669;
+            font-weight: 600;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        .demo-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Form 8949 Export Demo Test</h1>
+        <p>Testing demo export watermark functionality for HarvestPro CSV exports.</p>
+        
+        <div class="test-section">
+            <h3>Task 9.2: Demo Export Watermark</h3>
+            <p><strong>Requirements:</strong></p>
+            <ul>
+                <li>✅ Add "DEMO DATA - NOT FOR TAX FILING" watermark to demo CSV exports</li>
+                <li>✅ Include disclaimer: "Sample data for demonstration only"</li>
+                <li>✅ Clear visual distinction between demo and live exports</li>
+                <li>✅ Prevent accidental use of demo exports for tax filing</li>
+            </ul>
+            
+            <div style="margin: 20px 0;">
+                <button onclick="testLiveExport()">Generate Live Export</button>
+                <button onclick="testDemoExport()" class="demo-button">
+                    <span class="demo-badge">DEMO</span> Generate Demo Export
+                </button>
+            </div>
+            
+            <div id="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Export Comparison</h3>
+            <div id="comparison"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock CSV export functions (simplified versions for testing)
+        function generateMockCSV(isDemo = false) {
+            const metadataHeader = isDemo 
+                ? 'DEMO DATA - NOT FOR TAX FILING'
+                : 'Accounting: FIFO, Not a tax filing';
+            
+            const disclaimerLine = isDemo 
+                ? 'Sample data for demonstration only'
+                : '';
+            
+            const washSaleWarning = 'REMINDER: Monitor for repurchases within 30 days. Wash sale rules may apply.';
+            
+            const headers = [
+                'Description',
+                'Date Acquired',
+                'Date Sold',
+                'Proceeds',
+                'Cost Basis',
+                'Gain or Loss',
+                'Term',
+                'Quantity',
+                'Source',
+                'Tx Hash',
+                'Fee USD',
+                'Wash Sale Flag'
+            ];
+            
+            // Sample data
+            const sampleRow = [
+                '1.50000000 ETH',
+                '2024-01-15',
+                '2024-12-15',
+                '3000.00',
+                '4000.00',
+                '-1000.00',
+                'Long-term',
+                '1.50000000',
+                'Uniswap',
+                '0x1234...abcd',
+                '25.50',
+                'Monitor for repurchases within 30 days'
+            ];
+            
+            const csvLines = [];
+            csvLines.push(metadataHeader);
+            csvLines.push(washSaleWarning);
+            
+            if (isDemo && disclaimerLine) {
+                csvLines.push(disclaimerLine);
+            }
+            
+            csvLines.push(''); // Empty line
+            csvLines.push(headers.join(','));
+            csvLines.push(sampleRow.join(','));
+            
+            return csvLines.join('\n');
+        }
+        
+        function testLiveExport() {
+            const csv = generateMockCSV(false);
+            const filename = 'harvest-session-live-123.csv';
+            
+            displayResults('Live Export', csv, filename, false);
+            downloadCSV(csv, filename);
+        }
+        
+        function testDemoExport() {
+            const csv = generateMockCSV(true);
+            const filename = 'DEMO-harvest-session-123.csv';
+            
+            displayResults('Demo Export', csv, filename, true);
+            downloadCSV(csv, filename);
+        }
+        
+        function displayResults(title, csv, filename, isDemo) {
+            const resultsDiv = document.getElementById('results');
+            const lines = csv.split('\n');
+            
+            let validationResults = [];
+            
+            if (isDemo) {
+                // Validate demo requirements
+                if (lines[0] === 'DEMO DATA - NOT FOR TAX FILING') {
+                    validationResults.push('✅ Demo watermark present');
+                } else {
+                    validationResults.push('❌ Demo watermark missing');
+                }
+                
+                if (lines.includes('Sample data for demonstration only')) {
+                    validationResults.push('✅ Demo disclaimer present');
+                } else {
+                    validationResults.push('❌ Demo disclaimer missing');
+                }
+                
+                if (filename.startsWith('DEMO-')) {
+                    validationResults.push('✅ Demo filename prefix present');
+                } else {
+                    validationResults.push('❌ Demo filename prefix missing');
+                }
+            } else {
+                // Validate live requirements
+                if (lines[0] === 'Accounting: FIFO, Not a tax filing') {
+                    validationResults.push('✅ Standard metadata header present');
+                } else {
+                    validationResults.push('❌ Standard metadata header missing');
+                }
+                
+                if (!lines.includes('DEMO DATA - NOT FOR TAX FILING')) {
+                    validationResults.push('✅ No demo watermark (correct for live)');
+                } else {
+                    validationResults.push('❌ Demo watermark present in live export');
+                }
+                
+                if (!filename.startsWith('DEMO-')) {
+                    validationResults.push('✅ Standard filename (no demo prefix)');
+                } else {
+                    validationResults.push('❌ Demo prefix in live filename');
+                }
+            }
+            
+            resultsDiv.innerHTML = `
+                <h4>${title} Results</h4>
+                <p><strong>Filename:</strong> <code>${filename}</code></p>
+                <div style="margin: 10px 0;">
+                    ${validationResults.map(result => `<div>${result}</div>`).join('')}
+                </div>
+                <details>
+                    <summary>View CSV Content</summary>
+                    <pre>${csv}</pre>
+                </details>
+            `;
+            
+            updateComparison();
+        }
+        
+        function updateComparison() {
+            const liveCSV = generateMockCSV(false);
+            const demoCSV = generateMockCSV(true);
+            
+            const comparisonDiv = document.getElementById('comparison');
+            comparisonDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4>Live Export</h4>
+                        <pre style="height: 200px; overflow-y: auto;">${liveCSV}</pre>
+                    </div>
+                    <div>
+                        <h4><span class="demo-badge">DEMO</span> Demo Export</h4>
+                        <pre style="height: 200px; overflow-y: auto;">${demoCSV}</pre>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 15px; background: #fef3c7; border-radius: 6px; border: 1px solid #f59e0b;">
+                    <strong>Key Differences:</strong>
+                    <ul>
+                        <li>Demo export has "DEMO DATA - NOT FOR TAX FILING" watermark</li>
+                        <li>Demo export includes "Sample data for demonstration only" disclaimer</li>
+                        <li>Demo filename has "DEMO-" prefix</li>
+                        <li>Both include wash sale warning for compliance</li>
+                    </ul>
+                </div>
+            `;
+        }
+        
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // Initialize comparison on page load
+        window.onload = function() {
+            updateComparison();
+        };
+    </script>
+</body>
+</html>

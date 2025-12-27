@@ -1,12 +1,14 @@
 /**
  * useHarvestFilters Hook
  * Integrates filter store with URL persistence and provides filtered opportunities
+ * Enhanced with performance monitoring
  */
 
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useHarvestFilterStore } from '@/stores/useHarvestFilterStore';
 import { applyFilters, hasActiveFilters, getActiveFilterCount } from '@/lib/harvestpro/filter-application';
+import { harvestProPerformanceMonitor } from '@/lib/harvestpro/performance-monitor';
 import type { HarvestOpportunity } from '@/types/harvestpro';
 
 export function useHarvestFilters(opportunities: HarvestOpportunity[]) {
@@ -46,9 +48,11 @@ export function useHarvestFilters(opportunities: HarvestOpportunity[]) {
     filterStore.sort,
   ]);
 
-  // Apply filters to opportunities
+  // Apply filters to opportunities with performance monitoring
   const filteredOpportunities = useMemo(() => {
-    return applyFilters(opportunities, {
+    const start = performance.now();
+    
+    const result = applyFilters(opportunities, {
       search: filterStore.search,
       types: filterStore.types,
       wallets: filterStore.wallets,
@@ -59,6 +63,31 @@ export function useHarvestFilters(opportunities: HarvestOpportunity[]) {
       liquidity: filterStore.liquidity,
       sort: filterStore.sort,
     });
+    
+    const duration = performance.now() - start;
+    harvestProPerformanceMonitor.recordMetric(
+      'filter:application',
+      duration,
+      100, // 100ms threshold for filter application
+      {
+        inputCount: opportunities.length,
+        outputCount: result.length,
+        hasSearch: !!filterStore.search,
+        activeFilterCount: getActiveFilterCount({
+          search: filterStore.search,
+          types: filterStore.types,
+          wallets: filterStore.wallets,
+          riskLevels: filterStore.riskLevels,
+          minBenefit: filterStore.minBenefit,
+          holdingPeriod: filterStore.holdingPeriod,
+          gasEfficiency: filterStore.gasEfficiency,
+          liquidity: filterStore.liquidity,
+          sort: filterStore.sort,
+        }),
+      }
+    );
+    
+    return result;
   }, [
     opportunities,
     filterStore.search,

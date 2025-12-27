@@ -96,16 +96,25 @@ function MetricWithTrustSignal({
   methodology,
   delay,
 }: MetricWithTrustSignalProps) {
+  const metricId = `metric-${label.toLowerCase().replace(/\s+/g, '-')}`;
+  const descriptionId = `${metricId}-description`;
+
   return (
     <motion.div
       className="space-y-2"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay }}
+      role="group"
+      aria-labelledby={metricId}
+      aria-describedby={descriptionId}
     >
       <div className="flex items-center gap-2">
-        <Icon className={cn('w-5 h-5', color)} />
-        <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
+        <Icon className={cn('w-5 h-5', color)} aria-hidden="true" />
+        <p 
+          id={metricId}
+          className="text-xs uppercase text-gray-500 tracking-wider font-medium"
+        >
           {label}
         </p>
         <TooltipProvider>
@@ -114,13 +123,15 @@ function MetricWithTrustSignal({
               <button
                 className="text-gray-400 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
                 aria-label={`How ${label.toLowerCase()} is calculated`}
+                title={`How ${label.toLowerCase()} is calculated`}
               >
-                <HelpCircle className="w-3 h-3" />
+                <HelpCircle className="w-3 h-3" aria-hidden="true" />
               </button>
             </TooltipTrigger>
             <TooltipContent 
               side="top" 
               className="max-w-sm p-4 bg-slate-800 border-slate-600 text-slate-100"
+              role="tooltip"
             >
               <div className="space-y-2">
                 <div className="font-semibold text-cyan-400 mb-3">
@@ -139,7 +150,11 @@ function MetricWithTrustSignal({
           </Tooltip>
         </TooltipProvider>
       </div>
-      <p className="text-3xl font-bold text-white">
+      <p 
+        id={descriptionId}
+        className="text-3xl font-bold text-white"
+        aria-label={`${label}: ${value}`}
+      >
         {value}
       </p>
     </motion.div>
@@ -217,7 +232,18 @@ export function HarvestSummaryCard({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
+      role="region"
+      aria-labelledby="harvest-summary-title"
+      aria-describedby="harvest-summary-description"
     >
+      {/* Screen reader title */}
+      <h2 id="harvest-summary-title" className="sr-only">
+        Harvest Opportunities Summary
+      </h2>
+      <p id="harvest-summary-description" className="sr-only">
+        Overview of available tax-loss harvesting opportunities including total losses, net benefits, and efficiency metrics
+      </p>
+
       {/* Warning Banner */}
       {hasHighRiskOpportunities && (
         <motion.div
@@ -225,8 +251,10 @@ export function HarvestSummaryCard({
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
+          role="alert"
+          aria-live="polite"
         >
-          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" aria-hidden="true" />
           <p className="text-sm text-yellow-500">
             Some opportunities have elevated risk. Review Guardian scores carefully.
           </p>
@@ -234,7 +262,7 @@ export function HarvestSummaryCard({
       )}
 
       {/* 2x2 Metrics Grid */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-6" role="group" aria-label="Harvest opportunity metrics">
         {/* Total Harvestable Loss */}
         <MetricWithTrustSignal
           icon={TrendingDown}
@@ -273,7 +301,7 @@ export function HarvestSummaryCard({
           transition={{ delay: 0.4 }}
         >
           <div className="flex items-center gap-2">
-            <Zap className={cn('w-5 h-5', getGasEfficiencyColor(summary.gasEfficiencyScore))} />
+            <Zap className={cn('w-5 h-5', getGasEfficiencyColor(summary.gasEfficiencyScore))} aria-hidden="true" />
             <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
               Gas Efficiency
             </p>
@@ -283,13 +311,15 @@ export function HarvestSummaryCard({
                   <button
                     className="text-gray-400 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
                     aria-label="How gas efficiency is calculated"
+                    title="How gas efficiency is calculated"
                   >
-                    <HelpCircle className="w-3 h-3" />
+                    <HelpCircle className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent 
                   side="top" 
                   className="max-w-sm p-4 bg-slate-800 border-slate-600 text-slate-100"
+                  role="tooltip"
                 >
                   <div className="space-y-2">
                     <div className="font-semibold text-cyan-400 mb-3">
@@ -309,7 +339,10 @@ export function HarvestSummaryCard({
             </TooltipProvider>
           </div>
           <div className="flex items-center justify-between">
-            <p className={cn('text-2xl font-bold', getGasEfficiencyColor(summary.gasEfficiencyScore))}>
+            <p 
+              className={cn('text-2xl font-bold', getGasEfficiencyColor(summary.gasEfficiencyScore))}
+              aria-label={`Gas efficiency grade: ${summary.gasEfficiencyScore}`}
+            >
               {summary.gasEfficiencyScore}
             </p>
             <GasPriceStatus />

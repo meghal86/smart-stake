@@ -24,6 +24,7 @@ import {
   AllOpportunitiesHarvested,
   APIFailureFallback,
 } from '@/components/harvestpro';
+import { HarvestProErrorBoundary } from '@/components/harvestpro/HarvestProErrorBoundary';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { DemoBanner } from '@/components/ux/DemoBanner';
 import { useHarvestFilters } from '@/hooks/useHarvestFilters';
@@ -32,7 +33,9 @@ import { useWallet } from '@/contexts/WalletContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useDemoMode } from '@/lib/ux/DemoModeManager';
-import type { OpportunitiesSummary, HarvestOpportunity, HarvestSession } from '@/types/harvestpro';
+import { serviceAvailability, HarvestProService } from '@/lib/harvestpro/service-availability';
+import { harvestProPerformanceMonitor } from '@/lib/harvestpro/performance-monitor';
+import type { OpportunitiesResponse, OpportunitiesSummary, HarvestOpportunity, HarvestSession } from '@/types/harvestpro';
 
 type ViewState = 'loading' | 'no-wallet' | 'no-opportunities' | 'all-harvested' | 'error' | 'normal';
 
@@ -52,6 +55,23 @@ export default function HarvestPro() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [completedSession, setCompletedSession] = useState<HarvestSession | null>(null);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+
+  // Initialize service monitoring
+  useEffect(() => {
+    serviceAvailability.startMonitoringAll();
+    
+    return () => {
+      serviceAvailability.cleanup();
+    };
+  }, []);
+
+  // Handle demo mode when services are unavailable
+  const handleServiceDegradation = () => {
+    const health = serviceAvailability.getHealthSummary();
+    if (health.overallHealth === 'critical' && !isDemo) {
+      setDemoMode(true);
+    }
+  };
 
   // Pull-to-refresh
   const handlePullRefresh = async () => {
@@ -161,69 +181,93 @@ export default function HarvestPro() {
     },
   ];
 
-  // Use real data when not in demo mode, mock data otherwise
-  const opportunities = isDemo 
-    ? mockOpportunities 
-    : (opportunitiesData?.items || []);
+  // Default empty response for when data is not available
+  const emptyResponse: OpportunitiesResponse = {
+    items: [],
+    cursor: null,
+    ts: new Date().toISOString(),
+    summary: {
+      totalHarvestableLoss: 0,
+      estimatedNetBenefit: 0,
+      eligibleTokensCount: 0,
+      gasEfficiencyScore: 'C' as const,
+    },
+  };
 
-  const summary = isDemo
-    ? mockSummary
-    : (opportunitiesData?.summary || {
-        totalHarvestableLoss: 0,
-        estimatedNetBenefit: 0,
-        eligibleTokensCount: 0,
-        gasEfficiencyScore: 'C' as const,
-      });
+  // Use real data when not in demo mode, mock data otherwise
+  let currentData: OpportunitiesResponse;
+  
+  if (isDemo) {
+    currentData = {
+      items: mockOpportunities,
+      cursor: null,
+      ts: new Date().toISOString(),
+      summary: mockSummary,
+    };
+  } else if (opportunitiesData) {
+    currentData = opportunitiesData as OpportunitiesResponse;
+  } else {
+    currentData = emptyResponse;
+  }
+
+  const opportunities = currentData.items;
+  const summary = currentData.summary;
 
   // Use the filtering hook
   const { filteredOpportunities, isFiltered, activeFilterCount } = useHarvestFilters(opportunities);
 
-  // Update view state based on API response
+  // Update view state based on API response with performance monitoring
   useEffect(() => {
-    if (isDemo) {
-      // In demo mode, always show normal view
-      setViewState('normal');
-    } else if (isLoading) {
-      setViewState('loading');
-    } else if (isError) {
-      setViewState('error');
-    } else if (opportunities.length === 0) {
-      setViewState('no-opportunities');
-    } else {
-      setViewState('normal');
-    }
+    harvestProPerformanceMonitor.measureLoadingState('view_state_update', () => {
+      if (isDemo) {
+        // In demo mode, always show normal view
+        setViewState('normal');
+      } else if (isLoading) {
+        setViewState('loading');
+      } else if (isError) {
+        setViewState('error');
+      } else if (opportunities.length === 0) {
+        setViewState('no-opportunities');
+      } else {
+        setViewState('normal');
+      }
+    });
   }, [isDemo, isLoading, isError, opportunities.length]);
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    if (isDemo) {
-      // In demo mode, just simulate refresh
-      setTimeout(() => {
-        setIsRefreshing(false);
-        setLastUpdated(new Date());
-      }, 1000);
-    } else {
-      // In real mode, refetch from API
-      refetch().finally(() => {
-        setIsRefreshing(false);
-        setLastUpdated(new Date());
-      });
-    }
+    harvestProPerformanceMonitor.measureInteraction('refresh', () => {
+      setIsRefreshing(true);
+      if (isDemo) {
+        // In demo mode, just simulate refresh
+        setTimeout(() => {
+          setIsRefreshing(false);
+          setLastUpdated(new Date());
+        }, 1000);
+      } else {
+        // In real mode, refetch from API
+        refetch().finally(() => {
+          setIsRefreshing(false);
+          setLastUpdated(new Date());
+        });
+      }
+    }, { mode: isDemo ? 'demo' : 'live' });
   };
 
-  // Handle opening detail modal
+  // Handle opening detail modal with performance monitoring
   const handleStartHarvest = (opportunityId: string) => {
-    console.log('🚀 Start Harvest clicked! Opportunity ID:', opportunityId);
-    // Search in the actual opportunities array (not mockOpportunities)
-    const opportunity = opportunities.find(opp => opp.id === opportunityId);
-    console.log('📦 Found opportunity:', opportunity);
-    if (opportunity) {
-      setSelectedOpportunity(opportunity);
-      setIsModalOpen(true);
-      console.log('✅ Modal should open now');
-    } else {
-      console.error('❌ Opportunity not found!');
-    }
+    harvestProPerformanceMonitor.measureInteraction('modal_open', () => {
+      console.log('🚀 Start Harvest clicked! Opportunity ID:', opportunityId);
+      // Search in the actual opportunities array (not mockOpportunities)
+      const opportunity = opportunities.find((opp: HarvestOpportunity) => opp.id === opportunityId);
+      console.log('📦 Found opportunity:', opportunity);
+      if (opportunity) {
+        setSelectedOpportunity(opportunity);
+        setIsModalOpen(true);
+        console.log('✅ Modal should open now');
+      } else {
+        console.error('❌ Opportunity not found!');
+      }
+    }, { opportunityId, opportunityCount: opportunities.length });
   };
 
   // Handle harvest execution
@@ -279,32 +323,55 @@ export default function HarvestPro() {
     }, 2000); // Simulate 2 second execution
   };
 
-  // Handle CSV download - client-side generation
+  // Handle CSV download - client-side generation with performance monitoring
+  // Enhanced Req 30 AC5: Demo export watermark for demo data
   const handleDownloadCSV = (sessionId: string) => {
     if (!completedSession) return;
     
-    // Import the CSV generation function
-    import('@/lib/harvestpro/csv-export').then(({ generateForm8949CSV }) => {
-      const csv = generateForm8949CSV(completedSession);
-      
-      // Create blob and download
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `harvest-session-${sessionId}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      URL.revokeObjectURL(url);
-      console.log('✅ CSV downloaded successfully');
-    }).catch(error => {
-      console.error('❌ Failed to generate CSV:', error);
-    });
+    harvestProPerformanceMonitor.measureCSVGeneration('download_trigger', () => {
+      // Import the CSV generation function
+      import('@/lib/harvestpro/csv-export').then(({ generateForm8949CSV }) => {
+        harvestProPerformanceMonitor.measureCSVGeneration('generation', () => {
+          // Enhanced Req 30 AC5: Pass demo mode to CSV generation for watermarking
+          const csv = generateForm8949CSV(completedSession, isDemo);
+          
+          // Create blob and download
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          
+          // Enhanced Req 30 AC5: Add demo prefix to filename for demo exports
+          const filename = isDemo 
+            ? `DEMO-harvest-session-${sessionId}.csv`
+            : `harvest-session-${sessionId}.csv`;
+          
+          link.setAttribute('href', url);
+          link.setAttribute('download', filename);
+          link.style.visibility = 'hidden';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          URL.revokeObjectURL(url);
+          console.log(`✅ CSV downloaded successfully${isDemo ? ' (DEMO MODE)' : ''}`);
+          
+          return csv;
+        }, {
+          sessionId,
+          opportunityCount: completedSession.opportunitiesSelected.length,
+          totalBenefit: completedSession.netBenefitTotal,
+        });
+      }).catch(error => {
+        console.error('❌ Failed to generate CSV:', error);
+        harvestProPerformanceMonitor.recordMetric(
+          'csv:import_error',
+          Date.now(),
+          0,
+          { error: error.message, sessionId }
+        );
+      });
+    }, { sessionId });
   };
 
   // Handle view proof
@@ -324,36 +391,63 @@ export default function HarvestPro() {
     switch (viewState) {
       case 'loading':
         return (
-          <>
+          <HarvestProErrorBoundary
+            component="loading-state"
+            enableRecovery={false}
+          >
             <SummaryCardSkeleton className="mb-6" />
             <OpportunityCardSkeletonGrid count={3} />
-          </>
+          </HarvestProErrorBoundary>
         );
 
       case 'no-wallet':
         return (
-          <NoWalletsConnected
-            onConnectWallet={() => console.log('Connect wallet')}
-          />
+          <HarvestProErrorBoundary
+            component="no-wallet-state"
+            enableRecovery={false}
+          >
+            <NoWalletsConnected
+              onConnectWallet={() => console.log('Connect wallet')}
+            />
+          </HarvestProErrorBoundary>
         );
 
       case 'no-opportunities':
-        return <NoOpportunitiesDetected />;
+        return (
+          <HarvestProErrorBoundary
+            component="no-opportunities-state"
+            enableDemoMode={true}
+            onEnterDemoMode={handleServiceDegradation}
+          >
+            <NoOpportunitiesDetected />
+          </HarvestProErrorBoundary>
+        );
 
       case 'all-harvested':
         return (
-          <AllOpportunitiesHarvested
-            onDownloadCSV={() => console.log('Download CSV')}
-            onViewProof={() => console.log('View proof')}
-          />
+          <HarvestProErrorBoundary
+            component="all-harvested-state"
+            enableRecovery={true}
+          >
+            <AllOpportunitiesHarvested
+              onDownloadCSV={() => console.log('Download CSV')}
+              onViewProof={() => console.log('View proof')}
+            />
+          </HarvestProErrorBoundary>
         );
 
       case 'error':
         return (
-          <APIFailureFallback
-            onRetry={handleRefresh}
-            isRetrying={isRefreshing}
-          />
+          <HarvestProErrorBoundary
+            component="error-fallback"
+            enableDemoMode={true}
+            onEnterDemoMode={handleServiceDegradation}
+          >
+            <APIFailureFallback
+              onRetry={handleRefresh}
+              isRetrying={isRefreshing}
+            />
+          </HarvestProErrorBoundary>
         );
 
       case 'normal':
@@ -361,37 +455,56 @@ export default function HarvestPro() {
         return (
           <>
             {/* Summary Card */}
-            <HarvestSummaryCard
-              summary={summary}
-              hasHighRiskOpportunities={true}
-              className="mb-6"
-            />
+            <HarvestProErrorBoundary
+              component="summary-card"
+              enableDemoMode={true}
+              onEnterDemoMode={handleServiceDegradation}
+              cacheKey="harvestpro-summary"
+            >
+              <HarvestSummaryCard
+                summary={summary}
+                hasHighRiskOpportunities={true}
+                className="mb-6"
+              />
+            </HarvestProErrorBoundary>
 
             {/* Opportunities Feed */}
-            <div className="space-y-4">
-              {filteredOpportunities.length > 0 ? (
-                filteredOpportunities.map((opportunity, index) => (
-                  <HarvestOpportunityCard
-                    key={opportunity.id}
-                    opportunity={opportunity}
-                    index={index}
-                    onStartHarvest={handleStartHarvest}
-                    onSave={(id) => console.log('Save:', id)}
-                    onShare={(id) => console.log('Share:', id)}
-                    onReport={(id) => console.log('Report:', id)}
-                    isConnected={isConnected}
-                    isDemo={isDemo}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12 text-gray-400">
-                  <p className="text-lg mb-2">No opportunities match your filters</p>
-                  <p className="text-sm">
-                    {isFiltered && `${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} active`}
-                  </p>
-                </div>
-              )}
-            </div>
+            <HarvestProErrorBoundary
+              component="opportunities-feed"
+              enableDemoMode={true}
+              onEnterDemoMode={handleServiceDegradation}
+              cacheKey="harvestpro-opportunities-list"
+            >
+              <div className="space-y-4">
+                {filteredOpportunities.length > 0 ? (
+                  filteredOpportunities.map((opportunity, index) => (
+                    <HarvestProErrorBoundary
+                      key={opportunity.id}
+                      component="opportunity-card"
+                      enableRecovery={true}
+                    >
+                      <HarvestOpportunityCard
+                        opportunity={opportunity}
+                        index={index}
+                        onStartHarvest={handleStartHarvest}
+                        onSave={(id) => console.log('Save:', id)}
+                        onShare={(id) => console.log('Share:', id)}
+                        onReport={(id) => console.log('Report:', id)}
+                        isConnected={isConnected}
+                        isDemo={isDemo}
+                      />
+                    </HarvestProErrorBoundary>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-gray-400">
+                    <p className="text-lg mb-2">No opportunities match your filters</p>
+                    <p className="text-sm">
+                      {isFiltered && `${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} active`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </HarvestProErrorBoundary>
 
             {/* Demo State Switcher */}
             <div className="mt-8 text-center py-6 text-gray-400 rounded-2xl border border-white/10 bg-white/5">
@@ -464,61 +577,128 @@ export default function HarvestPro() {
           repeat: Infinity,
           ease: [0.25, 1, 0.5, 1],
         }}
+        aria-hidden="true"
       />
 
+      {/* Skip to main content link for screen readers */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
-      <HarvestProHeader
-        lastUpdated={lastUpdated}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
+      <header role="banner">
+        <HarvestProErrorBoundary
+          component="header"
+          enableDemoMode={true}
+          onEnterDemoMode={handleServiceDegradation}
+          cacheKey="harvestpro-header"
+        >
+          <HarvestProHeader
+            lastUpdated={lastUpdated}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+          />
+        </HarvestProErrorBoundary>
+      </header>
 
       {/* Demo Banner */}
       {isDemo && (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <DemoBanner 
-            feature="HarvestPro"
-            onExitDemo={() => setDemoMode(false)}
-          />
+          <HarvestProErrorBoundary
+            component="demo-banner"
+            enableRecovery={false}
+          >
+            <DemoBanner 
+              onExitDemo={() => setDemoMode(false)}
+            />
+          </HarvestProErrorBoundary>
         </div>
       )}
 
       {/* Main Content - Responsive Container */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28">
+      <main 
+        id="main-content"
+        role="main"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28"
+        aria-label="HarvestPro tax-loss harvesting opportunities"
+      >
+        {/* Page Title for Screen Readers */}
+        <h1 className="sr-only">HarvestPro - Tax-Loss Harvesting Opportunities</h1>
+
         {/* Filter Chips - Horizontally scrollable on mobile */}
-        <FilterChipRow className="mb-6" />
+        <section aria-labelledby="filters-heading">
+          <h2 id="filters-heading" className="sr-only">Filter Opportunities</h2>
+          <HarvestProErrorBoundary
+            component="filters"
+            enableDemoMode={true}
+            onEnterDemoMode={handleServiceDegradation}
+          >
+            <FilterChipRow className="mb-6" />
+          </HarvestProErrorBoundary>
+        </section>
 
         {/* Content Area */}
-        <div>
-          {renderContent()}
-        </div>
-      </div>
+        <section aria-labelledby="opportunities-heading">
+          <h2 id="opportunities-heading" className="sr-only">Harvest Opportunities</h2>
+          <HarvestProErrorBoundary
+            component="main-content"
+            enableDemoMode={true}
+            onEnterDemoMode={handleServiceDegradation}
+            cacheKey="harvestpro-opportunities"
+          >
+            <div>
+              {renderContent()}
+            </div>
+          </HarvestProErrorBoundary>
+        </section>
+      </main>
 
       {/* Footer Navigation */}
-      <FooterNav />
+      <footer role="contentinfo">
+        <HarvestProErrorBoundary
+          component="footer"
+          enableRecovery={false}
+        >
+          <FooterNav />
+        </HarvestProErrorBoundary>
+      </footer>
 
       {/* Detail Modal */}
-      <HarvestDetailModal
-        opportunity={selectedOpportunity}
-        isOpen={isModalOpen}
-        onClose={() => {
-          console.log('🚪 Modal closing');
-          setIsModalOpen(false);
-          setSelectedOpportunity(null);
-        }}
-        onExecute={handleExecute}
-        isConnected={isConnected}
-      />
+      <HarvestProErrorBoundary
+        component="detail-modal"
+        enableDemoMode={true}
+        onEnterDemoMode={handleServiceDegradation}
+      >
+        <HarvestDetailModal
+          opportunity={selectedOpportunity}
+          isOpen={isModalOpen}
+          onClose={() => {
+            console.log('🚪 Modal closing');
+            setIsModalOpen(false);
+            setSelectedOpportunity(null);
+          }}
+          onExecute={handleExecute}
+          isConnected={isConnected}
+        />
+      </HarvestProErrorBoundary>
 
       {/* Success Screen */}
       {completedSession && showSuccessScreen && (
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
-          <HarvestSuccessScreen
-            session={completedSession}
-            onDownloadCSV={handleDownloadCSV}
-            onViewProof={handleViewProof}
-            onClose={handleCloseSuccess}
-          />
+          <HarvestProErrorBoundary
+            component="success-screen"
+            enableRecovery={true}
+          >
+            <HarvestSuccessScreen
+              session={completedSession}
+              onDownloadCSV={handleDownloadCSV}
+              onViewProof={handleViewProof}
+              onClose={handleCloseSuccess}
+            />
+          </HarvestProErrorBoundary>
         </div>
       )}
     </div>

@@ -31,6 +31,11 @@ export interface DemoBannerProps {
    * Custom className for styling
    */
   className?: string;
+  
+  /**
+   * Callback when user exits demo mode
+   */
+  onExitDemo?: () => void;
 }
 
 /**
