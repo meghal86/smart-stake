@@ -30,7 +30,7 @@ export function PerformanceMonitor() {
     };
 
     updateMetrics();
-    const interval = setInterval(updateMetrics, 5000);
+    const interval = setInterval(updateMetrics, 30000); // Reduced frequency to 30 seconds
     return () => clearInterval(interval);
   }, []);
 

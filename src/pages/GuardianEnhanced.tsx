@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
+import { InteractiveDiv } from '@/components/ui/interactive-div';
 import { RisksTab } from '@/components/guardian/RisksTab';
 import { AlertsTab } from '@/components/guardian/AlertsTab';
 import { HistoryTab } from '@/components/guardian/HistoryTab';
@@ -282,18 +284,19 @@ export function GuardianEnhanced() {
               </div>
               
               <div className="flex items-center gap-3">
-                <motion.button
+                <DisabledTooltipButton
                   onClick={() => setIsDarkTheme(!isDarkTheme)}
                   className={`p-2 rounded-lg transition-all duration-200 ${
                     isDarkTheme 
                       ? 'bg-white/10 hover:bg-white/15' 
                       : 'bg-gray-100/80 hover:bg-gray-200/80'
                   }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
                 >
                   {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </motion.button>
+                </DisabledTooltipButton>
               </div>
             </div>
           </div>
@@ -334,26 +337,27 @@ export function GuardianEnhanced() {
             <div className="flex flex-col sm:flex-row gap-3 mb-6 relative z-10">
               <ConnectButton.Custom>
                 {({ openConnectModal }) => (
-                  <button 
+                  <DisabledTooltipButton 
                     onClick={openConnectModal}
-                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 transition relative z-20 cursor-pointer"
-                    style={{ pointerEvents: 'auto' }}
+                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 transition relative z-20"
+                    aria-label="Connect your wallet to start security scan"
                   >
                     Connect Wallet
-                  </button>
+                  </DisabledTooltipButton>
                 )}
               </ConnectButton.Custom>
-              <button 
+              <DisabledTooltipButton 
                 onClick={handleDemoMode}
-                className={`w-full sm:w-auto px-4 py-2 rounded-lg border transition-all duration-300 relative z-20 cursor-pointer ${
+                className={`w-full sm:w-auto px-4 py-2 rounded-lg border transition-all duration-300 relative z-20 ${
                   isDarkTheme
                     ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                     : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                 }`}
-                style={{ pointerEvents: 'auto' }}
+                variant="outline"
+                aria-label="Try Guardian demo mode with sample wallet data"
               >
                 ✨ Try Demo Mode
-              </button>
+              </DisabledTooltipButton>
             </div>
 
             <div className={`flex flex-col sm:flex-row justify-between text-xs transition-colors duration-300 ${
@@ -494,13 +498,16 @@ export function GuardianEnhanced() {
               {/* Multi-Wallet Dropdown */}
               {(wallets.length > 0 || activeAddress) && (
                 <div className="relative">
-                  <button
+                  <DisabledTooltipButton
                     onClick={() => setShowWalletDropdown(!showWalletDropdown)}
                     className={`flex items-center gap-2 px-3 py-1 rounded-lg border transition-all duration-300 ${
                       isDarkTheme
                         ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                         : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                     }`}
+                    variant="outline"
+                    size="sm"
+                    aria-label="Select active wallet for security scan"
                   >
                     <Wallet className="w-3 h-3" />
                     <span className="text-xs font-mono">
@@ -513,7 +520,7 @@ export function GuardianEnhanced() {
                       }`} />
                     )}
                     <ChevronDown className="w-3 h-3" />
-                  </button>
+                  </DisabledTooltipButton>
                   
                   {/* Wallet Dropdown */}
                   {showWalletDropdown && (
@@ -530,7 +537,7 @@ export function GuardianEnhanced() {
                         </h3>
                         
                         {wallets.map((wallet, index) => (
-                          <button
+                          <InteractiveDiv
                             key={wallet.address}
                             onClick={() => handleSwitchWallet(index)}
                             className={`w-full flex items-center justify-between p-2 rounded-lg mb-2 transition-all ${
@@ -540,6 +547,7 @@ export function GuardianEnhanced() {
                                   ? 'hover:bg-white/5'
                                   : 'hover:bg-gray-50'
                             }`}
+                            ariaLabel={`Switch to wallet ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)} with trust score ${wallet.trustScore || 'unknown'}`}
                           >
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${
@@ -578,10 +586,10 @@ export function GuardianEnhanced() {
                                 </p>
                               )}
                             </div>
-                          </button>
+                          </InteractiveDiv>
                         ))}
                         
-                        <button
+                        <DisabledTooltipButton
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -594,10 +602,12 @@ export function GuardianEnhanced() {
                               ? 'border-gray-600 text-gray-400 hover:border-[#00C9A7] hover:text-[#00C9A7]'
                               : 'border-gray-300 text-gray-500 hover:border-[#00C9A7] hover:text-[#00C9A7]'
                           }`}
+                          variant="outline"
+                          aria-label="Add a new wallet to Guardian for security monitoring"
                         >
                           <Plus className="w-4 h-4" />
                           <span className="text-sm">Add Wallet</span>
-                        </button>
+                        </DisabledTooltipButton>
                       </div>
                     </div>
                   )}
@@ -607,14 +617,17 @@ export function GuardianEnhanced() {
             
             <div className="flex items-center gap-3">
               {demoMode && (
-                <button
+                <DisabledTooltipButton
                   onClick={handleExitDemo}
                   className={`px-2 py-1 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity ${
                     isDarkTheme ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                   }`}
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Exit demo mode and return to normal Guardian interface"
                 >
                   Demo Mode (Exit)
-                </button>
+                </DisabledTooltipButton>
               )}
               
               <p className={`text-xs transition-colors duration-300 ${
@@ -624,21 +637,22 @@ export function GuardianEnhanced() {
               </p>
               
               <div className="flex items-center gap-3">
-                <motion.button
+                <DisabledTooltipButton
                   onClick={() => setIsDarkTheme(!isDarkTheme)}
                   className={`p-2 rounded-lg transition-all duration-200 ${
                     isDarkTheme 
                       ? 'bg-white/10 hover:bg-white/15' 
                       : 'bg-gray-100/80 hover:bg-gray-200/80'
                   }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
                 >
                   {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </motion.button>
+                </DisabledTooltipButton>
                 
                 <div className="flex gap-2 text-sm">
-                  <button 
+                  <DisabledTooltipButton 
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -647,17 +661,19 @@ export function GuardianEnhanced() {
                       console.log('Set showAddWalletModal to true');
                       alert('Add Wallet button clicked! Check console.');
                     }}
-                    className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 cursor-pointer z-10 relative ${
+                    className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
                       isDarkTheme
                         ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                         : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                     }`}
-                    style={{ pointerEvents: 'auto' }}
+                    variant="outline"
+                    size="sm"
+                    aria-label="Add a new wallet to Guardian for security monitoring"
                   >
                     <Plus className="w-3 h-3" />
                     Add Wallet
-                  </button>
-                  <button 
+                  </DisabledTooltipButton>
+                  <DisabledTooltipButton 
                     onClick={demoMode ? handleExitDemo : handleDemoMode}
                     className={`px-3 py-1 rounded-lg border transition-all duration-300 ${
                       demoMode
@@ -666,12 +682,15 @@ export function GuardianEnhanced() {
                           ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                           : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                     }`}
+                    variant={demoMode ? "default" : "outline"}
+                    size="sm"
+                    aria-label={demoMode ? "Exit demo mode" : "Enter demo mode with sample wallet data"}
                   >
                     {demoMode ? 'Exit Demo' : 'Demo'}
-                  </button>
+                  </DisabledTooltipButton>
                   <ConnectButton.Custom>
                     {({ openConnectModal }) => (
-                      <button 
+                      <DisabledTooltipButton 
                         onClick={openConnectModal}
                         className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
                           isConnected && !demoMode
@@ -680,6 +699,9 @@ export function GuardianEnhanced() {
                               ? 'border-[rgba(255,255,255,0.1)] text-gray-300 hover:bg-[rgba(255,255,255,0.05)]'
                               : 'border-[rgba(0,0,0,0.08)] text-[#444C56] hover:bg-gray-100'
                         }`}
+                        variant={isConnected && !demoMode ? "default" : "outline"}
+                        size="sm"
+                        aria-label={isConnected ? "Wallet is connected" : "Connect your wallet to Guardian"}
                       >
                         {isConnected ? 'Connected' : 'Connect'}
                         {isConnected && !demoMode && (
@@ -690,7 +712,7 @@ export function GuardianEnhanced() {
                             <Activity className="w-3 h-3" />
                           </motion.div>
                         )}
-                      </button>
+                      </DisabledTooltipButton>
                     )}
                   </ConnectButton.Custom>
                 </div>
@@ -703,13 +725,15 @@ export function GuardianEnhanced() {
             isDarkTheme ? 'text-gray-300' : 'text-[#444C56]'
           }`}>
             {['Scan', 'Risks', 'Alerts', 'History'].map((tab) => (
-              <motion.button
+              <DisabledTooltipButton
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`relative px-2 py-1 transition-all duration-200 ${
                   activeTab === tab ? 'text-[#00C9A7]' : ''
                 }`}
-                whileHover={{ scale: 1.05 }}
+                variant="ghost"
+                size="sm"
+                aria-label={`Switch to ${tab} tab`}
               >
                 {tab}
                 {activeTab === tab && (
@@ -719,7 +743,7 @@ export function GuardianEnhanced() {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
-              </motion.button>
+              </DisabledTooltipButton>
             ))}
           </nav>
         </div>
@@ -903,7 +927,7 @@ export function GuardianEnhanced() {
                       </p>
                     </div>
                     
-                    <button
+                    <DisabledTooltipButton
                       onClick={() => {
                         setActiveWalletIndex(index);
                         handleRescan();
@@ -913,24 +937,28 @@ export function GuardianEnhanced() {
                           ? 'bg-[#00C9A7]/20 text-[#00C9A7] hover:bg-[#00C9A7]/30'
                           : 'bg-[#00C9A7]/10 text-[#00C9A7] hover:bg-[#00C9A7]/20'
                       }`}
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Scan wallet ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)} for security risks`}
                     >
                       Scan →
-                    </button>
+                    </DisabledTooltipButton>
                   </div>
                 </div>
               ))}
             </div>
             
             {wallets.length > 1 && (
-              <button
+              <DisabledTooltipButton
                 onClick={() => {
                   // Scan all wallets
                   toast.success(`Scanning ${wallets.length} wallets...`);
                 }}
                 className="w-full mt-4 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white font-medium hover:opacity-90 transition-all duration-200"
+                aria-label={`Scan all ${wallets.length} wallets for security risks`}
               >
                 Scan All Wallets
-              </button>
+              </DisabledTooltipButton>
             )}
           </motion.div>
         )}
@@ -958,20 +986,26 @@ export function GuardianEnhanced() {
               }`}>
                 Trust Score
               </h2>
-              <button
+              <DisabledTooltipButton
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-[#00C9A7]/10 text-[#00C9A7] hover:bg-[#00C9A7]/20 transition"
+                variant="ghost"
+                size="sm"
+                aria-label="View AI-generated security digest for this wallet"
               >
                 <Brain className="w-3 h-3" /> Digest
-              </button>
+              </DisabledTooltipButton>
             </div>
-            <button 
+            <DisabledTooltipButton 
               onClick={() => setShowLearnMore(!showLearnMore)}
               className={`text-xs hover:text-[#00C9A7] transition-colors duration-300 ${
                 isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
               }`}
+              variant="ghost"
+              size="sm"
+              aria-label={showLearnMore ? 'Hide trust score details' : 'Learn more about trust score calculation'}
             >
               {showLearnMore ? 'Hide details' : 'ⓘ Learn More'}
-            </button>
+            </DisabledTooltipButton>
           </div>
           <div className="flex items-center gap-3 mt-3 mb-4">
             <div className="relative">
@@ -1143,7 +1177,7 @@ export function GuardianEnhanced() {
                     </p>
                   </div>
                   {card.cta && (
-                    <button 
+                    <DisabledTooltipButton 
                       data-guardian-button="true"
                       onClick={(e) => {
                         e.preventDefault();
@@ -1155,11 +1189,11 @@ export function GuardianEnhanced() {
                           setActiveTab('Risks');
                         }
                       }}
-                      className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto cursor-pointer relative z-10"
-                      style={{ pointerEvents: 'auto' }}
+                      className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto"
+                      aria-label={card.cta === 'Fix Risks' ? 'Fix detected security risks in this wallet' : 'Review token approvals for this wallet'}
                     >
                       {card.cta === 'Fix Risks' && wallets.length > 1 ? 'Fix Risks in Selected Wallet' : card.cta} →
-                    </button>
+                    </DisabledTooltipButton>
                   )}
                 </motion.div>
               ));
@@ -1174,15 +1208,14 @@ export function GuardianEnhanced() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <button 
+          <DisabledTooltipButton 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               console.log('Rescan button clicked');
               handleRescan();
             }}
-            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2 cursor-pointer relative z-10"
-            style={{ pointerEvents: 'auto' }}
+            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2"
             aria-label="Re-scan active wallet for updated risk analysis"
           >
             <motion.div
@@ -1196,7 +1229,7 @@ export function GuardianEnhanced() {
               <Shield className="w-4 h-4" />
             </motion.div>
             {wallets.length > 1 ? 'Re-Scan This Wallet' : 'Re-Scan Wallet'}
-          </button>
+          </DisabledTooltipButton>
         </motion.div>
         </>
         )}
@@ -1211,12 +1244,15 @@ export function GuardianEnhanced() {
                 <AlertTriangle className="w-5 h-5" />
                 Fix Detected Risks
               </h2>
-              <button
+              <DisabledTooltipButton
                 onClick={() => setShowFixModal(false)}
                 className="text-gray-400 hover:text-white transition-colors"
+                variant="ghost"
+                size="sm"
+                aria-label="Close fix risks modal"
               >
                 ✕
-              </button>
+              </DisabledTooltipButton>
             </div>
             
             <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -1242,7 +1278,7 @@ export function GuardianEnhanced() {
                       </p>
                     </div>
                     
-                    <button
+                    <DisabledTooltipButton
                       onClick={async () => {
                         try {
                           // Show loading state
@@ -1266,9 +1302,11 @@ export function GuardianEnhanced() {
                         }
                       }}
                       className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white text-sm font-medium hover:opacity-90 transition"
+                      size="sm"
+                      aria-label={`Revoke ${flag.type} approval to improve wallet security`}
                     >
                       Revoke
-                    </button>
+                    </DisabledTooltipButton>
                   </div>
                 </div>
               ))}
@@ -1279,13 +1317,15 @@ export function GuardianEnhanced() {
                 {(scanResult?.flags || []).length} risk{(scanResult?.flags || []).length !== 1 ? 's' : ''} detected
               </p>
               <div className="flex gap-2">
-                <button
+                <DisabledTooltipButton
                   onClick={() => setShowFixModal(false)}
                   className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700/50 transition"
+                  variant="outline"
+                  aria-label="Close fix risks modal without making changes"
                 >
                   Close
-                </button>
-                <button
+                </DisabledTooltipButton>
+                <DisabledTooltipButton
                   onClick={async () => {
                     try {
                       const riskCount = (scanResult?.flags || []).length;
@@ -1305,9 +1345,10 @@ export function GuardianEnhanced() {
                     }
                   }}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white font-medium hover:opacity-90 transition"
+                  aria-label="Revoke all detected security risks at once"
                 >
                   Revoke All
-                </button>
+                </DisabledTooltipButton>
               </div>
             </div>
           </div>
@@ -1334,15 +1375,16 @@ export function GuardianEnhanced() {
             Guardian scans your wallet for hidden risks — like old approvals or shady contracts.
             Everything runs read-only; no funds ever move without your consent.
           </p>
-          <button
+          <DisabledTooltipButton
             onClick={() => {
               setShowOnboard(false);
               localStorage.setItem('guardian_onboard_seen', '1');
             }}
             className="mt-4 bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] px-4 py-2 rounded-xl text-white font-medium hover:opacity-90 transition"
+            aria-label="Start your first Guardian security scan"
           >
             🚀 Run My First Scan
-          </button>
+          </DisabledTooltipButton>
         </DialogContent>
       </Dialog>
       

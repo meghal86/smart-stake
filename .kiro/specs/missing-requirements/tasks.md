@@ -6,21 +6,21 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
 
 ## Preflight (Docs + Numbering — Must be done first)
 
-- [ ] 0. Align Requirements Numbering (R1–R24)
+- [x] 0. Align Requirements Numbering (R1–R24)
   - Confirm requirements.md contains R1–R21 plus R22–R24 (or renumber references across design/tasks)
   - Ensure task references match the final requirements.md IDs
   - _Acceptance: No task references undefined requirements_
 
 ## Phase 0: P0 Critical (Launch Gate Requirements)
 
-- [ ] 1. Fix PERF-01 App Freeze After 3–5 Interactions
+- [x] 1. Fix PERF-01 App Freeze After 3–5 Interactions
   - Search: render loops, leaking listeners/intervals, runaway polling, unbounded state updates
   - Ensure cleanup on unmount (effects, subscriptions, intervals)
   - Search for existing monitoring utilities (src/lib/performance/, Sentry hooks, query retry loops)
-  - _Requirements: R1-AC1, R1-AC2, R1-AC4, R1-AC5 (+ R22 if defined)_
+  - _Requirements: R1-AC1, R1-AC2, R1-AC4, R1-AC5, R22-AC1, R22-AC2, R22-AC3, R22-AC4, R22-AC5_
   - _Acceptance: 5+ minutes interaction without freeze; no continuously growing memory footprint_
 
-- [ ] 2. Eliminate All Inert CTAs ("Touch Everything" Pass)
+- [x] 2. Eliminate All Inert CTAs ("Touch Everything" Pass)
   - Inventory all interactive elements (buttons/links/cards/toggles)
   - Any element that can't act must be: disabled + tooltip ("Coming soon", "Connect wallet", "Sign in")
   - Extend existing Button/Card patterns — do not create new variants if one exists
@@ -31,13 +31,13 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
   - Search for existing Footer/AppShell/Layout
   - Ensure links exist and work: Terms, Privacy, Contact Support, Report Bug
   - Legal pages are allowed as new routes only if they don't exist, but must show real content, not placeholders
-  - _Requirements: R6-AC1, R6-AC2, R6-AC3, R6-AC4, R6-AC5 (+ R24 if defined)_
+  - _Requirements: R6-AC1, R6-AC2, R6-AC3, R6-AC4, R6-AC5, R24-AC1, R24-AC2, R24-AC3, R24-AC4, R24-AC5_
   - _Acceptance: All links work on mobile/desktop; legal pages show actual content_
 
 - [ ] 3.1 Add Build/Version Visibility (Settings → About preferred)
   - Search for existing "About" or Settings metadata section
   - Display app version/build commit or build timestamp
-  - _Requirements: (Add to R24 if used)_
+  - _Requirements: R24-AC3_
   - _Acceptance: Build/version visible within 2 taps from Settings_
 
 ## Phase 1: Global Infrastructure (All Screens)
@@ -53,7 +53,7 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
   - Search for existing wallet connection + selector components
   - Ensure wallet chip shows label (ENS/nickname) + short address everywhere
   - Wallet switching MUST: reset wallet-scoped state, show skeleton/loading, show success toast, never display stale cross-wallet data
-  - _Requirements: R3-AC1, R3-AC2, R3-AC3, R3-AC4, R3-AC5 (+ R17 if signed-in persistence applies)_
+  - _Requirements: R3-AC1, R3-AC2, R3-AC3, R3-AC4, R3-AC5, R17-AC1, R17-AC2, R17-AC3, R17-AC4, R17-AC5_
   - _Acceptance: Switching wallet refreshes all wallet-scoped data; no stale UI_
 
 - [ ] 6. Demo Mode Banner Consistency
@@ -195,13 +195,13 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
   - Add route-level skeletons and/or persistent shell (no blank screen ever)
   - Implement App Router loading.tsx per route OR global shell loader + top progress bar
   - Use React Query isLoading/isFetching (if present)
-  - _Requirements: R1-AC3, (Define as R23-AC1 if using R23)_
+  - _Requirements: R1-AC3, R23-AC1_
   - _Acceptance: Loading feedback appears within 200ms everywhere needed; no white flash/dead air on route transitions_
 
 - [ ] 28. Standardize Empty States
   - Use existing EmptyState/NoResults components
   - Every empty state must have a next action CTA
-  - _Requirements: (Define as R23-AC2 if using R23)_
+  - _Requirements: R23-AC2_
   - _Acceptance: No blank screens; empty states are actionable_
 
 - [ ] 29. Standardize Error States

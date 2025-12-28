@@ -72,7 +72,7 @@ function MarketHubContent() {
       if (error) throw error;
       return data;
     },
-    refetchInterval: timeWindow === '24h' ? 30000 : 300000,
+    refetchInterval: timeWindow === '24h' ? 60000 : 300000, // Reduced from 30s to 60s
     retry: 3
   });
 
@@ -85,7 +85,7 @@ function MarketHubContent() {
       if (error) throw error;
       return data;
     },
-    refetchInterval: timeWindow === '24h' ? 30000 : 300000,
+    refetchInterval: timeWindow === '24h' ? 60000 : 300000, // Reduced from 30s to 60s
     retry: 2
   });
 

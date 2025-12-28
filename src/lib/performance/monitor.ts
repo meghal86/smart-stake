@@ -159,13 +159,22 @@ class PerformanceMonitor {
   }
 
   /**
-   * Disconnect observer
+   * Disconnect observer and cleanup
    */
   disconnect() {
     if (this.observer) {
       this.observer.disconnect();
       this.observer = null;
     }
+    // Clear metrics to prevent memory leaks
+    this.metrics = [];
+  }
+
+  /**
+   * Cleanup method for proper resource management
+   */
+  cleanup() {
+    this.disconnect();
   }
 }
 
@@ -195,6 +204,8 @@ export function usePerformanceMonitor(componentName: string) {
 export function measureWebVitals() {
   if (typeof window === 'undefined') return;
 
+  const observers: PerformanceObserver[] = [];
+
   // FCP - First Contentful Paint
   const paintEntries = performance.getEntriesByType('paint');
   const fcpEntry = paintEntries.find((entry) => entry.name === 'first-contentful-paint');
@@ -213,6 +224,7 @@ export function measureWebVitals() {
         }
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      observers.push(lcpObserver);
     } catch (error) {
       console.warn('LCP monitoring not supported:', error);
     }
@@ -231,6 +243,7 @@ export function measureWebVitals() {
         performanceMonitor.recordMetric('CLS', clsValue * 1000, 100); // Convert to ms equivalent
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
+      observers.push(clsObserver);
     } catch (error) {
       console.warn('CLS monitoring not supported:', error);
     }
@@ -245,15 +258,39 @@ export function measureWebVitals() {
         }
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
+      observers.push(fidObserver);
     } catch (error) {
       console.warn('FID monitoring not supported:', error);
     }
   }
+
+  // Return cleanup function
+  return () => {
+    observers.forEach(observer => {
+      try {
+        observer.disconnect();
+      } catch (error) {
+        console.warn('Error disconnecting performance observer:', error);
+      }
+    });
+  };
 }
 
-// Auto-initialize Web Vitals measurement
+// Auto-initialize Web Vitals measurement with cleanup
 if (typeof window !== 'undefined') {
+  let webVitalsCleanup: (() => void) | null = null;
+  
   window.addEventListener('load', () => {
-    setTimeout(measureWebVitals, 0);
+    setTimeout(() => {
+      webVitalsCleanup = measureWebVitals();
+    }, 0);
+  });
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    performanceMonitor.cleanup();
+    if (webVitalsCleanup) {
+      webVitalsCleanup();
+    }
   });
 }

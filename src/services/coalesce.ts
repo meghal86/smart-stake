@@ -87,7 +87,19 @@ class RequestCoalescer {
 // Global coalescer instance
 export const requestCoalescer = new RequestCoalescer();
 
-// Cleanup every 5 minutes
-setInterval(() => {
-  requestCoalescer.cleanup();
-}, 5 * 60 * 1000);
+// Cleanup every 5 minutes - with proper cleanup tracking
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+if (typeof window !== 'undefined') {
+  cleanupInterval = setInterval(() => {
+    requestCoalescer.cleanup();
+  }, 5 * 60 * 1000);
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval);
+      cleanupInterval = null;
+    }
+  });
+}

@@ -7,6 +7,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { DisabledTooltipButton } from '@/components/ui/disabled-tooltip-button';
+import { InteractiveDiv } from '@/components/ui/interactive-div';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -364,12 +366,13 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Button
+                      <DisabledTooltipButton
                         size="sm"
                         variant="ghost"
                         onClick={handleAiExplain}
                         disabled={aiExplaining}
                         className="text-[var(--brand-teal,#14B8A6)] hover:bg-[var(--brand-teal,#14B8A6)]/10"
+                        aria-label="Get AI explanation of this whale pattern"
                       >
                         {aiExplaining ? (
                           <motion.div
@@ -381,8 +384,8 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                         ) : (
                           <Zap className="h-4 w-4" />
                         )}
-                      </Button>
-                      <Button
+                      </DisabledTooltipButton>
+                      <DisabledTooltipButton
                         size="sm"
                         variant="outline"
                         onClick={() => {
@@ -390,10 +393,10 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           setShowAdvancedFilters(!showAdvancedFilters);
                         }}
                         className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border-2"
-                        title="Advanced Filters"
+                        aria-label="Toggle advanced pattern filters"
                       >
                         <Target className="h-4 w-4 text-slate-700 dark:text-slate-300" />
-                      </Button>
+                      </DisabledTooltipButton>
                     </div>
                   </div>
                 </CardContent>
@@ -462,7 +465,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                         </Tabs>
                       </div>
                       <div className="flex items-end gap-2">
-                        <Button 
+                        <DisabledTooltipButton 
                           size="sm" 
                           variant="outline" 
                           className="text-xs"
@@ -504,11 +507,12 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                             URL.revokeObjectURL(url);
                             console.log('✅ EXPORTED DATA:', exportData);
                           }}
+                          aria-label="Export pattern analysis data as JSON file"
                         >
                           <Download className="h-3 w-3 mr-1" />
                           Export
-                        </Button>
-                        <Button 
+                        </DisabledTooltipButton>
+                        <DisabledTooltipButton 
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
@@ -516,10 +520,11 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                             handleShare();
                           }} 
                           className="text-xs"
+                          aria-label="Share pattern analysis with others"
                         >
                           <Share2 className="h-3 w-3 mr-1" />
                           Share
-                        </Button>
+                        </DisabledTooltipButton>
                       </div>
                     </div>
                   </motion.div>
@@ -671,7 +676,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <Button
+                    <DisabledTooltipButton
                       onClick={() => {
                         console.log('🔔 CREATE ALERT BUTTON CLICKED!');
                         console.log('🔔 Creating alert for:', signal.asset, 'pattern');
@@ -685,6 +690,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                         onCreateAlert();
                       }}
                       className="w-full bg-[var(--brand-teal,#14B8A6)] hover:bg-[var(--brand-teal,#14B8A6)]/90 text-white font-semibold relative overflow-hidden"
+                      aria-label={`Create alert for ${signal.asset} whale pattern notifications`}
                     >
                       <Bell className="h-4 w-4 mr-2" />
                       Create Alert for Next Pattern
@@ -696,7 +702,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                         />
                       )}
-                    </Button>
+                    </DisabledTooltipButton>
                   </motion.div>
                   
                   <div className="grid grid-cols-2 gap-3">
@@ -706,7 +712,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                       whileTap={{ scale: 0.98 }}
                       className="relative"
                     >
-                      <Button 
+                      <DisabledTooltipButton 
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
@@ -722,6 +728,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           transition-all duration-300 ease-out
                           shadow-sm hover:shadow-md
                         "
+                        aria-label="Share this whale pattern insight with others"
                       >
                         <div className="flex items-center gap-2 relative z-10">
                           <motion.div
@@ -741,7 +748,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           animate={{ x: [-100, 200] }}
                           transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
                         />
-                      </Button>
+                      </DisabledTooltipButton>
                     </motion.div>
                     
                     {/* Beautiful AI Explain Button */}
@@ -750,7 +757,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                       whileTap={{ scale: 0.98 }}
                       className="relative"
                     >
-                      <Button 
+                      <DisabledTooltipButton 
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
@@ -768,6 +775,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           shadow-sm hover:shadow-md
                           disabled:opacity-70 disabled:cursor-not-allowed
                         "
+                        aria-label={aiExplaining ? "AI is analyzing the pattern" : "Get AI explanation of this whale pattern"}
                       >
                         <div className="flex items-center gap-2 relative z-10">
                           {aiExplaining ? (
@@ -818,7 +826,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                           />
                         )}
-                      </Button>
+                      </DisabledTooltipButton>
                     </motion.div>
                   </div>
                   
@@ -852,7 +860,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                       whileTap={{ scale: 0.98 }}
                       className="relative"
                     >
-                      <Button
+                      <DisabledTooltipButton
                         variant="outline"
                         size="sm"
                         onClick={() => {
@@ -869,6 +877,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           ${!patternData?.recentInstances?.length ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                           group px-3 py-2 rounded-lg font-medium text-xs
                         `}
+                        aria-label={showAllInstances ? 'Show fewer pattern instances' : `View all ${patternData?.recentInstances?.length || 0} pattern instances`}
                       >
                         <div className="flex items-center gap-2">
                           <motion.div
@@ -902,7 +911,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           animate={{ x: [-100, 300] }}
                           transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
                         />
-                      </Button>
+                      </DisabledTooltipButton>
                     </motion.div>
                     
                     {/* Enhanced Export Button */}
@@ -910,7 +919,7 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <Button 
+                      <DisabledTooltipButton 
                         variant="ghost" 
                         size="sm" 
                         className="text-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 group px-3 py-2"
@@ -951,10 +960,11 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                           a.click();
                           URL.revokeObjectURL(url);
                         }}
+                        aria-label="Export pattern instances data as CSV file"
                       >
                         <Download className="h-3.5 w-3.5 mr-2 group-hover:animate-bounce" />
                         Export
-                      </Button>
+                      </DisabledTooltipButton>
                     </motion.div>
                   </div>
                 </div>
@@ -963,23 +973,32 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700">
-                        <th 
-                          className="text-left py-2 text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-                          onClick={() => handleSort('date')}
-                        >
-                          Date {sortBy === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <th>
+                          <InteractiveDiv 
+                            className="text-left py-2 text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                            onClick={() => handleSort('date')}
+                            ariaLabel="Sort pattern instances by date"
+                          >
+                            Date {sortBy === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </InteractiveDiv>
                         </th>
-                        <th 
-                          className="text-right py-2 text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-                          onClick={() => handleSort('amount')}
-                        >
-                          Amount {sortBy === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <th>
+                          <InteractiveDiv 
+                            className="text-right py-2 text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                            onClick={() => handleSort('amount')}
+                            ariaLabel="Sort pattern instances by amount"
+                          >
+                            Amount {sortBy === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </InteractiveDiv>
                         </th>
-                        <th 
-                          className="text-right py-2 text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-                          onClick={() => handleSort('drift')}
-                        >
-                          24h Drift {sortBy === 'drift' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        <th>
+                          <InteractiveDiv 
+                            className="text-right py-2 text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                            onClick={() => handleSort('drift')}
+                            ariaLabel="Sort pattern instances by 24h price drift"
+                          >
+                            24h Drift {sortBy === 'drift' && (sortOrder === 'asc' ? '↑' : '↓')}
+                          </InteractiveDiv>
                         </th>
                         <th className="text-center py-2 text-slate-600 dark:text-slate-400">Confidence</th>
                         <th className="text-center py-2 text-slate-600 dark:text-slate-400">Outcome</th>
@@ -1145,16 +1164,23 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
           </div>
           
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowExplainModal(false)}>
+            <DisabledTooltipButton 
+              variant="outline" 
+              onClick={() => setShowExplainModal(false)}
+              aria-label="Close pattern explanation modal"
+            >
               Close
-            </Button>
-            <Button onClick={() => {
-              setShowExplainModal(false);
-              setShowShareModal(true);
-            }}>
+            </DisabledTooltipButton>
+            <DisabledTooltipButton 
+              onClick={() => {
+                setShowExplainModal(false);
+                setShowShareModal(true);
+              }}
+              aria-label="Share this pattern analysis with others"
+            >
               <Share2 className="h-4 w-4 mr-2" />
               Share Analysis
-            </Button>
+            </DisabledTooltipButton>
           </div>
         </DialogContent>
       </Dialog>
@@ -1178,28 +1204,30 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
             </div>
             
             <div className="grid grid-cols-2 gap-3">
-              <Button
+              <DisabledTooltipButton
                 onClick={copyToClipboard}
                 className="flex items-center gap-2"
+                aria-label="Copy pattern analysis summary to clipboard"
                 variant="outline"
               >
                 <Copy className="h-4 w-4" />
                 Copy Text
-              </Button>
+              </DisabledTooltipButton>
               
-              <Button
+              <DisabledTooltipButton
                 onClick={() => {
                   const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${signal.asset} whale pattern: ${(patternData?.multiplier || 0).toFixed(1)}× above average, ${patternData?.accuracy || 0}% accuracy. Powered by @AlphaWhale`)}`;
                   window.open(url, '_blank');
                   setShowShareModal(false);
                 }}
                 className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+                aria-label="Share pattern analysis on Twitter"
               >
                 <ExternalLink className="h-4 w-4" />
                 Tweet
-              </Button>
+              </DisabledTooltipButton>
               
-              <Button
+              <DisabledTooltipButton
                 onClick={() => {
                   const subject = `${signal.asset} Whale Pattern Alert`;
                   const body = `${signal.asset} whale pattern analysis:\n\n` +
@@ -1213,12 +1241,13 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                 }}
                 className="flex items-center gap-2"
                 variant="outline"
+                aria-label="Share pattern analysis via email"
               >
                 <Bell className="h-4 w-4" />
                 Email
-              </Button>
+              </DisabledTooltipButton>
               
-              <Button
+              <DisabledTooltipButton
                 onClick={() => {
                   const exportData = {
                     asset: signal.asset,
@@ -1243,17 +1272,22 @@ export function PatternModal({ signal, isOpen, onClose, onCreateAlert }: Pattern
                 }}
                 className="flex items-center gap-2"
                 variant="outline"
+                aria-label="Export pattern analysis as JSON file"
               >
                 <Download className="h-4 w-4" />
                 Export
-              </Button>
+              </DisabledTooltipButton>
             </div>
           </div>
           
           <div className="flex justify-end">
-            <Button variant="ghost" onClick={() => setShowShareModal(false)}>
+            <DisabledTooltipButton 
+              variant="ghost" 
+              onClick={() => setShowShareModal(false)}
+              aria-label="Cancel sharing pattern analysis"
+            >
               Cancel
-            </Button>
+            </DisabledTooltipButton>
           </div>
         </DialogContent>
       </Dialog>

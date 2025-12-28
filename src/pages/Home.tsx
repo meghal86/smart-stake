@@ -7,6 +7,8 @@ import { UpgradePrompt } from "@/components/subscription/UpgradePrompt";
 import { PlanBadge } from "@/components/subscription/PlanBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/ui/disabled-tooltip-button";
+import { InteractiveDiv } from "@/components/ui/interactive-div";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -419,65 +421,72 @@ export default function Home() {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button 
+              <DisabledTooltipButton 
                 size="sm" 
                 onClick={() => setAlertCenterOpen(true)}
                 className="bg-primary hover:bg-primary/90"
+                aria-label="Create new whale alert"
               >
                 <Bell className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">Create Alert</span>
-              </Button>
+              </DisabledTooltipButton>
               <div className="hidden sm:flex border rounded-lg p-1">
-                <Button
+                <DisabledTooltipButton
                   size="sm"
                   variant={viewMode === 'expanded' ? 'default' : 'ghost'}
                   onClick={() => setViewMode('expanded')}
                   className="text-xs px-2"
+                  aria-label="Switch to expanded view mode"
                 >
                   Full
-                </Button>
-                <Button
+                </DisabledTooltipButton>
+                <DisabledTooltipButton
                   size="sm"
                   variant={viewMode === 'summary' ? 'default' : 'ghost'}
                   onClick={() => setViewMode('summary')}
                   className="text-xs px-2"
+                  aria-label="Switch to summary view mode"
                 >
                   Summary
-                </Button>
-                <Button
+                </DisabledTooltipButton>
+                <DisabledTooltipButton
                   size="sm"
                   variant={viewMode === 'compact' ? 'default' : 'ghost'}
                   onClick={() => setViewMode('compact')}
                   className="text-xs px-2"
+                  aria-label="Switch to compact view mode"
                 >
                   Minimal
-                </Button>
+                </DisabledTooltipButton>
               </div>
               <div className="flex border rounded-lg p-1">
-                <Button
+                <DisabledTooltipButton
                   size="sm"
                   variant={whaleFilter === 'all' ? 'default' : 'ghost'}
                   onClick={() => setWhaleFilter('all')}
                   className="text-xs px-2"
+                  aria-label="Show all whale transactions"
                 >
                   All
-                </Button>
-                <Button
+                </DisabledTooltipButton>
+                <DisabledTooltipButton
                   size="sm"
                   variant={whaleFilter === 'large' ? 'default' : 'ghost'}
                   onClick={() => setWhaleFilter('large')}
                   className="text-xs px-2"
+                  aria-label="Show transactions over $5M"
                 >
                   $5M+
-                </Button>
-                <Button
+                </DisabledTooltipButton>
+                <DisabledTooltipButton
                   size="sm"
                   variant={whaleFilter === 'mega' ? 'default' : 'ghost'}
                   onClick={() => setWhaleFilter('mega')}
                   className="text-xs px-2"
+                  aria-label="Show transactions over $10M"
                 >
                   $10M+
-                </Button>
+                </DisabledTooltipButton>
               </div>
               <PlanBadge plan={userPlan.plan} />
             </div>
@@ -517,9 +526,15 @@ export default function Home() {
           <Alert>
             <AlertDescription className="flex items-center justify-between">
               <span className="text-xs sm:text-sm">Daily alerts: {dailyAlertsCount}/{dailyLimit}</span>
-              <Button size="sm" variant="outline" onClick={() => navigate('/subscription')} className="text-xs">
+              <DisabledTooltipButton 
+                size="sm" 
+                variant="outline" 
+                onClick={() => navigate('/subscription')} 
+                className="text-xs"
+                aria-label="Upgrade to premium plan for unlimited alerts"
+              >
                 Upgrade <Crown className="h-3 w-3 ml-1" />
-              </Button>
+              </DisabledTooltipButton>
             </AlertDescription>
           </Alert>
         )}
@@ -536,9 +551,14 @@ export default function Home() {
                     </div>
                     <h2 className="text-xl font-bold">Alert Center</h2>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setAlertCenterOpen(false)}>
+                  <DisabledTooltipButton 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setAlertCenterOpen(false)}
+                    aria-label="Close alert center"
+                  >
                     <X className="h-4 w-4" />
-                  </Button>
+                  </DisabledTooltipButton>
                 </div>
                 
                 <div className="space-y-4">
@@ -548,17 +568,18 @@ export default function Home() {
                   </div>
                   
                   <div className="flex flex-wrap gap-3">
-                    <Button 
+                    <DisabledTooltipButton 
                       className="flex items-center gap-2 bg-primary hover:bg-primary/90"
                       onClick={() => {
                         alert('Custom Alert Wizard: Set amount threshold, select chains, choose notification type');
                         setAlertCenterOpen(false);
                       }}
+                      aria-label="Create a custom whale alert with personalized settings"
                     >
                       <Zap className="h-4 w-4" />
                       Create Custom Alert
-                    </Button>
-                    <Button 
+                    </DisabledTooltipButton>
+                    <DisabledTooltipButton 
                       variant="outline" 
                       className="flex items-center gap-2"
                       onClick={() => {
@@ -568,37 +589,40 @@ export default function Home() {
                         else if (choice === '3') { setMinAmount('1000000'); setAlertCenterOpen(false); }
                         else if (choice === '4') { setSelectedChain('ethereum'); setAlertCenterOpen(false); }
                       }}
+                      aria-label="Browse pre-made alert templates"
                     >
                       <Filter className="h-4 w-4" />
                       Browse Templates
-                    </Button>
-                    <Button 
+                    </DisabledTooltipButton>
+                    <DisabledTooltipButton 
                       variant="outline" 
                       className="flex items-center gap-2"
                       onClick={() => {
                         alert('Alert History: 3 alerts triggered today - 2 successful, 1 pending');
                       }}
+                      aria-label="View alert history and statistics"
                     >
                       <Clock className="h-4 w-4" />
                       View History
-                    </Button>
+                    </DisabledTooltipButton>
                   </div>
                   
                   <div className="text-center py-6 border-2 border-dashed border-muted-foreground/20 rounded-xl bg-muted/20">
                     <Zap className="h-8 w-8 mx-auto mb-2 text-primary/60" />
                     <h4 className="font-medium mb-2">No custom alert rules yet</h4>
                     <p className="text-sm text-muted-foreground mb-3">Get notified instantly when whales make moves</p>
-                    <Button 
+                    <DisabledTooltipButton 
                       size="sm" 
                       variant="outline"
                       onClick={() => {
                         navigate('/predictions');
                         setAlertCenterOpen(false);
                       }}
+                      aria-label="Create your first alert rule"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Create your first alert rule
-                    </Button>
+                    </DisabledTooltipButton>
                   </div>
                 </div>
               </div>
@@ -613,7 +637,7 @@ export default function Home() {
             Alert Templates
           </h3>
           <div className="flex gap-2 overflow-x-auto">
-            <Button 
+            <DisabledTooltipButton 
               size="sm" 
               variant="outline" 
               onClick={() => {
@@ -621,10 +645,11 @@ export default function Home() {
                 if (amount) setMinAmount(amount);
               }} 
               className="shrink-0"
+              aria-label="Set custom minimum amount for whale alerts"
             >
               💥 Custom Amount
-            </Button>
-            <Button 
+            </DisabledTooltipButton>
+            <DisabledTooltipButton 
               size="sm" 
               variant="outline" 
               onClick={() => {
@@ -632,10 +657,11 @@ export default function Home() {
                 if (chain) setSelectedChain(chain.toLowerCase());
               }} 
               className="shrink-0"
+              aria-label="Filter alerts by specific blockchain"
             >
               🔗 Custom Chain
-            </Button>
-            <Button 
+            </DisabledTooltipButton>
+            <DisabledTooltipButton 
               size="sm" 
               variant="outline" 
               onClick={() => {
@@ -647,9 +673,10 @@ export default function Home() {
                 }
               }} 
               className="shrink-0"
+              aria-label="Set custom token and amount filter"
             >
               🎯 Custom Token
-            </Button>
+            </DisabledTooltipButton>
           </div>
         </div>
 
@@ -692,7 +719,7 @@ export default function Home() {
               />
               
               <WhalePreferencesModal />
-              <Button
+              <DisabledTooltipButton
                 size="sm"
                 variant="outline"
                 onClick={() => {
@@ -710,9 +737,10 @@ export default function Home() {
                   }
                 }}
                 className="text-xs"
+                aria-label="Reset all filters to default values"
               >
                 Reset All
-              </Button>
+              </DisabledTooltipButton>
               <div className="text-xs text-muted-foreground px-2">
                 Min: ${(preferences.minAmountUsd / 1000000).toFixed(1)}M
               </div>
@@ -764,16 +792,17 @@ export default function Home() {
                 );
               } else if (viewMode === 'summary') {
                 return (
-                  <div 
+                  <InteractiveDiv 
                     key={`${transaction.id}-${index}`}
                     onClick={() => setSelectedTransaction(transaction)}
-                    className={`p-4 border rounded-lg hover:bg-muted/30 cursor-pointer transition-all group ${
+                    className={`p-4 border rounded-lg transition-all group ${
                       transaction.type === "buy" 
                         ? "border-l-4 border-l-green-500" 
                         : transaction.type === "sell"
                         ? "border-l-4 border-l-red-500"
                         : "border-l-4 border-l-blue-500"
                     } ${isMegaTransaction ? 'shadow-xl ring-2 ring-yellow-400/60 border-yellow-400/40 bg-gradient-to-r from-yellow-50/20 to-orange-50/20' : isLargeTransaction ? 'shadow-lg ring-1 ring-blue-400/40 border-blue-400/30 bg-blue-50/10' : ''}`}
+                    ariaLabel={`View details for ${transaction.token} transaction of $${(transaction.amountUSD / 1000000).toFixed(1)}M`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -795,14 +824,15 @@ export default function Home() {
                         {formatTime(transaction.timestamp)}
                       </div>
                     </div>
-                  </div>
+                  </InteractiveDiv>
                 );
               } else {
                 return (
-                  <div 
+                  <InteractiveDiv 
                     key={`${transaction.id}-${index}`}
                     onClick={() => setSelectedTransaction(transaction)}
-                    className="flex items-center justify-between p-2 border-b hover:bg-muted/20 cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-2 border-b transition-colors"
+                    ariaLabel={`View details for ${transaction.token} transaction of $${(transaction.amountUSD / 1000000).toFixed(1)}M`}
                   >
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${
@@ -818,7 +848,7 @@ export default function Home() {
                     <div className="text-xs text-muted-foreground">
                       {formatTime(transaction.timestamp)}
                     </div>
-                  </div>
+                  </InteractiveDiv>
                 );
               }
             })}
@@ -858,13 +888,14 @@ export default function Home() {
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xl font-bold">Transaction Details</h2>
-                      <Button
+                      <DisabledTooltipButton
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedTransaction(null)}
+                        aria-label="Close transaction details modal"
                       >
                         <X className="h-4 w-4" />
-                      </Button>
+                      </DisabledTooltipButton>
                     </div>
                     
                     <div className="space-y-4">
@@ -893,14 +924,15 @@ export default function Home() {
                         <label className="text-sm font-medium text-muted-foreground">Transaction Hash</label>
                         <div className="flex items-center gap-2 font-mono text-sm bg-muted p-2 rounded">
                           <span className="flex-1 truncate">{selectedTransaction.txHash}</span>
-                          <Button
+                          <DisabledTooltipButton
                             size="sm"
                             variant="ghost"
                             onClick={() => copyToClipboard(selectedTransaction.txHash)}
                             className="h-6 w-6 p-0"
+                            aria-label="Copy transaction hash to clipboard"
                           >
                             <Copy className="h-3 w-3" />
-                          </Button>
+                          </DisabledTooltipButton>
                         </div>
                       </div>
                       
@@ -908,14 +940,15 @@ export default function Home() {
                         <label className="text-sm font-medium text-muted-foreground">From Address</label>
                         <div className="flex items-center gap-2 font-mono text-sm bg-muted p-2 rounded">
                           <span className="flex-1">{selectedTransaction.fromAddress}</span>
-                          <Button
+                          <DisabledTooltipButton
                             size="sm"
                             variant="ghost"
                             onClick={() => copyToClipboard(selectedTransaction.fromAddress)}
                             className="h-6 w-6 p-0"
+                            aria-label="Copy from address to clipboard"
                           >
                             <Copy className="h-3 w-3" />
-                          </Button>
+                          </DisabledTooltipButton>
                         </div>
                       </div>
                       
@@ -923,19 +956,20 @@ export default function Home() {
                         <label className="text-sm font-medium text-muted-foreground">To Address</label>
                         <div className="flex items-center gap-2 font-mono text-sm bg-muted p-2 rounded">
                           <span className="flex-1">{selectedTransaction.toAddress}</span>
-                          <Button
+                          <DisabledTooltipButton
                             size="sm"
                             variant="ghost"
                             onClick={() => copyToClipboard(selectedTransaction.toAddress)}
                             className="h-6 w-6 p-0"
+                            aria-label="Copy to address to clipboard"
                           >
                             <Copy className="h-3 w-3" />
-                          </Button>
+                          </DisabledTooltipButton>
                         </div>
                       </div>
                       
                       <div className="flex gap-4">
-                        <Button
+                        <DisabledTooltipButton
                           onClick={() => {
                             const getExplorerUrl = (chain: string, txHash: string) => {
                               switch (chain.toLowerCase()) {
@@ -951,20 +985,22 @@ export default function Home() {
                             window.open(getExplorerUrl(selectedTransaction.chain, selectedTransaction.txHash), '_blank')
                           }}
                           className="flex-1"
+                          aria-label="View transaction on blockchain explorer"
                         >
                           View on Explorer
-                        </Button>
-                        <Button
+                        </DisabledTooltipButton>
+                        <DisabledTooltipButton
                           variant="outline"
                           onClick={() => {
                             // Future: Open alert creation dialog
                             alert(`Alert setup for ${selectedTransaction.token} transactions > $${(selectedTransaction.amountUSD/1000000).toFixed(1)}M`)
                           }}
                           className="flex-1"
+                          aria-label="Create alert for similar transactions"
                         >
                           <Bell className="h-4 w-4 mr-2" />
                           Create Alert
-                        </Button>
+                        </DisabledTooltipButton>
                       </div>
                     </div>
                   </div>
@@ -975,10 +1011,14 @@ export default function Home() {
             {/* Load More Button */}
             {!isLoading && filteredTransactions.length >= 10 && (
               <div className="text-center py-4">
-                <Button variant="outline" onClick={() => setMinAmount('')}>
+                <DisabledTooltipButton 
+                  variant="outline" 
+                  onClick={() => setMinAmount('')}
+                  aria-label="Load more whale transactions"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Load More Transactions
-                </Button>
+                </DisabledTooltipButton>
               </div>
             )}
           </>

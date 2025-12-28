@@ -72,6 +72,7 @@ import Hunter from "./pages/Hunter";
 import HarvestPro from "./pages/HarvestPro";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
+import { PerformanceDebugger } from "@/components/performance/PerformanceDebugger";
 import { ClientProviders } from "@/providers/ClientProviders";
 
 const App = () => {
@@ -86,22 +87,26 @@ const App = () => {
     // Suppress extension errors globally
     suppressExtensionErrors();
 
-    // Fix RainbowKit modal clickability - ULTRA AGGRESSIVE
+    // Fix RainbowKit modal clickability - with proper cleanup
     let cleanupFn: (() => void) | undefined;
+    let aggressiveInterval: NodeJS.Timeout | undefined;
+    
     import('@/utils/fixRainbowKit').then(({ fixRainbowKitModals, forceFixRainbowKit }) => {
       cleanupFn = fixRainbowKitModals();
       
-      // Also run aggressive fixes every 200ms
-      const aggressiveInterval = setInterval(() => {
+      // Run fixes less aggressively - only when needed
+      aggressiveInterval = setInterval(() => {
         const rkElements = document.querySelectorAll('[data-rk]');
         if (rkElements.length > 0) {
           forceFixRainbowKit();
         }
-      }, 200);
+      }, 2000); // Reduced from 200ms to 2 seconds
       
       return () => {
         cleanupFn?.();
-        clearInterval(aggressiveInterval);
+        if (aggressiveInterval) {
+          clearInterval(aggressiveInterval);
+        }
       };
     });
 
@@ -220,6 +225,7 @@ const App = () => {
             </Routes>
           </BrowserNavigationProvider>
         </BrowserRouter>
+        <PerformanceDebugger />
       </ClientProviders>
     </ErrorBoundary>
   );

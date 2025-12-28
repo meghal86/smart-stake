@@ -23,10 +23,12 @@ import { DevInfo } from '@/components/DevInfo';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
+      retry: 2, // Reduced from 3
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 15000),
-      staleTime: 2 * 60 * 1000,
+      staleTime: 5 * 60 * 1000, // Increased from 2 minutes to 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
       refetchOnWindowFocus: false,
+      refetchOnReconnect: false, // Prevent automatic refetch on reconnect
     },
   },
 });

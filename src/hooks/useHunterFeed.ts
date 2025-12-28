@@ -309,7 +309,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
-    refetchInterval: props.realTimeEnabled ? 30000 : false, // 30s if real-time enabled
+    refetchInterval: props.realTimeEnabled ? 60000 : false, // Reduced from 30s to 60s
     staleTime: 60000, // 1 minute
     gcTime: 300000, // 5 minutes (formerly cacheTime)
     enabled: true,

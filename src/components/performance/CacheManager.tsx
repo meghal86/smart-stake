@@ -19,7 +19,7 @@ export function CacheManager() {
 
   useEffect(() => {
     updateStats();
-    const interval = setInterval(updateStats, 2000);
+    const interval = setInterval(updateStats, 30000); // Reduced frequency to 30 seconds
     return () => clearInterval(interval);
   }, []);
 
