@@ -23,6 +23,9 @@ import Scanner from "./pages/Scanner";
 import Yields from "./pages/Yields";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Terms from "./pages/legal/Terms";
+import Privacy from "./pages/legal/Privacy";
+import Contact from "./pages/legal/Contact";
 import Premium from "./pages/Premium";
 import Debug from "./pages/Debug";
 import NotificationSettings from "./pages/NotificationSettings";
@@ -199,6 +202,9 @@ const App = () => {
                   <Route path="/scanner" element={<Scanner />} />
                   <Route path="/reports" element={<ReportsExports />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/legal/terms" element={<Terms />} />
+                  <Route path="/legal/privacy" element={<Privacy />} />
+                  <Route path="/legal/contact" element={<Contact />} />
                   <Route path="/predictions" element={<PredictionsScenarios />} />
                   <Route path="/hub" element={<PulsePage />} />
                   <Route path="/hub2" element={<PulsePage />} />

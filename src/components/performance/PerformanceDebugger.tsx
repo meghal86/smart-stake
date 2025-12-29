@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Trash2, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Activity, Trash2, RefreshCw, AlertTriangle, CheckCircle, X, Minimize2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { performanceMonitor } from '@/lib/performance/monitor';
-import { memoryMonitor, useMemoryMonitor } from '@/lib/performance/memory-monitor';
+import { useMemoryMonitor } from '@/lib/performance/memory-monitor';
 import { intervalManager } from '@/lib/performance/interval-manager';
 
 /**
  * Performance Debugger Component
  * 
  * Shows real-time performance metrics and memory usage
- * Only visible in development mode
+ * Only available in development mode, opens on click
  */
 export function PerformanceDebugger() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [performanceMetrics, setPerformanceMetrics] = useState(performanceMonitor.getMetrics());
   const [intervalStats, setIntervalStats] = useState(intervalManager.getStats());
   const { memoryStats, forceGarbageCollection } = useMemoryMonitor();
 
-  // Only show in development
-  useEffect(() => {
-    setIsVisible(process.env.NODE_ENV === 'development');
-  }, []);
+  // Only available in development
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // Update metrics periodically
+  // Update metrics periodically when open
   useEffect(() => {
+    if (!isOpen) return;
+
     const updateMetrics = () => {
       setPerformanceMetrics(performanceMonitor.getMetrics());
       setIntervalStats(intervalManager.getStats());
@@ -35,9 +36,26 @@ export function PerformanceDebugger() {
     updateMetrics();
     const interval = setInterval(updateMetrics, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isOpen]);
 
-  if (!isVisible) return null;
+  // Global function to open debugger from anywhere
+  useEffect(() => {
+    if (!isDevelopment) return;
+
+    const openDebugger = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
+
+    // Expose global function
+    (window as any).openPerformanceDebugger = openDebugger;
+
+    return () => {
+      delete (window as any).openPerformanceDebugger;
+    };
+  }, [isDevelopment]);
+
+  if (!isDevelopment) return null;
 
   const clearMetrics = () => {
     performanceMonitor.clear();
@@ -53,6 +71,52 @@ export function PerformanceDebugger() {
   const isMemoryHigh = memoryUsagePercent > 80;
   const hasMemoryGrowth = memoryStats?.trend && memoryStats.trend.growth > 10 * 1024 * 1024; // 10MB
 
+  // Floating trigger button when closed
+  if (!isOpen) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="rounded-full w-12 h-12 bg-black/90 hover:bg-black text-white border border-gray-700"
+          title="Open Performance Debugger"
+        >
+          <Activity className="h-5 w-5" />
+        </Button>
+      </div>
+    );
+  }
+
+  // Minimized state
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <Card className="p-2 bg-black/90 text-white border-gray-700">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span className="text-sm font-medium">Performance</span>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setIsMinimized(false)}
+              className="h-6 w-6 p-0"
+            >
+              <Minimize2 className="h-3 w-3" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setIsOpen(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Full debugger panel
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm">
       <Card className="p-4 bg-black/90 text-white border-gray-700">
@@ -64,9 +128,29 @@ export function PerformanceDebugger() {
               DEV
             </Badge>
           </div>
-          <Button size="sm" variant="outline" onClick={clearMetrics}>
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setIsMinimized(true)}
+              className="h-6 w-6 p-0"
+              title="Minimize"
+            >
+              <Minimize2 className="h-3 w-3" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setIsOpen(false)}
+              className="h-6 w-6 p-0"
+              title="Close"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+            <Button size="sm" variant="outline" onClick={clearMetrics} title="Clear metrics">
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-4 text-sm">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, LogOut, Settings, Crown, ChevronDown, Menu, X, Bell, Filter } from 'lucide-react';
+import { User, LogOut, Settings, Crown, ChevronDown, Menu, X, Bell, Filter, UserCheck, UserX } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,9 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Logo } from '@/components/ui/Logo';
 import { WalletConnectModal } from '@/components/ui/WalletConnectModal';
+import { ActiveWalletIndicator } from '@/components/wallet/ActiveWalletIndicator';
 import { MobileDrawer } from './MobileDrawer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -39,6 +41,63 @@ export const UserHeader = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   
   const maxAlerts = actualPlan === 'free' ? 50 : 500;
+
+  // Identity Indicator Component - Define before use
+  const IdentityIndicator = () => {
+    const isSignedIn = !!user;
+    
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant={isSignedIn ? "default" : "secondary"} 
+              className={`
+                flex items-center gap-1.5 px-2 py-1 text-xs font-medium cursor-help
+                ${isSignedIn 
+                  ? 'bg-[#14B8A6]/10 text-[#14B8A6] border-[#14B8A6]/20 hover:bg-[#14B8A6]/20' 
+                  : 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/20'
+                }
+              `}
+            >
+              {isSignedIn ? (
+                <>
+                  <UserCheck className="h-3 w-3" />
+                  <span className="hidden sm:inline">Signed In</span>
+                  <span className="sm:hidden">Auth</span>
+                </>
+              ) : (
+                <>
+                  <UserX className="h-3 w-3" />
+                  <span className="hidden sm:inline">Guest</span>
+                  <span className="sm:hidden">Guest</span>
+                </>
+              )}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <div className="text-center">
+              {isSignedIn ? (
+                <div>
+                  <p className="font-medium">Signed In</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your wallets, alerts, and settings are saved to your account
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-medium">Guest Mode</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Guest mode doesn't save wallets, alerts, or settings. Sign in to persist your data.
+                  </p>
+                </div>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   useEffect(() => {
     if (user) {
@@ -119,15 +178,19 @@ export const UserHeader = () => {
     return (
       <div className="bg-gradient-to-r from-background to-muted/20 border-b shadow-sm">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 py-1 sm:py-2">
-          <div className="pl-3 sm:pl-4">
-            <Logo 
-              size="sm" 
-              showText={false}
-              clickable={true}
-              onClick={() => navigate('/?tab=home')}
-              src="/hero_logo_1920.png"
-              className="h-16 sm:h-20"
-            />
+          <div className="flex items-center gap-3">
+            <div className="pl-3 sm:pl-4">
+              <Logo 
+                size="sm" 
+                showText={false}
+                clickable={true}
+                onClick={() => navigate('/?tab=home')}
+                src="/hero_logo_1920.png"
+                className="h-16 sm:h-20"
+              />
+            </div>
+            <IdentityIndicator />
+            <ActiveWalletIndicator size="sm" compact />
           </div>
           <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-primary"></div>
         </div>
@@ -139,15 +202,19 @@ export const UserHeader = () => {
     return (
       <div className="bg-gradient-to-r from-background to-muted/20 border-b shadow-sm">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 py-1 sm:py-2">
-          <div className="pl-3 sm:pl-4">
-            <Logo 
-              size="sm" 
-              showText={false}
-              clickable={true}
-              onClick={() => navigate('/?tab=home')}
-              src="/hero_logo_1920.png"
-              className="h-16 sm:h-20"
-            />
+          <div className="flex items-center gap-3">
+            <div className="pl-3 sm:pl-4">
+              <Logo 
+                size="sm" 
+                showText={false}
+                clickable={true}
+                onClick={() => navigate('/?tab=home')}
+                src="/hero_logo_1920.png"
+                className="h-16 sm:h-20"
+              />
+            </div>
+            <IdentityIndicator />
+            <ActiveWalletIndicator size="sm" compact />
           </div>
           
           <div className="hidden md:flex items-center gap-2">
@@ -199,19 +266,24 @@ export const UserHeader = () => {
     <>
       <div className="bg-gradient-to-r from-background to-muted/20 border-b shadow-sm">
         <div className="flex items-center justify-between w-full px-2 sm:px-4 py-1 sm:py-2">
-          <div className="pl-3 sm:pl-4">
-            <Logo 
-              size="sm" 
-              showText={false}
-              clickable={true}
-              onClick={() => navigate('/?tab=home')}
-              src="/hero_logo_1920.png"
-              className="h-16 sm:h-20"
-            />
+          <div className="flex items-center gap-3">
+            <div className="pl-3 sm:pl-4">
+              <Logo 
+                size="sm" 
+                showText={false}
+                clickable={true}
+                onClick={() => navigate('/?tab=home')}
+                src="/hero_logo_1920.png"
+                className="h-16 sm:h-20"
+              />
+            </div>
+            <IdentityIndicator />
           </div>
           
           {/* Desktop Header */}
           <div className="hidden md:flex items-center gap-4">
+            <ActiveWalletIndicator size="sm" />
+            
             <Badge variant={actualPlan === 'free' ? 'secondary' : 'default'}>
               {actualPlan === 'free' && <span className="mr-1">🆓</span>}
               {(actualPlan === 'pro' || actualPlan === 'premium') && <Crown className="h-3 w-3 mr-1" />}

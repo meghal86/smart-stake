@@ -25,7 +25,7 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 - Hooks: `src/hooks/useEnhancedPortfolio.ts`, `src/hooks/useUserAddresses.ts`
 - Services: `src/services/MetricsService.ts` (portfolio tracking)
 - Icons: `PortfolioIcon`, `PortfolioIcon5` in nav components
-- Database: `user_portfolio_addresses`, `portfolio_snapshots` tables
+- Database: user_portfolio_addresses and portfolio_snapshots exist today; new work SHALL extend these where present (ALTER TABLE) and SHALL NOT create parallel tables
 
 ## Glossary
 
@@ -42,6 +42,10 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 - **Simulation_Receipt**: Results from pre-transaction simulation
 - **Action_Score**: Prioritization score for recommended actions
 
+**Chain Identity Rule**: All internal and persisted chain identifiers SHALL use EIP-155 chain_id (integer). Any human-readable chain name is display-only and SHALL NOT be used for execution, simulation binding, or idempotency.
+
+**Risk Score Range Rule**: All risk scores (portfolio risk_score, approval risk_score, confidence) SHALL be normalized to 0..1 and MUST be bounded by constraints at persistence boundaries.
+
 ## Requirements
 
 ### Requirement 1: Unified Portfolio Hub
@@ -51,7 +55,7 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 #### Acceptance Criteria
 
 1. THE Portfolio_Route SHALL serve as the canonical entry point at `/portfolio`
-2. IF the existing canonical Portfolio route currently lives under `/lite/portfolio` (or other), THE System SHALL alias/redirect `/portfolio` to the existing route without creating a new parallel page (reuse-first)
+2. THE `/portfolio` route MAY be added only as a thin redirect/alias to an existing route, without introducing a parallel implementation
 3. WHEN a user accesses the portfolio, THE System SHALL display persistent AI Hub and 3-tab spine (Overview, Positions, Audit)
 4. THE System SHALL show always-visible elements: net worth, 24h delta, freshness, trust/risk summary, alerts count
 5. THE Copilot_Entry SHALL be always available through chat drawer
@@ -191,7 +195,7 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
   "id": "plan_456",
   "intent": "revoke_approvals",
   "steps": [
-    { "stepId": "s1", "kind": "revoke", "chain": "ethereum", "target": "0x...", "status": "ready" }
+    { "stepId": "s1", "kind": "revoke", "chainId": 1, "target": "0x...", "status": "ready" }
   ],
   "policy": { "status": "allowed", "violations": [] },
   "simulation": { "status": "pass", "receiptId": "sim_789" },
@@ -314,9 +318,10 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 
 1. THE System SHALL maintain data models for User, Wallet Profile, Portfolio Snapshot, Position, Approval/Permission, Recommended Action, Intent Plan, Audit Event, Notification Prefs
 2. THE System SHALL provide APIs for portfolio snapshot, positions, approvals, recommended actions, plan creation/simulation/execution, audit events, graph-lite, copilot, notification settings
-3. THE System SHALL support pagination for large datasets
-4. THE System SHALL implement proper error handling with Result types
-5. THE System SHALL maintain API versioning and backward compatibility
+3. All portfolio APIs SHALL be versioned under /api/v1/... and responses SHALL include { apiVersion: "v1" }
+4. THE System SHALL support pagination for large datasets
+5. THE System SHALL implement proper error handling with Result types
+6. THE System SHALL maintain API versioning and backward compatibility
 
 ### Requirement 16: Telemetry and Business Metrics
 
@@ -330,6 +335,17 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 4. THE System SHALL monitor p95/p99 latencies and SSE reconnect rates
 5. THE System SHALL track action funnel from card → plan → simulate → sign → confirm
 
+**Required events:**
+- portfolio_snapshot_loaded (cache_hit, latency_ms, wallet_scope)
+- action_card_viewed (action_id, severity)
+- plan_created (plan_id, intent, wallet_scope)
+- plan_simulated (plan_id, receipt_id, status, latency_ms)
+- plan_execute_clicked (plan_id)
+- step_submitted / step_confirmed / step_failed (plan_id, step_id, chain_id, tx_hash?)
+- override_unsafe_clicked (reason_code)
+
 ## Ship-Blocker Prevention Checklist
 
 All ship-blockers enumerated in requirements above.
+
+**This document's Requirement numbers (R1–R16) are canonical. Any other requirement ID formats are non-authoritative.**

@@ -27,14 +27,15 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
   - _Requirements: R5-AC1, R5-AC2, R5-AC3, R5-AC4_
   - _Acceptance: 100% interactive elements produce feedback_
 
-- [ ] 3. Add Footer OR Settings → Legal/Support (v1 minimal, but real)
+- [x] 3. Add Footer OR Settings → Legal/Support (v1 minimal, but real)
+  - please make sure if any of Teams, pirvacy, contact Support or anything exist in compelte project use that or refactor that do not create new one
   - Search for existing Footer/AppShell/Layout
   - Ensure links exist and work: Terms, Privacy, Contact Support, Report Bug
   - Legal pages are allowed as new routes only if they don't exist, but must show real content, not placeholders
   - _Requirements: R6-AC1, R6-AC2, R6-AC3, R6-AC4, R6-AC5, R24-AC1, R24-AC2, R24-AC3, R24-AC4, R24-AC5_
   - _Acceptance: All links work on mobile/desktop; legal pages show actual content_
 
-- [ ] 3.1 Add Build/Version Visibility (Settings → About preferred)
+- [x] 3.1 Add Build/Version Visibility (Settings → About preferred)
   - Search for existing "About" or Settings metadata section
   - Display app version/build commit or build timestamp
   - _Requirements: R24-AC3_
@@ -42,14 +43,14 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
 
 ## Phase 1: Global Infrastructure (All Screens)
 
-- [ ] 4. Add Identity Indicator Everywhere
+- [x] 4. Add Identity Indicator Everywhere
   - Search: existing auth UI components (src/components/layout/, header components)
   - Extend existing header to show persistent "Guest" / "Signed in" chip
   - Tooltip: "Guest mode doesn't save wallets/alerts/settings"
   - _Requirements: R2-AC1, R2-AC2, R2-AC3_
   - _Acceptance: Visible within 1 glance on every screen_
 
-- [ ] 5. Add Active Wallet Indicator Everywhere + Correct Wallet Switching
+- [x] 5. Add Active Wallet Indicator Everywhere + Correct Wallet Switching
   - Search for existing wallet connection + selector components
   - Ensure wallet chip shows label (ENS/nickname) + short address everywhere
   - Wallet switching MUST: reset wallet-scoped state, show skeleton/loading, show success toast, never display stale cross-wallet data

@@ -50,11 +50,17 @@ import {
   Phone,
   Image,
   Eye,
-  EyeOff
+  EyeOff,
+  FileText,
+  Info,
+  ExternalLink,
+  Bug,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FooterNav } from "@/components/layout/FooterNav";
 import { profileSettingsSchema, notificationSettingsSchema, privacySettingsSchema, type ProfileSettings, type NotificationSettings, type PrivacySettings } from "@/schemas/settings";
+import { getBuildInfo, getVersionString, getBuildDateString } from "@/lib/utils/build-info";
 
 /**
  * Utility function to safely format date values and prevent "Invalid Date" display
@@ -97,7 +103,7 @@ export default function SettingsPage() {
   const { tier, isPremium, isEnterprise } = useTier();
   const { metadata, loading } = useUserMetadata();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy' | 'legal' | 'about'>('profile');
   const [isSaving, setIsSaving] = useState<{
     profile: boolean;
     notifications: boolean;
@@ -351,6 +357,22 @@ export default function SettingsPage() {
                     >
                       <Shield className="w-4 h-4 mr-2" />
                       Privacy
+                    </Button>
+                    <Button
+                      variant={activeTab === 'legal' ? 'default' : 'ghost'}
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('legal')}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Legal & Support
+                    </Button>
+                    <Button
+                      variant={activeTab === 'about' ? 'default' : 'ghost'}
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('about')}
+                    >
+                      <Info className="w-4 h-4 mr-2" />
+                      About
                     </Button>
                   </nav>
                 </CardContent>
@@ -845,6 +867,266 @@ export default function SettingsPage() {
                         </DisabledTooltipButton>
                       </form>
                     </Form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Legal & Support Tab */}
+              {activeTab === 'legal' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Legal & Support
+                    </CardTitle>
+                    <CardDescription>
+                      Access legal documents and get help
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Legal Documents */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Legal Documents</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Button 
+                          variant="outline" 
+                          className="justify-start h-auto p-4"
+                          onClick={() => navigate('/legal/terms')}
+                        >
+                          <div className="flex items-start gap-3">
+                            <FileText className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                            <div className="text-left">
+                              <div className="font-medium">Terms of Service</div>
+                              <div className="text-sm text-muted-foreground">
+                                Our terms and conditions
+                              </div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 ml-auto text-muted-foreground" />
+                          </div>
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          className="justify-start h-auto p-4"
+                          onClick={() => navigate('/legal/privacy')}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Shield className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                            <div className="text-left">
+                              <div className="font-medium">Privacy Policy</div>
+                              <div className="text-sm text-muted-foreground">
+                                How we handle your data
+                              </div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 ml-auto text-muted-foreground" />
+                          </div>
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Support Options */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Get Support</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Button 
+                          variant="outline" 
+                          className="justify-start h-auto p-4"
+                          onClick={() => navigate('/legal/contact')}
+                        >
+                          <div className="flex items-start gap-3">
+                            <HelpCircle className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                            <div className="text-left">
+                              <div className="font-medium">Contact Support</div>
+                              <div className="text-sm text-muted-foreground">
+                                Get help with your account
+                              </div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 ml-auto text-muted-foreground" />
+                          </div>
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          className="justify-start h-auto p-4"
+                          onClick={() => {
+                            const mailtoLink = `mailto:bugs@alphawhale.com?subject=Bug Report&body=Please describe the bug you encountered:%0A%0ASteps to reproduce:%0A1. %0A2. %0A3. %0A%0AExpected behavior:%0A%0AActual behavior:%0A%0ABrowser: ${navigator.userAgent}%0AURL: ${window.location.href}%0ATimestamp: ${new Date().toISOString()}`;
+                            window.location.href = mailtoLink;
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <Bug className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                            <div className="text-left">
+                              <div className="font-medium">Report a Bug</div>
+                              <div className="text-sm text-muted-foreground">
+                                Report technical issues
+                              </div>
+                            </div>
+                            <ExternalLink className="w-4 h-4 ml-auto text-muted-foreground" />
+                          </div>
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Quick Contact */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Quick Contact</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">General Support</div>
+                            <div className="text-sm text-muted-foreground">For account and general questions</div>
+                          </div>
+                          <a 
+                            href="mailto:support@alphawhale.com"
+                            className="text-primary hover:underline text-sm"
+                          >
+                            support@alphawhale.com
+                          </a>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">Bug Reports</div>
+                            <div className="text-sm text-muted-foreground">For technical issues and bugs</div>
+                          </div>
+                          <a 
+                            href="mailto:bugs@alphawhale.com"
+                            className="text-primary hover:underline text-sm"
+                          >
+                            bugs@alphawhale.com
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* About Tab */}
+              {activeTab === 'about' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Info className="w-5 h-5" />
+                      About AlphaWhale
+                    </CardTitle>
+                    <CardDescription>
+                      App version and build information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Version Information */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Version Information</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">App Version</div>
+                            <div className="text-sm text-muted-foreground">Current release version</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-mono text-sm">{getVersionString()}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">Build Date</div>
+                            <div className="text-sm text-muted-foreground">When this version was built</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm">{getBuildDateString()}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">Environment</div>
+                            <div className="text-sm text-muted-foreground">Current deployment environment</div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="capitalize">
+                              {getBuildInfo().environment}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* System Information */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">System Information</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">Browser</div>
+                            <div className="text-sm text-muted-foreground">Your current browser</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-mono max-w-xs truncate">
+                              {navigator.userAgent.split(' ')[0]}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">Screen Resolution</div>
+                            <div className="text-sm text-muted-foreground">Current viewport size</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-mono">
+                              {window.innerWidth} × {window.innerHeight}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Information */}
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Additional Information</h3>
+                      <div className="text-sm text-muted-foreground space-y-2">
+                        <p>
+                          AlphaWhale is a comprehensive blockchain analytics and portfolio management platform.
+                        </p>
+                        <p>
+                          For technical support or questions about this version, please contact our support team.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Developer Tools (Development Only) */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Developer Tools</h3>
+                        <div className="space-y-3">
+                          <Button 
+                            variant="outline" 
+                            className="justify-start w-full"
+                            onClick={() => {
+                              // Open performance debugger via global function
+                              if ((window as any).openPerformanceDebugger) {
+                                (window as any).openPerformanceDebugger();
+                              }
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <Activity className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                              <div className="text-left">
+                                <div className="font-medium">Performance Debugger</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Monitor memory usage and performance metrics
+                                </div>
+                              </div>
+                            </div>
+                          </Button>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          Developer tools are only available in development mode
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
