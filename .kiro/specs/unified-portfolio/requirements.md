@@ -4,6 +4,14 @@
 
 AlphaWhale Portfolio must evolve from read-only tracking into a read-write-automate "Wealth OS" that is actionable, deterministically safe, and unified across Guardian + Hunter + Harvest + Action Engine. This unified portfolio system serves as the central command center for all wealth management activities with mobile-first design and consistent AlphaWhale design system.
 
+## Version Scope Lock (V1 Launch Requirements)
+
+**V1 (Launch)**: R1–R3, R4 (minimum), R5 (minimum), R6–R7 (core), R8 (graph-lite v0 placeholder), R9 (taxonomy + validation), R10, R12, R13 (basic smoke + leakage tests)
+
+**V1.1**: R11 notifications, R14 MEV toggle, graph-lite v1
+
+**V2**: deeper telemetry + advanced adversarial suites
+
 ## Scope Lock (MANDATORY) — Reuse-First / No-Duplicate Rule
 
 **User Story:** As the platform owner, I want the Portfolio redesign to reuse existing code and architecture, so we ship faster without duplicating systems or diverging styling.
@@ -12,12 +20,13 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 
 1. THE System SHALL reuse the existing Portfolio route, screens, components, hooks, stores, and services where they exist
 2. THE System SHALL NOT create new routes, tabs, or pages if equivalent Portfolio UI already exists in the codebase
-3. THE System SHALL NOT introduce duplicate CSS/token systems; Portfolio styling SHALL use the existing AlphaWhale design system primitives
-4. BEFORE adding any new component/hook/store/service, THE implementer SHALL document:
+3. Adding /portfolio is permitted only as a redirect/alias to the existing portfolio implementation
+4. THE System SHALL NOT introduce duplicate CSS/token systems; Portfolio styling SHALL use the existing AlphaWhale design system primitives
+5. BEFORE adding any new component/hook/store/service, THE implementer SHALL document:
    - what was searched (paths/modules), and
    - why reuse/refactor was not possible (≤3 bullets)
-5. THE System SHALL enforce a "no-duplicate Portfolio primitives" check (lint/script/CI gate) for key modules (Portfolio UI primitives, API clients, risk scoring utilities)
-6. THE implementation SHALL NOT add new top-level navigation items or modules as part of Portfolio work
+6. THE System SHALL enforce a "no-duplicate Portfolio primitives" check (lint/script/CI gate) for key modules (Portfolio UI primitives, API clients, risk scoring utilities)
+7. THE implementation SHALL NOT add new top-level navigation items or modules as part of Portfolio work
 
 **Existing Portfolio Infrastructure to Reuse:**
 - Routes: `/lite/portfolio`, `/lite5/portfolio5`, existing portfolio pages
@@ -63,6 +72,7 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 7. THE System SHALL attach freshness_sec and confidence to all primary Portfolio aggregates: net worth, positions totals, approvals list, recommended actions
 8. THE default confidence threshold SHALL be 0.70 unless overridden by config, and SHALL be lower-bounded at 0.50 (cannot disable gating entirely)
 9. WHEN confidence < threshold, THE System SHALL show a degraded banner and gate risky actions
+10. THE confidence aggregation rule SHALL be: confidence = min(sourceConfidences) for safety-critical aggregates (approvals, actions, plans); confidence = weightedAvg(...) allowed only for non-execution UI metrics
 
 ### Requirement 2: Mobile-First Responsive Design
 
@@ -96,9 +106,11 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 
 1. THE System SHALL generate 3-10 actions prioritized by ActionScore formula
 2. THE ActionScore SHALL equal (Severity × ExposureUSD × Confidence × TimeDecay) − Friction(gasUSD + timeSec)
-3. THE System SHALL include minimum action types: approval hygiene, de-risk exposure, claim rewards, opportunity routing
-4. WHEN displaying an action, THE System SHALL show title, why (≤3 bullets), impact preview, and CTA
-5. THE Impact_Preview SHALL include risk score delta, prevented-loss estimate, expected gain, gas estimate, time estimate
+3. THE Severity SHALL use explicit numeric weights: critical=1.0, high=0.75, medium=0.5, low=0.25
+4. THE ActionScore SHALL sort descending, with ties broken by higher confidence then lower friction
+5. THE System SHALL include minimum action types: approval hygiene, de-risk exposure, claim rewards, opportunity routing
+6. WHEN displaying an action, THE System SHALL show title, why (≤3 bullets), impact preview, and CTA
+7. THE Impact_Preview SHALL include risk score delta, prevented-loss estimate, expected gain, gas estimate, time estimate
 
 ### Requirement 5: Approval Risk Scoring
 
@@ -152,9 +164,10 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 
 1. THE Audit_Tab SHALL display transaction timeline with AI tags
 2. THE System SHALL show approvals/permissions list with risk ranking and VAR
-3. THE System SHALL provide graph-lite visualizer for transaction flows with risk colors
+3. THE System SHALL provide graph-lite visualizer for transaction flows with risk colors (V1: static mini diagram/list-based flow placeholder; full graph in V1.1)
 4. THE System SHALL maintain receipts showing "planned vs executed" metadata for AlphaWhale-created plans
 5. THE System SHALL track freshness and confidence for key numbers
+6. THE System SHALL implement scheduled cleanup job: delete expired receipts; keep last N snapshots per scope
 
 ### Requirement 9: Constrained Copilot Integration
 
@@ -247,7 +260,9 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 2. THE System SHALL track asset/chain/protocol distribution
 3. THE System SHALL compute unified risk scores across wallet set
 4. THE System SHALL identify top movers and "what changed" drivers
-5. THE System SHALL maintain wallet-user linkage protection with RLS and encryption
+5. THE System SHALL maintain wallet-user linkage protection with RLS and encryption using: normalized address + address_hash (indexed) + optional address_enc (pgcrypto/Vault key)
+6. THE System SHALL use plaintext address for RPC queries; DB uses RLS; logs never include raw addresses unless debug flag enabled
+7. THE System SHALL store PolicyEngineConfig in portfolio_policy_prefs table (or extend existing user settings table if equivalent exists)
 
 ### Requirement 13: Stress Testing and Quality Gates
 
@@ -318,10 +333,13 @@ AlphaWhale Portfolio must evolve from read-only tracking into a read-write-autom
 
 1. THE System SHALL maintain data models for User, Wallet Profile, Portfolio Snapshot, Position, Approval/Permission, Recommended Action, Intent Plan, Audit Event, Notification Prefs
 2. THE System SHALL provide APIs for portfolio snapshot, positions, approvals, recommended actions, plan creation/simulation/execution, audit events, graph-lite, copilot, notification settings
-3. All portfolio APIs SHALL be versioned under /api/v1/... and responses SHALL include { apiVersion: "v1" }
-4. THE System SHALL support pagination for large datasets
-5. THE System SHALL implement proper error handling with Result types
-6. THE System SHALL maintain API versioning and backward compatibility
+3. All portfolio APIs SHALL be versioned under /api/v1/portfolio/... and responses SHALL include { apiVersion: "v1" }
+4. THE SSE endpoints SHALL include apiVersion in header and first SSE event
+5. THE System SHALL support pagination for large datasets
+6. THE System SHALL implement proper error handling with Result types
+7. THE System SHALL maintain API versioning and backward compatibility
+8. THE System SHALL use NUMERIC(5,4) precision for risk_score and confidence fields (not DECIMAL(3,2))
+9. THE System SHALL define snapshot storage mode as upsert-current with unique constraint (user_id, scope_mode, scope_key) and update updated_at field
 
 ### Requirement 16: Telemetry and Business Metrics
 

@@ -1,21 +1,96 @@
 # Implementation Plan: Unified Portfolio System
 
+# V1 Scope Lock + Ship-Blocker Spec Alignment (MANDATORY)
+
+## V1 Launch Requirements (from requirements.md)
+
+V1 MUST ship: R1–R3, R4(min), R5(min), R6–R7(core), R8(graph-lite v0 placeholder), R9(taxonomy+validation), R10, R12, R13(basic smoke + leakage tests).
+
+V1.1: R11 notifications, R14 MEV toggle, graph-lite v1.
+
+V2: deeper telemetry + advanced adversarial suites.
+
+## 0. Ship-Blocker Alignment Tasks (DO FIRST)
+
+- [ ] 0.1 Canonical API Versioning [V1]
+  - All endpoints in this plan MUST be under: `/api/v1/portfolio/...`
+  - Every JSON response MUST include `{ apiVersion: "v1" }`
+  - SSE MUST include:
+    - Header: `X-API-Version: v1`
+    - First SSE event: `meta` with `{ apiVersion: "v1" }`
+  - Acceptance: no `/api/portfolio/...` endpoints remain anywhere in task.md
+
+- [ ] 0.2 Snapshot Storage Mode (R15.9) [V1]
+  - Snapshot persistence MUST be **upsert-current** (not append-only)
+  - Add UNIQUE constraint: `(user_id, scope_mode, scope_key)`
+  - Writes update `updated_at` and overwrite net_worth/delta/positions/risk fields
+  - Acceptance: DB enforces single "current snapshot" per scope
+
+- [ ] 0.3 Numeric Precision Hardening (R15.8) [V1]
+  - risk_score + confidence MUST be `NUMERIC(5,4)` (0.0000..1.0000)
+  - Bounds MUST be enforced by CHECK constraints at DB boundary
+  - Acceptance: no DECIMAL(3,2) remains for these fields
+
+- [ ] 0.4 Confidence Aggregation Rule (R1.10) [V1]
+  - For safety-critical aggregates (approvals, actions, plans): `confidence = min(sourceConfidences)`
+  - Weighted averages allowed ONLY for non-execution UI metrics
+  - Acceptance: confidence aggregation implemented + unit/property test added
+
+- [ ] 0.5 ActionScore Weights + Tie-break Rules (R4.3–R4.4) [V1]
+  - Severity weights: critical=1.0, high=0.75, medium=0.5, low=0.25
+  - Sort: ActionScore desc; ties -> higher confidence; ties -> lower friction
+  - Acceptance: scoring code + property tests updated
+
+- [ ] 0.6 Graph-Lite v0 Scope (R8.3) [V1]
+  - V1 ships **Graph-Lite v0**: list-based "flow summary" / mini static diagram
+  - Full interactive graph is V1.1 backlog
+  - Acceptance: Audit tab renders Graph-Lite v0 section without blocking V1
+
+- [ ] 0.7 Privacy Model for Wallet Linkage (R12.5–R12.7) [V1]
+  - Wallet records store: normalized address (for RPC), `address_hash` (indexed), optional `address_enc`
+  - Logs MUST NOT include raw addresses unless explicit debug flag enabled
+  - PolicyEngineConfig stored in `portfolio_policy_prefs` (or extend existing settings table)
+  - Acceptance: migration + RLS + logging rules in place
+
+- [ ] 0.8 Cleanup Job (R8.6) [V1]
+  - Scheduled cleanup deletes expired simulation receipts
+  - Enforces "keep last N snapshots per scope_key"
+  - Acceptance: scheduled job exists (Supabase scheduled function/pg_cron equivalent)
+
+- [ ] 0.9 V1/V1.1/V2 Task Labels [V1]
+  - Every task MUST be tagged: `[V1]`, `[V1.1]`, or `[V2]`
+  - V1 PRs cannot include V1.1/V2 codepaths unless behind feature flag and off by default
+
 ## Overview
 
 This implementation plan transforms the Unified Portfolio System design into actionable coding tasks. The approach emphasizes reuse-first architecture, mobile-first responsive design, and enterprise-grade security with property-based testing for correctness guarantees.
 
 ## Tasks
 
-- [ ] 1. Set up project structure and database schema
+- [ ] 1. Set up project structure and database schema [V1]
   - Create database migration for unified portfolio tables
   - Set up TypeScript shared types and interfaces
   - Configure property-based testing framework (fast-check)
   - _Requirements: 1.1, 14.4, 14.5_
 
-- [ ] 1.1 Create database migration for portfolio tables (REUSE-FIRST CHECK REQUIRED)
+- [ ] 1.1 Create database migration for portfolio tables (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search existing migrations in supabase/migrations/ for portfolio_snapshots, approval_risks, intent_plans, execution_steps, simulation_receipts tables
   - **IF EXISTS**: Extend existing tables with ALTER TABLE statements instead of CREATE TABLE
-  - **IF NOT EXISTS**: Implement portfolio_snapshots table with scope_key constraints
+  - **IF NOT EXISTS**: Update risk_score and confidence fields to NUMERIC(5,4) with bounds CHECK (0..1) (R15.8)
+  - **IF NOT EXISTS**: portfolio_snapshots MUST be upsert-current:
+    - Add UNIQUE(user_id, scope_mode, scope_key) (R15.9)
+    - Update "latest snapshot index" to use updated_at DESC (since we overwrite) (R15.9)
+  - **IF NOT EXISTS**: Add portfolio_policy_prefs table (or extend existing settings table):
+    - user_id PK/FK, max_gas_usd, block_new_contracts_days, block_infinite_approvals_to_unknown,
+      require_simulation_for_value_over_usd, confidence_threshold (min 0.50), updated_at (R12.7)
+  - **IF NOT EXISTS**: Extend user_portfolio_addresses (REUSE existing table):
+    - add address_hash TEXT NOT NULL (indexed)
+    - optional address_enc TEXT NULL
+    - add normalization trigger: lower(address)
+    - add CHECK that address_hash is present and address is normalized
+  - **IF NOT EXISTS**: Add cleanup job mechanism:
+    - function + scheduled invocation to delete expired simulation_receipts
+    - function + scheduled invocation to keep last N snapshots per (user_id, scope_mode, scope_key) (R8.6)
   - **IF NOT EXISTS**: Implement approval_risks table with chain_id INTEGER NOT NULL (no DEFAULT)
   - **IF NOT EXISTS**: Implement intent_plans table with wallet_scope JSON validation
   - **IF NOT EXISTS**: Implement execution_steps table with chain_id INTEGER NOT NULL (EIP-155)
@@ -33,13 +108,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Create separate CREATE INDEX statements (PostgreSQL-compliant)
   - _Requirements: 1.1, 7.5, 7.6, 8.4, 11.4, 14.4_
 
-- [ ] 1.2 Write integration test for database schema constraints
+- [ ] 1.2 Write integration test for database schema constraints [V1]
   - Test scope_key determinism via migrate → insert → assert fail/pass
   - Test database triggers and constraints enforcement
   - Test RLS policies and constraint violations
   - **Validates: Requirements 1.1**
 
-- [ ] 1.3 Set up shared TypeScript types (REUSE-FIRST CHECK REQUIRED)
+- [ ] 1.3 Set up shared TypeScript types (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/types/** for existing ScopeMode, WalletScope, ExecutionStep, IntentPlan, ApprovalRisk types
   - **IF EXISTS**: Extend existing types with additional properties instead of creating new ones
   - **IF NOT EXISTS**: Define ScopeMode and WalletScope types
@@ -48,17 +123,24 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Define FreshnessConfidence and PolicyEngineConfig interfaces
   - _Requirements: 1.1, 6.8_
 
-- [ ] 1.4 Write property test for shared type validation
+- [ ] 1.4 Write property test for shared type validation [V1]
   - **Property S2: Type safety enforcement**
   - **Validates: Requirements 1.1**
 
-- [ ] 2. Implement reuse audit gate and component discovery
+- [ ] 1.5 Integration test: snapshot upsert-current [V1]
+  - Insert snapshot for same (user_id, scope_mode, scope_key) twice -> row count stays 1, updated_at changes
+  - **Validates: Requirements R15.9**
+
+- [ ] 1.6 Test: cleanup deletes expired receipts + retains last N snapshots [V1]
+  - **Validates: Requirements R8.6**
+
+- [ ] 2. Implement reuse audit gate and component discovery [V1]
   - Search existing portfolio components and hooks
   - Document reuse decisions for each new component
   - Extend existing components where possible
   - _Requirements: 3.1, 3.2_
 
-- [ ] 2.1 Audit existing portfolio infrastructure (REUSE-FIRST CHECK REQUIRED)
+- [ ] 2.1 Audit existing portfolio infrastructure (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for reusable components
   - **BEFORE CREATING**: Search src/hooks/** for portfolio-related hooks
   - **BEFORE CREATING**: Search src/services/** for portfolio services
@@ -67,7 +149,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Document findings and reuse opportunities (≤3 bullets per search)
   - _Requirements: 3.1_
 
-- [ ] 2.2 Extend PortfolioHub component (or create if missing) (REUSE-FIRST CHECK REQUIRED)
+- [ ] 2.2 Extend PortfolioHub component (or create if missing) (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing PortfolioHub, Portfolio, or similar components
   - **BEFORE CREATING**: Search src/hooks/** for useUserAddresses, useWalletSwitching hooks
   - **IF EXISTS**: Extend existing PortfolioHub with wallet switching and freshness display
@@ -76,11 +158,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF EXISTS**: Integrate with existing useUserAddresses hook, **IF NOT EXISTS**: create new hook
   - _Requirements: 3.1, 3.2, 10.1_
 
-- [ ] 2.3 Write property test for wallet switching
+- [ ] 2.3 Write property test for wallet switching [V1]
   - **Property S3: Wallet switch data isolation**
   - **Validates: Requirements 12.5**
 
-- [ ] 2.4 Create Portfolio Route Shell (or extend existing) (REUSE-FIRST CHECK REQUIRED)
+- [ ] 2.4 Create Portfolio Route Shell (or extend existing) (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/pages/** and src/app/** for existing /portfolio routes
   - **BEFORE CREATING**: Search src/components/** for existing route shells or layout components
   - **IF EXISTS**: Extend existing /portfolio route with 3-tab spine (Overview, Positions, Audit)
@@ -90,7 +172,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Ensure mobile-first responsive layout with single-column for <480px
   - _Requirements: 1.1, 1.2, 2.1, 2.2_
 
-- [ ] 2.5 Create Overview Tab component (REUSE-FIRST CHECK REQUIRED)
+- [ ] 2.5 Create Overview Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing NetWorthCard, ActionsFeed, RiskSummary components
   - **BEFORE CREATING**: Search src/components/** for existing activity timeline or summary components
   - **IF EXISTS**: Extend existing components with freshness + confidence display
@@ -100,7 +182,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add Recent Activity Timeline with AI tags
   - _Requirements: 1.1, 4.1, 10.1_
 
-- [ ] 2.6 Create Positions Tab component (REUSE-FIRST CHECK REQUIRED)
+- [ ] 2.6 Create Positions Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing AssetBreakdown, ChainDistribution, ProtocolExposure components
   - **BEFORE CREATING**: Search src/components/** for existing performance metrics or breakdown components
   - **IF EXISTS**: Extend existing components with progressive disclosure patterns
@@ -110,30 +192,30 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add Performance Metrics display
   - _Requirements: 12.1, 12.2, 12.3_
 
-- [ ] 2.7 Create Audit Tab component (REUSE-FIRST CHECK REQUIRED)
+- [ ] 2.7 Create Audit Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing TransactionTimeline, ApprovalsList, GraphVisualizer components
   - **BEFORE CREATING**: Search src/components/** for existing audit, timeline, or transaction components
   - **IF EXISTS**: Extend existing components with AI tags and VAR + severity display
   - **IF NOT EXISTS**: Implement Transaction Timeline with AI tags
   - **IF NOT EXISTS**: Add Approvals Risk List with VAR + severity display
-  - **IF NOT EXISTS**: Add Graph-Lite Visualizer for transaction flows (90-day placeholder - not blocking v1)
+  - **IF NOT EXISTS**: Add Graph-Lite Visualizer for transaction flows (V1: static mini diagram/list-based flow placeholder; full graph in V1.1)
   - **IF NOT EXISTS**: Add Planned vs Executed Receipts section
   - _Requirements: 8.1, 8.4_
 
-- [ ] 2.8 Implement Design System Compliance enforcement
+- [ ] 2.8 Implement Design System Compliance enforcement [V1]
   - Add ESLint rule to prevent custom CSS patterns that bypass shared component library
   - Add Playwright checks for design token compliance (CSS class allowlist)
   - Prevent inline styles and ensure only approved design tokens are used
   - **Property 4: Design System Compliance**
   - **Validates: Requirements 3.1, 3.2**
 
-- [ ] 3. Implement portfolio snapshot API and caching
-  - Create /api/portfolio/snapshot endpoint
+- [ ] 3. Implement portfolio snapshot API and caching [V1]
+  - Create /api/v1/portfolio/snapshot endpoint
   - Implement risk-aware caching with severity-based TTL
   - Add freshness and confidence metadata
   - _Requirements: 1.6, 1.8, 10.5_
 
-- [ ] 3.1 Create portfolio snapshot API endpoint (REUSE-FIRST CHECK REQUIRED)
+- [ ] 3.1 Create portfolio snapshot API endpoint (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/app/api/portfolio/** and src/pages/api/portfolio/** for existing snapshot endpoints
   - **BEFORE CREATING**: Search src/services/** for existing portfolio aggregation services
   - **IF EXISTS**: Extend existing endpoint with scope parameter and freshness metadata
@@ -144,15 +226,20 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Handle degraded mode when confidence < threshold
   - _Requirements: 1.6, 1.8, 1.9, 15.3_
 
-- [ ] 3.2 Write property test for data aggregation
+- [ ] 3.2 Write property test for data aggregation [V1]
   - **Property 1: Data Aggregation Completeness**
   - **Validates: Requirements 1.6**
 
-- [ ] 3.3 Write property test for metadata consistency
+- [ ] 3.3 Write property test for metadata consistency [V1]
   - **Property 2: Metadata Attachment Consistency**
   - **Validates: Risk-aware metadata tracking policy**
 
-- [ ] 3.4 Implement risk-aware caching system (REUSE-FIRST CHECK REQUIRED)
+- [ ] 3.4 Test confidence aggregation rule [V1]
+  - Assert approvals/actions/plans confidence == min(sourceConfidences)
+  - Assert weighted avg allowed only for non-execution metrics
+  - **Validates: Requirements R1.10**
+
+- [ ] 3.5 Implement risk-aware caching system (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/lib/** for existing caching systems, TTL calculators, or cache invalidation logic
   - **BEFORE CREATING**: Search src/services/** for existing cache warming or risk-based caching
   - **IF EXISTS**: Extend existing caching with severity-based TTL ranges
@@ -181,9 +268,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Add loading states and error handling
   - _Requirements: 4.1, 4.4, 10.1, 10.2_
 
-- [ ] 4.2 Write property test for action scoring
+- [ ] 4.2 Write property test for action scoring [V1]
   - **Property 5: Action Score Calculation**
-  - **Validates: Requirements 4.2**
+  - Verify severity weights: critical=1.0, high=0.75, medium=0.5, low=0.25
+  - Verify tie-break: higher confidence wins, then lower friction
+  - **Validates: Requirements 4.2, R4.3–R4.4**
 
 - [ ] 4.3 Write property test for action generation bounds
   - **Property 6: Action Generation Bounds**
@@ -413,7 +502,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 21: Copilot Action Verb Handling**
   - **Validates: Requirements 9.2**
 
-- [ ] 11.4 Implement GET /api/v1/portfolio/copilot/stream endpoint (REUSE-FIRST CHECK REQUIRED)
+- [ ] 11.4 Implement GET /api/v1/portfolio/copilot/stream endpoint (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/app/api/** and src/pages/api/** for existing SSE endpoints or copilot integrations
   - **BEFORE CREATING**: Search src/services/** for existing copilot services or response validation
   - **IF EXISTS**: Extend existing endpoint with wallet scope parameter and taxonomy validation
@@ -421,6 +510,8 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Validate Copilot responses against taxonomy
   - **IF NOT EXISTS**: Prevent automation promises in responses
   - **IF NOT EXISTS**: Add capability notices for system limitations
+  - **IF NOT EXISTS**: Set header X-API-Version: v1
+  - **IF NOT EXISTS**: SSE first event: event: meta with { apiVersion: "v1" }
   - **IF NOT EXISTS**: Include { apiVersion: "v1" } in response headers
   - _Requirements: 9.1, 9.2, 9.3, 15.3_
 
@@ -428,7 +519,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 22: Copilot Automation Promise Prevention**
   - **Validates: Requirements 9.3**
 
-- [ ] 12. Implement progressive disclosure UI patterns
+- [ ] 13. Implement progressive disclosure UI patterns [V1]
   - Add "View all" functionality to all sections
   - Implement mobile-first responsive layouts
   - Add loading, empty, error, and degraded states
@@ -461,42 +552,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 24: Performance Requirements**
   - **Validates: Requirements 10.3, 10.4**
 
-- [ ] 13. Implement notification system
-  - Add exposure-aware notification aggregation
-  - Implement user settings for DND and severity thresholds
-  - Add deep linking and delivery tracking
-  - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
-
-- [ ] 13.1 Create notification management system (REUSE-FIRST CHECK REQUIRED)
-  - **BEFORE CREATING**: Search src/lib/** for existing notification systems, aggregation logic, or user preference management
-  - **BEFORE CREATING**: Search src/services/** for existing notification services or delivery tracking
-  - **IF EXISTS**: Extend existing system with exposure-aware aggregation and portfolio-specific settings
-  - **IF NOT EXISTS**: Implement exposure-aware aggregation logic
-  - **IF NOT EXISTS**: Add user preference controls (DND, caps, severity)
-  - **IF NOT EXISTS**: Create deep link generation for notifications
-  - **IF NOT EXISTS**: Track delivery and read status
-  - **IF NOT EXISTS**: Enforce daily quotas per user
-  - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
-
-- [ ] 13.2 Write property test for notification management
-  - **Property 27: Notification Management**
-  - **Validates: Requirements 11.1, 11.2, 11.3, 11.4, 11.5**
-
-- [ ] 13.3 Implement MEV-protected sending mode toggle for Requirement 14.3 compliance (REUSE-FIRST CHECK REQUIRED)
-  - **BEFORE CREATING**: Search src/lib/** for existing MEV protection, private RPC routing, or transaction sending systems
-  - **BEFORE CREATING**: Search src/services/** for existing transaction execution or MEV protection services
-  - **IF EXISTS**: Extend existing system with mevProtectedMode configuration and capability detection
-  - **IF NOT EXISTS**: Add policy/config flag mevProtectedMode: "off" | "auto" | "force"
-  - **IF NOT EXISTS**: Enable only on chains/providers where supported; otherwise emit CapabilityNotice
-  - **IF NOT EXISTS**: Ensure plan receipts log whether protected mode was requested/used
-  - **IF NOT EXISTS**: Add UI toggle for MEV protection preference
-  - _Requirements: 14.3_
-
-- [ ] 13.4 Write property test for MEV protection mode
-  - **Property 33: MEV Protection Mode Enforcement**
-  - **Validates: Requirements 14.3**
-
-- [ ] 14. Implement multi-wallet aggregation
+- [ ] 14. Implement multi-wallet aggregation [V1]
   - Add cross-wallet net worth calculation
   - Implement unified risk scoring
   - Create exposure breakdown views
@@ -547,23 +603,14 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 31: Mandatory Simulation Coverage**
   - **Validates: Requirements 14.2**
 
-- [ ] 16.5 Implement concrete stress and adversarial test suites for Requirement 13 compliance
-  - Create Playwright test suites for functional stress scenarios:
+- [ ] 16.5 Implement basic stress tests for Requirement 13 compliance [V1]
+  - Create Playwright test suites for basic functional stress scenarios:
     - rapid tab + wallet switching for 60s (no stale wallet leakage)
     - wallet switch mid SSE stream (SSE closed, state cleared, restarted)
-    - 5k rows virtualization stability
     - degraded provider mode (simulation down) gating
-    - deep-link entry guard + phishing warning
-  - Create k6 performance test scenarios:
-    - snapshot cached p95 < 600ms
-    - snapshot cold p95 < 1200ms
-    - copilot first token p95 < 1500ms (measure from SSE open → first event)
-  - Create adversarial security test suite:
-    - prompt injection via token name / tx metadata (Copilot must not deviate from taxonomy)
-    - simulation vs execution mismatch (TX differs from simulated plan - blocked + audit logged)
-    - deep-link / QR entry points ("Open wallet & sign" link - warning + verification gate)
-    - proxy upgradeable contract interaction (flagged with reason + severity)
-  - _Requirements: 13.1, 13.2, 13.3_
+    - "create plan → simulate → execute" happy path (a few cycles)
+  - Basic smoke tests only - move k6 + "weekly adversarial suite" to V2
+  - _Requirements: 13.1, 13.2 (basic smoke + leakage tests only)_
 
 - [ ] 16.6 Write property test for stress test coverage
   - **Property 34: Stress Test Coverage Completeness**
@@ -589,17 +636,16 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 26: Cache Invalidation Triggers**
   - **Validates: Requirements 10.6**
 
-- [ ] 17.3 Implement telemetry wiring to MetricsService for Requirement 16 compliance (REUSE-FIRST CHECK REQUIRED)
+- [ ] 17.3 Telemetry wiring (minimal) [V1]
+  - Only: portfolio_snapshot_loaded (cache_hit, latency_ms, wallet_scope), plan_created, plan_simulated, step_confirmed/failed
+  - Everything else (MTTS, prevented-loss p50/p95, FP rate dashboards) moves to [V2]
   - **BEFORE CREATING**: Search src/services/MetricsService.ts for existing event tracking, correlation IDs, or portfolio metrics
-  - **IF EXISTS**: Extend MetricsService with portfolio event taxonomy and correlation ID support
-  - **IF NOT EXISTS**: Add event taxonomy with correlation_id per user session
+  - **IF EXISTS**: Extend MetricsService with minimal portfolio event taxonomy
+  - **IF NOT EXISTS**: Add minimal event taxonomy with correlation_id per user session
   - **IF NOT EXISTS**: Add plan_id and step_id propagation throughout execution flow
   - **IF NOT EXISTS**: Track SSE reconnect rates and connection stability
-  - **IF NOT EXISTS**: Implement required events: portfolio_snapshot_loaded, action_card_viewed, plan_created, plan_simulated, plan_execute_clicked, step_submitted/confirmed/failed, override_unsafe_clicked
-  - **IF NOT EXISTS**: Add MTTS (Mean Time To Safety) calculation for critical issues
-  - **IF NOT EXISTS**: Track prevented loss $ at p50/p95 percentiles
-  - **IF NOT EXISTS**: Monitor fix rate and false positive rate
-  - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
+  - **IF NOT EXISTS**: Implement minimal required events: portfolio_snapshot_loaded, plan_created, plan_simulated, step_confirmed/failed
+  - _Requirements: 16.1, 16.2 (minimal)_
 
 - [ ] 17.4 Write property test for telemetry completeness
   - **Property 35: Telemetry Event Completeness**
@@ -637,8 +683,46 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Test error handling and fallback behavior
   - _Requirements: 1.6_
 
-- [ ] 19. Final checkpoint - Ensure all tests pass
+- [ ] 19. Final checkpoint - Ensure all tests pass [V1]
   - Ensure all tests pass, ask the user if questions arise.
+
+## Backlog — V1.1 (Not in V1 Launch)
+
+- [ ] Notifications (R11) [V1.1]
+  - Implement notification system
+  - Add exposure-aware notification aggregation
+  - Implement user settings for DND and severity thresholds
+  - Add deep linking and delivery tracking
+  - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+
+- [ ] MEV-protected sending toggle (R14.3) [V1.1]
+  - Implement MEV-protected sending mode toggle
+  - Add policy/config flag mevProtectedMode: "off" | "auto" | "force"
+  - Enable only on chains/providers where supported
+  - Add UI toggle for MEV protection preference
+  - _Requirements: 14.3_
+
+- [ ] Graph-Lite v1 interactive [V1.1]
+  - Replace static mini diagram with full interactive graph visualizer
+  - Add transaction flow visualization with risk colors
+  - Implement zoom, pan, and filtering capabilities
+  - _Requirements: 8.3 (full version)_
+
+## Backlog — V2
+
+- [ ] Deeper telemetry (MTTS, prevented-loss modeling, funnels) [V2]
+  - Add MTTS (Mean Time To Safety) calculation for critical issues
+  - Track prevented loss $ at p50/p95 percentiles
+  - Monitor fix rate and false positive rate
+  - Implement comprehensive dashboards
+  - _Requirements: 16.3, 16.4, 16.5_
+
+- [ ] Weekly adversarial suites + chaos runs [V2]
+  - Create k6 performance test scenarios
+  - Create adversarial security test suite
+  - Implement chaos engineering tests
+  - Add deep-link entry guard + phishing warning tests
+  - _Requirements: 13.3 (advanced adversarial)_
 
 ## Notes
 
