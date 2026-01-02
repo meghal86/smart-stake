@@ -1,7 +1,3 @@
-/**
- * Guardian Page
- * Main page for wallet trust & safety scanning
- */
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ExternalLink, AlertTriangle, ShieldAlert } from 'lucide-react';
@@ -12,6 +8,7 @@ import { ScanDialog } from '@/components/guardian/ScanDialog';
 import { ScoreCard } from '@/components/guardian/ScoreCard';
 import { RiskCard } from '@/components/guardian/RiskCard';
 import { RevokeModal } from '@/components/guardian/RevokeModal';
+import { WalletScopeHeader } from '@/components/guardian/WalletScopeHeader';
 import { useGuardianStore } from '@/store/guardianStore';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { Button } from '@/components/ui/button';
@@ -167,7 +164,7 @@ export function GuardianPage() {
                 {activeAddress?.slice(0, 6)}...{activeAddress?.slice(-4)}
               </span>
               {demoMode && (
-                <span className="ml-2 text-xs bg-blue-500/10 text-blue-500 px-2 py-1 rounded">
+                <span className="demo-mode-badge ml-2">
                   Demo Mode
                 </span>
               )}
@@ -182,12 +179,19 @@ export function GuardianPage() {
                 setDemoAddress(null);
                 setAutoScanTriggered(false);
               }}
+              className="guardian-exit-demo-button"
             >
               Exit Demo
             </Button>
           )}
         </div>
       </div>
+
+      {/* Wallet Scope Header */}
+      <WalletScopeHeader 
+        walletAddress={activeAddress || undefined}
+        walletLabel={demoMode ? 'Demo Wallet' : undefined}
+      />
 
       {/* Score Card */}
       <div className="mb-8">

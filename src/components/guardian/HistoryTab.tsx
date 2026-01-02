@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { TrendingUp, Calendar, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { WalletScopeHeader } from './WalletScopeHeader';
+import { useWallet } from '@/contexts/WalletContext';
 
 interface ScanHistory {
   id: string;
@@ -17,6 +19,11 @@ interface HistoryTabProps {
 }
 
 export function HistoryTab({ walletAddress }: HistoryTabProps) {
+  const { connectedWallets, activeWallet } = useWallet();
+
+  // Get wallet label for display
+  const activeWalletData = connectedWallets.find(w => w.address === activeWallet);
+  const walletLabel = activeWalletData?.label || activeWalletData?.ens || activeWalletData?.lens;
   const { data: history = [], isLoading } = useQuery({
     queryKey: ['guardian_history', walletAddress],
     queryFn: async () => {
@@ -77,6 +84,11 @@ export function HistoryTab({ walletAddress }: HistoryTabProps) {
 
   return (
     <div className="space-y-6">
+      <WalletScopeHeader 
+        walletAddress={walletAddress} 
+        walletLabel={walletLabel}
+      />
+      
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <motion.div

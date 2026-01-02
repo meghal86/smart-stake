@@ -1,0 +1,98 @@
+/* Button Color Fixes for Guardian Demo Mode */
+
+/* Fix RainbowKit button overrides */
+.rnk-connect-button button {
+  background: var(--gradient-primary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* Ensure shadcn/ui button variants work correctly */
+button[data-variant="default"],
+.btn-primary {
+  background: var(--gradient-primary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+button[data-variant="outline"],
+.btn-outline {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border: 2px solid var(--glass-border) !important;
+  backdrop-filter: blur(10px);
+}
+
+button[data-variant="outline"]:hover {
+  background: var(--glass-hover) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+button[data-variant="secondary"],
+.btn-secondary {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--secondary-foreground)) !important;
+  border: none !important;
+}
+
+/* Fix specific Guardian buttons */
+.guardian-connect-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
+}
+
+.guardian-connect-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+.guardian-demo-button {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+}
+
+.guardian-demo-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.guardian-exit-demo-button {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--secondary-foreground)) !important;
+  border: none !important;
+}
+
+.guardian-exit-demo-button:hover {
+  background: hsl(var(--secondary) / 0.8) !important;
+}
+
+/* Prevent white button override */
+button:not(.btn-white):not([data-allow-white]) {
+  background-color: var(--expected-bg, inherit) !important;
+}
+
+/* Ensure demo mode badge styling */
+.demo-mode-badge {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Fix wallet scope header in demo mode */
+.wallet-scope-header.demo-mode {
+  background: rgba(146, 64, 14, 0.2) !important;
+  border-color: rgba(180, 83, 9, 0.5) !important;
+}
+
+.wallet-scope-header.demo-mode .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+.wallet-scope-header.demo-mode .text-amber-200 {
+  color: #fde68a !important;
+}

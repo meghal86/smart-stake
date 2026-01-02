@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Bell, ExternalLink, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { WalletScopeHeader } from './WalletScopeHeader';
+import { useWallet } from '@/contexts/WalletContext';
 
 interface Alert {
   id: string;
@@ -21,6 +23,11 @@ interface AlertsTabProps {
 
 export function AlertsTab({ walletAddress }: AlertsTabProps) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const { connectedWallets, activeWallet } = useWallet();
+
+  // Get wallet label for display
+  const activeWalletData = connectedWallets.find(w => w.address === activeWallet);
+  const walletLabel = activeWalletData?.label || activeWalletData?.ens || activeWalletData?.lens;
 
   const { data: initialAlerts = [], isLoading } = useQuery({
     queryKey: ['guardian_alerts', walletAddress],
@@ -123,6 +130,11 @@ export function AlertsTab({ walletAddress }: AlertsTabProps) {
 
   return (
     <div className="space-y-4">
+      <WalletScopeHeader 
+        walletAddress={walletAddress} 
+        walletLabel={walletLabel}
+      />
+      
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">
           Recent Alerts ({alerts.length})

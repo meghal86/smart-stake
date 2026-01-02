@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Wallet Scope Header Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+        }
+        .success {
+            color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+        }
+        .warning {
+            color: #f59e0b;
+        }
+        .code {
+            background: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .test-url {
+            background: #1f2937;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Guardian Wallet Scope Header - Live Testing</h1>
+    
+    <div class="test-section">
+        <h2>🚀 Live Application Testing</h2>
+        <p>The development server is running. Test the Guardian wallet scope header on these pages:</p>
+        
+        <div class="test-url">
+            <strong>Guardian Main Page:</strong><br>
+            <a href="http://localhost:8081/guardian" target="_blank" style="color: #60a5fa;">
+                http://localhost:8081/guardian
+            </a>
+        </div>
+        
+        <div class="test-url">
+            <strong>Guardian Enhanced:</strong><br>
+            <a href="http://localhost:8081/guardian-enhanced" target="_blank" style="color: #60a5fa;">
+                http://localhost:8081/guardian-enhanced
+            </a>
+        </div>
+        
+        <div class="test-url">
+            <strong>Guardian UX2:</strong><br>
+            <a href="http://localhost:8081/guardian-ux2" target="_blank" style="color: #60a5fa;">
+                http://localhost:8081/guardian-ux2
+            </a>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>✅ What to Look For</h2>
+        <p>On each Guardian page, you should see:</p>
+        <ul>
+            <li class="success">✅ A header showing <span class="code">"Analyzing: [Wallet Address]"</span></li>
+            <li class="success">✅ Shield icon next to "Analyzing:"</li>
+            <li class="success">✅ Wallet icon next to the address</li>
+            <li class="success">✅ Glassmorphism styling (semi-transparent background)</li>
+            <li class="success">✅ Header appears on all tabs (Scan, Risks, Alerts, History)</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔧 Implementation Status</h2>
+        <h3>Files Modified:</h3>
+        <ul>
+            <li class="success">✅ <span class="code">src/components/guardian/WalletScopeHeader.tsx</span> - Component created</li>
+            <li class="success">✅ <span class="code">src/pages/GuardianPage.tsx</span> - Header added after main header</li>
+            <li class="success">✅ <span class="code">src/pages/GuardianUX2.tsx</span> - Header added to content area</li>
+            <li class="success">✅ <span class="code">src/pages/GuardianEnhanced.tsx</span> - Header in Scan tab</li>
+            <li class="success">✅ <span class="code">src/components/guardian/RisksTab.tsx</span> - Header at top</li>
+            <li class="success">✅ <span class="code">src/components/guardian/AlertsTab.tsx</span> - Header at top</li>
+            <li class="success">✅ <span class="code">src/components/guardian/HistoryTab.tsx</span> - Header at top</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🐛 Troubleshooting</h2>
+        <p>If the wallet scope header is not visible:</p>
+        <ol>
+            <li><strong>Connect a wallet first</strong> - The header only shows when a wallet is connected</li>
+            <li><strong>Check browser console</strong> - Look for any React/TypeScript errors</li>
+            <li><strong>Try demo mode</strong> - Some Guardian pages have demo mode buttons</li>
+            <li><strong>Refresh the page</strong> - Ensure latest code is loaded</li>
+        </ol>
+        
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li>🔸 <strong>No wallet connected:</strong> Header should not appear (returns null)</li>
+            <li>🔸 <strong>Wallet connected:</strong> Header shows "Analyzing: 0x1234...5678"</li>
+            <li>🔸 <strong>ENS/Label available:</strong> Shows label + truncated address</li>
+            <li>🔸 <strong>Demo mode:</strong> Shows "Demo Wallet" label</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Test Checklist</h2>
+        <p>Manually verify each item:</p>
+        <ul>
+            <li>☐ Guardian main page shows wallet scope header when wallet connected</li>
+            <li>☐ Guardian Enhanced shows wallet scope header on Scan tab</li>
+            <li>☐ Guardian UX2 shows wallet scope header</li>
+            <li>☐ Risks tab shows wallet scope header</li>
+            <li>☐ Alerts tab shows wallet scope header</li>
+            <li>☐ History tab shows wallet scope header</li>
+            <li>☐ Header disappears when wallet disconnected</li>
+            <li>☐ Header updates when switching wallets</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎯 Requirements Verification</h2>
+        <ul>
+            <li class="success">✅ <strong>R10-AC3:</strong> Wallet scope header shows "Analyzing: [Wallet Name/Address]"</li>
+            <li class="success">✅ <strong>R10-AC4:</strong> Header shown on Scan/Risks/Alerts/History screens</li>
+        </ul>
+        <p class="success"><strong>Task 10 Implementation Complete!</strong></p>
+    </div>
+    
+    <script>
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+        
+        console.log('Guardian Wallet Scope Header Test Page Loaded');
+        console.log('Dev server should be running on http://localhost:8081');
+    </script>
+</body>
+</html>

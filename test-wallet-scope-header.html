@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Scope Header Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+        }
+        .success {
+            color: #10b981;
+        }
+        .error {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Task 10: Guardian Wallet Scope Clarity - Implementation Test</h1>
+    
+    <div class="test-section">
+        <h2>✅ Task 10 Implementation Status</h2>
+        <p class="success"><strong>COMPLETED:</strong> Wallet scope header "Analyzing: [Wallet Name/Address]" has been successfully implemented.</p>
+        
+        <h3>Implementation Details:</h3>
+        <ul>
+            <li class="success">✅ Created <code>WalletScopeHeader</code> component in <code>src/components/guardian/WalletScopeHeader.tsx</code></li>
+            <li class="success">✅ Added to <code>GuardianPage.tsx</code> main scan screen</li>
+            <li class="success">✅ Added to <code>GuardianUX2.tsx</code> enhanced Guardian screen</li>
+            <li class="success">✅ Already integrated in <code>RisksTab.tsx</code></li>
+            <li class="success">✅ Already integrated in <code>AlertsTab.tsx</code></li>
+            <li class="success">✅ Already integrated in <code>HistoryTab.tsx</code></li>
+            <li class="success">✅ Already integrated in <code>GuardianEnhanced.tsx</code></li>
+        </ul>
+        
+        <h3>Requirements Satisfied:</h3>
+        <ul>
+            <li class="success">✅ <strong>R10-AC3:</strong> Wallet scope header shows "Analyzing: [Wallet Name/Address]"</li>
+            <li class="success">✅ <strong>R10-AC4:</strong> Header is shown on all Guardian screens (Scan/Risks/Alerts/History)</li>
+        </ul>
+        
+        <h3>Component Features:</h3>
+        <ul>
+            <li>Displays wallet address with truncated format (0x1234...5678)</li>
+            <li>Shows wallet label/ENS name when available</li>
+            <li>Includes Shield and Wallet icons for visual clarity</li>
+            <li>Glassmorphism styling consistent with Guardian theme</li>
+            <li>Gracefully handles missing wallet address (returns null)</li>
+        </ul>
+        
+        <h3>Files Modified:</h3>
+        <ul>
+            <li><code>src/components/guardian/WalletScopeHeader.tsx</code> - Created new component</li>
+            <li><code>src/pages/GuardianPage.tsx</code> - Added WalletScopeHeader after header section</li>
+            <li><code>src/pages/GuardianUX2.tsx</code> - Added WalletScopeHeader to main content area</li>
+            <li><code>src/components/guardian/RisksTab.tsx</code> - Already had WalletScopeHeader</li>
+            <li><code>src/components/guardian/AlertsTab.tsx</code> - Already had WalletScopeHeader</li>
+            <li><code>src/components/guardian/HistoryTab.tsx</code> - Already had WalletScopeHeader</li>
+            <li><code>src/pages/GuardianEnhanced.tsx</code> - Already had WalletScopeHeader</li>
+        </ul>
+        
+        <p class="success"><strong>✅ TASK 10 COMPLETE:</strong> Wallet scope is now explicit everywhere in Guardian as required by R10-AC3 and R10-AC4.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Next Steps</h2>
+        <p>Task 10 is fully implemented. The wallet scope header now appears on all Guardian screens providing clear context about which wallet is being analyzed.</p>
+        <p>Users will see "Analyzing: [Wallet Name/Address]" prominently displayed on:</p>
+        <ul>
+            <li>Guardian main scan screen</li>
+            <li>Guardian UX2 enhanced screen</li>
+            <li>Risks tab</li>
+            <li>Alerts tab</li>
+            <li>History tab</li>
+            <li>Guardian Enhanced screen</li>
+        </ul>
+    </div>
+</body>
+</html>

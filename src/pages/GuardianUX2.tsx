@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, RefreshCw, Wrench, Sparkles, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { TrustGauge } from '@/components/guardian/TrustGauge';
 import { GlowButton } from '@/components/ui/button-glow';
+import { WalletScopeHeader } from '@/components/guardian/WalletScopeHeader';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
 import { Hub2Footer } from '@/components/hub2/Hub2Footer';
@@ -234,6 +235,12 @@ export function GuardianUX2() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center px-6 pt-12 pb-32">
+        {/* Wallet Scope Header */}
+        <WalletScopeHeader 
+          walletAddress={address || undefined}
+          walletLabel="Connected Wallet"
+        />
+
         {/* Trust Gauge Hero */}
         <motion.div
           initial={{ opacity: 0 }}

@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ShieldAlert, FileWarning, EyeOff, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { FixRiskModal } from './FixRiskModal';
+import { WalletScopeHeader } from './WalletScopeHeader';
+import { useWallet } from '@/contexts/WalletContext';
 
 interface Risk {
   id: string;
@@ -21,6 +23,11 @@ interface RisksTabProps {
 
 export function RisksTab({ walletAddress }: RisksTabProps) {
   const [showFixModal, setShowFixModal] = useState(false);
+  const { connectedWallets, activeWallet } = useWallet();
+
+  // Get wallet label for display
+  const activeWalletData = connectedWallets.find(w => w.address === activeWallet);
+  const walletLabel = activeWalletData?.label || activeWalletData?.ens || activeWalletData?.lens;
 
   const { data: risks = [], isLoading, refetch } = useQuery({
     queryKey: ['guardian_risks', walletAddress],
@@ -91,6 +98,11 @@ export function RisksTab({ walletAddress }: RisksTabProps) {
 
   return (
     <div className="space-y-4">
+      <WalletScopeHeader 
+        walletAddress={walletAddress} 
+        walletLabel={walletLabel}
+      />
+      
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">
           {risks.length} Active Risk{risks.length !== 1 ? 's' : ''}

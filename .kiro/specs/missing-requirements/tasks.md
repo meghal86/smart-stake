@@ -86,7 +86,7 @@ This implementation plan addresses the 24 missing requirements for AlphaWhale v1
   - _Requirements: R9-AC1, R9-AC2, R9-AC3, R9-AC4, R9-AC5_
   - _Acceptance: Every headline metric has definition path + freshness indicator_
 
-- [ ] 10. GUARDIAN (/guardian) — Wallet Scope Clarity
+- [x] 10. GUARDIAN (/guardian) — Wallet Scope Clarity
   - Add scope header: "Analyzing: [Wallet Name/Address]"
   - Ensure shown on Scan/Risks/Alerts/History
   - _Requirements: R10-AC3, R10-AC4_

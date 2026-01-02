@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Button Fixes Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import the exact CSS from the app */
+        :root {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --primary: 160 84% 39%;
+            --primary-foreground: 355 7% 97%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --border: 217.2 32.6% 17.5%;
+            --ring: 160 84% 39%;
+            
+            /* Glass morphism */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-hover: rgba(255, 255, 255, 0.10);
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
+            --gradient-background: linear-gradient(135deg, #0A0E1A 0%, #141A28 100%);
+        }
+        
+        body {
+            background: var(--gradient-background);
+            color: hsl(var(--foreground));
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Button Color Fixes for Guardian Demo Mode */
+
+        /* Fix RainbowKit button overrides */
+        .rnk-connect-button button {
+            background: var(--gradient-primary) !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        /* Ensure shadcn/ui button variants work correctly */
+        button[data-variant="default"],
+        .btn-primary {
+            background: var(--gradient-primary) !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        button[data-variant="outline"],
+        .btn-outline {
+            background: transparent !important;
+            color: hsl(var(--foreground)) !important;
+            border: 2px solid var(--glass-border) !important;
+            backdrop-filter: blur(10px);
+        }
+
+        button[data-variant="outline"]:hover {
+            background: var(--glass-hover) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        button[data-variant="secondary"],
+        .btn-secondary {
+            background: hsl(var(--secondary)) !important;
+            color: hsl(var(--secondary-foreground)) !important;
+            border: none !important;
+        }
+
+        /* Fix specific Guardian buttons */
+        .guardian-connect-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .guardian-connect-button:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .guardian-demo-button {
+            background: transparent !important;
+            color: hsl(var(--foreground)) !important;
+            border: 2px solid rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .guardian-demo-button:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .guardian-exit-demo-button {
+            background: hsl(var(--secondary)) !important;
+            color: hsl(var(--secondary-foreground)) !important;
+            border: none !important;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .guardian-exit-demo-button:hover {
+            background: hsl(var(--secondary) / 0.8) !important;
+        }
+
+        /* Prevent white button override */
+        button:not(.btn-white):not([data-allow-white]) {
+            background-color: var(--expected-bg, inherit) !important;
+        }
+
+        /* Ensure demo mode badge styling */
+        .demo-mode-badge {
+            background: rgba(59, 130, 246, 0.1) !important;
+            color: #3b82f6 !important;
+            border: 1px solid rgba(59, 130, 246, 0.2) !important;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Fix wallet scope header in demo mode */
+        .wallet-scope-header {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .wallet-scope-header.demo-mode {
+            background: rgba(146, 64, 14, 0.2) !important;
+            border-color: rgba(180, 83, 9, 0.5) !important;
+        }
+
+        .wallet-scope-header.demo-mode .text-amber-400 {
+            color: #fbbf24 !important;
+        }
+
+        .wallet-scope-header.demo-mode .text-amber-200 {
+            color: #fde68a !important;
+        }
+        
+        /* Test styles */
+        .test-section {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-pass { background-color: #10b981; }
+        .status-fail { background-color: #ef4444; }
+        .status-warn { background-color: #f59e0b; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-4">Guardian Button Fixes Test</h1>
+            <p class="text-slate-400">Testing button color fixes for demo mode and general styling</p>
+        </div>
+        
+        <!-- Test Status Dashboard -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold mb-4">Test Status Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="statusDashboard">
+                <!-- Status items will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Test 1: ConnectGate Buttons (Before Demo) -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold mb-4">
+                <span class="status-indicator" id="test1-status"></span>
+                Test 1: ConnectGate Buttons (Initial State)
+            </h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <div class="text-center space-y-4">
+                    <div class="flex flex-col gap-3 items-center">
+                        <!-- Connect Wallet Button -->
+                        <button class="guardian-connect-button flex items-center gap-2" id="connectButton">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            Connect Wallet
+                        </button>
+                        
+                        <div class="text-xs text-slate-400">or</div>
+                        
+                        <!-- Try Demo Mode Button -->
+                        <button class="guardian-demo-button flex items-center gap-2" id="demoButton">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Try Demo Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test 2: Demo Mode Active State -->
+        <div class="test-section" id="demoModeSection" style="display: none;">
+            <h2 class="text-xl font-semibold mb-4">
+                <span class="status-indicator" id="test2-status"></span>
+                Test 2: Demo Mode Active State
+            </h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <!-- Wallet Scope Header -->
+                <div class="wallet-scope-header demo-mode flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <span class="text-sm text-slate-300">Analyzing:</span>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-amber-200">Demo Wallet</span>
+                        <span class="text-xs text-slate-400 font-mono">0xd8dA...6045</span>
+                    </div>
+                </div>
+                
+                <!-- Header with Demo Badge -->
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2">
+                            Guardian <span class="text-slate-400 font-normal">Trust & Safety</span>
+                        </h3>
+                        <p class="text-slate-400">
+                            Comprehensive security scan for wallet 
+                            <span class="font-mono text-sm">0xd8dA...6045</span>
+                            <span class="demo-mode-badge ml-2">Demo Mode</span>
+                        </p>
+                    </div>
+                    <button class="guardian-exit-demo-button" id="exitDemoButton">
+                        Exit Demo
+                    </button>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-4 flex-wrap">
+                    <button class="guardian-connect-button">
+                        Rescan Wallet
+                    </button>
+                    <button class="guardian-demo-button">
+                        Fix Risks
+                    </button>
+                    <button class="guardian-exit-demo-button">
+                        View Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test 3: Button Color Validation -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold mb-4">
+                <span class="status-indicator" id="test3-status"></span>
+                Test 3: Button Color Validation
+            </h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-medium text-slate-300">Primary Buttons</h4>
+                        <button class="guardian-connect-button w-full" data-test="primary-normal">Primary Normal</button>
+                        <button class="guardian-connect-button w-full" disabled style="opacity: 0.5;" data-test="primary-disabled">Primary Disabled</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-medium text-slate-300">Outline Buttons</h4>
+                        <button class="guardian-demo-button w-full" data-test="outline-normal">Outline Normal</button>
+                        <button class="guardian-demo-button w-full" disabled style="opacity: 0.5;" data-test="outline-disabled">Outline Disabled</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-medium text-slate-300">Secondary Buttons</h4>
+                        <button class="guardian-exit-demo-button w-full" data-test="secondary-normal">Secondary Normal</button>
+                        <button class="guardian-exit-demo-button w-full" disabled style="opacity: 0.5;" data-test="secondary-disabled">Secondary Disabled</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test 4: Issue Detection -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold mb-4">
+                <span class="status-indicator" id="test4-status"></span>
+                Test 4: Issue Detection & Comparison
+            </h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <div class="space-y-4">
+                    <div class="flex gap-4 flex-wrap">
+                        <button class="px-6 py-3 bg-white text-black rounded-lg font-medium" data-test="white-button">
+                            ❌ White Button (Issue)
+                        </button>
+                        <button class="guardian-connect-button" data-test="correct-primary">
+                            ✅ Correct Primary
+                        </button>
+                        <button class="guardian-demo-button" data-test="correct-outline">
+                            ✅ Correct Outline
+                        </button>
+                        <button class="guardian-exit-demo-button" data-test="correct-secondary">
+                            ✅ Correct Secondary
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-slate-800/50 rounded-lg">
+                        <h5 class="text-sm font-medium text-slate-300 mb-2">Color Analysis Results:</h5>
+                        <div id="colorAnalysis" class="text-sm text-slate-400 space-y-1">
+                            <!-- Results will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Results Summary -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold mb-4">Test Results Summary</h2>
+            <div id="testSummary" class="space-y-2">
+                <!-- Summary will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Test state management
+        const testResults = {
+            test1: { status: 'pending', name: 'ConnectGate Buttons' },
+            test2: { status: 'pending', name: 'Demo Mode State' },
+            test3: { status: 'pending', name: 'Color Validation' },
+            test4: { status: 'pending', name: 'Issue Detection' }
+        };
+        
+        // Demo mode functionality
+        const demoButton = document.getElementById('demoButton');
+        const exitDemoButton = document.getElementById('exitDemoButton');
+        const demoModeSection = document.getElementById('demoModeSection');
+        
+        demoButton.addEventListener('click', () => {
+            demoModeSection.style.display = 'block';
+            demoButton.textContent = 'Demo Mode Active';
+            demoButton.disabled = true;
+            demoButton.style.opacity = '0.5';
+            
+            testResults.test1.status = 'pass';
+            testResults.test2.status = 'pass';
+            updateTestStatus();
+            showToast('Demo mode activated - scanning sample wallet', 'success');
+        });
+        
+        exitDemoButton.addEventListener('click', () => {
+            demoModeSection.style.display = 'none';
+            demoButton.textContent = 'Try Demo Mode';
+            demoButton.disabled = false;
+            demoButton.style.opacity = '1';
+            
+            showToast('Demo mode deactivated', 'info');
+        });
+        
+        // Color analysis function
+        function analyzeButtonColors() {
+            const buttons = document.querySelectorAll('button[data-test]');
+            const results = [];
+            let passCount = 0;
+            
+            buttons.forEach((button) => {
+                const testName = button.getAttribute('data-test');
+                const styles = window.getComputedStyle(button);
+                const bgColor = styles.backgroundColor;
+                const color = styles.color;
+                const borderColor = styles.borderColor;
+                
+                let status = 'pass';
+                let message = '';
+                
+                // Check for issues
+                if (testName === 'white-button') {
+                    if (bgColor === 'rgb(255, 255, 255)') {
+                        status = 'expected';
+                        message = 'White button as expected (issue example)';
+                    } else {
+                        status = 'fail';
+                        message = 'White button not showing white background';
+                    }
+                } else if (testName.includes('primary')) {
+                    if (bgColor.includes('rgb(255, 255, 255)')) {
+                        status = 'fail';
+                        message = 'Primary button showing white background (ISSUE)';
+                    } else if (bgColor.includes('gradient') || bgColor.includes('59, 130, 246') || bgColor.includes('139, 92, 246')) {
+                        status = 'pass';
+                        message = 'Primary button has correct gradient/blue background';
+                        passCount++;
+                    } else {
+                        status = 'warn';
+                        message = `Primary button background: ${bgColor}`;
+                    }
+                } else if (testName.includes('outline')) {
+                    if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
+                        status = 'pass';
+                        message = 'Outline button has transparent background';
+                        passCount++;
+                    } else if (bgColor.includes('rgb(255, 255, 255)')) {
+                        status = 'fail';
+                        message = 'Outline button showing white background (ISSUE)';
+                    } else {
+                        status = 'warn';
+                        message = `Outline button background: ${bgColor}`;
+                    }
+                } else if (testName.includes('secondary')) {
+                    if (bgColor.includes('rgb(255, 255, 255)')) {
+                        status = 'fail';
+                        message = 'Secondary button showing white background (ISSUE)';
+                    } else {
+                        status = 'pass';
+                        message = 'Secondary button has correct background';
+                        passCount++;
+                    }
+                }
+                
+                results.push({ testName, status, message, bgColor, color, borderColor });
+            });
+            
+            // Update test results
+            testResults.test3.status = passCount >= 4 ? 'pass' : (passCount >= 2 ? 'warn' : 'fail');
+            testResults.test4.status = results.some(r => r.status === 'fail') ? 'fail' : 'pass';
+            
+            return results;
+        }
+        
+        // Update test status indicators
+        function updateTestStatus() {
+            Object.keys(testResults).forEach(testKey => {
+                const indicator = document.getElementById(`${testKey}-status`);
+                const result = testResults[testKey];
+                
+                indicator.className = `status-indicator status-${result.status}`;
+            });
+            
+            updateStatusDashboard();
+            updateTestSummary();
+        }
+        
+        // Update status dashboard
+        function updateStatusDashboard() {
+            const dashboard = document.getElementById('statusDashboard');
+            dashboard.innerHTML = '';
+            
+            Object.keys(testResults).forEach(testKey => {
+                const result = testResults[testKey];
+                const statusCard = document.createElement('div');
+                statusCard.className = 'p-4 rounded-lg border border-slate-700/50 bg-slate-800/30';
+                statusCard.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="status-indicator status-${result.status}"></span>
+                        <span class="text-sm font-medium">${result.name}</span>
+                    </div>
+                    <div class="text-xs text-slate-400 capitalize">${result.status}</div>
+                `;
+                dashboard.appendChild(statusCard);
+            });
+        }
+        
+        // Update test summary
+        function updateTestSummary() {
+            const summary = document.getElementById('testSummary');
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(r => r.status === 'pass').length;
+            const failedTests = Object.values(testResults).filter(r => r.status === 'fail').length;
+            const warnTests = Object.values(testResults).filter(r => r.status === 'warn').length;
+            
+            summary.innerHTML = `
+                <div class="flex items-center gap-4 text-sm">
+                    <span class="flex items-center gap-2">
+                        <span class="status-indicator status-pass"></span>
+                        Passed: ${passedTests}/${totalTests}
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="status-indicator status-fail"></span>
+                        Failed: ${failedTests}/${totalTests}
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="status-indicator status-warn"></span>
+                        Warnings: ${warnTests}/${totalTests}
+                    </span>
+                </div>
+                <div class="text-sm text-slate-400 mt-2">
+                    Overall Status: ${failedTests === 0 ? (warnTests === 0 ? 'All tests passed ✅' : 'Tests passed with warnings ⚠️') : 'Some tests failed ❌'}
+                </div>
+            `;
+        }
+        
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white font-medium z-50 transition-all transform translate-x-full max-w-sm`;
+            
+            if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            } else if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            } else {
+                toast.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+            }
+            
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Run tests on page load
+        window.addEventListener('load', () => {
+            // Initial status update
+            updateTestStatus();
+            
+            // Run color analysis after a short delay
+            setTimeout(() => {
+                const colorResults = analyzeButtonColors();
+                
+                // Display color analysis results
+                const analysisDiv = document.getElementById('colorAnalysis');
+                analysisDiv.innerHTML = colorResults.map(result => 
+                    `<div class="flex items-center gap-2">
+                        <span class="status-indicator status-${result.status}"></span>
+                        <span class="font-mono text-xs">${result.testName}:</span>
+                        <span>${result.message}</span>
+                    </div>`
+                ).join('');
+                
+                updateTestStatus();
+                
+                // Show completion toast
+                const failedCount = Object.values(testResults).filter(r => r.status === 'fail').length;
+                if (failedCount === 0) {
+                    showToast('All button color tests passed!', 'success');
+                } else {
+                    showToast(`${failedCount} button color issues detected`, 'error');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

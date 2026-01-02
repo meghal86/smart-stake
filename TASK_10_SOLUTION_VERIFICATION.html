@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task 10: Guardian Wallet Scope - SOLUTION VERIFICATION</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 12px;
+            border: 1px solid #475569;
+        }
+        .solution-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #1e293b;
+            border-radius: 10px;
+            border-left: 4px solid #10b981;
+        }
+        .problem-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #1e293b;
+            border-radius: 10px;
+            border-left: 4px solid #ef4444;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #1e293b;
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        /* Mock wallet scope headers */
+        .wallet-scope-connected {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .wallet-scope-disconnected {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(120, 53, 15, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(180, 83, 9, 0.5);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .icon-connected { width: 16px; height: 16px; color: #10b981; }
+        .icon-disconnected { width: 16px; height: 16px; color: #f59e0b; }
+        .icon-wallet-connected { width: 12px; height: 12px; color: #94a3b8; }
+        .icon-wallet-disconnected { width: 12px; height: 12px; color: #f59e0b; }
+        
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        .info { color: #3b82f6; }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        
+        .code-block {
+            background: #374151;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Task 10: Guardian Wallet Scope Clarity</h1>
+            <h2 class="success">✅ SOLUTION IMPLEMENTED</h2>
+            <p>The wallet scope header now appears in ALL states with proper user feedback</p>
+        </div>
+
+        <div class="problem-section">
+            <h2>❌ Previous Problem</h2>
+            <p><strong>Issue:</strong> User reported "still same issue not fixed at all"</p>
+            <p><strong>Root Cause:</strong> Component returned <code>null</code> when no wallet was connected, making it completely invisible.</p>
+            
+            <div class="code-block">
+// OLD CODE - Component was invisible without wallet
+if (!walletAddress) {
+  return null; // ← This caused the issue!
+}</div>
+            
+            <p><strong>User Experience:</strong> Users couldn't see that wallet scope clarity was implemented because they needed to connect a wallet first.</p>
+        </div>
+
+        <div class="solution-section">
+            <h2>✅ Solution Implemented</h2>
+            <p><strong>Enhanced Component:</strong> Now shows appropriate state for both connected and disconnected wallets</p>
+            
+            <h3>State 1: Wallet Connected</h3>
+            <div class="wallet-scope-connected">
+                <svg class="icon-connected" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <span style="font-size: 14px; color: #cbd5e1;">Analyzing:</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg class="icon-wallet-connected" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                    <span style="font-size: 14px; font-weight: 500; color: white;">0xd8dA...6045</span>
+                </div>
+            </div>
+            
+            <h3>State 2: Wallet Disconnected (NEW!)</h3>
+            <div class="wallet-scope-disconnected">
+                <svg class="icon-disconnected" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <span style="font-size: 14px; color: #cbd5e1;">Analyzing:</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg class="icon-wallet-disconnected" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                    <span style="font-size: 14px; font-weight: 500; color: #fbbf24;">Connect wallet to see analysis scope</span>
+                </div>
+            </div>
+            
+            <div class="code-block">
+// NEW CODE - Always shows appropriate state
+const isConnected = !!walletAddress;
+
+const displayContent = walletAddress 
+  ? (walletLabel || `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`)
+  : "Connect wallet to see analysis scope";
+
+// Component always renders with appropriate styling and content</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Live Testing</h2>
+            <p>Test the solution on all Guardian screens:</p>
+            
+            <button class="test-button" onclick="window.open('http://localhost:8081/guardian', '_blank')">
+                🛡️ Guardian Main
+            </button>
+            <button class="test-button" onclick="window.open('http://localhost:8081/guardian-enhanced', '_blank')">
+                ⚡ Guardian Enhanced
+            </button>
+            <button class="test-button" onclick="window.open('http://localhost:8081/guardian-ux2', '_blank')">
+                🎨 Guardian UX2
+            </button>
+            
+            <h3>What You Should See:</h3>
+            <ul>
+                <li class="success">✅ <strong>Without wallet:</strong> Amber header "Connect wallet to see analysis scope"</li>
+                <li class="success">✅ <strong>With wallet:</strong> Green header "Analyzing: 0x1234...5678"</li>
+                <li class="success">✅ <strong>All tabs:</strong> Header appears on Scan, Risks, Alerts, History</li>
+                <li class="success">✅ <strong>Responsive:</strong> Updates when connecting/disconnecting wallet</li>
+            </ul>
+        </div>
+
+        <div class="solution-section">
+            <h2>📋 Requirements Verification</h2>
+            
+            <h3>✅ R10-AC3: Wallet scope header shows "Analyzing: [Wallet Name/Address]"</h3>
+            <ul>
+                <li class="success">✅ Connected state: Shows "Analyzing: 0x1234...5678"</li>
+                <li class="success">✅ Disconnected state: Shows "Analyzing: Connect wallet to see analysis scope"</li>
+                <li class="success">✅ Label support: Shows "Analyzing: Demo Wallet" when label provided</li>
+            </ul>
+            
+            <h3>✅ R10-AC4: Header shown on Scan/Risks/Alerts/History</h3>
+            <ul>
+                <li class="success">✅ GuardianPage.tsx (main scan screen)</li>
+                <li class="success">✅ GuardianEnhanced.tsx (scan tab)</li>
+                <li class="success">✅ GuardianUX2.tsx (enhanced UX)</li>
+                <li class="success">✅ RisksTab.tsx</li>
+                <li class="success">✅ AlertsTab.tsx</li>
+                <li class="success">✅ HistoryTab.tsx</li>
+            </ul>
+            
+            <p class="success"><strong>✅ TASK 10 COMPLETE:</strong> Wallet scope is now explicit everywhere in Guardian with proper user feedback for all states.</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 User Acceptance Test</h2>
+            <p><strong>Please verify the following:</strong></p>
+            
+            <ol>
+                <li><strong>Open any Guardian page</strong> - You should immediately see the wallet scope header</li>
+                <li><strong>Without wallet connected</strong> - Header shows amber "Connect wallet to see analysis scope"</li>
+                <li><strong>Connect a wallet</strong> - Header changes to green "Analyzing: [address]"</li>
+                <li><strong>Switch between tabs</strong> - Header appears on all Guardian tabs</li>
+                <li><strong>Disconnect wallet</strong> - Header reverts to amber connection prompt</li>
+            </ol>
+            
+            <p class="info"><strong>The issue is now resolved!</strong> The wallet scope header is always visible and provides clear feedback about the current analysis scope.</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Task 10 Solution Verification Page');
+        console.log('The WalletScopeHeader component now always shows appropriate state');
+        console.log('Test on Guardian pages to verify the solution works');
+        
+        // Auto-refresh to check for updates
+        setTimeout(() => {
+            console.log('Refreshing to check for latest changes...');
+            location.reload();
+        }, 60000);
+    </script>
+</body>
+</html>

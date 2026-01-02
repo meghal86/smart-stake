@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
@@ -34,6 +32,7 @@ import { InteractiveDiv } from '@/components/ui/interactive-div';
 import { RisksTab } from '@/components/guardian/RisksTab';
 import { AlertsTab } from '@/components/guardian/AlertsTab';
 import { HistoryTab } from '@/components/guardian/HistoryTab';
+import { WalletScopeHeader } from '@/components/guardian/WalletScopeHeader';
 import { FixRiskModal } from '@/components/guardian/FixRiskModal';
 import AddWalletModal from '@/components/guardian/AddWalletModal';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
@@ -758,6 +757,11 @@ export function GuardianEnhanced() {
         {/* Scan Tab Content */}
         {activeTab === 'Scan' && (
         <>
+        <WalletScopeHeader 
+          walletAddress={activeAddress || undefined} 
+          walletLabel={activeWallet?.label}
+        />
+        
         {/* Wallet Status Card */}
         <motion.div
           className={`backdrop-blur-xl rounded-2xl p-4 border transition-colors duration-300 ${

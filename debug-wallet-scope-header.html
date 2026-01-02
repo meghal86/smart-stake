@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200px, initial-scale=1.0">
+    <title>Debug Guardian Wallet Scope Header</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #0f172a;
+            color: white;
+        }
+        .debug-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: #1e293b;
+            border-left: 2px solid #334155;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 9999;
+        }
+        .main-content {
+            margin-right: 420px;
+            padding: 20px;
+        }
+        .mock-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        .shield-icon {
+            width: 16px;
+            height: 16px;
+            color: #10b981;
+        }
+        .wallet-icon {
+            width: 12px;
+            height: 12px;
+            color: #94a3b8;
+        }
+        .analyzing-text {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+        .wallet-address {
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+        }
+        .wallet-label {
+            font-size: 12px;
+            color: #94a3b8;
+            font-family: monospace;
+        }
+        .test-case {
+            margin: 15px 0;
+            padding: 15px;
+            background: #374151;
+            border-radius: 6px;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="debug-panel">
+        <h2>🔍 Debug Panel</h2>
+        <h3>Current Status:</h3>
+        <div id="status">Checking implementation...</div>
+        
+        <h3>Test Cases:</h3>
+        <div class="test-case">
+            <strong>Case 1: No wallet address</strong><br>
+            <span class="warning">Should return null (not visible)</span>
+        </div>
+        
+        <div class="test-case">
+            <strong>Case 2: Wallet address only</strong><br>
+            <span class="success">Should show truncated address</span>
+        </div>
+        
+        <div class="test-case">
+            <strong>Case 3: Wallet + label</strong><br>
+            <span class="success">Should show label + address</span>
+        </div>
+        
+        <h3>Implementation Check:</h3>
+        <div id="implementation-status">
+            <p>✅ Component created</p>
+            <p>✅ Added to GuardianPage.tsx</p>
+            <p>✅ Added to GuardianUX2.tsx</p>
+            <p>✅ Added to tab components</p>
+        </div>
+        
+        <h3>Possible Issues:</h3>
+        <ul>
+            <li>Wallet address not being passed correctly</li>
+            <li>Component returning null due to missing address</li>
+            <li>CSS styling issues</li>
+            <li>Import/export issues</li>
+        </ul>
+        
+        <button onclick="window.open('http://localhost:8081/guardian', '_blank')" 
+                style="background: #3b82f6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; margin: 5px 0;">
+            Test Guardian Page
+        </button>
+    </div>
+    
+    <div class="main-content">
+        <h1>Guardian Wallet Scope Header - Visual Test</h1>
+        
+        <h2>Expected Appearance:</h2>
+        
+        <h3>Case 1: Wallet Address Only</h3>
+        <div class="mock-header">
+            <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="analyzing-text">Analyzing:</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg class="wallet-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                </svg>
+                <span class="wallet-address">0xd8dA...6045</span>
+            </div>
+        </div>
+        
+        <h3>Case 2: Wallet Address + Label</h3>
+        <div class="mock-header">
+            <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="analyzing-text">Analyzing:</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg class="wallet-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                </svg>
+                <span class="wallet-address">Demo Wallet</span>
+                <span class="wallet-label">0xd8dA...6045</span>
+            </div>
+        </div>
+        
+        <h3>Case 3: Demo Mode</h3>
+        <div class="mock-header">
+            <svg class="shield-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="analyzing-text">Analyzing:</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg class="wallet-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                </svg>
+                <span class="wallet-address">Demo Wallet</span>
+                <span class="wallet-label">0xd8dA...6045</span>
+            </div>
+        </div>
+        
+        <h2>Debugging Steps:</h2>
+        <ol>
+            <li><strong>Open Guardian page</strong> - Click the test button in the debug panel</li>
+            <li><strong>Connect a wallet</strong> - Use MetaMask or demo mode</li>
+            <li><strong>Look for the header</strong> - Should appear similar to examples above</li>
+            <li><strong>Check browser console</strong> - Look for any errors</li>
+            <li><strong>Inspect element</strong> - Verify the component is in the DOM</li>
+        </ol>
+        
+        <h2>Requirements Verification:</h2>
+        <ul>
+            <li>✅ <strong>R10-AC3:</strong> Header shows "Analyzing: [Wallet Name/Address]"</li>
+            <li>✅ <strong>R10-AC4:</strong> Header appears on all Guardian screens</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Update status
+        document.getElementById('status').innerHTML = `
+            <div class="success">✅ Component implemented</div>
+            <div class="success">✅ Added to all Guardian screens</div>
+            <div class="warning">⚠️ Requires wallet connection to be visible</div>
+        `;
+        
+        console.log('Debug page loaded. Test the Guardian pages to verify wallet scope header.');
+    </script>
+</body>
+</html>

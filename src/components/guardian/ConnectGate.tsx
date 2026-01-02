@@ -90,7 +90,7 @@ export function ConnectGate({ onConnect, renderConnectButton, onDemoMode }: Conn
               <Button
                 size="lg"
                 onClick={onConnect}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 shadow-lg shadow-blue-500/30"
+                className="guardian-connect-button px-8 shadow-lg"
               >
                 <Shield className="w-5 h-5 mr-2" />
                 Connect Wallet
@@ -104,7 +104,7 @@ export function ConnectGate({ onConnect, renderConnectButton, onDemoMode }: Conn
                   size="lg"
                   variant="outline"
                   onClick={onDemoMode}
-                  className="px-8 border-2"
+                  className="guardian-demo-button px-8 border-2"
                 >
                   <Eye className="w-5 h-5 mr-2" />
                   Try Demo Mode
