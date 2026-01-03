@@ -604,8 +604,8 @@ export default function HarvestPro() {
         </HarvestProErrorBoundary>
       </header>
 
-      {/* Demo Banner */}
-      {isDemo && (
+      {/* Demo Banner - DISABLED */}
+      {/* {isDemo && (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <HarvestProErrorBoundary
             component="demo-banner"
@@ -616,7 +616,7 @@ export default function HarvestPro() {
             />
           </HarvestProErrorBoundary>
         </div>
-      )}
+      )} */}
 
       {/* Main Content - Responsive Container */}
       <main 

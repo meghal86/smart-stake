@@ -12,10 +12,22 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useQueryClient } from '@tanstack/react-query';
 import { resolveName, type ResolvedName } from '@/lib/name-resolution';
 import { useWalletLabels } from '@/hooks/useWalletLabels';
+import { 
+  legacyChainToCAIP2, 
+  caip2ToLegacyChain,
+  getSupportedNetworks
+} from '@/lib/networks/config';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+export interface TokenBalance {
+  token: string;
+  symbol: string;
+  balance: string;
+  usdValue?: number;
+}
 
 export interface ConnectedWallet {
   address: string;           // Ethereum address
@@ -24,19 +36,28 @@ export interface ConnectedWallet {
   lens?: string;             // Lens Protocol handle if available
   unstoppable?: string;      // Unstoppable Domains name if available
   resolvedName?: ResolvedName; // Full resolved name data
-  chain: string;             // Primary chain (ethereum, polygon, arbitrum, etc.)
-  balance?: string;          // Optional balance display
+  chain: string;             // Primary chain (ethereum, polygon, arbitrum, etc.) - LEGACY
+  chainNamespace: string;    // CAIP-2 format: eip155:1, eip155:137, etc.
+  supportedNetworks: string[]; // All networks this wallet supports
+  balancesByNetwork: Record<string, TokenBalance[]>; // Balances per network
+  guardianScoresByNetwork: Record<string, number>;   // Guardian scores per network
+  balance?: string;          // Optional balance display (LEGACY - use balancesByNetwork)
   lastUsed?: Date;           // Last time this wallet was active
 }
 
 export interface WalletContextValue {
   connectedWallets: ConnectedWallet[];
   activeWallet: string | null;
+  activeNetwork: string;     // Current CAIP-2 network (e.g., eip155:1)
   setActiveWallet: (address: string) => void;
+  setActiveNetwork: (chainNamespace: string) => void;
   connectWallet: () => Promise<void>;
   disconnectWallet: (address: string) => Promise<void>;
+  getSupportedNetworks: (address: string) => string[];
+  getWalletByNetwork: (address: string, network: string) => ConnectedWallet | null;
   isLoading: boolean;
   isSwitching: boolean;      // Indicates wallet switch in progress
+  isNetworkSwitching: boolean; // Indicates network switch in progress
 }
 
 // ============================================================================
@@ -56,8 +77,10 @@ interface WalletProviderProps {
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>([]);
   const [activeWallet, setActiveWalletState] = useState<string | null>(null);
+  const [activeNetwork, setActiveNetworkState] = useState<string>('eip155:1'); // Default to Ethereum
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitching, startTransition] = useTransition();
+  const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
   const queryClient = useQueryClient();
   const { labels: walletLabels, getLabel } = useWalletLabels();
 
@@ -68,16 +91,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   useEffect(() => {
     try {
       const savedWallet = localStorage.getItem('activeWallet');
+      const savedNetwork = localStorage.getItem('activeNetwork');
       const savedWallets = localStorage.getItem('connectedWallets');
+      
+      // Restore active network
+      if (savedNetwork && getSupportedNetworks().includes(savedNetwork)) {
+        setActiveNetworkState(savedNetwork);
+      }
       
       if (savedWallets) {
         const wallets: ConnectedWallet[] = JSON.parse(savedWallets);
         
-        // Convert lastUsed strings back to Date objects
-        const walletsWithDates = wallets.map(w => ({
-          ...w,
-          lastUsed: w.lastUsed ? new Date(w.lastUsed) : undefined,
-        }));
+        // Convert lastUsed strings back to Date objects and migrate legacy data
+        const walletsWithDates = wallets.map(w => {
+          // Migrate legacy chain to chainNamespace if needed
+          const chainNamespace = w.chainNamespace || legacyChainToCAIP2(w.chain);
+          
+          return {
+            ...w,
+            chainNamespace,
+            supportedNetworks: w.supportedNetworks || [chainNamespace], // Default to current network
+            balancesByNetwork: w.balancesByNetwork || {},
+            guardianScoresByNetwork: w.guardianScoresByNetwork || {},
+            lastUsed: w.lastUsed ? new Date(w.lastUsed) : undefined,
+          };
+        });
         
         setConnectedWallets(walletsWithDates);
         
@@ -103,6 +141,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.error('Failed to load wallet state from localStorage:', error);
       // Clear corrupted data
       localStorage.removeItem('activeWallet');
+      localStorage.removeItem('activeNetwork');
       localStorage.removeItem('connectedWallets');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,6 +159,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         localStorage.removeItem('activeWallet');
       }
       
+      if (activeNetwork) {
+        localStorage.setItem('activeNetwork', activeNetwork);
+      }
+      
       if (connectedWallets.length > 0) {
         localStorage.setItem('connectedWallets', JSON.stringify(connectedWallets));
       } else {
@@ -128,7 +171,105 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Failed to save wallet state to localStorage:', error);
     }
-  }, [activeWallet, connectedWallets]);
+  }, [activeWallet, activeNetwork, connectedWallets]);
+
+  // ============================================================================
+  // Set Active Network
+  // ============================================================================
+
+  const setActiveNetwork = useCallback((chainNamespace: string) => {
+    // Validate network is supported
+    const allSupportedNetworks = getSupportedNetworks();
+    if (!allSupportedNetworks.includes(chainNamespace)) {
+      console.error(`Network ${chainNamespace} not supported`);
+      return;
+    }
+
+    // Track network switch start time for performance monitoring
+    const switchStartTime = performance.now();
+    const previousNetwork = activeNetwork;
+
+    setIsNetworkSwitching(true);
+
+    // Use React 18 useTransition for smooth re-render during network switch
+    startTransition(() => {
+      setActiveNetworkState(chainNamespace);
+      
+      // Emit custom event for inter-module reactivity
+      const event = new CustomEvent('networkSwitched', {
+        detail: { 
+          chainNamespace, 
+          previousNetwork,
+          timestamp: new Date().toISOString() 
+        }
+      });
+      window.dispatchEvent(event);
+      
+      // Invalidate queries that depend on network
+      queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['guardian-scores'] });
+
+      // Track network switch analytics
+      const switchDurationMs = Math.round(performance.now() - switchStartTime);
+      
+      import('@/lib/analytics/tracker').then((module) => {
+        // Check if trackNetworkSwitched exists, otherwise skip
+        if ('trackNetworkSwitched' in module) {
+          const trackFn = (module as { trackNetworkSwitched?: (params: {
+            fromNetwork: string;
+            toNetwork: string;
+            switchDurationMs: number;
+            activeWallet: string | null;
+          }) => Promise<void> }).trackNetworkSwitched;
+          
+          if (trackFn) {
+            trackFn({
+              fromNetwork: previousNetwork,
+              toNetwork: chainNamespace,
+              switchDurationMs,
+              activeWallet,
+            }).catch((err: Error) => {
+              console.debug('Failed to track network switch:', err);
+            });
+          }
+        }
+      }).catch((err: Error) => {
+        console.debug('Failed to load analytics tracker:', err);
+      });
+
+      // Reset network switching state after a short delay
+      setTimeout(() => {
+        setIsNetworkSwitching(false);
+      }, 500);
+    });
+  }, [activeNetwork, activeWallet, queryClient, startTransition]);
+
+  // ============================================================================
+  // Multi-Chain Helper Methods
+  // ============================================================================
+
+  const getWalletSupportedNetworks = useCallback((address: string) => {
+    const wallet = connectedWallets.find(w => w.address.toLowerCase() === address.toLowerCase());
+    return wallet?.supportedNetworks || ['eip155:1']; // Default to Ethereum
+  }, [connectedWallets]);
+
+  const getWalletByNetwork = useCallback((address: string, network: string) => {
+    const wallet = connectedWallets.find(w => 
+      w.address.toLowerCase() === address.toLowerCase() &&
+      w.supportedNetworks.includes(network)
+    );
+    
+    if (!wallet) return null;
+    
+    // Return wallet with network-specific data
+    return {
+      ...wallet,
+      chainNamespace: network,
+      chain: caip2ToLegacyChain(network),
+      balance: wallet.balancesByNetwork[network]?.[0]?.balance,
+    };
+  }, [connectedWallets]);
 
   // ============================================================================
   // Set Active Wallet
@@ -183,10 +324,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           toWalletAddress: address,
           walletCount: connectedWallets.length,
           switchDurationMs,
-        }).catch(err => {
+        }).catch((err: Error) => {
           console.debug('Failed to track wallet switch:', err);
         });
-      }).catch(err => {
+      }).catch((err: Error) => {
         console.debug('Failed to load analytics tracker:', err);
       });
     });
@@ -208,7 +349,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
-      });
+      }) as string[];
       
       if (accounts.length === 0) {
         throw new Error('No accounts found');
@@ -224,13 +365,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
 
       // Get chain ID
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' }) as string;
       const chainName = getChainName(chainId);
+      const chainNamespace = legacyChainToCAIP2(chainName);
 
       // Create new wallet entry with label from user preferences
       const newWallet: ConnectedWallet = {
         address,
         chain: chainName,
+        chainNamespace,
+        supportedNetworks: [chainNamespace],
+        balancesByNetwork: {},
+        guardianScoresByNetwork: {},
         lastUsed: new Date(),
         label: getLabel(address), // Get label from user preferences
       };
@@ -256,16 +402,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const isFirstWallet = connectedWallets.length === 0;
       const newWalletCount = connectedWallets.length + 1;
       
-      import('@/lib/analytics/tracker').then(({ trackWalletConnected }) => {
-        trackWalletConnected({
-          walletAddress: address,
-          walletCount: newWalletCount,
-          isFirstWallet,
-          chain: chainName,
-        }).catch(err => {
-          console.debug('Failed to track wallet connection:', err);
-        });
-      }).catch(err => {
+      import('@/lib/analytics/tracker').then((module) => {
+        if ('trackWalletConnected' in module) {
+          const trackFn = (module as { trackWalletConnected?: (params: {
+            walletAddress: string;
+            walletCount: number;
+            isFirstWallet: boolean;
+            chain: string;
+          }) => Promise<void> }).trackWalletConnected;
+          
+          if (trackFn) {
+            trackFn({
+              walletAddress: address,
+              walletCount: newWalletCount,
+              isFirstWallet,
+              chain: chainName,
+            }).catch((err: Error) => {
+              console.debug('Failed to track wallet connection:', err);
+            });
+          }
+        }
+      }).catch((err: Error) => {
         console.debug('Failed to load analytics tracker:', err);
       });
 
@@ -353,15 +510,25 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
 
       // Track wallet disconnection analytics
-      import('@/lib/analytics/tracker').then(({ trackWalletDisconnected }) => {
-        trackWalletDisconnected({
-          walletAddress: address,
-          walletCount: remainingCount,
-          hadActiveWallet,
-        }).catch(err => {
-          console.debug('Failed to track wallet disconnection:', err);
-        });
-      }).catch(err => {
+      import('@/lib/analytics/tracker').then((module) => {
+        if ('trackWalletDisconnected' in module) {
+          const trackFn = (module as { trackWalletDisconnected?: (params: {
+            walletAddress: string;
+            walletCount: number;
+            hadActiveWallet: boolean;
+          }) => Promise<void> }).trackWalletDisconnected;
+          
+          if (trackFn) {
+            trackFn({
+              walletAddress: address,
+              walletCount: remainingCount,
+              hadActiveWallet,
+            }).catch((err: Error) => {
+              console.debug('Failed to track wallet disconnection:', err);
+            });
+          }
+        }
+      }).catch((err: Error) => {
         console.debug('Failed to load analytics tracker:', err);
       });
     } catch (error) {
@@ -379,11 +546,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const value: WalletContextValue = {
     connectedWallets,
     activeWallet,
+    activeNetwork,
     setActiveWallet,
+    setActiveNetwork,
     connectWallet,
     disconnectWallet,
+    getSupportedNetworks: getWalletSupportedNetworks,
+    getWalletByNetwork,
     isLoading,
     isSwitching,
+    isNetworkSwitching,
   };
 
   return (

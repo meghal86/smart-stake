@@ -1133,7 +1133,12 @@ export function GuardianEnhanced() {
                 <motion.div
                   key={card.title}
                   whileHover={{ scale: 1.02, y: -2, boxShadow: "0 8px 25px rgba(0,0,0,0.15)" }}
-                  transition={{ type: "spring", stiffness: 150, damping: 15 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 150, 
+                    damping: 15,
+                    delay: 0.2 + index * 0.1 
+                  }}
                   className={`relative min-h-[230px] flex flex-col justify-between backdrop-blur-xl rounded-2xl p-5 border overflow-hidden ${
                     isDarkTheme 
                       ? 'bg-[rgba(20,22,40,0.8)] border-[rgba(255,255,255,0.05)]' 
@@ -1146,7 +1151,6 @@ export function GuardianEnhanced() {
                   }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + index * 0.1 }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
                   <div className="flex items-center gap-2 mb-2">
