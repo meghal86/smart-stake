@@ -1,8 +1,8 @@
-# Multi-Chain EVM Wallet System Architecture (v2.4)
+# Multi-Chain EVM Wallet System Architecture (v2.4.1)
 
 ## ARCHITECTURE OVERVIEW
 
-The AlphaWhale multi-chain wallet system is a **server-authoritative, auth-integrated** wallet registry that supports multiple EVM networks using CAIP-2 chain namespaces. The system is **75% complete** with solid infrastructure but requires critical auth integration to function end-to-end.
+The AlphaWhale multi-chain wallet system is a **server-authoritative, auth-integrated** wallet registry that supports multiple EVM networks using CAIP-2 chain namespaces. The system extends existing infrastructure with critical auth integration to function end-to-end.
 
 ## CRITICAL ARCHITECTURAL INVARIANTS
 
@@ -85,34 +85,42 @@ Returns:
     "balance_cache": {}
   }],
   "quota": { 
-    "used_addresses": 2, 
-    "used_rows": 8, 
-    "total": 3, 
-    "plan": "free" 
+    "used": 2,
+    "total": 5, 
+    "plan": "free",
+    "used_rows": 4
   },
   "active_hint": { "primary_wallet_id": "uuid" }
 }
 ```
+
+**Note**: `quota.used` counts unique addresses (case-insensitive). `used_rows` is optional for debugging.
+**Ordering**: Edge Function must return deterministic ordering (primary first, then created_at desc, then id asc) per Requirement 15.
 
 **POST /functions/v1/wallets-add-watch**
 Body:
 ```json
 { 
   "address_or_ens": "vitalik.eth", 
-  "label": "Main", 
-  "chain_namespace": "eip155:1" 
+  "chain_namespace": "eip155:1",
+  "label": "Main"
 }
 ```
 
 **Behavior**:
 - ENS → resolve to address (if string ends with .eth)
-- Reject private-key-like input (Property 8)
+- Reject private-key-like input (64 hex characters with optional '0x' prefix) with `PRIVATE_KEY_DETECTED`
+- Reject seed-phrase-like input (12 or more space-separated words) with `SEED_PHRASE_DETECTED`
 - Normalize address to lowercase
 - Validate chain_namespace is supported
 - Return 409 if duplicate wallet+network
+- Support idempotency via `Idempotency-Key` header
 
 **POST /functions/v1/wallets-remove**
 Body: `{ "wallet_id": "uuid" }`
+
+**POST /functions/v1/wallets-remove-address**
+Body: `{ "address": "0x..." }`
 
 **POST /functions/v1/wallets-set-primary**
 Body: `{ "wallet_id": "uuid" }`
@@ -222,10 +230,12 @@ WalletContext
   ↓ (hydration)
 Edge Function GET /functions/v1/wallets-list
   ↓
-Supabase DB (service role reads or owner RLS reads)
+Supabase DB (service role reads)
   ↓
 WalletContext hydrates state
 ```
+
+**Note**: Wallet registry list is fetched ONLY via GET /functions/v1/wallets-list (Edge Function). Client SELECT may exist for debugging but must not be used for hydration.
 
 **Wallet Registry Write Flows (LOCKED)**:
 ```
@@ -403,29 +413,54 @@ const isGuardianSupported = networkConfig?.guardianSupported ?? false;
 ```sql
 ALTER TABLE user_wallets ENABLE ROW LEVEL SECURITY;
 
--- Allow read for owner
-DROP POLICY IF EXISTS "Users can view own wallets" ON user_wallets;
-CREATE POLICY "Users can view own wallets" ON user_wallets
-  FOR SELECT USING (auth.uid() = user_id);
+-- SELECT allowed for owner
+DROP POLICY IF EXISTS user_wallets_select_own ON user_wallets;
+CREATE POLICY user_wallets_select_own
+  ON user_wallets
+  FOR SELECT
+  USING (auth.uid() = user_id);
 
--- Deny all direct writes from client (INSERT/UPDATE/DELETE)
-DROP POLICY IF EXISTS "Deny direct writes" ON user_wallets;
-CREATE POLICY "Deny direct writes" ON user_wallets
-  FOR ALL USING (false) WITH CHECK (false);
+-- Explicitly deny client writes (defense-in-depth)
+DROP POLICY IF EXISTS user_wallets_no_insert ON user_wallets;
+CREATE POLICY user_wallets_no_insert
+  ON user_wallets
+  FOR INSERT
+  WITH CHECK (false);
+
+DROP POLICY IF EXISTS user_wallets_no_update ON user_wallets;
+CREATE POLICY user_wallets_no_update
+  ON user_wallets
+  FOR UPDATE
+  USING (false);
+
+DROP POLICY IF EXISTS user_wallets_no_delete ON user_wallets;
+CREATE POLICY user_wallets_no_delete
+  ON user_wallets
+  FOR DELETE
+  USING (false);
+
+-- Additional protection via REVOKE (Requirement 18)
+REVOKE INSERT, UPDATE, DELETE ON user_wallets FROM anon, authenticated;
 ```
 
 **Input Validation**:
 ```typescript
-// Property 8: Private Key Input Rejection
+// Private Key and Seed Phrase Input Rejection
 function validateWalletInput(input: string): ValidationResult {
-  // Reject private key patterns
+  // Reject private key patterns (64 hex characters with optional '0x' prefix)
   if (input.match(/^(0x)?[a-fA-F0-9]{64}$/)) {
-    return { valid: false, error: 'Private keys not allowed' };
+    return { 
+      valid: false, 
+      error: { code: 'PRIVATE_KEY_DETECTED', message: 'Private keys not allowed' }
+    };
   }
   
-  // Reject seed phrase patterns
+  // Reject seed phrase patterns (12 or more space-separated words)
   if (input.split(' ').length >= 12) {
-    return { valid: false, error: 'Seed phrases not allowed' };
+    return { 
+      valid: false, 
+      error: { code: 'SEED_PHRASE_DETECTED', message: 'Seed phrases not allowed' }
+    };
   }
   
   // Validate address or ENS
@@ -437,7 +472,10 @@ function validateWalletInput(input: string): ValidationResult {
     return { valid: true, type: 'address' };
   }
   
-  return { valid: false, error: 'Invalid address format' };
+  return { 
+    valid: false, 
+    error: { code: 'INVALID_ADDRESS', message: 'Invalid address format' }
+  };
 }
 ```
 
@@ -623,52 +661,84 @@ The system is **75% complete** with solid infrastructure. The remaining **25%** 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
 ### Property 1: CAIP-2 Format Consistency
-*For any* chain namespace string, the CAIP-2 validator should correctly accept valid formats (eip155:chainId) and reject invalid formats, and all network configurations should have valid CAIP-2 identifiers.
-**Validates: Auth Flow Contracts, Network Configuration**
+*For any* network identifier used in the system, it should follow the CAIP-2 format (eip155:chainId) and be included in the supported networks configuration.
+**Validates: Requirements 1.4**
 
 ### Property 2: Wallet Registry Source of Truth Invariant
-*For any* wallet operation sequence, the server database should always be the authoritative source, localStorage should only store UI preferences, and after refresh the wallet list should match server state.
-**Validates: Hard Lock 2 - Wallet Registry Source of Truth Rule**
+*For any* wallet operation sequence, the server database should always be the authoritative source, localStorage should only store UI preferences, and after refresh the wallet list should match server state exactly.
+**Validates: Requirements 2.2, 2.5**
 
 ### Property 3: Auth Flow Determinism
-*For any* sign up or sign in event, the redirect logic should be deterministic based on wallet count, session state should be established before wallet hydration, and all modules should read from the same authenticated context.
-**Validates: Hard Lock 1 - Auth Flow Contracts**
+*For any* sign up or sign in event, the redirect logic should be deterministic based on wallet count and authentication state, session should be established before wallet hydration, and all modules should read from the same authenticated context.
+**Validates: Requirements 2.1, 3.3, 3.4, 3.5**
 
-### Property 4: Active Selection Invariants
-*For any* network switching operation, the active wallet address should remain unchanged, switching to unsupported network combinations should show appropriate UI, and active selection should restore deterministically.
-**Validates: Hard Lock 5 - Active Selection Invariants**
+### Property 4: Active Selection Network Invariance
+*For any* network switching operation, the active wallet address should remain unchanged, and switching to unsupported network combinations should show appropriate UI feedback.
+**Validates: Requirements 1.3, 6.2, 6.3, 15.6**
 
 ### Property 5: Database Constraint Enforcement
-*For any* wallet mutation attempt, duplicate (user_id, address_lc, chain_namespace) should return 409 Conflict, only one primary wallet per user should be allowed, and address normalization should be consistent.
-**Validates: Hard Lock 2 - Database Invariants**
+*For any* wallet mutation attempt, duplicate (user_id, address_lc, chain_namespace) should return 409 Conflict, only one primary wallet per user should be allowed, and address normalization should be consistently lowercase.
+**Validates: Requirements 5.4, 8.1, 8.7, 9.1, 9.2**
 
 ### Property 6: API Contract Consistency
 *For any* Edge Function call, authentication headers should be required, error responses should follow standard format, and request/response shapes should match exact specifications.
-**Validates: Hard Lock 3 - API Contracts with Exact Shapes**
+**Validates: Requirements 13.2, 13.3, 13.4, 13.5**
 
 ### Property 7: RLS Security Enforcement
-*For any* client-side database operation, SELECT should be allowed for authenticated users, INSERT/UPDATE/DELETE should return 403 Forbidden, and Edge Functions with service role should succeed.
-**Validates: Hard Lock 4 - RLS Security Rule**
+*For any* client-side database operation, SELECT should be allowed for authenticated users on their own data, INSERT/UPDATE/DELETE should return 403 Forbidden, and Edge Functions with service role should succeed.
+**Validates: Requirements 9.3, 9.4, 9.5, 18.1, 18.2, 18.3, 18.4**
 
-### Property 8: Private Key Input Rejection
-*For any* user input string, the system should never accept or store inputs that contain private key patterns, seed phrase patterns should be rejected, and only valid addresses or ENS names should be accepted.
-**Validates: Security Architecture - Input Validation**
+### Property 8: Input Validation Security
+*For any* user input string, the system should reject private key patterns (64 hex chars) with PRIVATE_KEY_DETECTED, reject seed phrase patterns (12+ words) with SEED_PHRASE_DETECTED, and only accept valid addresses or ENS names.
+**Validates: Requirements 5.2, 5.3**
 
 ### Property 9: Cross-Module Session Consistency
-*For any* wallet or network change in one module, all other modules should reflect the change immediately, no module should maintain independent wallet state, and session consistency should be maintained across refreshes.
-**Validates: Hard Lock 1 - Cross-Module Session Consistency**
+*For any* wallet or network change in one module, all other modules should reflect the change immediately through event emission, no module should maintain independent wallet state when authenticated, and session consistency should be maintained across refreshes.
+**Validates: Requirements 4.1, 4.2, 4.3, 4.4, 4.5, 6.5**
 
-### Property 10: Network Configuration Extensibility
-*For any* new network added to SUPPORTED_NETWORKS, the UI should automatically display appropriate badges, validation should accept the new network, and all network-dependent features should work without code changes.
-**Validates: Network Configuration Architecture**
+### Property 10: Quota Enforcement Logic
+*For any* wallet addition operation, quota should count unique addresses (not rows), quota should be checked before allowing new address additions, and quota limits should be enforced server-side with appropriate error codes.
+**Validates: Requirements 7.1, 7.4, 7.5, 7.6, 7.8**
 
-### Property 11: Error Code Standardization
-*For any* network and error type combination, error codes should follow the standard format (NETWORK_TYPE_###), error messages should be user-friendly, and fallback behavior should be consistent.
-**Validates: Error Handling Architecture**
+### Property 11: Primary Wallet Semantics
+*For any* primary wallet operation, primary should be set at address level with one representative row marked is_primary=true, primary selection should follow network preference order, and primary reassignment should be atomic with deletion.
+**Validates: Requirements 8.3, 8.4, 8.5, 8.6**
 
-### Property 12: Multi-Chain Caching Isolation
-*For any* network operation, cache writes should be isolated by chain_namespace, cache reads should never return data from another network, and TTL expiration should work correctly per network.
-**Validates: Performance Architecture - Caching Strategy**
+### Property 12: Route Protection and Validation
+*For any* route access attempt, unauthenticated users should be redirected to login with valid next parameters, next parameter validation should prevent open redirects, and signin should alias to login preserving parameters.
+**Validates: Requirements 3.1, 3.2, 3.6**
+
+### Property 13: CORS and Preflight Handling
+*For any* Edge Function request, OPTIONS preflight should be handled correctly, CORS headers should include all required headers (authorization, content-type, apikey, x-client-info, idempotency-key), and browser calls should succeed without CORS errors.
+**Validates: Requirements 14.1, 14.2, 14.3, 14.4, 14.5**
+
+### Property 14: Idempotency Behavior
+*For any* mutation with Idempotency-Key header, same key within 60s should return cached response, expired keys should allow new operations, and database constraints should prevent duplicates regardless of idempotency expiration.
+**Validates: Requirements 16.3, 16.4, 16.6**
+
+### Property 15: Data Isolation by Network
+*For any* network-specific operation, data should be isolated by chain_namespace, network switches should not leak data between networks, and caches should be stored per-network.
+**Validates: Requirements 6.4, 11.2**
+
+### Property 16: Active Selection Restoration
+*For any* page refresh or session restoration, active selection should restore using localStorage if valid, fallback to server primary + default network, or use ordered-first wallet, and invalid localStorage should self-heal.
+**Validates: Requirements 15.4, 15.5**
+
+### Property 17: Edge Function Security Pattern
+*For any* Edge Function execution, JWT tokens should be validated using JWT-bound anon client, user_id should be extracted from validated claims and used for all operations, and security violations should be logged for monitoring.
+**Validates: Requirements 14.1-14.5, 16.3-16.6, 18.1-18.5**
+
+### Property 18: Wallet Shape Adapter Consistency
+*For any* database-to-UI transformation, rows should be grouped by address case-insensitively, ConnectedWallet objects should have correct structure, duplicate addresses should be prevented, and missing wallet-network combinations should be handled gracefully.
+**Validates: Requirements 19.1, 19.2, 19.3, 19.4**
+
+### Property 19: Error Handling Standardization
+*For any* error condition, network failures should show user-friendly messages, ENS failures should return 422 with ENS_RESOLUTION_FAILED, rate limit exceeded should return 429 with RATE_LIMITED, and offline mode should show cached data with indicators.
+**Validates: Requirements 10.1, 10.2, 10.3, 10.4**
+
+### Property 20: Migration Safety and Atomicity
+*For any* database migration operation, cleanup should happen before constraint creation, multiple primaries should be resolved to oldest wallet, zero primary users should get assigned primary, and migrations should be idempotent.
+**Validates: Requirements 17.1, 17.2, 17.3, 17.4, 17.5**
 
 ---
 
@@ -825,10 +895,11 @@ interface ConnectedWallet {
 
 // Adapter implementation in WalletProvider
 function adaptWalletRows(rows: WalletRow[], activeHint: { primary_wallet_id: string }): ConnectedWallet[] {
-  const grouped = groupBy(rows, 'address');
-  return Object.entries(grouped).map(([address, addressRows]) => ({
-    address,
-    networks: addressRows.map(row => row.chain_namespace),
+  // Group by lowercase address for case-insensitive grouping
+  const grouped = groupBy(rows, row => row.address.toLowerCase());
+  return Object.entries(grouped).map(([addressLc, addressRows]) => ({
+    address: addressRows[0].address, // Keep original address from server
+    networks: Array.from(new Set(addressRows.map(row => row.chain_namespace))), // Dedupe networks
     primaryAddress: addressRows.some(row => row.id === activeHint.primary_wallet_id),
     guardianScoresByNetwork: mergeGuardianScores(addressRows),
     balanceCacheByNetwork: mergeBalanceCache(addressRows),
@@ -840,12 +911,18 @@ function adaptWalletRows(rows: WalletRow[], activeHint: { primary_wallet_id: str
 
 **Rule**: Primary is address-level, not row-level.
 
+**Primary Semantics**: Primary is set at the **address level** - when an address is marked primary, the System chooses one representative row for that address to mark `is_primary = true`.
+
 **Implementation**:
 - One representative row per primary address has `is_primary=true`
 - When setting primary address, choose row by preference:
   1. Row matching current `activeNetwork`
   2. `eip155:1` row if available
   3. Any row for that address
+- If primary wallet row is deleted, reassign primary to another row for that address using priority:
+  1. Row with `chain_namespace = 'eip155:1'` (Ethereum mainnet)
+  2. Oldest row by `created_at` (tiebreaker: smallest `id`)
+  3. If no other rows exist for that address, pick any row from another address in priority order above
 
 ### Quota Architecture
 
@@ -855,10 +932,10 @@ function adaptWalletRows(rows: WalletRow[], activeHint: { primary_wallet_id: str
 // wallets-list response
 {
   "quota": {
-    "used_addresses": 2,    // Unique addresses
-    "used_rows": 8,         // Total rows (debugging)
-    "total": 3,             // Address limit
-    "plan": "free"
+    "used": 2,              // Unique addresses (canonical)
+    "total": 5,             // Address limit
+    "plan": "free",
+    "used_rows": 4          // Total rows (debugging)
   }
 }
 
@@ -932,6 +1009,49 @@ ON user_wallets(user_id) WHERE is_primary = true;
 
 ### Edge Function Security Architecture
 
+**Two-Client Authentication Pattern**:
+
+Edge Functions use a secure two-client pattern for authentication:
+
+1. **JWT Client**: Validates user identity using Supabase anon key + Authorization header
+2. **Service Role Client**: Performs database operations with elevated privileges
+
+```typescript
+// JWT client for auth validation only
+const jwtClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { headers: { Authorization: req.headers.get('authorization') } }
+});
+
+// Service role client for DB operations
+const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// Validate JWT and extract user_id
+const { data: { user }, error } = await jwtClient.auth.getUser();
+if (!user) {
+  return new Response(
+    JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Invalid or missing JWT' } }),
+    { status: 401 }
+  );
+}
+
+// All database operations use service role client with validated user_id
+const { data, error } = await serviceClient
+  .from('user_wallets')
+  .insert({ 
+    user_id: user.id,  // Never trust client-provided user IDs
+    ...walletData 
+  });
+```
+
+**Security Requirements**:
+- Edge Functions SHALL validate JWT tokens using a JWT-bound (anon) Supabase client via auth.getUser(); all DB writes use service role
+- Edge Functions SHALL extract `user_id` from validated JWT claims
+- Edge Functions SHALL use `user_id` for all database operations (never trust client-provided user IDs)
+- Edge Functions SHALL return 401 for missing/invalid Authorization headers
+- Edge Functions SHALL return 403 for valid JWTs with insufficient permissions
+- All wallet mutations SHALL be scoped to the authenticated user's `user_id`
+- Edge Functions SHALL log security violations for monitoring
+
 **CORS + Preflight Handling**:
 
 ```typescript
@@ -944,7 +1064,7 @@ export async function handler(req: Request): Promise<Response> {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'authorization, content-type',
+        'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, idempotency-key',
       },
     });
   }
@@ -974,10 +1094,16 @@ const { data, error } = await serviceClient
   .insert({ user_id: user.id, ...walletData });
 ```
 
-**Rate Limiting**:
+**Rate Limiting + Idempotency**:
 
 ```typescript
 import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: UPSTASH_REDIS_REST_URL,
+  token: UPSTASH_REDIS_REST_TOKEN,
+});
 
 const ratelimit = new Ratelimit({
   redis: redis,
@@ -986,8 +1112,19 @@ const ratelimit = new Ratelimit({
 
 export async function handler(req: Request) {
   const userId = await getUserId(req);
-  const { success } = await ratelimit.limit(`wallet-mutations:${userId}`);
+  const idempotencyKey = req.headers.get('idempotency-key');
   
+  // Check idempotency cache (Redis-based)
+  if (idempotencyKey) {
+    const cacheKey = `idempotency:${userId}:wallets-add-watch:${idempotencyKey}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return new Response(JSON.stringify(JSON.parse(cached)), { status: 200 });
+    }
+  }
+  
+  // Rate limiting
+  const { success } = await ratelimit.limit(`wallet-mutations:${userId}`);
   if (!success) {
     return new Response(
       JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'Too many requests' } }),
@@ -995,9 +1132,184 @@ export async function handler(req: Request) {
     );
   }
   
-  // Continue...
+  // Process request
+  const result = await processWalletMutation(req);
+  
+  // Cache response for idempotency (if key provided and no error)
+  if (idempotencyKey && !result.error) {
+    const cacheKey = `idempotency:${userId}:wallets-add-watch:${idempotencyKey}`;
+    await redis.setex(cacheKey, 60, JSON.stringify(result)); // 60s TTL
+  }
+  
+  return new Response(JSON.stringify(result));
 }
 ```
+
+**Idempotency Behavior**:
+- Mutations accept `Idempotency-Key` header (UUID format, TTL 60s cache in Redis)
+- If same `Idempotency-Key` received within 60s, return cached response without duplication
+- After TTL expires, request may be processed again; DB uniqueness constraints still prevent duplicates
+- At minimum, `wallets-add-watch` implements idempotency; others recommended
+
+---
+
+## MODULE INTEGRATION CONTRACT
+
+### What Each Module Reads
+- **activeWallet**: Current selected wallet address
+- **activeNetwork**: Current selected network (chain_namespace)
+- **connectedWallets**: Array of ConnectedWallet objects from shape adapter
+
+### What Each Module Must NOT Do
+- Read from wagmi directly for wallet list
+- Store wallet list locally in component state
+- Maintain independent "demo mode" wallet state when authenticated
+- Call Supabase client directly for wallet operations
+
+### How Modules Refresh Data
+**Primary**: React Query invalidation keys (recommended)
+**Secondary**: Listen to `wallet_switched` and `network_switched` events
+
+```typescript
+// Guardian module example
+const { data: guardianData } = useQuery({
+  queryKey: ['guardian', activeWallet, activeNetwork],
+  queryFn: () => fetchGuardianData(activeWallet, activeNetwork),
+  enabled: !!activeWallet && !!activeNetwork,
+});
+```
+
+---
+
+## REACT QUERY INTEGRATION
+
+### Query Keys (Standardized)
+```typescript
+// Wallet registry
+['wallets', 'registry'] → wallets-list Edge Function
+
+// Module-specific data
+['guardian', activeWallet, activeNetwork] → Guardian data
+['hunter', activeWallet, activeNetwork] → Hunter opportunities  
+['harvestpro', activeWallet, activeNetwork] → HarvestPro data
+```
+
+### Invalidation Rules
+```typescript
+// On wallet mutations
+onWalletAdd/Remove/SetPrimary: () => {
+  queryClient.invalidateQueries({ queryKey: ['wallets', 'registry'] });
+  queryClient.invalidateQueries({ queryKey: ['guardian'] }); // Invalidate all Guardian queries
+  queryClient.invalidateQueries({ queryKey: ['hunter'] });   // Invalidate all Hunter queries
+  queryClient.invalidateQueries({ queryKey: ['harvestpro'] }); // Invalidate all HarvestPro queries
+}
+
+// On network switch (queries auto-refetch due to key change)
+onNetworkSwitch: (newNetwork) => {
+  // Query keys with activeNetwork dependency will auto-refetch
+  // No manual invalidation needed if keys include activeNetwork
+}
+```
+
+---
+
+## EDGE FUNCTION RESPONSE SCHEMA
+
+### Success Response Format
+```typescript
+// Single resource
+{ 
+  wallet: { id, address, chain_namespace, is_primary, ... },
+  request_id?: string // Optional for debugging
+}
+
+// Collection
+{ 
+  wallets: [...],
+  quota: { used, total, plan, used_rows? },
+  active_hint: { primary_wallet_id },
+  request_id?: string
+}
+```
+
+### Error Response Format
+```typescript
+{ 
+  error: { 
+    code: string,           // WALLET_DUPLICATE, QUOTA_EXCEEDED, etc.
+    message: string,        // User-friendly message
+    details?: any,          // Optional additional context
+    request_id?: string     // Optional for debugging
+  } 
+}
+```
+
+### Standard Status Codes
+- `200`: Success
+- `401`: Unauthorized (missing/invalid JWT)
+- `403`: Forbidden (valid JWT, insufficient permissions)
+- `409`: Conflict (duplicate wallet, quota exceeded)
+- `422`: Validation Error (invalid address, ENS resolution failed)
+- `429`: Rate Limited
+
+---
+
+## OUT OF SCOPE (HARD LOCK)
+
+The following features are explicitly **NOT** included in this architecture:
+
+### Non-EVM Networks
+- Bitcoin, Solana, Cosmos, or other non-EVM networks
+- Cross-chain bridging or asset transfers
+
+### Wallet Management
+- Transaction signing or broadcasting
+- Private key management or storage
+- Hardware wallet integration (Ledger, Trezor)
+- Safe multisig management
+
+### Discovery Features
+- Wallet discovery via onchain scanning
+- Automatic wallet detection
+- Portfolio tracking integrations
+
+### Enterprise Features
+- Team/organization wallet sharing
+- Role-based access control
+- Bulk wallet import/export
+
+---
+
+## CROSS-MODULE EVENT ARCHITECTURE
+
+**Event Emission for Module Reactivity** (Optional - React Query preferred):
+
+The system emits standardized events as a secondary mechanism for cross-module reactivity:
+
+```typescript
+// WalletContext event emission
+function setActiveWallet(address: string) {
+  // Update internal state
+  setActiveWalletState(address);
+  
+  // Primary: Invalidate React Query keys
+  queryClient.invalidateQueries({ queryKey: ['guardian'] });
+  queryClient.invalidateQueries({ queryKey: ['hunter'] });
+  queryClient.invalidateQueries({ queryKey: ['harvestpro'] });
+  
+  // Secondary: Emit event for non-query UI effects
+  const event = new CustomEvent('wallet_switched', {
+    detail: { 
+      address, 
+      previousAddress: activeWallet,
+      timestamp: new Date().toISOString() 
+    }
+  });
+  window.dispatchEvent(event);
+}
+```
+
+**Recommended Architecture**: Use React Query invalidation as primary mechanism; events only for non-query UI effects.
 
 ### Active Selection Consistency Architecture
 
@@ -1011,8 +1323,10 @@ function validateActiveSelection(
   storedNetwork: string | null
 ): { address: string; network: string } {
   
-  // Check if stored selection exists in server data
-  const addressExists = serverWallets.find(w => w.address === storedAddress);
+  // Check if stored selection exists in server data (case-insensitive)
+  const addressExists = serverWallets.find(w => 
+    w.address.toLowerCase() === storedAddress?.toLowerCase()
+  );
   const networkExists = addressExists?.networks.includes(storedNetwork || '');
   
   if (addressExists && networkExists) {
@@ -1070,11 +1384,11 @@ This architecture provides a **server-authoritative, auth-integrated** multi-cha
 4. **Prevents "not associated" bugs** via RLS Security Rules
 5. **Prevents cross-network breaks** via Active Selection Invariants
 
-The system is **75% complete** with solid infrastructure. The remaining **25%** is critical auth integration that connects the existing multi-chain components with user authentication to create a unified, functional experience.
-
 **Key Architectural Decisions**:
 - **Reuse-first approach**: Extend existing components rather than create new ones
 - **Server-authoritative**: Database is source of truth, not localStorage
 - **Property-based testing**: Ensure correctness across all valid inputs
 - **Hard invariants**: Prevent common integration bugs through architectural constraints
+- **React Query integration**: Primary mechanism for cross-module consistency
 - **Gradual rollout**: Feature flags enable safe deployment and rollback
+- **Scope boundaries**: Clear out-of-scope items prevent feature creep
