@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SavedOpportunity {
   id: string;
@@ -35,18 +35,6 @@ export function useSavedOpportunities() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Initialize Supabase client
-  const getSupabaseClient = useCallback(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
-    return createClient(supabaseUrl, supabaseKey, {
-      global: {
-        headers: user?.access_token ? { Authorization: `Bearer ${user.access_token}` } : {},
-      },
-    });
-  }, [user?.access_token]);
-
   // Fetch saved opportunities
   const fetchSavedOpportunities = useCallback(async () => {
     if (!isAuthenticated || !user) {
@@ -59,8 +47,6 @@ export function useSavedOpportunities() {
     setError(null);
 
     try {
-      const supabase = getSupabaseClient();
-      
       const { data, error: fetchError } = await supabase
         .from('saved_opportunities')
         .select(`
@@ -94,7 +80,7 @@ export function useSavedOpportunities() {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, user, getSupabaseClient]);
+  }, [isAuthenticated, user]);
 
   // Check if an opportunity is saved
   const isSaved = useCallback((opportunityId: string): boolean => {
@@ -129,8 +115,6 @@ export function useSavedOpportunities() {
   useEffect(() => {
     if (!isAuthenticated || !user) return;
 
-    const supabase = getSupabaseClient();
-    
     const channel = supabase
       .channel('saved_opportunities_changes')
       .on(
@@ -151,7 +135,7 @@ export function useSavedOpportunities() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated, user, getSupabaseClient, fetchSavedOpportunities]);
+  }, [isAuthenticated, user, fetchSavedOpportunities]);
 
   return {
     savedOpportunities,

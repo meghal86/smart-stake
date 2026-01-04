@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Apple } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { supabase } from '../integrations/supabase/client';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
+import { useWallet } from '@/contexts/WalletContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -21,6 +22,25 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const { connectedWallets, isLoading: isWalletLoading, hydrateFromServer } = useWallet();
+
+  // Get next parameter from URL
+  const nextParam = searchParams.get('next');
+
+  // Validate next parameter to prevent open redirects
+  const getValidRedirectPath = (path: string | null): string => {
+    if (!path) return '/guardian';
+    
+    // Must start with / and must not start with //
+    if (path.startsWith('/') && !path.startsWith('//')) {
+      return path;
+    }
+    
+    return '/guardian';
+  };
+
+  const redirectPath = getValidRedirectPath(nextParam);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +65,15 @@ const Login: React.FC = () => {
           title: "Welcome back!",
           description: "You've been successfully logged in.",
         });
-        // Redirect to home page
-        navigate('/');
+        
+        // Wait for wallet hydration to complete before redirecting
+        // This ensures wallet count is available for routing decisions
+        await hydrateFromServer();
+        
+        // Redirect to next parameter or default to /guardian
+        // Both zero wallets and ≥1 wallet go to /guardian
+        // Guardian component handles empty state vs. main interface
+        navigate(redirectPath);
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -66,7 +93,7 @@ const Login: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         }
       });
 
@@ -77,6 +104,8 @@ const Login: React.FC = () => {
           description: error.message,
         });
       }
+      // Note: OAuth redirects to redirectTo URL, so wallet hydration happens
+      // in the WalletProvider after auth session is established
     } catch (err) {
       toast({
         variant: "destructive",
@@ -94,7 +123,7 @@ const Login: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
         }
       });
 
@@ -105,6 +134,8 @@ const Login: React.FC = () => {
           description: error.message,
         });
       }
+      // Note: OAuth redirects to redirectTo URL, so wallet hydration happens
+      // in the WalletProvider after auth session is established
     } catch (err) {
       toast({
         variant: "destructive",

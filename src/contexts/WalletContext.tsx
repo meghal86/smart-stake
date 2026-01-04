@@ -12,6 +12,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useQueryClient } from '@tanstack/react-query';
 import { resolveName, type ResolvedName } from '@/lib/name-resolution';
 import { useWalletLabels } from '@/hooks/useWalletLabels';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   legacyChainToCAIP2, 
   caip2ToLegacyChain,
@@ -58,6 +59,8 @@ export interface WalletContextValue {
   isLoading: boolean;
   isSwitching: boolean;      // Indicates wallet switch in progress
   isNetworkSwitching: boolean; // Indicates network switch in progress
+  isAuthenticated: boolean;  // Whether user is authenticated
+  hydrateFromServer: () => Promise<void>; // Hydrate wallets from server
 }
 
 // ============================================================================
@@ -81,8 +84,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitching, startTransition] = useTransition();
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
+  const [hydratedForUserId, setHydratedForUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { labels: walletLabels, getLabel } = useWalletLabels();
+  const { session, isAuthenticated, loading: authLoading } = useAuth();
 
   // ============================================================================
   // Load from localStorage on mount
@@ -146,6 +151,118 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ============================================================================
+  // Hydrate from server when auth session changes
+  // ============================================================================
+
+  const hydrateFromServer = useCallback(async () => {
+    if (!isAuthenticated || !session?.user?.id) {
+      // Clear wallet state if not authenticated
+      setConnectedWallets([]);
+      setActiveWalletState(null);
+      setHydratedForUserId(null);
+      return;
+    }
+
+    // Skip if already hydrated for this user
+    if (hydratedForUserId === session.user.id) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Call API to get wallet list
+      // For now, this is a placeholder - in production, call GET /functions/v1/wallets-list
+      const response = await fetch('/api/wallets/list', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Session expired, clear state
+          setConnectedWallets([]);
+          setActiveWalletState(null);
+          setHydratedForUserId(null);
+          return;
+        }
+        // API endpoint doesn't exist yet - this is expected during development
+        console.debug('Wallet list API not available yet, using empty wallet list');
+        setConnectedWallets([]);
+        setHydratedForUserId(session.user.id);
+        return;
+      }
+
+      const data = await response.json();
+      const wallets = data.wallets || [];
+
+      // Transform server data to ConnectedWallet format
+      const transformedWallets: ConnectedWallet[] = wallets.map((w: any) => {
+        // Validate chain_namespace format
+        const chainNamespace = w.chain_namespace || 'eip155:1';
+        
+        // Ensure it's a valid CAIP-2 format
+        if (!chainNamespace.match(/^eip155:\d+$/)) {
+          console.warn(`Invalid chain namespace: ${chainNamespace}, using default eip155:1`);
+          return {
+            address: w.address,
+            chainNamespace: 'eip155:1',
+            chain: 'ethereum',
+            supportedNetworks: ['eip155:1'],
+            balancesByNetwork: w.balance_cache || {},
+            guardianScoresByNetwork: w.guardian_scores || {},
+            label: w.label,
+            lastUsed: w.created_at ? new Date(w.created_at) : undefined,
+          };
+        }
+        
+        return {
+          address: w.address,
+          chainNamespace: chainNamespace,
+          chain: caip2ToLegacyChain(chainNamespace),
+          supportedNetworks: [chainNamespace],
+          balancesByNetwork: w.balance_cache || {},
+          guardianScoresByNetwork: w.guardian_scores || {},
+          label: w.label,
+          lastUsed: w.created_at ? new Date(w.created_at) : undefined,
+        };
+      });
+
+      setConnectedWallets(transformedWallets);
+      setHydratedForUserId(session.user.id);
+
+      // Restore active wallet from localStorage if valid, otherwise use primary or first
+      const savedWallet = localStorage.getItem('activeWallet');
+      if (savedWallet && transformedWallets.some(w => w.address === savedWallet)) {
+        setActiveWalletState(savedWallet);
+      } else {
+        // Find primary wallet or use first
+        const primaryWallet = wallets.find((w: any) => w.is_primary);
+        if (primaryWallet) {
+          setActiveWalletState(primaryWallet.address);
+        } else if (transformedWallets.length > 0) {
+          setActiveWalletState(transformedWallets[0].address);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to hydrate wallets from server:', error);
+      // Fall back to localStorage data - don't block app loading
+      setHydratedForUserId(session.user.id);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, session, hydratedForUserId]);
+
+  // Trigger hydration when auth session changes
+  useEffect(() => {
+    if (!authLoading) {
+      hydrateFromServer();
+    }
+  }, [isAuthenticated, session?.user?.id, authLoading, hydrateFromServer]);
 
   // ============================================================================
   // Save to localStorage on change
@@ -556,6 +673,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     isLoading,
     isSwitching,
     isNetworkSwitching,
+    isAuthenticated,
+    hydrateFromServer,
   };
 
   return (

@@ -35,13 +35,13 @@ Tasks that can be deferred to future iterations.
 **Description**: Integrate authentication flow with wallet registry hydration to prevent "signin works but modules don't know" bugs.
 
 **Acceptance Criteria**:
-- [ ] AuthProvider establishes session before WalletProvider hydration
-- [ ] WalletProvider reads auth session and hydrates from server on user change
-- [ ] Unauthenticated users redirect to `/login?next=<path>` with validation
-- [ ] `/signin` aliases to `/login` preserving query parameters
-- [ ] Zero wallets → `/guardian` with onboarding empty state
-- [ ] ≥1 wallet → `/guardian` by default
-- [ ] All modules read from same authenticated WalletContext
+- [x] AuthProvider establishes session before WalletProvider hydration
+- [x] WalletProvider reads auth session and hydrates from server on user change
+- [x] Unauthenticated users redirect to `/login?next=<path>` with validation
+- [x] `/signin` aliases to `/login` preserving query parameters
+- [x] Zero wallets → `/guardian` with onboarding empty state
+- [x] ≥1 wallet → `/guardian` by default
+- [x] All modules read from same authenticated WalletContext
 
 **Implementation Steps**:
 1. Update `AuthProvider` to establish session state
@@ -76,10 +76,10 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement server-authoritative Edge Functions for wallet CRUD operations with two-client authentication pattern.
 
 **Acceptance Criteria**:
-- [ ] `GET /functions/v1/wallets-list` returns deterministic ordering
-- [ ] `POST /functions/v1/wallets-add-watch` with ENS resolution and validation
-- [ ] `POST /functions/v1/wallets-remove` with atomic primary reassignment
-- [ ] `POST /functions/v1/wallets-remove-address` removes all rows for address
+- [x] `GET /functions/v1/wallets-list` returns deterministic ordering
+- [x] `POST /functions/v1/wallets-add-watch` with ENS resolution and validation
+- [x] `POST /functions/v1/wallets-remove` with atomic primary reassignment
+- [x] `POST /functions/v1/wallets-remove-address` removes all rows for address
 - [ ] `POST /functions/v1/wallets-set-primary` with atomic updates
 - [ ] All functions use JWT validation + service role pattern
 - [ ] CORS preflight handling for all functions
