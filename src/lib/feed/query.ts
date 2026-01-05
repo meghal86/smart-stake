@@ -6,7 +6,7 @@
  * Requirements: 3.7, 4.1-4.12, 4.16, 4.19, 7.9
  */
 
-import { createServiceClient } from '@/integrations/supabase/service';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Opportunity, 
   OpportunityType, 
@@ -76,7 +76,8 @@ const MAX_SPONSORED_PER_FOLD = 2;
  * - 18.4: Feed refresh with personalized ranking on wallet change
  */
 export async function getFeedPage(params: FeedQueryParams): Promise<FeedPageResult> {
-  const supabase = createServiceClient();
+  // Use client-side Supabase client for browser compatibility
+  // Note: This uses the anon key which has RLS policies for data access
   const limit = params.limit ?? DEFAULT_PAGE_SIZE;
   
   // Fetch wallet history for personalized ranking if wallet provided
@@ -411,7 +412,8 @@ function transformRowToOpportunity(row: unknown): Opportunity {
  * @returns Total count of matching opportunities
  */
 export async function countOpportunities(params: Omit<FeedQueryParams, 'cursor' | 'limit'>): Promise<number> {
-  const supabase = createServiceClient();
+  // Use client-side Supabase client for browser compatibility
+  // Note: This uses the anon key which has RLS policies for data access
 
   // Use materialized view for counting as well
   let query = supabase

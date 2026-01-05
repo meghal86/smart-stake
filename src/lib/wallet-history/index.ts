@@ -10,7 +10,7 @@
  * Requirements: 17.4, 18.4
  */
 
-import { createServiceClient } from '@/integrations/supabase/service';
+import { supabase } from '@/integrations/supabase/client';
 import { Chain, OpportunityType } from '@/types/hunter';
 import { RedisKeys } from '@/lib/redis/keys';
 import { cacheGet, cacheSet, cacheDel } from '@/lib/redis/cache';
@@ -64,7 +64,8 @@ export async function getWalletHistory(
   }
 
   // Fetch from database
-  const supabase = createServiceClient();
+  // Use client-side Supabase client for browser compatibility
+  // Note: This uses the anon key which has RLS policies for data access
 
   // Fetch completed opportunities
   const { data: completedData, error: completedError } = await supabase

@@ -11,12 +11,18 @@ import { RevokeModal } from '@/components/guardian/RevokeModal';
 import { WalletScopeHeader } from '@/components/guardian/WalletScopeHeader';
 import { useGuardianStore } from '@/store/guardianStore';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
+import { useRouteProtection } from '@/hooks/useRouteProtection';
+import { useWallet } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { chainIdToName } from '@/config/wagmi';
 
 export function GuardianPage() {
+  // Route protection - redirect unauthenticated users to login
+  useRouteProtection({ requireAuth: true });
+  
   const { address, isConnected, chain } = useAccount();
+  const { connectedWallets, activeWallet, activeNetwork, isAuthenticated } = useWallet();
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [autoScanTriggered, setAutoScanTriggered] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
@@ -27,14 +33,14 @@ export function GuardianPage() {
   // Get network name from chain ID
   const networkName = chain?.id ? chainIdToName[chain.id] || 'ethereum' : 'ethereum';
   
-  // Use demo address if in demo mode, otherwise use real wallet address
-  const activeAddress = demoMode ? demoAddress : address;
-  const isActive = demoMode ? !!demoAddress : isConnected;
+  // Use authenticated wallet if available, otherwise use wagmi address
+  const walletAddress = isAuthenticated && activeWallet ? activeWallet : address;
+  const isActive = isAuthenticated ? !!activeWallet : (demoMode ? !!demoAddress : isConnected);
   
   const { data, isLoading, refetch, rescan, isRescanning } = useGuardianScan({
-    walletAddress: activeAddress || undefined,
+    walletAddress: walletAddress || demoAddress || undefined,
     network: networkName,
-    enabled: isActive && !!activeAddress,
+    enabled: isActive && !!(walletAddress || demoAddress),
   });
 
   // Handle demo mode
@@ -47,11 +53,13 @@ export function GuardianPage() {
 
   // Auto-scan on wallet connect or demo mode
   useEffect(() => {
-    if ((isConnected && address && !autoScanTriggered) || (demoMode && demoAddress && !autoScanTriggered)) {
+    if ((isConnected && address && !autoScanTriggered) || 
+        (isAuthenticated && activeWallet && !autoScanTriggered) ||
+        (demoMode && demoAddress && !autoScanTriggered)) {
       setAutoScanTriggered(true);
       refetch();
     }
-  }, [isConnected, address, demoMode, demoAddress, autoScanTriggered, refetch]);
+  }, [isConnected, address, isAuthenticated, activeWallet, demoMode, demoAddress, autoScanTriggered, refetch]);
 
   // Show error toast
   useEffect(() => {
@@ -71,6 +79,24 @@ export function GuardianPage() {
       }, 2000);
     });
   };
+
+  // If authenticated but no wallets, show onboarding empty state
+  if (isAuthenticated && connectedWallets.length === 0) {
+    return (
+      <div className="container max-w-7xl mx-auto py-8 px-4">
+        <div className="flex flex-col items-center justify-center min-h-[500px] text-center">
+          <ShieldAlert className="h-16 w-16 text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold mb-2">No Wallets Added</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Add your first wallet to get started with Guardian security scanning.
+          </p>
+          <Button onClick={() => window.location.href = '/settings'}>
+            Add Wallet
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // If not connected and not in demo mode, show onboarding
   if (!isConnected && !demoMode) {
@@ -161,7 +187,7 @@ export function GuardianPage() {
             <p className="text-muted-foreground">
               Comprehensive security scan for wallet{' '}
               <span className="font-mono text-sm">
-                {activeAddress?.slice(0, 6)}...{activeAddress?.slice(-4)}
+                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
               </span>
               {demoMode && (
                 <span className="demo-mode-badge ml-2">
@@ -189,7 +215,7 @@ export function GuardianPage() {
 
       {/* Wallet Scope Header */}
       <WalletScopeHeader 
-        walletAddress={activeAddress || undefined}
+        walletAddress={walletAddress || demoAddress || undefined}
         walletLabel={demoMode ? 'Demo Wallet' : undefined}
       />
 

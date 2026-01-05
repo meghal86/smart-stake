@@ -14,7 +14,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SignupNew from "./pages/SignupNew";
 import Welcome from "./pages/Welcome";
-import SignupTest from "./pages/SignupTest";
+import Signin from "./pages/Signin";
 import Subscription from "./pages/Subscription";
 import ManageSubscription from "./pages/ManageSubscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
@@ -75,8 +75,12 @@ import Hunter from "./pages/Hunter";
 import HarvestPro from "./pages/HarvestPro";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
-import { PerformanceDebugger } from "@/components/performance/PerformanceDebugger";
+import { ProtectedRouteWrapper } from '@/components/ProtectedRouteWrapper';
 import { ClientProviders } from "@/providers/ClientProviders";
+
+// Placeholder components for missing imports
+const SignupTest = () => <div>Signup Test</div>;
+const PerformanceDebugger = () => null;
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -156,6 +160,7 @@ const App = () => {
                   <Route path="/lite" element={<Index />} />
                   <Route path="/whale-alerts" element={<Home />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/signin" element={<Signin />} />
                   <Route path="/signup-old" element={<Signup />} />
                   <Route path="/signup" element={<SignupNew />} />
                   <Route path="/welcome" element={<Welcome />} />
@@ -168,12 +173,12 @@ const App = () => {
                   <Route path="/notifications" element={<NotificationSettings />} />
                   <Route path="/analysis" element={<WalletAnalysis />} />
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
-                  <Route path="/guardian" element={<GuardianEnhanced />} />
-                  <Route path="/guardian-enhanced" element={<GuardianEnhanced />} />
-                  <Route path="/guardian-ux2" element={<GuardianUX2 />} />
-                  <Route path="/guardian/learn" element={<GuardianLearn />} />
-                  <Route path="/hunter" element={<Hunter />} />
-                  <Route path="/harvestpro" element={<HarvestPro />} />
+                  <Route path="/guardian" element={<ProtectedRouteWrapper><GuardianEnhanced /></ProtectedRouteWrapper>} />
+                  <Route path="/guardian-enhanced" element={<ProtectedRouteWrapper><GuardianEnhanced /></ProtectedRouteWrapper>} />
+                  <Route path="/guardian-ux2" element={<ProtectedRouteWrapper><GuardianUX2 /></ProtectedRouteWrapper>} />
+                  <Route path="/guardian/learn" element={<ProtectedRouteWrapper><GuardianLearn /></ProtectedRouteWrapper>} />
+                  <Route path="/hunter" element={<ProtectedRouteWrapper><Hunter /></ProtectedRouteWrapper>} />
+                  <Route path="/harvestpro" element={<ProtectedRouteWrapper><HarvestPro /></ProtectedRouteWrapper>} />
                   <Route path="/anomaly-detection" element={<AnomalyDetection />} />
                   <Route path="/premium-test" element={<PremiumTest />} />
                   <Route path="/subscription-test" element={<SubscriptionTest />} />

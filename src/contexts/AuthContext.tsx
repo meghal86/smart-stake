@@ -7,7 +7,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signOut: () => Promise<void>;
+  sessionEstablished: boolean; // Indicates session has been fully established
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionEstablished, setSessionEstablished] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -39,6 +42,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
       }
+      // Mark session as established after initial check
+      setSessionEstablished(true);
       setLoading(false);
     };
 
@@ -50,6 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        setSessionEstablished(true);
 
         // Create user record if it doesn't exist (non-blocking)
         if (event === 'SIGNED_IN' && session?.user) {
@@ -129,7 +135,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     session,
     loading,
+    isAuthenticated: !!session,
     signOut,
+    sessionEstablished,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

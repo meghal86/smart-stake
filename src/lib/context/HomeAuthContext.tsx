@@ -22,12 +22,13 @@ export const HomeAuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if JWT exists in cookie on mount
+  // Check if JWT exists in cookie on mount (non-blocking)
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/auth/me', {
           credentials: 'include',
+          signal: AbortSignal.timeout(3000), // 3 second timeout
         });
         
         if (response.ok) {
@@ -39,11 +40,13 @@ export const HomeAuthProvider = ({ children }: { children: ReactNode }) => {
           document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
         }
       } catch (err) {
-        console.error('Auth check failed:', err);
+        // Don't block app if auth check fails
+        console.debug('Auth check failed (non-blocking):', err);
         setIsAuthenticated(false);
       }
     };
 
+    // Run auth check in background without blocking
     checkAuth();
   }, []);
 
