@@ -48,10 +48,10 @@ export function PerformanceDebugger() {
     };
 
     // Expose global function
-    (window as any).openPerformanceDebugger = openDebugger;
+    (window as unknown as Record<string, unknown>).openPerformanceDebugger = openDebugger;
 
     return () => {
-      delete (window as any).openPerformanceDebugger;
+      delete (window as unknown as Record<string, unknown>).openPerformanceDebugger;
     };
   }, [isDevelopment]);
 

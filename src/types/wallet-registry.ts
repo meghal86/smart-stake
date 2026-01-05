@@ -6,14 +6,29 @@ export interface UserWallet {
   id: string
   user_id: string
   address: string
+  address_lc?: string
   label?: string
-  chain: string
+  chain_namespace: string
+  chain?: string
   source?: 'rainbowkit' | 'manual' | 'import' | 'demo' | 'migration'
-  verified: boolean
+  verified?: boolean
+  is_primary?: boolean
   last_scan?: string
   trust_score?: number
   risk_flags?: RiskFlag[]
+  guardian_scores?: Record<string, number>
+  balance_cache?: Record<string, unknown>
   metadata?: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface ConnectedWallet {
+  address: string
+  networks: string[]
+  is_primary: boolean
+  guardian_scores?: Record<string, number>
+  balance_cache?: Record<string, unknown>
   created_at: string
   updated_at: string
 }

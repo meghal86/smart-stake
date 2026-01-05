@@ -80,10 +80,10 @@ Tasks that can be deferred to future iterations.
 - [x] `POST /functions/v1/wallets-add-watch` with ENS resolution and validation
 - [x] `POST /functions/v1/wallets-remove` with atomic primary reassignment
 - [x] `POST /functions/v1/wallets-remove-address` removes all rows for address
-- [ ] `POST /functions/v1/wallets-set-primary` with atomic updates
-- [ ] All functions use JWT validation + service role pattern
-- [ ] CORS preflight handling for all functions
-- [ ] Exact API shapes match requirements specification
+- [x] `POST /functions/v1/wallets-set-primary` with atomic updates
+- [x] All functions use JWT validation + service role pattern
+- [x] CORS preflight handling for all functions
+- [x] Exact API shapes match requirements specification
 
 **Implementation Steps**:
 1. Create `supabase/functions/wallets-list/index.ts`
@@ -121,13 +121,13 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement database constraints, RLS policies, and migration safety to ensure data integrity and security.
 
 **Acceptance Criteria**:
-- [ ] `address_lc` generated column for case-insensitive lookups
-- [ ] Unique constraint on `(user_id, address_lc, chain_namespace)`
-- [ ] Unique constraint on `(user_id) WHERE is_primary = true`
-- [ ] RLS policies allow SELECT only for authenticated users
-- [ ] REVOKE INSERT/UPDATE/DELETE from anon/authenticated roles
-- [ ] Migration cleanup for existing multiple primaries
-- [ ] Idempotent migration that's safe to re-run
+- [x] `address_lc` generated column for case-insensitive lookups
+- [x] Unique constraint on `(user_id, address_lc, chain_namespace)`
+- [x] Unique constraint on `(user_id) WHERE is_primary = true`
+- [x] RLS policies allow SELECT only for authenticated users
+- [x] REVOKE INSERT/UPDATE/DELETE from anon/authenticated roles
+- [x] Migration cleanup for existing multiple primaries
+- [x] Idempotent migration that's safe to re-run
 
 **Implementation Steps**:
 1. Create migration with pre-constraint cleanup logic
@@ -159,9 +159,9 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement database-to-UI shape adapter that groups wallet rows by address for UI consumption.
 
 **Acceptance Criteria**:
-- [ ] Groups database rows by address (case-insensitive)
-- [ ] Creates `ConnectedWallet` objects with networks array
-- [ ] Handles missing wallet-network combinations gracefully
+- [x] Groups database rows by address (case-insensitive)
+- [x] Creates `ConnectedWallet` objects with networks array
+- [x] Handles missing wallet-network combinations gracefully
 - [ ] Prevents duplicate addresses in final array
 - [ ] Merges guardian scores and balance cache by network
 - [ ] Preserves original address casing from server
