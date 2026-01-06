@@ -57,7 +57,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform database response to API response format
-    const formattedWallets = (wallets || []).map((w: any) => ({
+    interface Wallet {
+      id: string;
+      address: string;
+      chain_namespace?: string;
+      label: string;
+      is_primary: boolean;
+      balance_cache?: Record<string, unknown>;
+      guardian_scores?: Record<string, unknown>;
+      created_at: string;
+    }
+
+    const formattedWallets = (wallets || []).map((w: Wallet) => ({
       id: w.id,
       address: w.address,
       chain_namespace: w.chain_namespace || 'eip155:1',
@@ -77,7 +88,7 @@ export async function GET(request: NextRequest) {
         used_rows: formattedWallets.length,
       },
       active_hint: {
-        primary_wallet_id: formattedWallets.find((w: any) => w.is_primary)?.id || null,
+        primary_wallet_id: formattedWallets.find((w: Wallet) => w.is_primary)?.id || null,
       },
     });
   } catch (error) {
