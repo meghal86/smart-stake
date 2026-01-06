@@ -162,9 +162,9 @@ Tasks that can be deferred to future iterations.
 - [x] Groups database rows by address (case-insensitive)
 - [x] Creates `ConnectedWallet` objects with networks array
 - [x] Handles missing wallet-network combinations gracefully
-- [ ] Prevents duplicate addresses in final array
-- [ ] Merges guardian scores and balance cache by network
-- [ ] Preserves original address casing from server
+- [x] Prevents duplicate addresses in final array
+- [x] Merges guardian scores and balance cache by network
+- [x] Preserves original address casing from server
 
 **Implementation Steps**:
 1. Implement `adaptWalletRows` function in WalletProvider
@@ -200,13 +200,13 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement plan-based wallet quota enforcement that counts unique addresses, not rows.
 
 **Acceptance Criteria**:
-- [ ] Quota counts unique addresses (case-insensitive) per user
-- [ ] Adding existing address on new network doesn't consume quota
-- [ ] Adding new address checks quota before insertion
-- [ ] Returns 409 QUOTA_EXCEEDED when limit reached
-- [ ] UI displays quota usage (used_addresses, used_rows, total)
-- [ ] Server-side enforcement in Edge Functions
-- [ ] Quota response includes plan information
+- [x] Quota counts unique addresses (case-insensitive) per user
+- [x] Adding existing address on new network doesn't consume quota
+- [x] Adding new address checks quota before insertion
+- [x] Returns 409 QUOTA_EXCEEDED when limit reached
+- [x] UI displays quota usage (used_addresses, used_rows, total)
+- [x] Server-side enforcement in Edge Functions
+- [x] Quota response includes plan information
 
 **Implementation Steps**:
 1. Add quota calculation logic to `wallets-list` Edge Function
