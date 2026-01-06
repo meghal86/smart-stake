@@ -210,10 +210,24 @@ serve(async (req) => {
       balance_cache: w.balance_cache || {},
     }))
 
+    // Get user's plan from database
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('plan')
+      .eq('user_id', userId)
+      .single()
+
+    if (profileError) {
+      console.error('Failed to fetch user profile:', profileError)
+      // Default to free tier if profile fetch fails
+      var plan = 'free'
+    } else {
+      var plan = userProfile?.plan || 'free'
+    }
+
     // Calculate quota
     const uniqueAddressCount = countUniqueAddresses(walletRows)
     const totalRows = walletRows.length
-    const plan = 'free' // TODO: Get from user profile
     const quotaLimit = getQuotaLimit(plan)
 
     const quota: QuotaInfo = {

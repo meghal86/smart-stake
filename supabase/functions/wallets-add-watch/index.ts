@@ -470,6 +470,21 @@ serve(async (req) => {
       )
     }
 
+    // Get user's plan from database
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('plan')
+      .eq('user_id', userId)
+      .single()
+
+    if (profileError) {
+      console.error('Failed to fetch user profile:', profileError)
+      // Default to free tier if profile fetch fails
+      var plan = 'free'
+    } else {
+      var plan = userProfile?.plan || 'free'
+    }
+
     // Get all wallets for this user to check quota
     const { data: userWallets, error: listError } = await supabase
       .from('user_wallets')
@@ -499,7 +514,6 @@ serve(async (req) => {
     // If new address, check quota
     if (isNewAddress) {
       const uniqueAddressCount = countUniqueAddresses(walletList)
-      const plan = 'free' // TODO: Get from user profile
       const quotaLimit = getQuotaLimit(plan)
 
       if (uniqueAddressCount >= quotaLimit) {
