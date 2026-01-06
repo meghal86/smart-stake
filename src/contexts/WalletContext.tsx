@@ -46,6 +46,16 @@ export interface ConnectedWallet {
   lastUsed?: Date;           // Last time this wallet was active
 }
 
+interface ServerWallet {
+  address: string;
+  chain_namespace?: string;
+  balance_cache?: Record<string, TokenBalance[]>;
+  guardian_scores?: Record<string, number>;
+  label?: string;
+  created_at?: string;
+  is_primary?: boolean;
+}
+
 export interface WalletContextValue {
   connectedWallets: ConnectedWallet[];
   activeWallet: string | null;
@@ -197,11 +207,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         return;
       }
 
-      const data = await response.json();
-      const wallets = data.wallets || [];
+      const data = await response.json() as { wallets?: ServerWallet[] };
+      const wallets = data.wallets ?? [];
 
       // Transform server data to ConnectedWallet format
-      const transformedWallets: ConnectedWallet[] = wallets.map((w: any) => {
+      const transformedWallets: ConnectedWallet[] = wallets.map((w: ServerWallet) => {
         // Validate chain_namespace format
         const chainNamespace = w.chain_namespace || 'eip155:1';
         
@@ -241,7 +251,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setActiveWalletState(savedWallet);
       } else {
         // Find primary wallet or use first
-        const primaryWallet = wallets.find((w: any) => w.is_primary);
+        const primaryWallet = wallets.find((w) => w.is_primary);
         if (primaryWallet) {
           setActiveWalletState(primaryWallet.address);
         } else if (transformedWallets.length > 0) {

@@ -28,12 +28,14 @@ interface WalletProviderProps {
   children: ReactNode;
 }
 
+type WalletListItem = Record<string, unknown>;
+
 export function WalletProvider({ children }: WalletProviderProps) {
   const { session } = useAuth(); // 🔑 auth session
   const hydratedForUserRef = useRef<string | null>(null);
 
   // ---- Wallet registry state (Task 1 minimal) ----
-  const [wallets, setWallets] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<WalletListItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // ---- Clear wallet state (on logout / session loss) ----

@@ -1106,8 +1106,11 @@ export default function SettingsPage() {
                             className="justify-start w-full"
                             onClick={() => {
                               // Open performance debugger via global function
-                              if ((window as any).openPerformanceDebugger) {
-                                (window as any).openPerformanceDebugger();
+                              const debugWindow = window as Window & {
+                                openPerformanceDebugger?: () => void;
+                              };
+                              if (debugWindow.openPerformanceDebugger) {
+                                debugWindow.openPerformanceDebugger();
                               }
                             }}
                           >

@@ -68,13 +68,14 @@ export async function setPrimaryWallet(walletId: string): Promise<{
       success: true,
       wallet_id: data?.wallet_id,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred'
     console.error('Unexpected error in setPrimaryWallet:', error)
     return {
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
-        message: error?.message || 'An unexpected error occurred',
+        message,
       },
     }
   }
