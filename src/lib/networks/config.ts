@@ -436,9 +436,14 @@ export async function requestNetworkSwitch(chainNamespace: string): Promise<bool
       params: [{ chainId: `0x${config.chainId.toString(16)}` }],
     });
     return true;
-  } catch (switchError: any) {
+  } catch (switchError: unknown) {
+    const errorCode =
+      typeof switchError === 'object' && switchError !== null && 'code' in switchError
+        ? (switchError as { code?: number | string }).code
+        : undefined;
+
     // This error code indicates that the chain has not been added to MetaMask
-    if (switchError.code === 4902) {
+    if (errorCode === 4902 || errorCode === '4902') {
       try {
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
