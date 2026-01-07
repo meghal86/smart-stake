@@ -10,9 +10,11 @@
 import { useState } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useDisconnect } from 'wagmi'
-import { X, Wallet, FileText, Link as LinkIcon } from 'lucide-react'
+import { X, Wallet, FileText, Link as LinkIcon, AlertCircle } from 'lucide-react'
 import { useWalletRegistry } from '@/hooks/useWalletRegistry'
 import { useTheme } from '@/contexts/ThemeContext'
+import { ERROR_MESSAGES } from '@/lib/constants/errorMessages'
+import { validateWalletInput } from '@/lib/wallet-validation'
 
 interface AddWalletModalProps {
   isOpen: boolean
@@ -37,15 +39,18 @@ export function AddWalletModal({ isOpen, onClose }: AddWalletModalProps) {
   const handleManualSubmit = async () => {
     setError('')
 
-    // Validate Ethereum address
-    if (!manualAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-      setError('Invalid Ethereum address format')
+    // Validate wallet input (address or ENS)
+    const validation = validateWalletInput(manualAddress.trim())
+    if (!validation.valid) {
+      const errorCode = validation.error?.code || 'INVALID_ADDRESS'
+      const errorMessage = ERROR_MESSAGES[errorCode as keyof typeof ERROR_MESSAGES] || ERROR_MESSAGES.INVALID_ADDRESS
+      setError(errorMessage)
       return
     }
 
     try {
       await addWallet({
-        address: manualAddress,
+        address: manualAddress.trim(),
         label: manualLabel.trim() || undefined,
         chain: 'ethereum',
         source: 'manual',
@@ -57,7 +62,19 @@ export function AddWalletModal({ isOpen, onClose }: AddWalletModalProps) {
       setMode('choose')
       onClose()
     } catch (err: unknown) {
-      setError(err.message || 'Failed to add wallet')
+      // Handle API errors with user-friendly messages
+      let errorMessage = ERROR_MESSAGES.UNKNOWN_ERROR
+      
+      if (err instanceof Error) {
+        const errorCode = err.message
+        if (errorCode in ERROR_MESSAGES) {
+          errorMessage = ERROR_MESSAGES[errorCode as keyof typeof ERROR_MESSAGES]
+        } else {
+          errorMessage = err.message
+        }
+      }
+      
+      setError(errorMessage)
     }
   }
 
@@ -252,8 +269,19 @@ export function AddWalletModal({ isOpen, onClose }: AddWalletModalProps) {
             </button>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
-                {error}
+              <div className={`p-4 rounded-lg border flex gap-3 ${
+                isDark
+                  ? 'bg-red-500/10 border-red-500/30'
+                  : 'bg-red-50 border-red-200'
+              }`}>
+                <AlertCircle size={20} className={`flex-shrink-0 mt-0.5 ${
+                  isDark ? 'text-red-400' : 'text-red-600'
+                }`} />
+                <p className={`text-sm ${
+                  isDark ? 'text-red-300' : 'text-red-700'
+                }`}>
+                  {error}
+                </p>
               </div>
             )}
 
@@ -284,7 +312,7 @@ export function AddWalletModal({ isOpen, onClose }: AddWalletModalProps) {
                   isDark ? 'text-slate-300' : 'text-slate-700'
                 }`}
               >
-                Wallet Address <span className="text-red-500">*</span>
+                Wallet Address or ENS Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -293,13 +321,18 @@ export function AddWalletModal({ isOpen, onClose }: AddWalletModalProps) {
                   setManualAddress(e.target.value)
                   setError('')
                 }}
-                placeholder="0x..."
+                placeholder="0x... or vitalik.eth"
                 className={`w-full px-4 py-2 rounded-lg border outline-none transition-colors font-mono text-sm ${
                   isDark
                     ? 'bg-slate-900/50 border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500'
                     : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500'
                 }`}
               />
+              <p className={`text-xs mt-2 ${
+                isDark ? 'text-slate-500' : 'text-slate-500'
+              }`}>
+                Enter a 42-character Ethereum address (0x...) or an ENS name (name.eth)
+              </p>
             </div>
 
             <div className="flex gap-3 pt-2">

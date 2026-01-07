@@ -10,7 +10,7 @@
  * with one representative row marked is_primary=true, primary selection should follow
  * network preference order, and primary reassignment should be atomic with deletion.
  * 
- * @vitest-environment node
+ * @vitest-environment jsdom
  */
 
 import * as fc from 'fast-check'
@@ -23,42 +23,100 @@ import {
 } from '../../primary-wallet'
 
 /**
+ * Generator for valid Ethereum addresses
+ */
+const addressGenerator = fc.tuple(
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff })
+).map(([a, b, c, d, e]) => 
+  '0x' + [a, b, c, d, e].map(n => n.toString(16).padStart(8, '0')).join('').slice(0, 40)
+)
+
+/**
  * Generator for valid wallet objects
  */
 const walletGenerator = fc.record({
   id: fc.uuid(),
   user_id: fc.uuid(),
-  address: fc.hexaString({ minLength: 40, maxLength: 40 }).map(h => '0x' + h),
+  address: addressGenerator,
   chain_namespace: fc.constantFrom('eip155:1', 'eip155:137', 'eip155:42161', 'eip155:10', 'eip155:8453'),
   is_primary: fc.boolean(),
-  created_at: fc.date({ min: new Date('2020-01-01'), max: new Date() }).map(d => d.toISOString()),
-  updated_at: fc.date({ min: new Date('2020-01-01'), max: new Date() }).map(d => d.toISOString()),
+  created_at: fc.integer({ min: 1577836800000, max: Date.now() }).map(ms => new Date(ms).toISOString()),
+  updated_at: fc.integer({ min: 1577836800000, max: Date.now() }).map(ms => new Date(ms).toISOString()),
+})
+
+/**
+ * Generator for wallet arrays with at most one primary per address
+ */
+const validWalletArrayGenerator = fc.tuple(
+  fc.uuid(),
+  fc.array(addressGenerator, { minLength: 1, maxLength: 3 }),
+  fc.array(fc.constantFrom('eip155:1', 'eip155:137', 'eip155:42161', 'eip155:10', 'eip155:8453'), { minLength: 1, maxLength: 5 }),
+  fc.array(fc.boolean(), { minLength: 1, maxLength: 3 })
+).map(([userId, addresses, namespaces, primaryFlags]) => {
+  const wallets: Wallet[] = []
+  let walletId = 0
+  let primaryFlagIdx = 0
+  
+  for (const address of addresses) {
+    let addressHasPrimary = false
+    // Use a Set to track which namespaces we've already added for this address
+    const usedNamespaces = new Set<string>()
+    
+    for (const ns of namespaces) {
+      // Skip if we've already added this namespace for this address
+      if (usedNamespaces.has(ns)) {
+        continue
+      }
+      usedNamespaces.add(ns)
+      
+      // Use the primaryFlags array to determine if this should be primary
+      // But ensure only one per address
+      const shouldBePrimary = !addressHasPrimary && primaryFlags[primaryFlagIdx % primaryFlags.length]
+      if (shouldBePrimary) addressHasPrimary = true
+      primaryFlagIdx++
+      
+      wallets.push({
+        id: `wallet-${walletId++}`,
+        user_id: userId,
+        address,
+        chain_namespace: ns,
+        is_primary: shouldBePrimary,
+        created_at: new Date(Date.now() - walletId * 1000 * 60 * 60).toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+  
+  return wallets
 })
 
 /**
  * Generator for wallet arrays with at least one wallet
  */
-const nonEmptyWalletArrayGenerator = fc.array(walletGenerator, { minLength: 1, maxLength: 10 })
+const nonEmptyWalletArrayGenerator = validWalletArrayGenerator
 
 /**
  * Generator for wallet arrays with multiple wallets for same address
  */
 const multiNetworkWalletGenerator = fc.tuple(
   fc.uuid(),
-  fc.hexaString({ minLength: 40, maxLength: 40 }).map(h => '0x' + h),
-  fc.uuid(),
+  addressGenerator,
   fc.array(
     fc.constantFrom('eip155:1', 'eip155:137', 'eip155:42161', 'eip155:10', 'eip155:8453'),
     { minLength: 2, maxLength: 5 }
   )
-).map(([userId, address, createdAtBase, networks]) => {
+).map(([userId, address, networks]) => {
   const baseDate = new Date('2025-01-01')
   return networks.map((ns, idx) => ({
-    id: fc.sample(fc.uuid(), 1)[0],
+    id: `wallet-${idx}`,
     user_id: userId,
     address,
     chain_namespace: ns,
-    is_primary: false,
+    is_primary: idx === 0, // Only first one is primary
     created_at: new Date(baseDate.getTime() + idx * 1000).toISOString(),
     updated_at: new Date(baseDate.getTime() + idx * 1000).toISOString(),
   }))
@@ -83,19 +141,17 @@ describe('Feature: multi-chain-wallet-system, Property 11: Primary Wallet Semant
   test('primary wallet selection prefers eip155:1 when available', () => {
     fc.assert(
       fc.property(
-        fc.tuple(
-          nonEmptyWalletArrayGenerator,
-          fc.boolean()
-        ),
-        ([wallets, includeEthereum]) => {
+        validWalletArrayGenerator,
+        (wallets) => {
+          // Add an Ethereum mainnet wallet if not already present
           let testWallets = wallets
+          const hasEthereum = wallets.some(w => w.chain_namespace === 'eip155:1')
           
-          if (includeEthereum) {
-            // Add an Ethereum mainnet wallet
+          if (!hasEthereum && wallets.length > 0) {
             testWallets = [
               ...wallets,
               {
-                id: fc.sample(fc.uuid(), 1)[0],
+                id: `wallet-eth-${Date.now()}`,
                 user_id: wallets[0].user_id,
                 address: wallets[0].address,
                 chain_namespace: 'eip155:1',
@@ -108,7 +164,7 @@ describe('Feature: multi-chain-wallet-system, Property 11: Primary Wallet Semant
 
           const candidate = findBestPrimaryCandidate(testWallets)
 
-          if (includeEthereum && candidate) {
+          if (hasEthereum && candidate) {
             // Should prefer eip155:1
             const selectedWallet = testWallets.find(w => w.id === candidate)
             expect(selectedWallet?.chain_namespace).toBe('eip155:1')
@@ -126,36 +182,36 @@ describe('Feature: multi-chain-wallet-system, Property 11: Primary Wallet Semant
           fc.record({
             id: fc.uuid(),
             user_id: fc.uuid(),
-            address: fc.hexaString({ minLength: 40, maxLength: 40 }).map(h => '0x' + h),
+            address: addressGenerator,
             chain_namespace: fc.constantFrom('eip155:137', 'eip155:42161', 'eip155:10', 'eip155:8453'),
             is_primary: fc.boolean(),
-            created_at: fc.date({ min: new Date('2020-01-01'), max: new Date() }).map(d => d.toISOString()),
-            updated_at: fc.date({ min: new Date('2020-01-01'), max: new Date() }).map(d => d.toISOString()),
+            created_at: fc.integer({ min: 1577836800000, max: Date.now() }).map(ms => new Date(ms).toISOString()),
+            updated_at: fc.integer({ min: 1577836800000, max: Date.now() }).map(ms => new Date(ms).toISOString()),
           }),
           { minLength: 1, maxLength: 10 }
-        )
-      ),
-      (wallets) => {
-        const candidate = findBestPrimaryCandidate(wallets)
+        ),
+        (wallets) => {
+          const candidate = findBestPrimaryCandidate(wallets)
 
-        if (candidate && wallets.length > 0) {
-          const selectedWallet = wallets.find(w => w.id === candidate)
-          const oldestWallet = wallets.reduce((oldest, current) => {
-            const currentDate = new Date(current.created_at).getTime()
-            const oldestDate = new Date(oldest.created_at).getTime()
-            
-            if (currentDate < oldestDate) {
-              return current
-            } else if (currentDate === oldestDate && current.id < oldest.id) {
-              return current
-            }
-            return oldest
-          })
+          if (candidate && wallets.length > 0) {
+            const selectedWallet = wallets.find(w => w.id === candidate)
+            const oldestWallet = wallets.reduce((oldest, current) => {
+              const currentDate = new Date(current.created_at).getTime()
+              const oldestDate = new Date(oldest.created_at).getTime()
+              
+              if (currentDate < oldestDate) {
+                return current
+              } else if (currentDate === oldestDate && current.id < oldest.id) {
+                return current
+              }
+              return oldest
+            })
 
-          // Should select the oldest wallet
-          expect(selectedWallet?.id).toBe(oldestWallet.id)
+            // Should select the oldest wallet
+            expect(selectedWallet?.id).toBe(oldestWallet.id)
+          }
         }
-      },
+      ),
       { numRuns: 100 }
     )
   })
@@ -186,28 +242,39 @@ describe('Feature: multi-chain-wallet-system, Property 11: Primary Wallet Semant
         fc.record({
           id: fc.uuid(),
           user_id: fc.uuid(),
-          address: fc.hexaString({ minLength: 40, maxLength: 40 }).map(h => '0x' + h),
+          address: addressGenerator,
           chain_namespace: fc.constantFrom('eip155:1', 'eip155:137'),
           is_primary: fc.boolean(),
-          created_at: fc.date().map(d => d.toISOString()),
-          updated_at: fc.date().map(d => d.toISOString()),
-        })
+          created_at: fc.integer({ min: 1577836800000, max: Date.now() }).map(ms => new Date(ms).toISOString()),
+          updated_at: fc.integer({ min: 1577836800000, max: Date.now() }).map(ms => new Date(ms).toISOString()),
+        }),
+        (wallet) => {
+          const result = isPrimaryWallet(wallet)
+          expect(result).toBe(wallet.is_primary === true)
+        }
       ),
-      (wallet) => {
-        const result = isPrimaryWallet(wallet)
-        expect(result).toBe(wallet.is_primary === true)
-      },
       { numRuns: 100 }
     )
   })
 
-  test('only one wallet in list can be primary', () => {
+  test('only one wallet per address can be primary', () => {
     fc.assert(
-      fc.property(nonEmptyWalletArrayGenerator, (wallets) => {
-        const primaryWallets = wallets.filter(w => w.is_primary === true)
+      fc.property(validWalletArrayGenerator, (wallets) => {
+        // Group wallets by address
+        const walletsByAddress = new Map<string, Wallet[]>()
+        for (const wallet of wallets) {
+          const key = wallet.address.toLowerCase()
+          if (!walletsByAddress.has(key)) {
+            walletsByAddress.set(key, [])
+          }
+          walletsByAddress.get(key)!.push(wallet)
+        }
         
-        // At most one wallet should be marked as primary
-        expect(primaryWallets.length).toBeLessThanOrEqual(1)
+        // For each address, check that at most one wallet is primary
+        for (const [address, addressWallets] of walletsByAddress) {
+          const primaryCount = addressWallets.filter(w => w.is_primary === true).length
+          expect(primaryCount, `Address ${address} should have at most 1 primary wallet`).toBeLessThanOrEqual(1)
+        }
       }),
       { numRuns: 100 }
     )

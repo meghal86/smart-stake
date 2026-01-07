@@ -6,7 +6,58 @@ This document breaks down the implementation of the Multi-Chain EVM Wallet Syste
 
 **Implementation Status**: Infrastructure exists, but auth + server registry + hardening must be connected for production.
 
+
 ---
+# Global Instructions (Apply to ALL Tasks Below)
+
+## Goal
+For every task listed in this file, ensure the final codebase passes **Vercel deployment**, `npm run build`, and `npm run lint` with **zero ESLint, TypeScript, and Next.js lint errors**.
+
+## Universal Rules
+These rules apply to **every task**, regardless of scope:
+
+1. Always run and verify:
+   - `npm run lint`
+   - `npm run build`
+   - Vercel build output (if available)
+
+2. Fix lint issues by **correcting the code**, not by disabling rules.
+   - `eslint-disable` is forbidden unless absolutely unavoidable
+   - Any exception must include a clear inline justification comment
+
+3. Follow framework best practices:
+   - React Hooks must satisfy `react-hooks/exhaustive-deps`
+   - Follow Next.js App Router conventions
+   - Separate Server and Client components correctly
+   - Use `next/image` and `next/link` where required
+
+4. TypeScript rules:
+   - No `any` unless strictly required
+   - No unused variables or imports
+   - All async functions must return correct Promise types
+
+5. Code quality:
+   - No `console.log` or debug code
+   - No commented-out dead code
+   - JSX lists must have stable `key` props
+   - No side effects inside render
+
+6. Behavioral constraints:
+   - Do NOT change business logic or app behavior
+   - Do NOT introduce new dependencies unless required to fix lint issues
+   - Refactor only to the extent needed to satisfy lint rules
+
+## Validation Checklist (Required After EACH Task)
+- `npm run lint` → ✅ zero errors
+- `npm run build` → ✅ success
+- Vercel deployment → ✅ no lint failures
+
+## Definition of Done
+A task is complete **only if**:
+- All lint rules pass
+- Build succeeds
+- No new warnings are introduced
+
 
 ## TASK CATEGORIES
 
@@ -241,12 +292,14 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement address-level primary wallet semantics with atomic operations and reassignment logic.
 
 **Acceptance Criteria**:
-- [ ] Primary is set at address level (one representative row marked)
-- [ ] Primary selection follows network preference order
-- [ ] Primary reassignment is atomic with deletion
-- [ ] First wallet automatically becomes primary
-- [ ] Only one primary wallet per user enforced
-- [ ] Primary updates prevent race conditions
+- [x] Primary is set at address level (one representative row marked)
+- [x] Primary selection follows network preference order
+- [x] Primary reassignment is atomic with deletion
+- [x] First wallet automatically becomes primary
+- [x] Only one primary wallet per user enforced
+- [x] Primary updates prevent race conditions
+
+**Status**: ✅ COMPLETE - All acceptance criteria met and tested
 
 **Implementation Steps**:
 1. Implement primary selection logic in `wallets-set-primary`
@@ -281,13 +334,13 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement comprehensive input validation to prevent security issues and provide clear error messages.
 
 **Acceptance Criteria**:
-- [ ] ENS resolution for `.eth` addresses
-- [ ] Reject private key patterns with PRIVATE_KEY_DETECTED
-- [ ] Reject seed phrase patterns with SEED_PHRASE_DETECTED
-- [ ] Validate CAIP-2 chain namespace format
-- [ ] Return 422 for validation errors with specific codes
-- [ ] User-friendly error messages in UI
-- [ ] Rate limiting with 429 responses
+- [x] ENS resolution for `.eth` addresses
+- [x] Reject private key patterns with PRIVATE_KEY_DETECTED
+- [x] Reject seed phrase patterns with SEED_PHRASE_DETECTED
+- [x] Validate CAIP-2 chain namespace format
+- [x] Return 422 for validation errors with specific codes
+- [x] User-friendly error messages in UI
+- [x] Rate limiting with 429 responses
 
 **Implementation Steps**:
 1. Create input validation utilities
@@ -324,12 +377,12 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement idempotency and concurrency safety for wallet mutations to handle double-clicks and race conditions.
 
 **Acceptance Criteria**:
-- [ ] `Idempotency-Key` header support (UUID format, 60s TTL)
-- [ ] Redis-based idempotency cache (not in-memory)
-- [ ] Same key within 60s returns cached response
-- [ ] Database constraints prevent duplicates after TTL expiration
-- [ ] Atomic operations for primary wallet updates
-- [ ] Concurrency tests pass consistently
+- [x] `Idempotency-Key` header support (UUID format, 60s TTL)
+- [x] Redis-based idempotency cache (not in-memory)
+- [x] Same key within 60s returns cached response
+- [x] Database constraints prevent duplicates after TTL expiration
+- [x] Atomic operations for primary wallet updates
+- [x] Concurrency tests pass consistently
 
 **Implementation Steps**:
 1. Add Upstash Redis integration for idempotency cache

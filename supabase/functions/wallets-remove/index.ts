@@ -34,6 +34,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { checkWalletRateLimit, RateLimitError, createRateLimitResponse } from '../_shared/rate-limit.ts'
+import { handleIdempotency } from '../_shared/idempotency.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -103,41 +105,44 @@ function isValidUUID(uuid: string): boolean {
 }
 
 /**
- * Find the best candidate for primary reassignment
- * Priority: eip155:1 → oldest created_at → smallest id
+ * Execute atomic transaction for wallet removal with primary reassignment
+ * Uses PostgreSQL RPC function for true atomicity
  */
-function findBestPrimaryCandidate(
-  wallets: Array<{
-    id: string
-    chain_namespace: string
-    created_at: string
-  }>
-): string | null {
-  if (wallets.length === 0) {
-    return null
-  }
+async function executeAtomicRemoval(
+  userId: string,
+  walletId: string
+): Promise<{ success: boolean; newPrimaryId?: string; error?: string }> {
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    
+    // Execute atomic transaction via RPC
+    const { data, error } = await supabase.rpc('remove_wallet_atomic', {
+      p_user_id: userId,
+      p_wallet_id: walletId,
+    })
 
-  // First priority: eip155:1 (Ethereum mainnet)
-  const ethereumWallet = wallets.find(w => w.chain_namespace === 'eip155:1')
-  if (ethereumWallet) {
-    return ethereumWallet.id
-  }
-
-  // Second priority: oldest by created_at
-  let oldestWallet = wallets[0]
-  for (const wallet of wallets) {
-    if (new Date(wallet.created_at) < new Date(oldestWallet.created_at)) {
-      oldestWallet = wallet
-    } else if (
-      new Date(wallet.created_at).getTime() === new Date(oldestWallet.created_at).getTime() &&
-      wallet.id < oldestWallet.id
-    ) {
-      // Tiebreaker: smallest id
-      oldestWallet = wallet
+    if (error) {
+      console.error('RPC error:', error)
+      return { success: false, error: error.message }
     }
-  }
 
-  return oldestWallet.id
+    if (!data || !data[0]) {
+      return { success: false, error: 'No response from database' }
+    }
+
+    const result = data[0]
+    if (!result.success) {
+      return { success: false, error: result.error_message }
+    }
+
+    return {
+      success: true,
+      newPrimaryId: result.new_primary_id || undefined,
+    }
+  } catch (err: any) {
+    console.error('Transaction error:', err)
+    return { success: false, error: err.message }
+  }
 }
 
 serve(async (req) => {
@@ -185,6 +190,22 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
+    }
+
+    // Check rate limit (10 requests per minute per user)
+    try {
+      await checkWalletRateLimit(userId, 10, 60)
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return createRateLimitResponse(error.retryAfter)
+      }
+      throw error
+    }
+
+    // Handle idempotency
+    const idempotencyResult = await handleIdempotency(req, userId, 'wallets-remove')
+    if (idempotencyResult.cached && idempotencyResult.response) {
+      return idempotencyResult.response
     }
 
     // Parse request body
@@ -299,86 +320,16 @@ serve(async (req) => {
       )
     }
 
-    const wasPrimary = walletToDelete.is_primary || false
-    const deletedAddress = walletToDelete.address
+    // Execute atomic transaction for wallet removal with primary reassignment
+    const txResult = await executeAtomicRemoval(userId, req_body.wallet_id)
 
-    // Start atomic transaction
-    let newPrimaryId: string | null = null
-
-    if (wasPrimary) {
-      // Get all other wallets for this user to find a new primary
-      const { data: allWallets, error: listError } = await supabase
-        .from('user_wallets')
-        .select('id, address, chain_namespace, created_at')
-        .eq('user_id', userId)
-        .neq('id', req_body.wallet_id)
-
-      if (listError) {
-        console.error('Database list error:', listError)
-        return new Response(
-          JSON.stringify({
-            error: {
-              code: 'DATABASE_ERROR',
-              message: 'Failed to fetch other wallets',
-            },
-          } as ErrorResponse),
-          {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        )
-      }
-
-      const otherWallets = (allWallets || []) as Array<{
-        id: string
-        address: string
-        chain_namespace: string
-        created_at: string
-      }>
-
-      if (otherWallets.length > 0) {
-        // Find best candidate for new primary
-        newPrimaryId = findBestPrimaryCandidate(otherWallets)
-
-        if (newPrimaryId) {
-          // Update new primary wallet
-          const { error: updateError } = await supabase
-            .from('user_wallets')
-            .update({ is_primary: true })
-            .eq('id', newPrimaryId)
-
-          if (updateError) {
-            console.error('Database update error:', updateError)
-            return new Response(
-              JSON.stringify({
-                error: {
-                  code: 'DATABASE_ERROR',
-                  message: 'Failed to update primary wallet',
-                },
-              } as ErrorResponse),
-              {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              }
-            )
-          }
-        }
-      }
-    }
-
-    // Delete the wallet
-    const { error: deleteError } = await supabase
-      .from('user_wallets')
-      .delete()
-      .eq('id', req_body.wallet_id)
-
-    if (deleteError) {
-      console.error('Database delete error:', deleteError)
+    if (!txResult.success) {
+      console.error('Transaction failed:', txResult.error)
       return new Response(
         JSON.stringify({
           error: {
             code: 'DATABASE_ERROR',
-            message: 'Failed to delete wallet',
+            message: txResult.error || 'Failed to remove wallet',
           },
         } as ErrorResponse),
         {
@@ -393,9 +344,12 @@ serve(async (req) => {
       success: true,
     }
 
-    if (newPrimaryId) {
-      response.new_primary_id = newPrimaryId
+    if (txResult.newPrimaryId) {
+      response.new_primary_id = txResult.newPrimaryId
     }
+
+    // Cache response for idempotency
+    await idempotencyResult.setCacheResponse(response)
 
     return new Response(JSON.stringify(response), {
       status: 200,

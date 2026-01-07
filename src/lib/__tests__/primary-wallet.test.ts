@@ -1,163 +1,444 @@
 /**
- * Unit tests for primary wallet management utilities
+ * Unit Tests for Primary Wallet Management
+ * 
+ * Tests the primary wallet selection and reassignment logic
+ * to ensure address-level primary semantics are maintained.
+ * 
+ * @see src/lib/primary-wallet.ts
+ * @see .kiro/specs/multi-chain-wallet-system/requirements.md - Requirement 8
  */
 
 import { describe, test, expect } from 'vitest'
 import {
-  isValidWalletId,
-  findBestPrimaryCandidate,
-  getPrimaryWallet,
-  isPrimaryWallet,
-  type Wallet,
+  findBestPrimaryRepresentative,
+  findBestPrimaryReassignmentCandidate,
+  hasExactlyOnePrimary,
+  getUniqueAddresses,
+  getWalletsForAddress,
+  verifyAddressLevelPrimarySemantics,
+  type WalletRow,
 } from '../primary-wallet'
 
-describe('Primary Wallet Utilities', () => {
-  describe('isValidWalletId', () => {
-    test('returns true for valid UUID', () => {
-      const validUUID = '550e8400-e29b-41d4-a716-446655440000'
-      expect(isValidWalletId(validUUID)).toBe(true)
-    })
-
-    test('returns true for valid UUID with uppercase', () => {
-      const validUUID = '550E8400-E29B-41D4-A716-446655440000'
-      expect(isValidWalletId(validUUID)).toBe(true)
-    })
-
-    test('returns false for invalid UUID format', () => {
-      expect(isValidWalletId('not-a-uuid')).toBe(false)
-      expect(isValidWalletId('550e8400-e29b-41d4-a716')).toBe(false)
-      expect(isValidWalletId('')).toBe(false)
-    })
-
-    test('returns false for UUID with invalid characters', () => {
-      expect(isValidWalletId('550e8400-e29b-41d4-a716-44665544000g')).toBe(false)
-    })
-  })
-
-  describe('findBestPrimaryCandidate', () => {
-    const mockWallet = (
-      id: string,
-      chainNamespace: string,
-      createdAt: string
-    ): Wallet => ({
-      id,
-      user_id: 'user-123',
-      address: '0x' + id.substring(0, 40),
-      chain_namespace: chainNamespace,
-      is_primary: false,
-      created_at: createdAt,
-      updated_at: createdAt,
-    })
-
+describe('Primary Wallet Management', () => {
+  describe('findBestPrimaryRepresentative', () => {
     test('returns null for empty wallet list', () => {
-      expect(findBestPrimaryCandidate([])).toBeNull()
+      const result = findBestPrimaryRepresentative([])
+      expect(result).toBeNull()
     })
 
-    test('prefers eip155:1 (Ethereum mainnet)', () => {
-      const wallets = [
-        mockWallet('wallet-1', 'eip155:137', '2025-01-01T00:00:00Z'),
-        mockWallet('wallet-2', 'eip155:1', '2025-01-02T00:00:00Z'),
-        mockWallet('wallet-3', 'eip155:42161', '2025-01-03T00:00:00Z'),
+    test('prefers activeNetwork when provided', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
       ]
 
-      expect(findBestPrimaryCandidate(wallets)).toBe('wallet-2')
+      const result = findBestPrimaryRepresentative(wallets, 'eip155:137')
+      expect(result).toBe('wallet-2')
     })
 
-    test('falls back to oldest created_at when no eip155:1', () => {
-      const wallets = [
-        mockWallet('wallet-1', 'eip155:137', '2025-01-03T00:00:00Z'),
-        mockWallet('wallet-2', 'eip155:42161', '2025-01-01T00:00:00Z'),
-        mockWallet('wallet-3', 'eip155:10', '2025-01-02T00:00:00Z'),
+    test('falls back to eip155:1 when activeNetwork not found', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
       ]
 
-      expect(findBestPrimaryCandidate(wallets)).toBe('wallet-2')
+      const result = findBestPrimaryRepresentative(wallets, 'eip155:42161')
+      expect(result).toBe('wallet-1')
+    })
+
+    test('selects oldest wallet when no activeNetwork or eip155:1', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:42161',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = findBestPrimaryRepresentative(wallets)
+      expect(result).toBe('wallet-2')
     })
 
     test('uses smallest id as tiebreaker for same created_at', () => {
-      const wallets = [
-        mockWallet('wallet-c', 'eip155:137', '2025-01-01T00:00:00Z'),
-        mockWallet('wallet-a', 'eip155:42161', '2025-01-01T00:00:00Z'),
-        mockWallet('wallet-b', 'eip155:10', '2025-01-01T00:00:00Z'),
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-b',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-a',
+          address: '0xabc',
+          chain_namespace: 'eip155:42161',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
       ]
 
-      expect(findBestPrimaryCandidate(wallets)).toBe('wallet-a')
+      const result = findBestPrimaryRepresentative(wallets)
+      expect(result).toBe('wallet-a')
     })
 
-    test('returns single wallet when only one exists', () => {
-      const wallets = [mockWallet('wallet-1', 'eip155:137', '2025-01-01T00:00:00Z')]
+    test('handles single wallet', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+      ]
 
-      expect(findBestPrimaryCandidate(wallets)).toBe('wallet-1')
+      const result = findBestPrimaryRepresentative(wallets)
+      expect(result).toBe('wallet-1')
     })
   })
 
-  describe('getPrimaryWallet', () => {
-    const mockWallet = (id: string, isPrimary: boolean): Wallet => ({
-      id,
-      user_id: 'user-123',
-      address: '0x' + id.substring(0, 40),
-      chain_namespace: 'eip155:1',
-      is_primary: isPrimary,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z',
-    })
-
-    test('returns primary wallet when one exists', () => {
-      const wallets = [
-        mockWallet('wallet-1', false),
-        mockWallet('wallet-2', true),
-        mockWallet('wallet-3', false),
-      ]
-
-      const primary = getPrimaryWallet(wallets)
-      expect(primary).not.toBeNull()
-      expect(primary?.id).toBe('wallet-2')
-    })
-
-    test('returns null when no primary wallet exists', () => {
-      const wallets = [
-        mockWallet('wallet-1', false),
-        mockWallet('wallet-2', false),
-        mockWallet('wallet-3', false),
-      ]
-
-      expect(getPrimaryWallet(wallets)).toBeNull()
-    })
-
+  describe('findBestPrimaryReassignmentCandidate', () => {
     test('returns null for empty wallet list', () => {
-      expect(getPrimaryWallet([])).toBeNull()
+      const result = findBestPrimaryReassignmentCandidate([])
+      expect(result).toBeNull()
     })
 
-    test('returns first primary wallet if multiple exist (edge case)', () => {
-      const wallets = [
-        mockWallet('wallet-1', true),
-        mockWallet('wallet-2', true),
-        mockWallet('wallet-3', false),
+    test('prefers eip155:1 (Ethereum mainnet)', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xdef',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
       ]
 
-      const primary = getPrimaryWallet(wallets)
-      expect(primary?.id).toBe('wallet-1')
+      const result = findBestPrimaryReassignmentCandidate(wallets)
+      expect(result).toBe('wallet-2')
+    })
+
+    test('selects oldest wallet when no eip155:1', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xdef',
+          chain_namespace: 'eip155:42161',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = findBestPrimaryReassignmentCandidate(wallets)
+      expect(result).toBe('wallet-2')
+    })
+
+    test('uses smallest id as tiebreaker for same created_at', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-b',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-a',
+          address: '0xdef',
+          chain_namespace: 'eip155:42161',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = findBestPrimaryReassignmentCandidate(wallets)
+      expect(result).toBe('wallet-a')
     })
   })
 
-  describe('isPrimaryWallet', () => {
-    const mockWallet = (isPrimary: boolean): Wallet => ({
-      id: 'wallet-1',
-      user_id: 'user-123',
-      address: '0x1234567890123456789012345678901234567890',
-      chain_namespace: 'eip155:1',
-      is_primary: isPrimary,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z',
+  describe('hasExactlyOnePrimary', () => {
+    test('returns false for empty list', () => {
+      const result = hasExactlyOnePrimary([])
+      expect(result).toBe(false)
     })
 
-    test('returns true when wallet is primary', () => {
-      const wallet = mockWallet(true)
-      expect(isPrimaryWallet(wallet)).toBe(true)
+    test('returns true when exactly one primary', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = hasExactlyOnePrimary(wallets)
+      expect(result).toBe(true)
     })
 
-    test('returns false when wallet is not primary', () => {
-      const wallet = mockWallet(false)
-      expect(isPrimaryWallet(wallet)).toBe(false)
+    test('returns false when no primary', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = hasExactlyOnePrimary(wallets)
+      expect(result).toBe(false)
+    })
+
+    test('returns false when multiple primaries', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: true,
+        },
+      ]
+
+      const result = hasExactlyOnePrimary(wallets)
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('getUniqueAddresses', () => {
+    test('returns empty array for empty list', () => {
+      const result = getUniqueAddresses([])
+      expect(result).toEqual([])
+    })
+
+    test('returns unique addresses (case-insensitive)', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xABC',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-3',
+          address: '0xDEF',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-03T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = getUniqueAddresses(wallets)
+      expect(result).toHaveLength(2)
+      expect(result).toContain('0xabc')
+      expect(result).toContain('0xdef')
+    })
+  })
+
+  describe('getWalletsForAddress', () => {
+    test('returns empty array when no wallets match', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+      ]
+
+      const result = getWalletsForAddress(wallets, '0xdef')
+      expect(result).toEqual([])
+    })
+
+    test('returns all wallets for address (case-insensitive)', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xABC',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-3',
+          address: '0xdef',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-03T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = getWalletsForAddress(wallets, '0xABC')
+      expect(result).toHaveLength(2)
+      expect(result[0].id).toBe('wallet-1')
+      expect(result[1].id).toBe('wallet-2')
+    })
+  })
+
+  describe('verifyAddressLevelPrimarySemantics', () => {
+    test('returns true for valid semantics', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-3',
+          address: '0xdef',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-03T00:00:00Z',
+          is_primary: true,
+        },
+      ]
+
+      const result = verifyAddressLevelPrimarySemantics(wallets)
+      expect(result).toBe(true)
+    })
+
+    test('returns false when address has multiple primaries', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: true,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: true,
+        },
+      ]
+
+      const result = verifyAddressLevelPrimarySemantics(wallets)
+      expect(result).toBe(false)
+    })
+
+    test('returns true when address has no primary', () => {
+      const wallets: WalletRow[] = [
+        {
+          id: 'wallet-1',
+          address: '0xabc',
+          chain_namespace: 'eip155:1',
+          created_at: '2025-01-01T00:00:00Z',
+          is_primary: false,
+        },
+        {
+          id: 'wallet-2',
+          address: '0xabc',
+          chain_namespace: 'eip155:137',
+          created_at: '2025-01-02T00:00:00Z',
+          is_primary: false,
+        },
+      ]
+
+      const result = verifyAddressLevelPrimarySemantics(wallets)
+      expect(result).toBe(true)
+    })
+
+    test('returns true for empty list', () => {
+      const result = verifyAddressLevelPrimarySemantics([])
+      expect(result).toBe(true)
     })
   })
 })
