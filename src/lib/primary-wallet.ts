@@ -1,163 +1,206 @@
 /**
  * Primary Wallet Management Utilities
  * 
- * Handles client-side logic for primary wallet operations.
- * All mutations are performed via Edge Functions for atomicity and security.
- */
-
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
-
-/**
- * Set a wallet as the primary wallet for the authenticated user
+ * Implements address-level primary wallet semantics where:
+ * - Primary is set at the address level (one representative row marked)
+ * - When choosing a representative row, prefer: activeNetwork → eip155:1 → oldest
  * 
- * @param walletId - UUID of the wallet to set as primary
- * @returns Success response with wallet_id or error
+ * @see .kiro/specs/multi-chain-wallet-system/requirements.md - Requirement 8
+ * @see .kiro/specs/multi-chain-wallet-system/design.md - Primary Semantics
  */
-export async function setPrimaryWallet(walletId: string): Promise<{
-  success: boolean
-  wallet_id?: string
-  error?: {
-    code: string
-    message: string
-  }
-}> {
-  try {
-    // Get the current session to ensure user is authenticated
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
 
-    if (sessionError || !session) {
-      return {
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User is not authenticated',
-        },
-      }
-    }
-
-    // Call the Edge Function
-    const { data, error } = await supabase.functions.invoke(
-      'wallets-set-primary',
-      {
-        body: {
-          wallet_id: walletId,
-        },
-      }
-    )
-
-    if (error) {
-      console.error('Error setting primary wallet:', error)
-      return {
-        success: false,
-        error: {
-          code: 'FUNCTION_ERROR',
-          message: error.message || 'Failed to set primary wallet',
-        },
-      }
-    }
-
-    return {
-      success: true,
-      wallet_id: data?.wallet_id,
-    }
-  } catch (error: any) {
-    console.error('Unexpected error in setPrimaryWallet:', error)
-    return {
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: error?.message || 'An unexpected error occurred',
-      },
-    }
-  }
-}
-
-/**
- * Validate that a wallet ID is a valid UUID
- * 
- * @param walletId - The wallet ID to validate
- * @returns true if valid UUID format, false otherwise
- */
-export function isValidWalletId(walletId: string): boolean {
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  return uuidPattern.test(walletId)
-}
-
-/**
- * Type for wallet data from the database
- */
-export interface Wallet {
+export interface WalletRow {
   id: string
-  user_id: string
   address: string
   chain_namespace: string
-  is_primary: boolean
   created_at: string
-  updated_at: string
-  label?: string
-  guardian_scores?: Record<string, unknown>
-  balance_cache?: Record<string, unknown>
+  is_primary: boolean
 }
 
 /**
- * Find the best candidate for primary wallet from a list of wallets
- * Priority: eip155:1 (Ethereum mainnet) → oldest by created_at → smallest id
- * 
- * @param wallets - Array of wallets to choose from
- * @returns The wallet ID of the best candidate, or null if no wallets
+ * Extended wallet interface for property tests
  */
-export function findBestPrimaryCandidate(wallets: Wallet[]): string | null {
+export interface Wallet extends WalletRow {
+  user_id: string
+  updated_at: string
+}
+
+/**
+ * Find the best representative row for an address to mark as primary
+ * 
+ * Priority order:
+ * 1. Row matching activeNetwork (if provided)
+ * 2. Row with chain_namespace = 'eip155:1' (Ethereum mainnet)
+ * 3. Oldest row by created_at (tiebreaker: smallest id)
+ * 
+ * @param wallets - All wallet rows for the address
+ * @param activeNetwork - Current active network (optional)
+ * @returns The ID of the best representative row, or null if no wallets
+ */
+export function findBestPrimaryRepresentative(
+  wallets: WalletRow[],
+  activeNetwork?: string
+): string | null {
   if (wallets.length === 0) {
     return null
   }
 
-  // First priority: eip155:1 (Ethereum mainnet)
+  // Priority 1: Row matching activeNetwork
+  if (activeNetwork) {
+    const activeNetworkWallet = wallets.find(w => w.chain_namespace === activeNetwork)
+    if (activeNetworkWallet) {
+      return activeNetworkWallet.id
+    }
+  }
+
+  // Priority 2: Row with eip155:1 (Ethereum mainnet)
   const ethereumWallet = wallets.find(w => w.chain_namespace === 'eip155:1')
   if (ethereumWallet) {
     return ethereumWallet.id
   }
 
-  // Second priority: oldest by created_at
-  let oldestWallet = wallets[0]
+  // Priority 3: Oldest by created_at (tiebreaker: smallest id)
+  let bestWallet = wallets[0]
   for (const wallet of wallets) {
-    const walletDate = new Date(wallet.created_at).getTime()
-    const oldestDate = new Date(oldestWallet.created_at).getTime()
+    const bestTime = new Date(bestWallet.created_at).getTime()
+    const walletTime = new Date(wallet.created_at).getTime()
 
-    if (walletDate < oldestDate) {
-      oldestWallet = wallet
-    } else if (walletDate === oldestDate && wallet.id < oldestWallet.id) {
+    if (walletTime < bestTime) {
+      bestWallet = wallet
+    } else if (walletTime === bestTime && wallet.id < bestWallet.id) {
       // Tiebreaker: smallest id
-      oldestWallet = wallet
+      bestWallet = wallet
     }
   }
 
-  return oldestWallet.id
+  return bestWallet.id
+}
+
+/**
+ * Find the best candidate for primary reassignment when a primary wallet is deleted
+ * 
+ * Priority order:
+ * 1. Row with chain_namespace = 'eip155:1' (Ethereum mainnet)
+ * 2. Oldest row by created_at (tiebreaker: smallest id)
+ * 3. If no other rows exist for that address, pick from another address
+ * 
+ * @param wallets - All remaining wallet rows for the user
+ * @returns The ID of the best candidate, or null if no wallets
+ */
+export function findBestPrimaryReassignmentCandidate(
+  wallets: WalletRow[]
+): string | null {
+  if (wallets.length === 0) {
+    return null
+  }
+
+  // Priority 1: Row with eip155:1 (Ethereum mainnet)
+  const ethereumWallet = wallets.find(w => w.chain_namespace === 'eip155:1')
+  if (ethereumWallet) {
+    return ethereumWallet.id
+  }
+
+  // Priority 2: Oldest by created_at (tiebreaker: smallest id)
+  let bestWallet = wallets[0]
+  for (const wallet of wallets) {
+    const bestTime = new Date(bestWallet.created_at).getTime()
+    const walletTime = new Date(wallet.created_at).getTime()
+
+    if (walletTime < bestTime) {
+      bestWallet = wallet
+    } else if (walletTime === bestTime && wallet.id < bestWallet.id) {
+      // Tiebreaker: smallest id
+      bestWallet = wallet
+    }
+  }
+
+  return bestWallet.id
+}
+
+/**
+ * Alias for findBestPrimaryReassignmentCandidate for backward compatibility
+ * Used in property tests
+ */
+export function findBestPrimaryCandidate(wallets: Wallet[]): string | null {
+  return findBestPrimaryReassignmentCandidate(wallets)
 }
 
 /**
  * Get the primary wallet from a list of wallets
  * 
- * @param wallets - Array of wallets
- * @returns The primary wallet, or null if none is marked as primary
+ * @param wallets - List of wallets
+ * @returns The primary wallet if found, undefined otherwise
  */
-export function getPrimaryWallet(wallets: Wallet[]): Wallet | null {
-  return wallets.find(w => w.is_primary) || null
+export function getPrimaryWallet(wallets: Wallet[]): Wallet | undefined {
+  return wallets.find(w => w.is_primary === true)
 }
 
 /**
- * Check if a wallet is the primary wallet
+ * Check if a wallet is marked as primary
  * 
- * @param wallet - The wallet to check
- * @returns true if the wallet is marked as primary
+ * @param wallet - Wallet to check
+ * @returns true if wallet is marked as primary, false otherwise
  */
 export function isPrimaryWallet(wallet: Wallet): boolean {
   return wallet.is_primary === true
 }
+
+/**
+ * Validate that a user has exactly one primary wallet
+ * 
+ * @param wallets - All wallet rows for the user
+ * @returns true if exactly one primary wallet exists, false otherwise
+ */
+export function hasExactlyOnePrimary(wallets: WalletRow[]): boolean {
+  const primaryCount = wallets.filter(w => w.is_primary).length
+  return primaryCount === 1
+}
+
+/**
+ * Get all unique addresses from wallet rows (case-insensitive)
+ * 
+ * @param wallets - Wallet rows
+ * @returns Array of unique addresses (lowercase)
+ */
+export function getUniqueAddresses(wallets: WalletRow[]): string[] {
+  const uniqueAddresses = new Set(wallets.map(w => w.address.toLowerCase()))
+  return Array.from(uniqueAddresses)
+}
+
+/**
+ * Get all wallet rows for a specific address (case-insensitive)
+ * 
+ * @param wallets - All wallet rows
+ * @param address - Address to filter by
+ * @returns Wallet rows for the address
+ */
+export function getWalletsForAddress(wallets: WalletRow[], address: string): WalletRow[] {
+  const lowerAddress = address.toLowerCase()
+  return wallets.filter(w => w.address.toLowerCase() === lowerAddress)
+}
+
+/**
+ * Verify address-level primary semantics
+ * 
+ * For each unique address, there should be at most one primary wallet row.
+ * 
+ * @param wallets - All wallet rows for the user
+ * @returns true if address-level semantics are valid, false otherwise
+ */
+export function verifyAddressLevelPrimarySemantics(wallets: WalletRow[]): boolean {
+  const uniqueAddresses = getUniqueAddresses(wallets)
+
+  for (const address of uniqueAddresses) {
+    const addressWallets = getWalletsForAddress(wallets, address)
+    const primaryCount = addressWallets.filter(w => w.is_primary).length
+
+    // Each address should have at most one primary
+    if (primaryCount > 1) {
+      console.error(`Address ${address} has ${primaryCount} primary wallets (should be 0 or 1)`)
+      return false
+    }
+  }
+
+  return true
+}
+

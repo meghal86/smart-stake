@@ -29,6 +29,16 @@ export const ERROR_MESSAGES = {
   WALLET_ALREADY_CONNECTED: 'Good news - your wallet is already connected! You can proceed with your actions or refresh if needed.',
   WALLET_DISCONNECTION_FAILED: 'Having trouble disconnecting. Please refresh the page and try again.',
   
+  // Wallet Validation Errors
+  PRIVATE_KEY_DETECTED: 'We detected a private key. For your security, please provide a wallet address or ENS name instead.',
+  SEED_PHRASE_DETECTED: 'We detected a seed phrase. For your security, please provide a wallet address or ENS name instead.',
+  INVALID_ADDRESS: 'That doesn\'t look like a valid Ethereum address or ENS name. Please check and try again.',
+  INVALID_CHAIN_NAMESPACE: 'Invalid network format. Please select a supported network.',
+  WALLET_DUPLICATE: 'This wallet is already in your registry for this network.',
+  QUOTA_EXCEEDED: 'You\'ve reached your wallet limit for your current plan. Upgrade to add more wallets.',
+  ENS_RESOLUTION_FAILED: 'We couldn\'t resolve that ENS name. Please check the spelling or use an Ethereum address instead.',
+  RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
+  
   // Component Errors
   COMPONENT_ERROR: 'Something unexpected happened. Please refresh the page to get back on track.',
   NAVIGATION_ERROR: 'Navigation hiccup! Please try again or refresh the page.',

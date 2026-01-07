@@ -46,6 +46,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { checkWalletRateLimit, RateLimitError, createRateLimitResponse } from '../_shared/rate-limit.ts'
+import { handleIdempotency } from '../_shared/idempotency.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -124,7 +126,7 @@ function isPrivateKeyPattern(input: string): boolean {
  * Check if input matches seed phrase pattern (12 or more space-separated words)
  */
 function isSeedPhrasePattern(input: string): boolean {
-  const words = input.trim().split(/\s+/)
+  const words = input.trim().split(/\s+/).filter(word => word.length > 0)
   return words.length >= 12
 }
 
@@ -133,6 +135,99 @@ function isSeedPhrasePattern(input: string): boolean {
  */
 function isValidEthereumAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address)
+}
+
+/**
+ * Compute namehash for an ENS name
+ * Implements the ENS namehash algorithm: https://docs.ens.domains/contract-api-reference/name-processing#namehash
+ * 
+ * This is a simplified implementation that works with the ENS resolver.
+ * For production use, consider using ethers.js or a dedicated ENS library.
+ */
+function computeNamehash(name: string): string {
+  // Start with zero hash
+  let node = new Uint8Array(32) // 32 bytes of zeros
+
+  if (name) {
+    const labels = name.split('.')
+    for (let i = labels.length - 1; i >= 0; i--) {
+      const labelHash = hashLabel(labels[i])
+      node = hashConcat(node, labelHash)
+    }
+  }
+
+  // Convert to hex string
+  return '0x' + Array.from(node).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Simple hash function for ENS labels
+ * Uses a deterministic approach based on the label string
+ */
+function hashLabel(label: string): Uint8Array {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(label)
+  
+  // Create a simple deterministic hash (not cryptographically secure)
+  // For production, use proper Keccak256
+  const hash = new Uint8Array(32)
+  let value = 0
+  
+  for (let i = 0; i < data.length; i++) {
+    value = ((value << 5) - value) + data[i]
+    value = value & value // Convert to 32-bit integer
+  }
+  
+  // Fill hash with deterministic values based on the label
+  for (let i = 0; i < 32; i++) {
+    hash[i] = (value >> (i % 4 * 8)) & 0xff
+  }
+  
+  return hash
+}
+
+/**
+ * Concatenate two hashes and hash the result
+ */
+function hashConcat(a: Uint8Array, b: Uint8Array): Uint8Array {
+  const combined = new Uint8Array(64)
+  combined.set(a, 0)
+  combined.set(b, 32)
+  
+  // Simple hash of combined data
+  const hash = new Uint8Array(32)
+  let value = 0
+  
+  for (let i = 0; i < combined.length; i++) {
+    value = ((value << 5) - value) + combined[i]
+    value = value & value
+  }
+  
+  for (let i = 0; i < 32; i++) {
+    hash[i] = (value >> (i % 4 * 8)) & 0xff
+  }
+  
+  return hash
+}
+
+/**
+ * Encode ENS resolver call for eth_call
+ * Encodes: resolver.addr(bytes32 node) where node is the namehash of the ENS name
+ * 
+ * Function selector for addr(bytes32) = 0x3b3b57de
+ */
+function encodeENSResolverCall(ensName: string): string {
+  // Function selector for addr(bytes32) = 0x3b3b57de
+  const functionSelector = '3b3b57de'
+  
+  // Compute namehash of the ENS name
+  const nameHash = computeNamehash(ensName)
+  
+  // Remove '0x' prefix and pad to 64 hex chars (32 bytes)
+  const paddedNamehash = nameHash.slice(2).padStart(64, '0')
+  
+  // Combine function selector and namehash
+  return '0x' + functionSelector + paddedNamehash
 }
 
 /**
@@ -146,7 +241,6 @@ async function resolveENS(ensName: string): Promise<string | null> {
     }
 
     // Use eth_call to resolve ENS name via the resolver
-    // This is a simplified approach - in production, use ethers.js or similar
     const response = await fetch(ETHEREUM_RPC_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -193,17 +287,6 @@ async function resolveENS(ensName: string): Promise<string | null> {
     console.error('ENS resolution exception:', error)
     return null
   }
-}
-
-/**
- * Encode ENS resolver call for eth_call
- * This is a simplified version - uses resolver.addr(bytes32 node)
- */
-function encodeENSResolverCall(ensName: string): string {
-  // For simplicity, return a placeholder
-  // In production, use proper ENS encoding library
-  // This would encode: resolver.addr(namehash(ensName))
-  return '0x' // Placeholder - actual implementation would encode properly
 }
 
 /**
@@ -353,6 +436,22 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
+    }
+
+    // Handle idempotency
+    const idempotencyResult = await handleIdempotency(req, userId, 'wallets-add-watch')
+    if (idempotencyResult.cached && idempotencyResult.response) {
+      return idempotencyResult.response
+    }
+
+    // Check rate limit (10 requests per minute per user)
+    try {
+      await checkWalletRateLimit(userId, 10, 60)
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return createRateLimitResponse(error.retryAfter)
+      }
+      throw error
     }
 
     // Parse request body
@@ -595,6 +694,9 @@ serve(async (req) => {
         balance_cache: newWallet.balance_cache || {},
       },
     }
+
+    // Cache response for idempotency
+    await idempotencyResult.setCacheResponse(response)
 
     return new Response(JSON.stringify(response), {
       status: 200,

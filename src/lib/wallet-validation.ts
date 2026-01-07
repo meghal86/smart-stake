@@ -30,7 +30,7 @@ export function isPrivateKeyPattern(input: string): boolean {
  * Examples: "word1 word2 word3 ... word12"
  */
 export function isSeedPhrasePattern(input: string): boolean {
-  const words = input.trim().split(/\s+/)
+  const words = input.trim().split(/\s+/).filter(word => word.length > 0)
   return words.length >= 12
 }
 

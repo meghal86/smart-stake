@@ -34,6 +34,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { checkWalletRateLimit, RateLimitError, createRateLimitResponse } from '../_shared/rate-limit.ts'
+import { handleIdempotency } from '../_shared/idempotency.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -212,6 +214,22 @@ serve(async (req) => {
       )
     }
 
+    // Handle idempotency
+    const idempotencyResult = await handleIdempotency(req, userId, 'wallets-set-primary')
+    if (idempotencyResult.cached && idempotencyResult.response) {
+      return idempotencyResult.response
+    }
+
+    // Check rate limit (10 requests per minute per user)
+    try {
+      await checkWalletRateLimit(userId, 10, 60)
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return createRateLimitResponse(error.retryAfter)
+      }
+      throw error
+    }
+
     // Parse request body
     let body: unknown
     try {
@@ -348,6 +366,9 @@ serve(async (req) => {
       success: true,
       wallet_id: req_body.wallet_id,
     }
+
+    // Cache response for idempotency
+    await idempotencyResult.setCacheResponse(response)
 
     return new Response(JSON.stringify(response), {
       status: 200,
