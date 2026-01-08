@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ExternalLink, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ConnectGate } from '@/components/guardian/ConnectGate';
 import { ScanDialog } from '@/components/guardian/ScanDialog';
@@ -15,51 +14,33 @@ import { useRouteProtection } from '@/hooks/useRouteProtection';
 import { useWallet } from '@/contexts/WalletContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { chainIdToName } from '@/config/wagmi';
 
 export function GuardianPage() {
   // Route protection - redirect unauthenticated users to login
   useRouteProtection({ requireAuth: true });
   
-  const { address, isConnected, chain } = useAccount();
   const { connectedWallets, activeWallet, activeNetwork, isAuthenticated } = useWallet();
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [autoScanTriggered, setAutoScanTriggered] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
-  const [demoAddress, setDemoAddress] = useState<string | null>(null);
 
   const { scanning, result, lastError } = useGuardianStore();
   
-  // Get network name from chain ID
-  const networkName = chain?.id ? chainIdToName[chain.id] || 'ethereum' : 'ethereum';
-  
-  // Use authenticated wallet if available, otherwise use wagmi address
-  const walletAddress = isAuthenticated && activeWallet ? activeWallet : address;
-  const isActive = isAuthenticated ? !!activeWallet : (demoMode ? !!demoAddress : isConnected);
+  // When authenticated, ONLY use WalletContext - never maintain independent wallet state
+  // This ensures Guardian reads from the same source of truth as other modules
+  const isActive = isAuthenticated && !!activeWallet;
   
   const { data, isLoading, refetch, rescan, isRescanning } = useGuardianScan({
-    walletAddress: walletAddress || demoAddress || undefined,
-    network: networkName,
-    enabled: isActive && !!(walletAddress || demoAddress),
+    // Hook will automatically use WalletContext values when authenticated
+    enabled: isActive,
   });
 
-  // Handle demo mode
-  const handleDemoMode = () => {
-    const mockAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'; // Vitalik's address
-    setDemoAddress(mockAddress);
-    setDemoMode(true);
-    toast.success('Demo mode activated - scanning sample wallet');
-  };
-
-  // Auto-scan on wallet connect or demo mode
+  // Auto-scan on wallet connect
   useEffect(() => {
-    if ((isConnected && address && !autoScanTriggered) || 
-        (isAuthenticated && activeWallet && !autoScanTriggered) ||
-        (demoMode && demoAddress && !autoScanTriggered)) {
+    if (isAuthenticated && activeWallet && !autoScanTriggered) {
       setAutoScanTriggered(true);
       refetch();
     }
-  }, [isConnected, address, isAuthenticated, activeWallet, demoMode, demoAddress, autoScanTriggered, refetch]);
+  }, [isAuthenticated, activeWallet, autoScanTriggered, refetch]);
 
   // Show error toast
   useEffect(() => {
@@ -98,14 +79,12 @@ export function GuardianPage() {
     );
   }
 
-  // If not connected and not in demo mode, show onboarding
-  if (!isConnected && !demoMode) {
+  // If not authenticated, show onboarding
+  if (!isAuthenticated) {
     return (
       <div className="container max-w-7xl mx-auto py-8 px-4">
         <ConnectGate 
-          onConnect={() => {}} 
           renderConnectButton={() => <ConnectButton />}
-          onDemoMode={handleDemoMode}
         />
       </div>
     );
@@ -187,36 +166,16 @@ export function GuardianPage() {
             <p className="text-muted-foreground">
               Comprehensive security scan for wallet{' '}
               <span className="font-mono text-sm">
-                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                {activeWallet?.slice(0, 6)}...{activeWallet?.slice(-4)}
               </span>
-              {demoMode && (
-                <span className="demo-mode-badge ml-2">
-                  Demo Mode
-                </span>
-              )}
             </p>
           </div>
-          {demoMode && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setDemoMode(false);
-                setDemoAddress(null);
-                setAutoScanTriggered(false);
-              }}
-              className="guardian-exit-demo-button"
-            >
-              Exit Demo
-            </Button>
-          )}
         </div>
       </div>
 
       {/* Wallet Scope Header */}
       <WalletScopeHeader 
-        walletAddress={walletAddress || demoAddress || undefined}
-        walletLabel={demoMode ? 'Demo Wallet' : undefined}
+        walletAddress={activeWallet}
       />
 
       {/* Score Card */}
@@ -268,7 +227,7 @@ export function GuardianPage() {
                     label: 'View tx',
                     onClick: () => {
                       window.open(
-                        `https://etherscan.io/address/${address}`,
+                        `https://etherscan.io/address/${activeWallet}`,
                         '_blank'
                       );
                     },
@@ -337,4 +296,3 @@ export function GuardianPage() {
 }
 
 export default GuardianPage;
-

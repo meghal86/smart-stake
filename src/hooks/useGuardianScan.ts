@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { requestGuardianScan, GuardianScanResult } from '@/services/guardianService';
+import { useWallet } from '@/contexts/WalletContext';
 
 export interface UseGuardianScanOptions {
   walletAddress?: string;
@@ -52,20 +53,27 @@ export function useGuardianScan({
   enabled = true
 }: UseGuardianScanOptions = {}): UseGuardianScanResult {
   const queryClient = useQueryClient();
+  const { activeWallet, activeNetwork, isAuthenticated } = useWallet();
+  
+  // When authenticated, ALWAYS use WalletContext values (never independent wallet state)
+  // This ensures all modules read from the same source of truth
+  const effectiveWalletAddress = isAuthenticated && activeWallet ? activeWallet : walletAddress;
+  const effectiveNetwork = isAuthenticated ? activeNetwork : network;
+  
   const queryKey = useMemo(
-    () => ['guardian-scan', walletAddress, network] as const,
-    [walletAddress, network]
+    () => ['guardian-scan', effectiveWalletAddress, effectiveNetwork] as const,
+    [effectiveWalletAddress, effectiveNetwork]
   );
 
   const query = useQuery({
     queryKey,
-    enabled: enabled && Boolean(walletAddress),
-    queryFn: () => requestGuardianScan({ walletAddress, network }),
+    enabled: enabled && Boolean(effectiveWalletAddress),
+    queryFn: () => requestGuardianScan({ walletAddress: effectiveWalletAddress, network: effectiveNetwork }),
     staleTime: 60_000
   });
 
   const mutation = useMutation<GuardianScanResult>({
-    mutationFn: () => requestGuardianScan({ walletAddress, network }),
+    mutationFn: () => requestGuardianScan({ walletAddress: effectiveWalletAddress, network: effectiveNetwork }),
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result);
     }
@@ -84,7 +92,7 @@ export function useGuardianScan({
   const refetch = async () => {
     const result = await queryClient.fetchQuery({
       queryKey,
-      queryFn: () => requestGuardianScan({ walletAddress, network })
+      queryFn: () => requestGuardianScan({ walletAddress: effectiveWalletAddress, network: effectiveNetwork })
     });
     return result;
   };
