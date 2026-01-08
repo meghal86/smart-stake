@@ -2,11 +2,14 @@
  * React Query Hook for Harvest Opportunities
  * Calls Supabase Edge Function directly (Vite app - no Next.js API routes)
  * Enhanced with performance monitoring and optimized cache settings
+ * 
+ * Query key includes wallet context to ensure refetch on wallet/network changes
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { harvestProPerformanceMonitor } from '@/lib/harvestpro/performance-monitor';
+import { useWallet } from '@/contexts/WalletContext';
 import type { OpportunitiesResponse, HarvestOpportunity, GasEfficiencyGrade } from '@/types/harvestpro';
 
 export interface UseHarvestOpportunitiesOptions {
@@ -42,8 +45,11 @@ export function useHarvestOpportunities(options: UseHarvestOpportunitiesOptions 
     enabled = true,
   } = options;
 
+  // Get wallet context to include in query key for automatic refetch on wallet changes
+  const { activeWallet, activeNetwork, isAuthenticated } = useWallet();
+
   return useQuery({
-    queryKey: ['harvest-opportunities', { taxRate, minLossThreshold, maxRiskLevel, excludeWashSale }],
+    queryKey: ['harvest-opportunities', { taxRate, minLossThreshold, maxRiskLevel, excludeWashSale }, activeWallet, activeNetwork, isAuthenticated],
     queryFn: async (): Promise<OpportunitiesResponse> => {
       // Measure API call performance
       return await harvestProPerformanceMonitor.measureOpportunityLoading(

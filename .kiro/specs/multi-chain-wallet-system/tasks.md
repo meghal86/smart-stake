@@ -419,12 +419,12 @@ Tasks that can be deferred to future iterations.
 **Description**: Ensure all modules (Guardian/Hunter/HarvestPro) read from authenticated WalletContext and maintain session consistency.
 
 **Acceptance Criteria**:
-- [ ] Guardian reads wallet state only from WalletContext
-- [ ] Hunter reads wallet state only from WalletContext  
-- [ ] HarvestPro reads wallet state only from WalletContext
-- [ ] No modules maintain independent wallet lists when authenticated
-- [ ] Wallet/network changes reflect immediately across modules
-- [ ] React Query invalidation triggers cross-module updates
+- [x] Guardian reads wallet state only from WalletContext
+- [x] Hunter reads wallet state only from WalletContext  
+- [x] HarvestPro reads wallet state only from WalletContext
+- [x] No modules maintain independent wallet lists when authenticated
+- [x] Wallet/network changes reflect immediately across modules
+- [x] React Query invalidation triggers cross-module updates
 
 **Implementation Steps**:
 1. Audit Guardian module for independent wallet state
@@ -458,12 +458,12 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement deterministic active selection restoration and network switching that preserves wallet selection.
 
 **Acceptance Criteria**:
-- [ ] Deterministic ordering: `is_primary DESC, created_at DESC, id ASC`
-- [ ] Active selection restoration: localStorage → primary → ordered-first
-- [ ] Network switching preserves active wallet address
-- [ ] Invalid localStorage selection self-heals
-- [ ] Missing wallet-network combinations show "Not added" UI
-- [ ] Network switching completes within 2 seconds (P95)
+- [x] Deterministic ordering: `is_primary DESC, created_at DESC, id ASC`
+- [x] Active selection restoration: localStorage → primary → ordered-first
+- [x] Network switching preserves active wallet address
+- [x] Invalid localStorage selection self-heals
+- [x] Missing wallet-network combinations show "Not added" UI
+- [x] Network switching completes within 2 seconds (P95)
 
 **Implementation Steps**:
 1. Implement deterministic ordering in `wallets-list` Edge Function

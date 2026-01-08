@@ -46,9 +46,13 @@ export default function HarvestPro() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('normal');
   
-  // Wallet connection status
-  const { connectedWallets, activeWallet } = useWallet();
+  // Wallet connection status - read from authenticated WalletContext
+  const { connectedWallets, activeWallet, isAuthenticated } = useWallet();
   const isConnected = connectedWallets.length > 0 && !!activeWallet;
+  
+  // When authenticated, never use demo mode - always read from WalletContext
+  // This ensures HarvestPro maintains session consistency with other modules
+  const shouldUseDemoMode = isDemo && !isAuthenticated;
   
   // Modal and flow state
   const [selectedOpportunity, setSelectedOpportunity] = useState<HarvestOpportunity | null>(null);
@@ -84,14 +88,14 @@ export default function HarvestPro() {
     disabled: isModalOpen || showSuccessScreen,
   });
 
-  // Fetch real opportunities from API (disabled in demo mode)
+  // Fetch real opportunities from API (disabled only when in demo mode AND not authenticated)
   const {
     data: opportunitiesData,
     isLoading,
     isError,
     refetch,
   } = useHarvestOpportunities({
-    enabled: !isDemo, // Only fetch when not in demo mode
+    enabled: !shouldUseDemoMode, // Fetch when authenticated or not in demo mode
   });
 
   // Mock data for demo mode
@@ -197,7 +201,7 @@ export default function HarvestPro() {
   // Use real data when not in demo mode, mock data otherwise
   let currentData: OpportunitiesResponse;
   
-  if (isDemo) {
+  if (shouldUseDemoMode) {
     currentData = {
       items: mockOpportunities,
       cursor: null,
@@ -219,8 +223,8 @@ export default function HarvestPro() {
   // Update view state based on API response with performance monitoring
   useEffect(() => {
     harvestProPerformanceMonitor.measureLoadingState('view_state_update', () => {
-      if (isDemo) {
-        // In demo mode, always show normal view
+      if (shouldUseDemoMode) {
+        // In demo mode (unauthenticated), always show normal view
         setViewState('normal');
       } else if (isLoading) {
         setViewState('loading');
@@ -232,25 +236,25 @@ export default function HarvestPro() {
         setViewState('normal');
       }
     });
-  }, [isDemo, isLoading, isError, opportunities.length]);
+  }, [shouldUseDemoMode, isLoading, isError, opportunities.length]);
 
   const handleRefresh = () => {
     harvestProPerformanceMonitor.measureInteraction('refresh', () => {
       setIsRefreshing(true);
-      if (isDemo) {
-        // In demo mode, just simulate refresh
+      if (shouldUseDemoMode) {
+        // In demo mode (unauthenticated), just simulate refresh
         setTimeout(() => {
           setIsRefreshing(false);
           setLastUpdated(new Date());
         }, 1000);
       } else {
-        // In real mode, refetch from API
+        // In real mode (authenticated), refetch from API
         refetch().finally(() => {
           setIsRefreshing(false);
           setLastUpdated(new Date());
         });
       }
-    }, { mode: isDemo ? 'demo' : 'live' });
+    }, { mode: shouldUseDemoMode ? 'demo' : 'live' });
   };
 
   // Handle opening detail modal with performance monitoring
@@ -333,7 +337,7 @@ export default function HarvestPro() {
       import('@/lib/harvestpro/csv-export').then(({ generateForm8949CSV }) => {
         harvestProPerformanceMonitor.measureCSVGeneration('generation', () => {
           // Enhanced Req 30 AC5: Pass demo mode to CSV generation for watermarking
-          const csv = generateForm8949CSV(completedSession, isDemo);
+          const csv = generateForm8949CSV(completedSession, shouldUseDemoMode);
           
           // Create blob and download
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -341,7 +345,7 @@ export default function HarvestPro() {
           const url = URL.createObjectURL(blob);
           
           // Enhanced Req 30 AC5: Add demo prefix to filename for demo exports
-          const filename = isDemo 
+          const filename = shouldUseDemoMode 
             ? `DEMO-harvest-session-${sessionId}.csv`
             : `harvest-session-${sessionId}.csv`;
           
@@ -354,7 +358,7 @@ export default function HarvestPro() {
           document.body.removeChild(link);
           
           URL.revokeObjectURL(url);
-          console.log(`✅ CSV downloaded successfully${isDemo ? ' (DEMO MODE)' : ''}`);
+          console.log(`✅ CSV downloaded successfully${shouldUseDemoMode ? ' (DEMO MODE)' : ''}`);
           
           return csv;
         }, {
@@ -491,7 +495,7 @@ export default function HarvestPro() {
                         onShare={(id) => console.log('Share:', id)}
                         onReport={(id) => console.log('Report:', id)}
                         isConnected={isConnected}
-                        isDemo={isDemo}
+                        isDemo={shouldUseDemoMode}
                       />
                     </HarvestProErrorBoundary>
                   ))

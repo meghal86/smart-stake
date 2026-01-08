@@ -95,8 +95,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
   useEffect(() => {
     try {
-      const savedWallet = localStorage.getItem('activeWallet');
-      const savedNetwork = localStorage.getItem('activeNetwork');
+      // Use new localStorage keys: aw_active_address, aw_active_network
+      const savedAddress = localStorage.getItem('aw_active_address');
+      const savedNetwork = localStorage.getItem('aw_active_network');
       const savedWallets = localStorage.getItem('connectedWallets');
       
       // Restore active network
@@ -125,8 +126,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setConnectedWallets(walletsWithDates);
         
         // Restore active wallet if it's still in the list
-        if (savedWallet && walletsWithDates.some(w => w.address === savedWallet)) {
-          setActiveWalletState(savedWallet);
+        if (savedAddress && walletsWithDates.some(w => w.address === savedAddress)) {
+          setActiveWalletState(savedAddress);
         } else if (walletsWithDates.length > 0) {
           // Default to first wallet if saved wallet is not found
           setActiveWalletState(walletsWithDates[0].address);
@@ -145,11 +146,74 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Failed to load wallet state from localStorage:', error);
       // Clear corrupted data
-      localStorage.removeItem('activeWallet');
-      localStorage.removeItem('activeNetwork');
+      localStorage.removeItem('aw_active_address');
+      localStorage.removeItem('aw_active_network');
       localStorage.removeItem('connectedWallets');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ============================================================================
+  // Active Selection Restoration (Task 10)
+  // ============================================================================
+
+  /**
+   * Restore active selection using priority order:
+   * 1. localStorage (aw_active_address, aw_active_network) if valid in server data
+   * 2. server primary wallet + default network
+   * 3. ordered-first wallet (deterministic ordering: is_primary DESC, created_at DESC, id ASC)
+   * 
+   * Validates: Requirements 15.4, 15.5, 15.6
+   */
+  const restoreActiveSelection = useCallback((
+    wallets: ConnectedWallet[],
+    serverWallets: any[]
+  ): { address: string | null; network: string } => {
+    if (wallets.length === 0) {
+      return { address: null, network: 'eip155:1' };
+    }
+
+    // Priority 1: Check localStorage for saved selection
+    const savedAddress = localStorage.getItem('aw_active_address');
+    const savedNetwork = localStorage.getItem('aw_active_network');
+
+    // Validate localStorage selection exists in server data
+    if (savedAddress && savedNetwork) {
+      const isValidInServerData = serverWallets.some(
+        (w: any) => 
+          w.address.toLowerCase() === savedAddress.toLowerCase() &&
+          w.chain_namespace === savedNetwork
+      );
+
+      if (isValidInServerData) {
+        // localStorage selection is valid - use it
+        return { address: savedAddress, network: savedNetwork };
+      } else {
+        // localStorage selection is invalid - self-heal by clearing it
+        localStorage.removeItem('aw_active_address');
+        localStorage.removeItem('aw_active_network');
+      }
+    }
+
+    // Priority 2: Use server primary wallet + default network
+    const primaryWallet = serverWallets.find((w: any) => w.is_primary);
+    if (primaryWallet) {
+      return { 
+        address: primaryWallet.address, 
+        network: primaryWallet.chain_namespace || 'eip155:1' 
+      };
+    }
+
+    // Priority 3: Use ordered-first wallet (deterministic ordering)
+    // Server returns wallets sorted by: is_primary DESC, created_at DESC, id ASC
+    if (wallets.length > 0) {
+      return { 
+        address: wallets[0].address, 
+        network: wallets[0].chainNamespace || 'eip155:1' 
+      };
+    }
+
+    return { address: null, network: 'eip155:1' };
   }, []);
 
   // ============================================================================
@@ -201,6 +265,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const wallets = data.wallets || [];
 
       // Transform server data to ConnectedWallet format
+      // Server returns wallets sorted by: is_primary DESC, created_at DESC, id ASC (deterministic ordering)
       const transformedWallets: ConnectedWallet[] = wallets.map((w: any) => {
         // Validate chain_namespace format
         const chainNamespace = w.chain_namespace || 'eip155:1';
@@ -235,18 +300,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setConnectedWallets(transformedWallets);
       setHydratedForUserId(session.user.id);
 
-      // Restore active wallet from localStorage if valid, otherwise use primary or first
-      const savedWallet = localStorage.getItem('activeWallet');
-      if (savedWallet && transformedWallets.some(w => w.address === savedWallet)) {
-        setActiveWalletState(savedWallet);
-      } else {
-        // Find primary wallet or use first
-        const primaryWallet = wallets.find((w: any) => w.is_primary);
-        if (primaryWallet) {
-          setActiveWalletState(primaryWallet.address);
-        } else if (transformedWallets.length > 0) {
-          setActiveWalletState(transformedWallets[0].address);
-        }
+      // Restore active selection using priority order (Task 10)
+      const { address: restoredAddress, network: restoredNetwork } = restoreActiveSelection(
+        transformedWallets,
+        wallets
+      );
+
+      if (restoredAddress) {
+        setActiveWalletState(restoredAddress);
+      }
+
+      if (restoredNetwork) {
+        setActiveNetworkState(restoredNetwork);
       }
     } catch (error) {
       console.error('Failed to hydrate wallets from server:', error);
@@ -255,7 +320,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, session, hydratedForUserId]);
+  }, [isAuthenticated, session, hydratedForUserId, restoreActiveSelection]);
 
   // Trigger hydration when auth session changes
   useEffect(() => {
@@ -271,13 +336,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   useEffect(() => {
     try {
       if (activeWallet) {
-        localStorage.setItem('activeWallet', activeWallet);
+        localStorage.setItem('aw_active_address', activeWallet);
       } else {
-        localStorage.removeItem('activeWallet');
+        localStorage.removeItem('aw_active_address');
       }
       
       if (activeNetwork) {
-        localStorage.setItem('activeNetwork', activeNetwork);
+        localStorage.setItem('aw_active_network', activeNetwork);
       }
       
       if (connectedWallets.length > 0) {

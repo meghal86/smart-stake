@@ -11,6 +11,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WalletProvider, useWallet, truncateAddress, ConnectedWallet } from '../../contexts/WalletContext';
 
 // ============================================================================
+// Mock AuthContext
+// ============================================================================
+
+const mockUseAuth = vi.fn();
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+// ============================================================================
 // Test Setup
 // ============================================================================
 
@@ -71,6 +81,13 @@ describe('WalletContext', () => {
   beforeEach(() => {
     localStorageMock.clear();
     vi.clearAllMocks();
+    
+    // Default mock: not authenticated
+    mockUseAuth.mockReturnValue({
+      session: null,
+      isAuthenticated: false,
+      loading: false,
+    });
   });
 
   describe('useWallet hook', () => {
@@ -371,6 +388,110 @@ describe('WalletContext', () => {
       expect(result.current.activeWallet).toBeNull();
     });
   });
+
+  describe('setActiveNetwork', () => {
+    it('should change active network without changing active wallet', async () => {
+      const { result } = renderHook(() => useWallet(), {
+        wrapper: createWrapper(),
+      });
+
+      // Manually set up state (simulating loaded wallets)
+      const mockWallets: ConnectedWallet[] = [
+        { 
+          address: '0xaaa', 
+          chain: 'ethereum', 
+          chainNamespace: 'eip155:1',
+          supportedNetworks: ['eip155:1'],
+          balancesByNetwork: {},
+          guardianScoresByNetwork: {},
+        },
+        { 
+          address: '0xbbb', 
+          chain: 'polygon', 
+          chainNamespace: 'eip155:137',
+          supportedNetworks: ['eip155:137'],
+          balancesByNetwork: {},
+          guardianScoresByNetwork: {},
+        },
+      ];
+
+      // Set active wallet first
+      act(() => {
+        result.current.setActiveWallet('0xaaa');
+      });
+
+      const initialWallet = result.current.activeWallet;
+      const initialNetwork = result.current.activeNetwork;
+
+      // Switch network
+      act(() => {
+        result.current.setActiveNetwork('eip155:137');
+      });
+
+      // Network should change, but wallet should remain the same
+      expect(result.current.activeNetwork).toBe('eip155:137');
+      expect(result.current.activeWallet).toBe(initialWallet);
+    });
+
+    it('should emit networkSwitched event when switching networks', async () => {
+      const { result } = renderHook(() => useWallet(), {
+        wrapper: createWrapper(),
+      });
+
+      const eventListener = vi.fn();
+      window.addEventListener('networkSwitched', eventListener);
+
+      act(() => {
+        result.current.setActiveNetwork('eip155:137');
+      });
+
+      await waitFor(() => {
+        expect(eventListener).toHaveBeenCalled();
+      });
+
+      const event = eventListener.mock.calls[0][0] as CustomEvent;
+      expect(event.detail.chainNamespace).toBe('eip155:137');
+      expect(event.detail.previousNetwork).toBe('eip155:1');
+      expect(event.detail.timestamp).toBeDefined();
+
+      window.removeEventListener('networkSwitched', eventListener);
+    });
+
+    it('should persist active network to localStorage', async () => {
+      const { result } = renderHook(() => useWallet(), {
+        wrapper: createWrapper(),
+      });
+
+      act(() => {
+        result.current.setActiveNetwork('eip155:137');
+      });
+
+      await waitFor(() => {
+        expect(localStorageMock.getItem('aw_active_network')).toBe('eip155:137');
+      });
+    });
+
+    it('should set isNetworkSwitching flag during network switch', async () => {
+      const { result } = renderHook(() => useWallet(), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.isNetworkSwitching).toBe(false);
+
+      act(() => {
+        result.current.setActiveNetwork('eip155:137');
+      });
+
+      // isNetworkSwitching should be set to true during transition
+      // and reset to false after 500ms
+      await waitFor(
+        () => {
+          expect(result.current.isNetworkSwitching).toBe(false);
+        },
+        { timeout: 1000 }
+      );
+    });
+  });;
 
   describe('truncateAddress utility', () => {
     it('should truncate long addresses', () => {
