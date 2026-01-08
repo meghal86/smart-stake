@@ -46,6 +46,16 @@ export interface ConnectedWallet {
   lastUsed?: Date;           // Last time this wallet was active
 }
 
+interface ServerWallet {
+  address: string;
+  chain_namespace?: string;
+  balance_cache?: Record<string, TokenBalance[]>;
+  guardian_scores?: Record<string, number>;
+  label?: string;
+  created_at?: string;
+  is_primary?: boolean;
+}
+
 export interface WalletContextValue {
   connectedWallets: ConnectedWallet[];
   activeWallet: string | null;
@@ -261,8 +271,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         return;
       }
 
-      const data = await response.json();
-      const wallets = data.wallets || [];
+      const data = await response.json() as { wallets?: ServerWallet[] };
+      const wallets = data.wallets ?? [];
 
       // Transform server data to ConnectedWallet format
       // Server returns wallets sorted by: is_primary DESC, created_at DESC, id ASC (deterministic ordering)

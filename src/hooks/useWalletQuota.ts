@@ -7,7 +7,7 @@
  * Requirement 7.7: The UI SHALL display quota usage (used_addresses, used_rows, total)
  */
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, type QueryObserverResult } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 
 export interface WalletQuotaData {
@@ -21,7 +21,7 @@ export interface UseWalletQuotaResult {
   quota: WalletQuotaData | null
   isLoading: boolean
   error: Error | null
-  refetch: () => Promise<any>
+  refetch: () => Promise<QueryObserverResult<WalletQuotaData, Error>>
 }
 
 /**
@@ -36,7 +36,7 @@ export interface UseWalletQuotaResult {
 export function useWalletQuota(): UseWalletQuotaResult {
   const { session } = useAuth()
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery<WalletQuotaData, Error>({
     queryKey: ['wallet-quota', session?.user?.id],
     queryFn: async () => {
       if (!session) {
@@ -73,4 +73,3 @@ export function useWalletQuota(): UseWalletQuotaResult {
     refetch,
   }
 }
-
