@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { harvestProPerformanceMonitor } from '@/lib/harvestpro/performance-monitor';
 import { useWallet } from '@/contexts/WalletContext';
+import { harvestproKeys } from '@/lib/query-keys';
 import type { OpportunitiesResponse, HarvestOpportunity, GasEfficiencyGrade } from '@/types/harvestpro';
 
 export interface UseHarvestOpportunitiesOptions {
@@ -49,7 +50,7 @@ export function useHarvestOpportunities(options: UseHarvestOpportunitiesOptions 
   const { activeWallet, activeNetwork, isAuthenticated } = useWallet();
 
   return useQuery({
-    queryKey: ['harvest-opportunities', { taxRate, minLossThreshold, maxRiskLevel, excludeWashSale }, activeWallet, activeNetwork, isAuthenticated],
+    queryKey: harvestproKeys.opportunities(activeWallet, activeNetwork),
     queryFn: async (): Promise<OpportunitiesResponse> => {
       // Measure API call performance
       return await harvestProPerformanceMonitor.measureOpportunityLoading(

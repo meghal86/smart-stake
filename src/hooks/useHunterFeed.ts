@@ -4,6 +4,7 @@ import { getFeedPage, FeedQueryParams } from '@/lib/feed/query';
 import { Opportunity as NewOpportunity, OpportunityType, SortOption } from '@/types/hunter';
 import { useWallet } from '@/contexts/WalletContext';
 import { hashWalletAddress } from '@/lib/analytics/hash';
+import { hunterKeys } from '@/lib/query-keys';
 
 // Legacy opportunity interface for backward compatibility with existing UI
 interface LegacyOpportunity {
@@ -226,7 +227,7 @@ function formatDuration(opp: NewOpportunity): string {
  */
 export function useHunterFeed(props: UseHunterFeedProps) {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const { activeWallet, isSwitching } = useWallet();
+  const { activeWallet, activeNetwork, isSwitching } = useWallet();
 
   // Use demo mode or real API
   const useRealAPI = !props.isDemo;
@@ -254,7 +255,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     isFetchingNextPage,
     refetch: queryRefetch,
   } = useInfiniteQuery({
-    queryKey: ['hunter-feed', queryParams, useRealAPI, activeWallet],
+    queryKey: hunterKeys.feed(activeWallet, activeNetwork),
     queryFn: async ({ pageParam }) => {
       const personalizationStartTime = performance.now();
       

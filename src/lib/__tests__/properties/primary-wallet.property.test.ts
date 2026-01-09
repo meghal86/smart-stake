@@ -33,7 +33,18 @@ const chainNamespaceGenerator = fc.constantFrom(
   'eip155:8453'
 )
 
-const addressGenerator = fc.hexaString({ minLength: 40, maxLength: 40 }).map(h => '0x' + h)
+const addressGenerator = fc.tuple(
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff }),
+  fc.integer({ min: 0, max: 0xffffffff })
+).map(([a, b, c, d, e]) => {
+  const hex = [a, b, c, d, e]
+    .map((n) => n.toString(16).padStart(8, '0'))
+    .join('');
+  return `0x${hex}`;
+})
 
 const walletRowGenerator = (overrides?: Partial<WalletRow>) =>
   fc.record({

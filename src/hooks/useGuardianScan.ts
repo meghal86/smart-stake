@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { requestGuardianScan, GuardianScanResult } from '@/services/guardianService';
 import { useWallet } from '@/contexts/WalletContext';
+import { guardianKeys } from '@/lib/query-keys';
 
 export interface UseGuardianScanOptions {
   walletAddress?: string;
@@ -61,7 +62,7 @@ export function useGuardianScan({
   const effectiveNetwork = isAuthenticated ? activeNetwork : network;
   
   const queryKey = useMemo(
-    () => ['guardian-scan', effectiveWalletAddress, effectiveNetwork] as const,
+    () => guardianKeys.scan(effectiveWalletAddress, effectiveNetwork),
     [effectiveWalletAddress, effectiveNetwork]
   );
 
