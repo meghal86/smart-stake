@@ -1,10 +1,38 @@
-# Implementation Plan: Authenticated Home Decision Cockpit
+# Implementation Plan: Authenticated Decision Cockpit
 
 ## Overview
 
 This implementation plan converts the feature design into a series of incremental development tasks. The approach follows a backend-first layered strategy: database schema first, then API endpoints, followed by UI components, and finally integration and testing. Each task builds on previous work and includes validation checkpoints.
 
 **Critical:** 8 property tests are MANDATORY for institutional-grade determinism (marked with `[MANDATORY]`).
+
+## Route Decision
+
+**Route:** `/cockpit` (NOT `/home` — existing `/home` routes remain untouched)
+
+The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with existing `/home` implementations.
+
+## Reuse Existing Code Directive
+
+**CRITICAL: Before implementing ANY task, the developer MUST:**
+
+1. **Search the codebase** for existing implementations of the feature/component
+2. **Reuse existing code** if it exists — do NOT create duplicates
+3. **Extend existing code** if it partially covers the requirement
+4. **Only create new code** if no existing implementation exists
+
+**Specific areas to check before creating new:**
+- Database tables: Check `supabase/migrations/` and existing schema
+- API endpoints: Check `src/app/api/` and `pages/api/` for existing routes
+- React components: Check `src/components/` for reusable UI components
+- Hooks: Check `src/hooks/` for existing data fetching/state hooks
+- Types: Check `src/types/` for existing TypeScript interfaces
+- Utils: Check `src/lib/` and `src/utils/` for existing helper functions
+
+**If existing code is found:**
+- Document what was reused in the task completion notes
+- Extend/modify rather than duplicate
+- Import from existing locations rather than copying code
 
 ## Tasks
 
@@ -30,9 +58,9 @@ This implementation plan converts the feature design into a series of incrementa
     ```
   - _Requirements: Duplicate Detection (Locked)_
 
-- [ ] 1.2 Expand home_state prefs schema support
+- [ ] 1.2 Expand cockpit_state prefs schema support
   - Ensure prefs JSONB can store timezone (IANA string)
-  - Ensure daily_pulse and home_state policies allow INSERT + UPDATE (upsert path)
+  - Ensure daily_pulse and cockpit_state policies allow INSERT + UPDATE (upsert path)
   - _Requirements: Timezone Persistence (Locked), RLS Notes_
 
 - [ ] 1.3 [MANDATORY] Write property test for RLS isolation
@@ -43,19 +71,19 @@ This implementation plan converts the feature design into a series of incrementa
 
 - [ ] 2. Core API Endpoints Implementation
 
-- [ ] 2.1 Implement home state management endpoints
-  - Create POST /api/home/open with debouncing logic (once per minute per user)
-  - POST /api/home/open MUST accept { timezone?: string }
+- [ ] 2.1 Implement cockpit state management endpoints
+  - Create POST /api/cockpit/open with debouncing logic (once per minute per user)
+  - POST /api/cockpit/open MUST accept { timezone?: string }
   - Server MUST validate timezone is valid IANA (basic validation + allowlist fallback)
   - If prefs.timezone is missing, server MUST persist the provided timezone
-  - Implement GET /api/home/prefs and POST /api/home/prefs
+  - Implement GET /api/cockpit/prefs and POST /api/cockpit/prefs
   - Add DND edge case: if dnd_start_local == dnd_end_local → DND disabled
   - Add proper input validation and error handling
   - _Requirements: 11.7, 11.8, 19.1, 19.3, 19.4, Timezone Persistence (Locked)_
 
-- [ ] 2.2 [MANDATORY] Write property test for home open debouncing
-  - **Property 11: Home Open Debouncing**
-  - Test: For any sequence of POST /api/home/open calls from same user, only one update occurs per minute
+- [ ] 2.2 [MANDATORY] Write property test for cockpit open debouncing
+  - **Property 11: Cockpit Open Debouncing**
+  - Test: For any sequence of POST /api/cockpit/open calls from same user, only one update occurs per minute
   - Minimum 100 iterations
   - **Validates: Requirements 11.8**
 
@@ -107,9 +135,9 @@ This implementation plan converts the feature design into a series of incrementa
   - Client MUST treat ordering as authoritative (no client re-rank)
   - _Requirements: 6.1, 6.2, 6.9, Ranking Pipeline (Locked)_
 
-- [ ] 4. Home Summary Endpoint Implementation
+- [ ] 4. Cockpit Summary Endpoint Implementation
 
-- [ ] 4.1 Implement GET /api/home/summary endpoint
+- [ ] 4.1 Implement GET /api/cockpit/summary endpoint
   - Accept wallet_scope parameter (active | all)
   - Validate "active" wallet belongs to user
   - Implement Today Card state machine logic (priority order):
@@ -142,7 +170,7 @@ This implementation plan converts the feature design into a series of incrementa
   - Minimum 100 iterations
   - **Validates: Requirements 6.9**
 
-- [ ] 4.5 Implement POST /api/home/actions/rendered endpoint
+- [ ] 4.5 Implement POST /api/cockpit/actions/rendered endpoint
   - Body: { dedupe_keys: string[] } (max 3)
   - Server writes shown_actions rows with shown_at=now()
   - MUST be called only after ActionPreview actually renders
@@ -159,7 +187,7 @@ This implementation plan converts the feature design into a series of incrementa
   - Must include at least one of: expiring soon, new since last, portfolio delta
   - _Requirements: 9.1, 9.2, 11.2, 11.3_
 
-- [ ] 5.2 Implement GET /api/home/pulse endpoint
+- [ ] 5.2 Implement GET /api/cockpit/pulse endpoint
   - Accept date parameter (YYYY-MM-DD)
   - Create pulse retrieval with on-demand generation fallback
   - _Requirements: 9.2, 16.3_
@@ -212,7 +240,7 @@ This implementation plan converts the feature design into a series of incrementa
   - Add lane indicators, impact chips (max 2), provenance chips
   - Implement provenance gating display (heuristic → Review only)
   - Client MUST render in server-provided order (no re-ranking)
-  - Call POST /api/home/actions/rendered after render
+  - Call POST /api/cockpit/actions/rendered after render
   - _Requirements: 5.1, 5.2, 5.6, 5.7_
 
 - [ ] 9.3 Create Peek Drawer component
@@ -232,18 +260,18 @@ This implementation plan converts the feature design into a series of incrementa
 
 - [ ] 10.1 Implement authentication flow
   - Add unauthenticated redirect logic (redirect to /)
-  - Create demo mode exception handling (/home?demo=1)
+  - Create demo mode exception handling (/cockpit?demo=1)
   - _Requirements: 1.1, 1.3, 1.6_
 
 - [ ] 10.2 [MANDATORY] Write property test for unauthenticated access control
   - **Property 1: Unauthenticated Access Control**
-  - Test: For any unauthenticated user request to /home (excluding demo mode), system redirects to / and never renders authenticated dashboard
+  - Test: For any unauthenticated user request to /cockpit (excluding demo mode), system redirects to / and never renders authenticated dashboard
   - Minimum 100 iterations
   - **Validates: Requirements 1.1, 1.3**
 
 - [ ] 10.3 [MANDATORY] Write property test for demo mode exception
   - **Property 2: Demo Mode Exception**
-  - Test: For any unauthenticated user request to /home?demo=1, system bypasses redirect and renders static demo cockpit without calling authenticated APIs
+  - Test: For any unauthenticated user request to /cockpit?demo=1, system bypasses redirect and renders static demo cockpit without calling authenticated APIs
   - Minimum 100 iterations
   - **Validates: Requirements 1.6, 1.7**
 
@@ -252,7 +280,7 @@ This implementation plan converts the feature design into a series of incrementa
   - Disable Fix/Execute CTAs with "Demo" tooltips
   - Review actions: open local read-only preview (modal/sheet) OR show "Demo" tooltip
   - Demo mode MUST NOT navigate to authenticated routes (/action-center, /guardian, etc.)
-  - Demo mode MUST NOT call /api/home/* endpoints
+  - Demo mode MUST NOT call /api/cockpit/* endpoints
   - Demo mode MUST NOT write any state
   - Render static demo payload only
   - _Requirements: 1.7, 1.8, Demo mode UX (Locked)_
@@ -263,7 +291,7 @@ This implementation plan converts the feature design into a series of incrementa
   - On mount: start fetching prefs + summary in parallel
   - Immediately fetch summary with wallet_scope="active" (default)
   - When prefs returns: if wallet_scope_default="all", refetch summary
-  - POST /api/home/open after first meaningful render (debounced server-side)
+  - POST /api/cockpit/open after first meaningful render (debounced server-side)
   - Body MUST include: { timezone?: string } from Intl.DateTimeFormat().resolvedOptions().timeZone
   - _Requirements: Performance optimization, Timezone Persistence (Locked)_
 
@@ -275,8 +303,8 @@ This implementation plan converts the feature design into a series of incrementa
 - [ ] 12. Pulse Sheet Navigation Implementation
 
 - [ ] 12.1 Implement hash-based navigation
-  - /home#pulse MUST open Pulse full-screen sheet
-  - Closing MUST remove hash (back to /home) without full reload
+  - /cockpit#pulse MUST open Pulse full-screen sheet
+  - Closing MUST remove hash (back to /cockpit) without full reload
   - Mobile: swipe-down closes; Desktop: ESC closes
   - Must restore focus to the CTA that opened it
   - _Requirements: Pulse Sheet Navigation (Locked)_
@@ -315,8 +343,8 @@ This implementation plan converts the feature design into a series of incrementa
   - _Requirements: 14.4, 14.5_
 
 - [ ] 14.2 Optimize for performance SLOs
-  - /home first meaningful paint < 1.2s on mobile
-  - GET /api/home/summary: p50 < 150ms, p95 < 400ms, p99 < 900ms
+  - /cockpit first meaningful paint < 1.2s on mobile
+  - GET /api/cockpit/summary: p50 < 150ms, p95 < 400ms, p99 < 900ms
   - Drawer open latency < 100ms
   - _Requirements: 14.1, 14.2, 14.3_
 
@@ -359,7 +387,7 @@ The following 8 property tests are REQUIRED for institutional-grade determinism:
 | Task | Property | Description |
 |------|----------|-------------|
 | 1.3 | P14 | RLS Isolation - users only see their own data |
-| 2.2 | P11 | Home Open Debouncing - once per minute per user |
+| 2.2 | P11 | Cockpit Open Debouncing - once per minute per user |
 | 4.2 | P4 | Today Card Priority - deterministic state selection |
 | 4.3 | P6 | Action Ranking Algorithm - exact score formula |
 | 4.4 | P7 | Action Ranking Tie-Breakers - exact ordering |
