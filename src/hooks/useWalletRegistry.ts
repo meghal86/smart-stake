@@ -10,6 +10,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import { supabase } from '@/lib/supabase'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  walletKeys,
+  getWalletAddressDependentQueryKeys,
+} from '@/lib/query-keys'
 
 export interface UserWallet {
   id: string
@@ -66,7 +70,7 @@ export function useWalletRegistry() {
     error,
     refetch 
   } = useQuery({
-    queryKey: ['user-wallets', userId],
+    queryKey: walletKeys.registry(),
     queryFn: async (): Promise<UserWallet[]> => {
       if (!userId) return []
 
@@ -136,8 +140,15 @@ export function useWalletRegistry() {
 
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-wallets', userId] })
+    onSuccess: (data) => {
+      // Invalidate wallet registry (primary query)
+      queryClient.invalidateQueries({ queryKey: walletKeys.registry() })
+      
+      // Invalidate all queries dependent on this wallet address
+      const keysToInvalidate = getWalletAddressDependentQueryKeys(data.address)
+      keysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: key })
+      })
     },
   })
 
@@ -145,6 +156,10 @@ export function useWalletRegistry() {
   const removeWalletMutation = useMutation({
     mutationFn: async (walletId: string) => {
       if (!userId) throw new Error('User not authenticated')
+
+      // Get wallet address before deletion for invalidation
+      const walletToRemove = wallets.find(w => w.id === walletId)
+      if (!walletToRemove) throw new Error('Wallet not found')
 
       const { error } = await supabase
         .from('user_wallets')
@@ -156,9 +171,18 @@ export function useWalletRegistry() {
         console.error('Failed to remove wallet:', error)
         throw error
       }
+
+      return walletToRemove
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-wallets', userId] })
+    onSuccess: (removedWallet) => {
+      // Invalidate wallet registry (primary query)
+      queryClient.invalidateQueries({ queryKey: walletKeys.registry() })
+      
+      // Invalidate all queries dependent on this wallet address
+      const keysToInvalidate = getWalletAddressDependentQueryKeys(removedWallet.address)
+      keysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: key })
+      })
     },
   })
 
@@ -188,8 +212,15 @@ export function useWalletRegistry() {
 
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-wallets', userId] })
+    onSuccess: (updatedWallet) => {
+      // Invalidate wallet registry (primary query)
+      queryClient.invalidateQueries({ queryKey: walletKeys.registry() })
+      
+      // Invalidate all queries dependent on this wallet address
+      const keysToInvalidate = getWalletAddressDependentQueryKeys(updatedWallet.address)
+      keysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: key })
+      })
     },
   })
 

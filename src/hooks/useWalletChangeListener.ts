@@ -12,6 +12,10 @@
 
 import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  getWalletDependentQueryKeys,
+  getNetworkDependentQueryKeys,
+} from '@/lib/query-keys';
 
 export interface WalletChangeEvent {
   address: string;
@@ -55,12 +59,14 @@ export function useWalletChangeListener(
 
     // Invalidate all queries that depend on wallet
     // This ensures all modules refetch data with the new wallet
-    queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
-    queryClient.invalidateQueries({ queryKey: ['eligibility'] });
-    queryClient.invalidateQueries({ queryKey: ['saved-opportunities'] });
-    queryClient.invalidateQueries({ queryKey: ['guardian-scan'] });
-    queryClient.invalidateQueries({ queryKey: ['harvest-opportunities'] });
-    queryClient.invalidateQueries({ queryKey: ['portfolio-balances'] });
+    // Use standardized query keys from query-keys.ts
+    const keysToInvalidate = getWalletDependentQueryKeys(
+      customEvent.detail.address,
+      'eip155:1' // Default network - will be updated by network change handler
+    );
+    keysToInvalidate.forEach((key) => {
+      queryClient.invalidateQueries({ queryKey: key });
+    });
   }, [onWalletChange, queryClient]);
 
   // Handle network change events
@@ -74,10 +80,16 @@ export function useWalletChangeListener(
 
     // Invalidate all queries that depend on network
     // This ensures all modules refetch data with the new network
-    queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
-    queryClient.invalidateQueries({ queryKey: ['portfolio-balances'] });
-    queryClient.invalidateQueries({ queryKey: ['guardian-scores'] });
-    queryClient.invalidateQueries({ queryKey: ['harvest-opportunities'] });
+    // Use standardized query keys from query-keys.ts
+    // Note: We use null for activeWallet here since we don't have it in the event
+    // The actual wallet will be used by the modules when they refetch
+    const keysToInvalidate = getNetworkDependentQueryKeys(
+      null,
+      customEvent.detail.chainNamespace
+    );
+    keysToInvalidate.forEach((key) => {
+      queryClient.invalidateQueries({ queryKey: key });
+    });
   }, [onNetworkChange, queryClient]);
 
   // Set up event listeners

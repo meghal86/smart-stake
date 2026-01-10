@@ -18,6 +18,7 @@ import {
   caip2ToLegacyChain,
   getSupportedNetworks
 } from '@/lib/networks/config';
+import { getNetworkDependentQueryKeys } from '@/lib/query-keys';
 
 // ============================================================================
 // Types
@@ -397,10 +398,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
       window.dispatchEvent(event);
       
-      // Invalidate queries that depend on network
-      queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio-balances'] });
-      queryClient.invalidateQueries({ queryKey: ['guardian-scores'] });
+      // Invalidate queries that depend on network using standardized query keys
+      // This ensures all modules (Guardian, Hunter, HarvestPro, Portfolio) refetch
+      // when the network changes
+      const keysToInvalidate = getNetworkDependentQueryKeys(activeWallet, chainNamespace);
+      keysToInvalidate.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: key });
+      });
 
       // Track network switch analytics
       const switchDurationMs = Math.round(performance.now() - switchStartTime);

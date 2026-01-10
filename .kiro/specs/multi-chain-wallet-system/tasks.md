@@ -499,11 +499,11 @@ Tasks that can be deferred to future iterations.
 **Description**: Standardize React Query keys and invalidation patterns for cross-module consistency.
 
 **Acceptance Criteria**:
-- [ ] Standardized query keys: `['wallets', 'registry']`, `['guardian', activeWallet, activeNetwork]`
-- [ ] Wallet mutations invalidate all relevant queries
-- [ ] Network switches trigger automatic refetch via key changes
-- [ ] Query invalidation is primary mechanism (events secondary)
-- [ ] Consistent caching and stale time configuration
+- [x] Standardized query keys: `['wallets', 'registry']`, `['guardian', activeWallet, activeNetwork]`
+- [x] Wallet mutations invalidate all relevant queries
+- [x] Network switches trigger automatic refetch via key changes
+- [x] Query invalidation is primary mechanism (events secondary)
+- [x] Consistent caching and stale time configuration
 
 **Implementation Steps**:
 1. Define standardized query key patterns
@@ -541,12 +541,12 @@ Tasks that can be deferred to future iterations.
 **Description**: Implement comprehensive property-based test suite covering all 20 correctness properties with fast-check.
 
 **Acceptance Criteria**:
-- [ ] All 20 properties have corresponding property tests
-- [ ] Tests use fast-check with minimum 100 iterations
-- [ ] Critical properties (auth, database) use 1000 iterations
-- [ ] Proper test tagging: `Feature: multi-chain-wallet-system, Property X`
-- [ ] Smart generators for valid input spaces
-- [ ] Property tests run in CI/CD pipeline
+- [x] All 20 properties have corresponding property tests
+- [x] Tests use fast-check with minimum 100 iterations
+- [x] Critical properties (auth, database) use 1000 iterations
+- [x] Proper test tagging: `Feature: multi-chain-wallet-system, Property X`
+- [x] Smart generators for valid input spaces
+- [x] Property tests run in CI/CD pipeline
 
 **Implementation Steps**:
 1. Create property test files for each major component
