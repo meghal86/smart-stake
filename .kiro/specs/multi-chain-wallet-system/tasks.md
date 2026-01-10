@@ -545,8 +545,8 @@ Tasks that can be deferred to future iterations.
 - [x] Tests use fast-check with minimum 100 iterations
 - [x] Critical properties (auth, database) use 1000 iterations
 - [x] Proper test tagging: `Feature: multi-chain-wallet-system, Property X`
-- [ ] Smart generators for valid input spaces
-- [ ] Property tests run in CI/CD pipeline
+- [x] Smart generators for valid input spaces
+- [x] Property tests run in CI/CD pipeline
 
 **Implementation Steps**:
 1. Create property test files for each major component
