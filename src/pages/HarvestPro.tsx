@@ -50,9 +50,8 @@ export default function HarvestPro() {
   const { connectedWallets, activeWallet, isAuthenticated } = useWallet();
   const isConnected = connectedWallets.length > 0 && !!activeWallet;
   
-  // When authenticated, never use demo mode - always read from WalletContext
-  // This ensures HarvestPro maintains session consistency with other modules
-  const shouldUseDemoMode = isDemo && !isAuthenticated;
+  // When in demo mode, always show demo data regardless of authentication
+  const shouldUseDemoMode = isDemo;
   
   // Modal and flow state
   const [selectedOpportunity, setSelectedOpportunity] = useState<HarvestOpportunity | null>(null);
@@ -97,6 +96,13 @@ export default function HarvestPro() {
   } = useHarvestOpportunities({
     enabled: !shouldUseDemoMode, // Fetch when authenticated or not in demo mode
   });
+
+  // Refetch when switching from demo to live mode
+  useEffect(() => {
+    if (!shouldUseDemoMode && !isLoading) {
+      refetch();
+    }
+  }, [shouldUseDemoMode]);
 
   // Mock data for demo mode
   const mockSummary: OpportunitiesSummary = {
@@ -224,7 +230,7 @@ export default function HarvestPro() {
   useEffect(() => {
     harvestProPerformanceMonitor.measureLoadingState('view_state_update', () => {
       if (shouldUseDemoMode) {
-        // In demo mode (unauthenticated), always show normal view
+        // In demo mode, always show normal view with mock data
         setViewState('normal');
       } else if (isLoading) {
         setViewState('loading');
@@ -242,13 +248,13 @@ export default function HarvestPro() {
     harvestProPerformanceMonitor.measureInteraction('refresh', () => {
       setIsRefreshing(true);
       if (shouldUseDemoMode) {
-        // In demo mode (unauthenticated), just simulate refresh
+        // In demo mode, just simulate refresh
         setTimeout(() => {
           setIsRefreshing(false);
           setLastUpdated(new Date());
         }, 1000);
       } else {
-        // In real mode (authenticated), refetch from API
+        // In live mode, refetch from API
         refetch().finally(() => {
           setIsRefreshing(false);
           setLastUpdated(new Date());

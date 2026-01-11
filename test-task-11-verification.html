@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task 11: Runtime Data Flow Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { border-color: #10b981; }
+        .error { border-color: #ef4444; }
+        .warning { border-color: #f59e0b; }
+        .info { border-color: #3b82f6; }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .status.pass { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .status.pending { background: #f59e0b; color: white; }
+        .status.info { background: #3b82f6; color: white; }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+        }
+        .console-output {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .error-log {
+            color: #ff6b6b;
+        }
+        .warning-log {
+            color: #ffd93d;
+        }
+        .info-log {
+            color: #74c0fc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Task 11: Runtime Data Flow Verification</h1>
+    <p>Testing the implementation of parallel data fetching and three-block layout enforcement</p>
+
+    <div class="test-section info">
+        <h2>📋 Test Overview</h2>
+        <p>This test verifies that Task 11 has been properly implemented:</p>
+        <ul>
+            <li><strong>Task 11.1:</strong> Parallel data fetching (prefs + summary)</li>
+            <li><strong>Task 11.2:</strong> Three-block layout enforcement</li>
+        </ul>
+        
+        <div class="test-result">
+            <button onclick="runAllTests()" id="runTestsBtn">🧪 Run All Tests</button>
+            <button onclick="openCockpitDemo()" id="openDemoBtn">🎯 Open Cockpit Demo</button>
+            <button onclick="openCockpitAuth()" id="openAuthBtn">🔐 Open Cockpit (Auth Required)</button>
+        </div>
+    </div>
+
+    <div class="test-section" id="consoleSection">
+        <h2>🖥️ Console Error Check</h2>
+        <div class="test-result">
+            <span class="status pending" id="consoleStatus">PENDING</span>
+            <strong>Console Error Monitoring</strong>
+        </div>
+        <p>Monitoring for console errors when loading cockpit...</p>
+        <div class="console-output" id="consoleOutput">
+            Console monitoring will start when tests run...
+        </div>
+    </div>
+
+    <div class="test-section" id="dataFlowSection">
+        <h2>⚡ Task 11.1: Parallel Data Fetching</h2>
+        <div class="test-result">
+            <span class="status pending" id="dataFlowStatus">PENDING</span>
+            <strong>Runtime Data Flow Implementation</strong>
+        </div>
+        
+        <h3>Expected Implementation:</h3>
+        <ul>
+            <li>✅ On mount: start fetching prefs + summary in parallel</li>
+            <li>✅ Immediately fetch summary with wallet_scope="active" (default)</li>
+            <li>✅ When prefs returns: if wallet_scope_default="all", refetch summary</li>
+            <li>✅ POST /api/cockpit/open after first meaningful render</li>
+            <li>✅ Body includes timezone from Intl.DateTimeFormat().resolvedOptions().timeZone</li>
+        </ul>
+
+        <div class="test-result" id="dataFlowResults">
+            Results will appear here after testing...
+        </div>
+    </div>
+
+    <div class="test-section" id="layoutSection">
+        <h2>🏗️ Task 11.2: Three-Block Layout Enforcement</h2>
+        <div class="test-result">
+            <span class="status pending" id="layoutStatus">PENDING</span>
+            <strong>Layout Structure Validation</strong>
+        </div>
+        
+        <h3>Expected Layout:</h3>
+        <ul>
+            <li>✅ App Shell chrome (existing header/layout)</li>
+            <li>✅ Today Card block</li>
+            <li>✅ Action Preview block</li>
+            <li>✅ Error boundaries for each section</li>
+            <li>✅ Additional content (drawers, sheets) not counted as blocks</li>
+        </ul>
+
+        <div class="test-result" id="layoutResults">
+            Results will appear here after testing...
+        </div>
+    </div>
+
+    <div class="test-section" id="errorBoundarySection">
+        <h2>🛡️ Error Boundary Testing</h2>
+        <div class="test-result">
+            <span class="status pending" id="errorBoundaryStatus">PENDING</span>
+            <strong>Error Boundary Implementation</strong>
+        </div>
+        
+        <h3>Error Boundary Components:</h3>
+        <ul>
+            <li>✅ TodayCardErrorBoundary</li>
+            <li>✅ ActionPreviewErrorBoundary</li>
+            <li>✅ PeekDrawerErrorBoundary</li>
+            <li>✅ InsightsSheetErrorBoundary</li>
+        </ul>
+
+        <div class="test-result" id="errorBoundaryResults">
+            Results will appear here after testing...
+        </div>
+    </div>
+
+    <div class="test-section success" id="summarySection" style="display: none;">
+        <h2>📊 Test Summary</h2>
+        <div id="summaryResults"></div>
+    </div>
+
+    <script>
+        let consoleErrors = [];
+        let consoleWarnings = [];
+        let testResults = {
+            consoleErrors: false,
+            dataFlow: false,
+            layout: false,
+            errorBoundaries: false
+        };
+
+        // Capture console errors
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.error = function(...args) {
+            consoleErrors.push(args.join(' '));
+            updateConsoleOutput();
+            originalConsoleError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            consoleWarnings.push(args.join(' '));
+            updateConsoleOutput();
+            originalConsoleWarn.apply(console, args);
+        };
+
+        function updateConsoleOutput() {
+            const output = document.getElementById('consoleOutput');
+            let html = '';
+            
+            if (consoleErrors.length === 0 && consoleWarnings.length === 0) {
+                html = '<span class="info-log">No console errors or warnings detected ✅</span>';
+            } else {
+                if (consoleErrors.length > 0) {
+                    html += '<div class="error-log">ERRORS:</div>';
+                    consoleErrors.forEach(error => {
+                        html += `<div class="error-log">❌ ${error}</div>`;
+                    });
+                }
+                if (consoleWarnings.length > 0) {
+                    html += '<div class="warning-log">WARNINGS:</div>';
+                    consoleWarnings.forEach(warning => {
+                        html += `<div class="warning-log">⚠️ ${warning}</div>`;
+                    });
+                }
+            }
+            
+            output.innerHTML = html;
+        }
+
+        function openCockpitDemo() {
+            console.log('🎯 Opening cockpit in demo mode...');
+            updateConsoleOutput();
+            
+            // Clear previous errors
+            consoleErrors = [];
+            consoleWarnings = [];
+            
+            // Open cockpit in demo mode
+            const cockpitWindow = window.open('http://localhost:8084/cockpit?demo=1', '_blank');
+            
+            // Monitor for errors
+            setTimeout(() => {
+                checkConsoleErrors();
+                testDataFlow();
+                testLayout();
+                testErrorBoundaries();
+                updateSummary();
+            }, 3000);
+        }
+
+        function openCockpitAuth() {
+            console.log('🔐 Opening cockpit (auth required)...');
+            updateConsoleOutput();
+            
+            // Clear previous errors
+            consoleErrors = [];
+            consoleWarnings = [];
+            
+            // Open cockpit without demo mode
+            const cockpitWindow = window.open('http://localhost:8084/cockpit', '_blank');
+            
+            // Monitor for errors
+            setTimeout(() => {
+                checkConsoleErrors();
+                updateSummary();
+            }, 3000);
+        }
+
+        function checkConsoleErrors() {
+            const hasErrors = consoleErrors.length > 0;
+            const status = document.getElementById('consoleStatus');
+            
+            if (hasErrors) {
+                status.className = 'status fail';
+                status.textContent = 'FAIL';
+                testResults.consoleErrors = false;
+            } else {
+                status.className = 'status pass';
+                status.textContent = 'PASS';
+                testResults.consoleErrors = true;
+            }
+            
+            updateConsoleOutput();
+        }
+
+        function testDataFlow() {
+            // This is a visual/manual test since we can't directly inspect the hook
+            const status = document.getElementById('dataFlowStatus');
+            const results = document.getElementById('dataFlowResults');
+            
+            // Check if useCockpitData hook implementation exists
+            fetch('http://localhost:8084/src/hooks/useCockpitData.ts')
+                .then(response => response.text())
+                .then(content => {
+                    const hasParallelFetch = content.includes('Promise.all([prefsPromise, summaryPromise])');
+                    const hasTimezone = content.includes('Intl.DateTimeFormat().resolvedOptions().timeZone');
+                    const hasWalletScope = content.includes('wallet_scope_default');
+                    const hasMarkOpened = content.includes('/api/cockpit/open');
+                    
+                    if (hasParallelFetch && hasTimezone && hasWalletScope && hasMarkOpened) {
+                        status.className = 'status pass';
+                        status.textContent = 'PASS';
+                        testResults.dataFlow = true;
+                        
+                        results.innerHTML = `
+                            <div class="info-log">✅ Parallel fetching implemented</div>
+                            <div class="info-log">✅ Timezone handling implemented</div>
+                            <div class="info-log">✅ Wallet scope preference handling implemented</div>
+                            <div class="info-log">✅ Mark opened API call implemented</div>
+                        `;
+                    } else {
+                        status.className = 'status fail';
+                        status.textContent = 'FAIL';
+                        testResults.dataFlow = false;
+                        
+                        results.innerHTML = `
+                            <div class="error-log">❌ Missing implementation details</div>
+                            <div>Parallel fetch: ${hasParallelFetch ? '✅' : '❌'}</div>
+                            <div>Timezone: ${hasTimezone ? '✅' : '❌'}</div>
+                            <div>Wallet scope: ${hasWalletScope ? '✅' : '❌'}</div>
+                            <div>Mark opened: ${hasMarkOpened ? '✅' : '❌'}</div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    status.className = 'status fail';
+                    status.textContent = 'FAIL';
+                    testResults.dataFlow = false;
+                    results.innerHTML = `<div class="error-log">❌ Could not verify implementation: ${error.message}</div>`;
+                });
+        }
+
+        function testLayout() {
+            // Check if ThreeBlockLayout component exists
+            const status = document.getElementById('layoutStatus');
+            const results = document.getElementById('layoutResults');
+            
+            fetch('http://localhost:8084/src/components/cockpit/ThreeBlockLayout.tsx')
+                .then(response => response.text())
+                .then(content => {
+                    const hasValidation = content.includes('validateLayout');
+                    const hasBlocks = content.includes('today-card-block') && content.includes('action-preview-block');
+                    const hasErrorFallback = content.includes('LayoutErrorFallback');
+                    
+                    if (hasValidation && hasBlocks && hasErrorFallback) {
+                        status.className = 'status pass';
+                        status.textContent = 'PASS';
+                        testResults.layout = true;
+                        
+                        results.innerHTML = `
+                            <div class="info-log">✅ Layout validation implemented</div>
+                            <div class="info-log">✅ Three-block structure enforced</div>
+                            <div class="info-log">✅ Error fallback implemented</div>
+                        `;
+                    } else {
+                        status.className = 'status fail';
+                        status.textContent = 'FAIL';
+                        testResults.layout = false;
+                        
+                        results.innerHTML = `
+                            <div class="error-log">❌ Missing layout implementation</div>
+                            <div>Validation: ${hasValidation ? '✅' : '❌'}</div>
+                            <div>Blocks: ${hasBlocks ? '✅' : '❌'}</div>
+                            <div>Error fallback: ${hasErrorFallback ? '✅' : '❌'}</div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    status.className = 'status fail';
+                    status.textContent = 'FAIL';
+                    testResults.layout = false;
+                    results.innerHTML = `<div class="error-log">❌ Could not verify layout: ${error.message}</div>`;
+                });
+        }
+
+        function testErrorBoundaries() {
+            // Check if ErrorBoundary components exist
+            const status = document.getElementById('errorBoundaryStatus');
+            const results = document.getElementById('errorBoundaryResults');
+            
+            fetch('http://localhost:8084/src/components/cockpit/ErrorBoundary.tsx')
+                .then(response => response.text())
+                .then(content => {
+                    const hasTodayCard = content.includes('TodayCardErrorBoundary');
+                    const hasActionPreview = content.includes('ActionPreviewErrorBoundary');
+                    const hasPeekDrawer = content.includes('PeekDrawerErrorBoundary');
+                    const hasInsightsSheet = content.includes('InsightsSheetErrorBoundary');
+                    
+                    if (hasTodayCard && hasActionPreview && hasPeekDrawer && hasInsightsSheet) {
+                        status.className = 'status pass';
+                        status.textContent = 'PASS';
+                        testResults.errorBoundaries = true;
+                        
+                        results.innerHTML = `
+                            <div class="info-log">✅ TodayCardErrorBoundary implemented</div>
+                            <div class="info-log">✅ ActionPreviewErrorBoundary implemented</div>
+                            <div class="info-log">✅ PeekDrawerErrorBoundary implemented</div>
+                            <div class="info-log">✅ InsightsSheetErrorBoundary implemented</div>
+                        `;
+                    } else {
+                        status.className = 'status fail';
+                        status.textContent = 'FAIL';
+                        testResults.errorBoundaries = false;
+                        
+                        results.innerHTML = `
+                            <div class="error-log">❌ Missing error boundary components</div>
+                            <div>TodayCard: ${hasTodayCard ? '✅' : '❌'}</div>
+                            <div>ActionPreview: ${hasActionPreview ? '✅' : '❌'}</div>
+                            <div>PeekDrawer: ${hasPeekDrawer ? '✅' : '❌'}</div>
+                            <div>InsightsSheet: ${hasInsightsSheet ? '✅' : '❌'}</div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    status.className = 'status fail';
+                    status.textContent = 'FAIL';
+                    testResults.errorBoundaries = false;
+                    results.innerHTML = `<div class="error-log">❌ Could not verify error boundaries: ${error.message}</div>`;
+                });
+        }
+
+        function updateSummary() {
+            const summarySection = document.getElementById('summarySection');
+            const summaryResults = document.getElementById('summaryResults');
+            
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(result => result === true).length;
+            const allPassed = passedTests === totalTests;
+            
+            summarySection.style.display = 'block';
+            summarySection.className = allPassed ? 'test-section success' : 'test-section warning';
+            
+            let html = `
+                <div class="test-result">
+                    <span class="status ${allPassed ? 'pass' : 'fail'}">${allPassed ? 'ALL PASS' : 'SOME FAIL'}</span>
+                    <strong>Task 11 Implementation: ${passedTests}/${totalTests} tests passed</strong>
+                </div>
+                
+                <h3>Test Results:</h3>
+                <ul>
+                    <li>Console Errors: ${testResults.consoleErrors ? '✅ PASS' : '❌ FAIL'}</li>
+                    <li>Data Flow (11.1): ${testResults.dataFlow ? '✅ PASS' : '❌ FAIL'}</li>
+                    <li>Layout (11.2): ${testResults.layout ? '✅ PASS' : '❌ FAIL'}</li>
+                    <li>Error Boundaries: ${testResults.errorBoundaries ? '✅ PASS' : '❌ FAIL'}</li>
+                </ul>
+            `;
+            
+            if (allPassed) {
+                html += `
+                    <div class="test-result success">
+                        <h3>🎉 Task 11: Runtime Data Flow Implementation - COMPLETE</h3>
+                        <p>All subtasks have been successfully implemented:</p>
+                        <ul>
+                            <li>✅ Task 11.1: Parallel data fetching implemented</li>
+                            <li>✅ Task 11.2: Three-block layout enforcement implemented</li>
+                            <li>✅ Error boundaries implemented for all sections</li>
+                            <li>✅ No console errors in demo mode</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="test-result error">
+                        <h3>⚠️ Task 11: Some Issues Found</h3>
+                        <p>Please review the failed tests above and address any issues.</p>
+                    </div>
+                `;
+            }
+            
+            summaryResults.innerHTML = html;
+        }
+
+        function runAllTests() {
+            console.log('🧪 Running all Task 11 verification tests...');
+            
+            // Reset test results
+            testResults = {
+                consoleErrors: false,
+                dataFlow: false,
+                layout: false,
+                errorBoundaries: false
+            };
+            
+            // Reset status indicators
+            document.getElementById('consoleStatus').className = 'status pending';
+            document.getElementById('consoleStatus').textContent = 'PENDING';
+            document.getElementById('dataFlowStatus').className = 'status pending';
+            document.getElementById('dataFlowStatus').textContent = 'PENDING';
+            document.getElementById('layoutStatus').className = 'status pending';
+            document.getElementById('layoutStatus').textContent = 'PENDING';
+            document.getElementById('errorBoundaryStatus').className = 'status pending';
+            document.getElementById('errorBoundaryStatus').textContent = 'PENDING';
+            
+            // Clear console logs
+            consoleErrors = [];
+            consoleWarnings = [];
+            updateConsoleOutput();
+            
+            // Run tests
+            testDataFlow();
+            testLayout();
+            testErrorBoundaries();
+            
+            // Open demo to check for console errors
+            setTimeout(() => {
+                openCockpitDemo();
+            }, 1000);
+        }
+
+        // Initialize console monitoring
+        updateConsoleOutput();
+        
+        console.log('🚀 Task 11 Verification Test Ready');
+        console.log('Click "Run All Tests" to verify the implementation');
+    </script>
+</body>
+</html>

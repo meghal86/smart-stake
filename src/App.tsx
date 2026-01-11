@@ -65,7 +65,7 @@ import SignalsPage from "./pages/SignalsFeed";
 import TestWorldClass from "./pages/TestWorldClass";
 import WhaleSignalsPhaseD from "./pages/whale-signals/index";
 import PatternModalDemo from "./pages/PatternModalDemo";
-import { MyROI } from "./pages/insights/MyROI";
+import Cockpit from "./pages/Cockpit";
 import Hub2Plus from "./pages/Hub2Plus";
 // import Guardian from "./pages/Guardian"; // File removed
 import GuardianEnhanced from "./pages/GuardianEnhanced";
@@ -227,7 +227,8 @@ const App = () => {
                   <Route path="/test-world-class" element={<TestWorldClass />} />
                   <Route path="/pattern-demo" element={<PatternModalDemo />} />
                   <Route path="/hub/whale-signals" element={<WhaleSignalsPhaseD />} />
-                  <Route path="/insights" element={<div className="p-6"><MyROI /></div>} />
+                  <Route path="/cockpit" element={<Cockpit />} />
+                  <Route path="/insights" element={<div className="p-6">Insights Coming Soon</div>} />
                   {/* Unified Pro Signals - redirect old routes */}
                   <Route path="/whales" element={<SignalsPage />} />
                   <Route path="/whale-alerts" element={<SignalsPage />} />

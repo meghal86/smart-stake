@@ -36,13 +36,13 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
 
 ## Tasks
 
-- [ ] 1. Database Schema and Infrastructure Setup
+- [x] 1. Database Schema and Infrastructure Setup
   - Create Supabase database tables with proper RLS policies
   - Set up required indexes for performance
   - Configure environment variables and authentication
   - _Requirements: 17.1, 17.2, 17.7_
 
-- [ ] 1.1 Create shown_actions table for duplicate detection
+- [x] 1.1 Create shown_actions table for duplicate detection
   - Table: shown_actions (user_id UUID, dedupe_key TEXT, shown_at TIMESTAMPTZ)
   - Index: (user_id, shown_at DESC)
   - Unique constraint: (user_id, dedupe_key)
@@ -58,12 +58,12 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
     ```
   - _Requirements: Duplicate Detection (Locked)_
 
-- [ ] 1.2 Expand cockpit_state prefs schema support
+- [x] 1.2 Expand cockpit_state prefs schema support
   - Ensure prefs JSONB can store timezone (IANA string)
   - Ensure daily_pulse and cockpit_state policies allow INSERT + UPDATE (upsert path)
   - _Requirements: Timezone Persistence (Locked), RLS Notes_
 
-- [ ] 1.3 [MANDATORY] Write property test for RLS isolation
+- [x] 1.3 [MANDATORY] Write property test for RLS isolation
   - **Property 14: Row Level Security Isolation**
   - Test: For any authenticated user, database queries only return data belonging to that user
   - Minimum 100 iterations
@@ -71,7 +71,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
 
 - [ ] 2. Core API Endpoints Implementation
 
-- [ ] 2.1 Implement cockpit state management endpoints
+- [x] 2.1 Implement cockpit state management endpoints
   - Create POST /api/cockpit/open with debouncing logic (once per minute per user)
   - POST /api/cockpit/open MUST accept { timezone?: string }
   - Server MUST validate timezone is valid IANA (basic validation + allowlist fallback)
@@ -81,15 +81,15 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Add proper input validation and error handling
   - _Requirements: 11.7, 11.8, 19.1, 19.3, 19.4, Timezone Persistence (Locked)_
 
-- [ ] 2.2 [MANDATORY] Write property test for cockpit open debouncing
+- [x] 2.2 [MANDATORY] Write property test for cockpit open debouncing
   - **Property 11: Cockpit Open Debouncing**
   - Test: For any sequence of POST /api/cockpit/open calls from same user, only one update occurs per minute
   - Minimum 100 iterations
   - **Validates: Requirements 11.8**
 
-- [ ] 3. Source Adapter System Implementation
+- [x] 3. Source Adapter System Implementation
 
-- [ ] 3.1 Implement unified action model adapters
+- [x] 3.1 Implement unified action model adapters
   - Create Guardian findings adapter with provenance mapping
   - Implement Hunter opportunities adapter with expiration handling
   - Add Portfolio deltas and Action Center adapters
@@ -97,7 +97,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - **Timestamp contract (Locked):** Adapters MUST provide `created_at` + `updated_at` internally for freshness computation (stripped before response)
   - _Requirements: F2.1, F2.2, F2.3_
 
-- [ ] 3.2 Implement action scoring and ranking service
+- [x] 3.2 Implement action scoring and ranking service
   - Implement ranking pipeline (Locked order):
     1. Adapter normalization: source item → Action draft (with internal created_at/updated_at)
     2. Provenance gating: heuristic + Fix/Execute → downgrade to Review + is_executable=false
@@ -135,9 +135,9 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Client MUST treat ordering as authoritative (no client re-rank)
   - _Requirements: 6.1, 6.2, 6.9, Ranking Pipeline (Locked)_
 
-- [ ] 4. Cockpit Summary Endpoint Implementation
+- [x] 4. Cockpit Summary Endpoint Implementation
 
-- [ ] 4.1 Implement GET /api/cockpit/summary endpoint
+- [x] 4.1 Implement GET /api/cockpit/summary endpoint
   - Accept wallet_scope parameter (active | all)
   - Validate "active" wallet belongs to user
   - Implement Today Card state machine logic (priority order):
@@ -150,19 +150,19 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Return action_preview (max 3), counters, provider_status, degraded_mode
   - _Requirements: 3.3, 3.4, 6.1, 6.9, 16.1, 16.2_
 
-- [ ] 4.2 [MANDATORY] Write property test for Today Card priority determinism
+- [x] 4.2 [MANDATORY] Write property test for Today Card priority determinism
   - **Property 4: Today Card Priority Determinism**
   - Test: For any set of input conditions, Today Card state is determined by evaluating conditions in exact order and selecting first true
   - Minimum 100 iterations
   - **Validates: Requirements 3.3, 3.4**
 
-- [ ] 4.3 [MANDATORY] Write property test for action ranking algorithm
+- [x] 4.3 [MANDATORY] Write property test for action ranking algorithm
   - **Property 6: Action Ranking Algorithm**
   - Test: For any set of actions, ranking score is calculated using exact formula with specified weights
   - Minimum 100 iterations
   - **Validates: Requirements 6.1**
 
-- [ ] 4.4 [MANDATORY] Write property test for action ranking tie-breakers
+- [x] 4.4 [MANDATORY] Write property test for action ranking tie-breakers
   - **Property 7: Action Ranking Tie-Breakers**
   - Test: For any set of actions with identical scores, ordering follows tie-breakers in exact sequence
   - Tie-breaker order: higher severity → expires_at rule → higher relevance → newer event_time
@@ -170,7 +170,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Minimum 100 iterations
   - **Validates: Requirements 6.9**
 
-- [ ] 4.5 Implement POST /api/cockpit/actions/rendered endpoint
+- [x] 4.5 Implement POST /api/cockpit/actions/rendered endpoint ✓
   - Body: { dedupe_keys: string[] } (max 3)
   - Server writes shown_actions rows with shown_at=now()
   - MUST be called only after ActionPreview actually renders
@@ -178,64 +178,64 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Guard against re-render spam: only update if shown_at < now() - 30 seconds
   - _Requirements: Duplicate Detection (Locked)_
 
-- [ ] 5. Daily Pulse Engine Implementation
+- [x] 5. Daily Pulse Engine Implementation
 
-- [ ] 5.1 Implement pulse generation logic
+- [x] 5.1 Implement pulse generation logic
   - Create timezone-aware pulse generation (9am user local time)
   - Implement "new since last" tracking logic
   - Add pulse content constraints: max 8 rows total, max 3 per category
   - Must include at least one of: expiring soon, new since last, portfolio delta
   - _Requirements: 9.1, 9.2, 11.2, 11.3_
 
-- [ ] 5.2 Implement GET /api/cockpit/pulse endpoint
+- [x] 5.2 Implement GET /api/cockpit/pulse endpoint
   - Accept date parameter (YYYY-MM-DD)
   - Create pulse retrieval with on-demand generation fallback
   - _Requirements: 9.2, 16.3_
 
-- [ ] 6. Checkpoint - Backend API Validation
+- [x] 6. Checkpoint - Backend API Validation
   - Ensure all API endpoints return proper response format (data, error, meta with ts)
   - Verify rate limiting and authentication work correctly
   - Test database operations and RLS policies
   - Ask the user if questions arise
 
-- [ ] 7. Investment Primitives Implementation
+- [x] 7. Investment Primitives Implementation
 
-- [ ] 7.1 Implement save/bookmark functionality
+- [x] 7.1 Implement save/bookmark functionality
   - Create POST /api/investments/save endpoint
   - Add investment semantics (save vs bookmark vs wallet_role)
   - Implement relevance scoring integration
   - _Requirements: 12.1, 12.4, 12.6_
 
-- [ ] 7.2 Implement alert rules system
+- [x] 7.2 Implement alert rules system
   - Create GET /api/alerts/rules and POST /api/alerts/rules endpoints
   - Add rule validation and storage
   - Integrate with relevance scoring
   - _Requirements: 12.3, 12.5, 12.6_
 
-- [ ] 8. Web Push Notifications Implementation
+- [x] 8. Web Push Notifications Implementation
 
-- [ ] 8.1 Implement notification subscription endpoints
+- [x] 8.1 Implement notification subscription endpoints
   - Create POST /api/notifications/subscribe and unsubscribe
   - Add subscription validation and storage
   - Implement dev-only test endpoint (5/day/user limit)
   - _Requirements: 13.1, 13.2, 13.8_
 
-- [ ] 8.2 Implement notification sending logic
+- [x] 8.2 Implement notification sending logic
   - Add DND hours enforcement (default 10pm-8am local)
   - Add daily caps enforcement (max 3/day)
   - Create notification categories (critical, daily_pulse, expiring_soon)
   - _Requirements: 13.5, 13.6, 13.7_
 
-- [ ] 9. Frontend Component Implementation
+- [x] 9. Frontend Component Implementation
 
-- [ ] 9.1 Create Today Card component
+- [x] 9.1 Create Today Card component
   - Implement deterministic state rendering based on server-provided kind
   - Add header chrome support (demo pill, insights icon)
   - Ensure exactly 1 anchor metric, 1 context line, 1 primary CTA
   - Header chrome does NOT count as anchor/context/CTA
   - _Requirements: 3.1, 3.2, 3.6_
 
-- [ ] 9.2 Create Action Preview component
+- [x] 9.2 Create Action Preview component
   - Implement 3-row maximum constraint
   - Add lane indicators, impact chips (max 2), provenance chips
   - Implement provenance gating display (heuristic → Review only)
@@ -243,39 +243,39 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Call POST /api/cockpit/actions/rendered after render
   - _Requirements: 5.1, 5.2, 5.6, 5.7_
 
-- [ ] 9.3 Create Peek Drawer component
+- [x] 9.3 Create Peek Drawer component
   - Implement bottom sheet modal (80vh mobile, 640px max desktop)
   - Add collapsible sections with row limits (1-5 each)
   - Implement focus trap, aria-modal, focus restoration
   - Close: swipe down (mobile), overlay click, ESC key
   - _Requirements: 7.1, 7.2, 7.4, 7.5_
 
-- [ ] 9.4 Create Insights Sheet component
+- [x] 9.4 Create Insights Sheet component
   - Implement full-screen overlay
   - Add provider status and preference controls
   - Include launcher fallback logic (top-right icon in Today Card if chrome unavailable)
   - _Requirements: 8.1, 8.2, 8.6, 8.7_
 
-- [ ] 10. Authentication and Demo Mode Implementation
+- [x] 10. Authentication and Demo Mode Implementation
 
-- [ ] 10.1 Implement authentication flow
+- [x] 10.1 Implement authentication flow
   - Add unauthenticated redirect logic (redirect to /)
   - Create demo mode exception handling (/cockpit?demo=1)
   - _Requirements: 1.1, 1.3, 1.6_
 
-- [ ] 10.2 [MANDATORY] Write property test for unauthenticated access control
+- [x] 10.2 [MANDATORY] Write property test for unauthenticated access control
   - **Property 1: Unauthenticated Access Control**
   - Test: For any unauthenticated user request to /cockpit (excluding demo mode), system redirects to / and never renders authenticated dashboard
   - Minimum 100 iterations
   - **Validates: Requirements 1.1, 1.3**
 
-- [ ] 10.3 [MANDATORY] Write property test for demo mode exception
+- [x] 10.3 [MANDATORY] Write property test for demo mode exception
   - **Property 2: Demo Mode Exception**
   - Test: For any unauthenticated user request to /cockpit?demo=1, system bypasses redirect and renders static demo cockpit without calling authenticated APIs
   - Minimum 100 iterations
   - **Validates: Requirements 1.6, 1.7**
 
-- [ ] 10.4 Implement demo mode UX (Locked)
+- [x] 10.4 Implement demo mode UX (Locked)
   - Add persistent "Demo Mode" pill in TodayCard header chrome
   - Disable Fix/Execute CTAs with "Demo" tooltips
   - Review actions: open local read-only preview (modal/sheet) OR show "Demo" tooltip
@@ -285,9 +285,9 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Render static demo payload only
   - _Requirements: 1.7, 1.8, Demo mode UX (Locked)_
 
-- [ ] 11. Runtime Data Flow Implementation
+- [x] 11. Runtime Data Flow Implementation
 
-- [ ] 11.1 Implement parallel data fetching
+- [x] 11.1 Implement parallel data fetching
   - On mount: start fetching prefs + summary in parallel
   - Immediately fetch summary with wallet_scope="active" (default)
   - When prefs returns: if wallet_scope_default="all", refetch summary
@@ -295,7 +295,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Body MUST include: { timezone?: string } from Intl.DateTimeFormat().resolvedOptions().timeZone
   - _Requirements: Performance optimization, Timezone Persistence (Locked)_
 
-- [ ] 11.2 Implement three-block layout enforcement
+- [x] 11.2 Implement three-block layout enforcement
   - Ensure exactly: App Shell chrome, Today Card, Action Preview
   - Add layout validation and error boundaries
   - _Requirements: 2.1, 2.2_

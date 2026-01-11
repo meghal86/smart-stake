@@ -247,83 +247,49 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     try {
-      // Call API to get wallet list
-      // For now, this is a placeholder - in production, call GET /functions/v1/wallets-list
-      const response = await fetch('/api/wallets/list', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Session expired, clear state
-          setConnectedWallets([]);
-          setActiveWalletState(null);
-          setHydratedForUserId(null);
-          return;
-        }
-        // API endpoint doesn't exist yet - this is expected during development
-        console.debug('Wallet list API not available yet, using empty wallet list');
-        setConnectedWallets([]);
-        setHydratedForUserId(session.user.id);
-        return;
-      }
-
-      const data = await response.json() as { wallets?: ServerWallet[] };
-      const wallets = data.wallets ?? [];
-
-      // Transform server data to ConnectedWallet format
-      // Server returns wallets sorted by: is_primary DESC, created_at DESC, id ASC (deterministic ordering)
-      const transformedWallets: ConnectedWallet[] = wallets.map((w: any) => {
-        // Validate chain_namespace format
-        const chainNamespace = w.chain_namespace || 'eip155:1';
-        
-        // Ensure it's a valid CAIP-2 format
-        if (!chainNamespace.match(/^eip155:\d+$/)) {
-          console.warn(`Invalid chain namespace: ${chainNamespace}, using default eip155:1`);
-          return {
-            address: w.address,
-            chainNamespace: 'eip155:1',
-            chain: 'ethereum',
-            supportedNetworks: ['eip155:1'],
-            balancesByNetwork: w.balance_cache || {},
-            guardianScoresByNetwork: w.guardian_scores || {},
-            label: w.label,
-            lastUsed: w.created_at ? new Date(w.created_at) : undefined,
-          };
-        }
-        
-        return {
-          address: w.address,
-          chainNamespace: chainNamespace,
-          chain: caip2ToLegacyChain(chainNamespace),
-          supportedNetworks: [chainNamespace],
-          balancesByNetwork: w.balance_cache || {},
-          guardianScoresByNetwork: w.guardian_scores || {},
-          label: w.label,
-          lastUsed: w.created_at ? new Date(w.created_at) : undefined,
-        };
-      });
-
-      setConnectedWallets(transformedWallets);
+      // In Vite environment, we don't have the wallet list API endpoint yet
+      // For now, use localStorage data only and mark as hydrated
+      console.debug('Wallet hydration: Using localStorage data only (Vite environment)');
+      
+      // Mark as hydrated for this user to prevent repeated attempts
       setHydratedForUserId(session.user.id);
+      
+      // Get wallets from localStorage instead of state to avoid circular dependency
+      const savedWallets = localStorage.getItem('connectedWallets');
+      if (savedWallets) {
+        try {
+          const wallets: ConnectedWallet[] = JSON.parse(savedWallets);
+          
+          if (wallets.length > 0) {
+            const { address: restoredAddress, network: restoredNetwork } = restoreActiveSelection(
+              wallets,
+              [] // Empty server wallets array since we don't have server data
+            );
 
-      // Restore active selection using priority order (Task 10)
-      const { address: restoredAddress, network: restoredNetwork } = restoreActiveSelection(
-        transformedWallets,
-        wallets
-      );
+            if (restoredAddress) {
+              setActiveWalletState(restoredAddress);
+            }
 
-      if (restoredAddress) {
-        setActiveWalletState(restoredAddress);
+            if (restoredNetwork) {
+              setActiveNetworkState(restoredNetwork);
+            }
+          }
+        } catch (parseError) {
+          console.error('Failed to parse saved wallets:', parseError);
+        }
       }
-
-      if (restoredNetwork) {
-        setActiveNetworkState(restoredNetwork);
-      }
+      
+      // TODO: When Supabase Edge Functions are deployed, replace with:
+      // const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      // const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      // const response = await fetch(`${supabaseUrl}/functions/v1/wallets-list`, {
+      //   method: 'GET',
+      //   headers: {
+      //     'Authorization': `Bearer ${session.access_token}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      // });
+      
     } catch (error) {
       console.error('Failed to hydrate wallets from server:', error);
       // Fall back to localStorage data - don't block app loading
@@ -338,7 +304,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (!authLoading) {
       hydrateFromServer();
     }
-  }, [isAuthenticated, session?.user?.id, authLoading, hydrateFromServer]);
+  }, [isAuthenticated, session?.user?.id, authLoading]); // Remove hydrateFromServer from deps
 
   // ============================================================================
   // Save to localStorage on change

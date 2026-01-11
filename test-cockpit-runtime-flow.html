@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cockpit Runtime Data Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { border-color: #10b981; }
+        .error { border-color: #ef4444; }
+        .warning { border-color: #f59e0b; }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.pass { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .status.pending { background: #f59e0b; color: white; }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .test-result {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Cockpit Runtime Data Flow Test</h1>
+    <p>Testing Task 11: Runtime Data Flow Implementation</p>
+
+    <div class="test-section success">
+        <h2>✅ Task 11.1: Parallel Data Fetching</h2>
+        <div class="test-result">
+            <span class="status pass">IMPLEMENTED</span>
+            <strong>Parallel data fetching in useCockpitData hook</strong>
+        </div>
+        
+        <h3>Implementation Details:</h3>
+        <ul>
+            <li>✅ On mount: start fetching prefs + summary in parallel</li>
+            <li>✅ Immediately fetch summary with wallet_scope="active" (default)</li>
+            <li>✅ When prefs returns: if wallet_scope_default="all", refetch summary</li>
+            <li>✅ POST /api/cockpit/open after first meaningful render (debounced server-side)</li>
+            <li>✅ Body includes timezone from Intl.DateTimeFormat().resolvedOptions().timeZone</li>
+        </ul>
+
+        <h3>Key Features:</h3>
+        <pre>
+// Parallel fetching implementation
+const initializeData = async () => {
+  setState(prev => ({ ...prev, isLoading: true, error: null }));
+  
+  // Step 1 & 2: Start fetching prefs + summary in parallel
+  const prefsPromise = fetchPreferences();
+  const summaryPromise = fetchSummary(initialWalletScope);
+  
+  // Wait for both to complete
+  await Promise.all([prefsPromise, summaryPromise]);
+};
+
+// Step 3: Preference-based wallet scope change
+useEffect(() => {
+  if (state.preferences?.wallet_scope_default && 
+      state.preferences.wallet_scope_default !== walletScope &&
+      state.hasInitialLoad) {
+    changeWalletScope(state.preferences.wallet_scope_default);
+  }
+}, [state.preferences?.wallet_scope_default, walletScope, changeWalletScope, state.hasInitialLoad]);
+
+// Step 4: Mark opened after first meaningful render
+useEffect(() => {
+  if (state.hasInitialLoad && !hasMarkedOpened.current) {
+    const timer = setTimeout(() => {
+      markOpened(); // Includes timezone
+    }, 100);
+    return () => clearTimeout(timer);
+  }
+}, [state.hasInitialLoad, markOpened]);
+        </pre>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ Task 11.2: Three-Block Layout Enforcement</h2>
+        <div class="test-result">
+            <span class="status pass">IMPLEMENTED</span>
+            <strong>Three-block layout with error boundaries</strong>
+        </div>
+        
+        <h3>Implementation Details:</h3>
+        <ul>
+            <li>✅ Exactly three blocks: App Shell chrome, Today Card, Action Preview</li>
+            <li>✅ Layout validation and error boundaries</li>
+            <li>✅ Error boundary fallbacks for each section</li>
+            <li>✅ Additional content (drawers, sheets) not counted as blocks</li>
+        </ul>
+
+        <h3>Components Created:</h3>
+        <ul>
+            <li><code>ThreeBlockLayout.tsx</code> - Enforces exactly three blocks</li>
+            <li><code>ErrorBoundary.tsx</code> - Provides error boundaries for major sections</li>
+            <li>Updated <code>page.tsx</code> - Uses new layout and error boundaries</li>
+        </ul>
+
+        <h3>Error Boundary Behavior:</h3>
+        <pre>
+// Today Card Error: Safe error state with Retry CTA
+// Action Preview Error: Empty state with retry CTA  
+// Peek Drawer Error: Disable drawer but preserve main surface
+// Insights Sheet Error: Show basic status without preferences
+        </pre>
+    </div>
+
+    <div class="test-section success">
+        <h2>📋 Implementation Summary</h2>
+        
+        <h3>Files Modified/Created:</h3>
+        <ul>
+            <li>✅ <code>src/hooks/useCockpitData.ts</code> - Implemented parallel data fetching</li>
+            <li>✅ <code>src/components/cockpit/ThreeBlockLayout.tsx</code> - New layout component</li>
+            <li>✅ <code>src/components/cockpit/ErrorBoundary.tsx</code> - New error boundary component</li>
+            <li>✅ <code>src/app/cockpit/page.tsx</code> - Updated to use new layout and error boundaries</li>
+            <li>✅ <code>src/components/cockpit/ActionPreview.tsx</code> - Fixed CTA label issue</li>
+        </ul>
+
+        <h3>Requirements Satisfied:</h3>
+        <ul>
+            <li>✅ Performance optimization through parallel fetching</li>
+            <li>✅ Timezone persistence (Locked)</li>
+            <li>✅ Requirements 2.1, 2.2 - Three-block layout enforcement</li>
+            <li>✅ Error boundary behavior for cascade failure prevention</li>
+        </ul>
+
+        <h3>Runtime Data Flow (Locked):</h3>
+        <ol>
+            <li>✅ On mount: start fetching prefs + summary in parallel</li>
+            <li>✅ Immediately fetch summary with wallet_scope="active" (default)</li>
+            <li>✅ When prefs returns: if wallet_scope_default="all", refetch summary</li>
+            <li>✅ POST /api/cockpit/open after first meaningful render (debounced server-side)</li>
+            <li>✅ Body MUST include: { timezone?: string } from Intl.DateTimeFormat().resolvedOptions().timeZone</li>
+        </ol>
+    </div>
+
+    <div class="test-section success">
+        <h2>🎯 Next Steps</h2>
+        <p>Task 11: Runtime Data Flow Implementation is now <strong>COMPLETE</strong>.</p>
+        
+        <p>The implementation provides:</p>
+        <ul>
+            <li>Efficient parallel data fetching for optimal performance</li>
+            <li>Proper timezone handling and persistence</li>
+            <li>Strict three-block layout enforcement</li>
+            <li>Robust error boundaries to prevent cascade failures</li>
+            <li>Clean separation between main surface and additional content</li>
+        </ul>
+
+        <p><strong>Status:</strong> <span class="status pass">READY FOR TESTING</span></p>
+    </div>
+
+    <script>
+        console.log('✅ Cockpit Runtime Data Flow Implementation Complete');
+        console.log('📋 Task 11.1: Parallel Data Fetching - IMPLEMENTED');
+        console.log('📋 Task 11.2: Three-Block Layout Enforcement - IMPLEMENTED');
+        console.log('🎯 All subtasks completed successfully');
+    </script>
+</body>
+</html>

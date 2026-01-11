@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cockpit Functions Validator</title>
+    <style>
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .container {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 24px;
+            border: 1px solid #334155;
+        }
+        h1 {
+            color: #06b6d4;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-family: inherit;
+        }
+        button {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        button:hover {
+            background: #0891b2;
+        }
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 24px;
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 4px;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        .info { color: #06b6d4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Cockpit Edge Functions Validator</h1>
+        
+        <div class="form-group">
+            <label for="supabaseUrl">Supabase URL:</label>
+            <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co" />
+        </div>
+        
+        <div class="form-group">
+            <label for="anonKey">Supabase Anon Key:</label>
+            <input type="text" id="anonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+        </div>
+        
+        <div class="form-group">
+            <label for="authToken">Auth Token (JWT from logged-in user):</label>
+            <input type="text" id="authToken" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+            <small style="color: #64748b; font-size: 12px;">
+                Get this from browser dev tools → Application → Local Storage → sb-*-auth-token
+            </small>
+        </div>
+        
+        <button onclick="testCockpitSummary()">Test Cockpit Summary</button>
+        <button onclick="testActionsRendered()">Test Actions Rendered</button>
+        <button onclick="testAuthentication()">Test Authentication</button>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        let results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            results.innerHTML = '';
+        }
+        
+        function getConfig() {
+            return {
+                supabaseUrl: document.getElementById('supabaseUrl').value.trim(),
+                anonKey: document.getElementById('anonKey').value.trim(),
+                authToken: document.getElementById('authToken').value.trim()
+            };
+        }
+        
+        function validateConfig(config) {
+            if (!config.supabaseUrl) {
+                log('❌ Supabase URL is required', 'error');
+                return false;
+            }
+            if (!config.anonKey) {
+                log('❌ Supabase Anon Key is required', 'error');
+                return false;
+            }
+            return true;
+        }
+        
+        async function testCockpitSummary() {
+            const config = getConfig();
+            if (!validateConfig(config)) return;
+            
+            log('🧪 Testing cockpit-summary function...', 'info');
+            
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'apikey': config.anonKey,
+                };
+                
+                if (config.authToken) {
+                    headers['Authorization'] = `Bearer ${config.authToken}`;
+                }
+                
+                const response = await fetch(`${config.supabaseUrl}/functions/v1/cockpit-summary?wallet_scope=active`, {
+                    method: 'GET',
+                    headers: headers,
+                });
+                
+                log(`📊 Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const data = await response.json();
+                
+                if (response.ok && data.data) {
+                    log('✅ cockpit-summary is working!', 'success');
+                    log(`📋 Today Card: ${data.data.today_card?.kind}`, 'info');
+                    log(`📋 Actions: ${data.data.action_preview?.length || 0}`, 'info');
+                    log(`📋 Counters: ${JSON.stringify(data.data.counters)}`, 'info');
+                } else {
+                    log(`❌ Error: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testActionsRendered() {
+            const config = getConfig();
+            if (!validateConfig(config)) return;
+            if (!config.authToken) {
+                log('❌ Auth token is required for actions-rendered test', 'error');
+                return;
+            }
+            
+            log('🧪 Testing cockpit-actions-rendered function...', 'info');
+            
+            try {
+                const response = await fetch(`${config.supabaseUrl}/functions/v1/cockpit-actions-rendered`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${config.authToken}`,
+                        'Content-Type': 'application/json',
+                        'apikey': config.anonKey,
+                    },
+                    body: JSON.stringify({
+                        dedupe_keys: ['test:validation:Fix', 'test:validation:Execute']
+                    }),
+                });
+                
+                log(`📊 Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const data = await response.json();
+                
+                if (response.ok && data.data) {
+                    log('✅ cockpit-actions-rendered is working!', 'success');
+                    log(`📋 Updated: ${data.data.updated_count}/${data.data.total_count}`, 'info');
+                } else {
+                    log(`❌ Error: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAuthentication() {
+            const config = getConfig();
+            if (!validateConfig(config)) return;
+            
+            log('🧪 Testing authentication (should return 401)...', 'info');
+            
+            try {
+                const response = await fetch(`${config.supabaseUrl}/functions/v1/cockpit-summary`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': config.anonKey,
+                        // No Authorization header
+                    },
+                });
+                
+                log(`📊 Status: ${response.status}`, 'info');
+                
+                if (response.status === 401) {
+                    log('✅ Authentication is working correctly (401 for unauthenticated)', 'success');
+                } else {
+                    log(`⚠️ Expected 401 but got ${response.status}`, 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            log('🚀 Running all validation tests...', 'info');
+            log('=====================================', 'info');
+            
+            await testCockpitSummary();
+            log('', 'info'); // Empty line
+            await testActionsRendered();
+            log('', 'info'); // Empty line
+            await testAuthentication();
+            
+            log('', 'info');
+            log('📊 All tests completed!', 'success');
+        }
+        
+        // Auto-populate from environment if available
+        window.addEventListener('load', () => {
+            // Try to get values from localStorage or environment
+            const supabaseUrl = localStorage.getItem('supabase-url') || '';
+            const anonKey = localStorage.getItem('supabase-anon-key') || '';
+            
+            if (supabaseUrl) document.getElementById('supabaseUrl').value = supabaseUrl;
+            if (anonKey) document.getElementById('anonKey').value = anonKey;
+            
+            // Save values when they change
+            document.getElementById('supabaseUrl').addEventListener('change', (e) => {
+                localStorage.setItem('supabase-url', e.target.value);
+            });
+            document.getElementById('anonKey').addEventListener('change', (e) => {
+                localStorage.setItem('supabase-anon-key', e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,1 +1,4 @@
 project_id = "rebeznxivaxgserswhbn"
+
+[functions.harvest-recompute-opportunities]
+verify_jwt = false

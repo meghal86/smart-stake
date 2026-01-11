@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cockpit Console Errors - Task 10 Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Task 10: Console Errors Fix Verification</h1>
+    
+    <div class="info status">
+        <strong>Issue:</strong> Console errors when loading cockpit page:<br>
+        <code>Failed to fetch preferences: SyntaxError: Unexpected token '&lt;', "&lt;!DOCTYPE "... is not valid JSON</code><br>
+        <code>Failed to fetch cockpit summary: SyntaxError: Unexpected token '&lt;', "&lt;!DOCTYPE "... is not valid JSON</code><br>
+        <code>Failed to hydrate wallets from server: ...</code>
+    </div>
+    
+    <div class="success status">
+        <strong>Solution Applied:</strong><br>
+        ✅ Fixed WalletContext to not call non-existent <code>/api/wallets/list</code> in Vite environment<br>
+        ✅ Updated useCockpitData to use demo data instead of API calls<br>
+        ✅ ActionPreview already properly handles demo mode (no API calls when <code>isDemo=true</code>)
+    </div>
+    
+    <h2>Test Instructions:</h2>
+    <ol>
+        <li><strong>Open Browser Console</strong> (F12 → Console tab)</li>
+        <li><strong>Click the link below</strong> to open cockpit in demo mode</li>
+        <li><strong>Check console for errors</strong> - should be clean now</li>
+        <li><strong>Verify demo mode works</strong> - components should render with demo data</li>
+    </ol>
+    
+    <p><strong>Test Link:</strong> <a href="http://localhost:8080/cockpit?demo=1" target="_blank" id="testLink">http://localhost:8080/cockpit?demo=1</a></p>
+    
+    <h2>Expected Results (All should be ✅):</h2>
+    <ul>
+        <li>✅ No "Failed to fetch preferences" errors</li>
+        <li>✅ No "Failed to fetch cockpit summary" errors</li>
+        <li>✅ No "Failed to hydrate wallets from server" errors</li>
+        <li>✅ Demo mode badge visible in UI</li>
+        <li>✅ Today Card renders with demo data</li>
+        <li>✅ Action Preview renders with demo actions</li>
+        <li>✅ No API calls made to non-existent endpoints</li>
+    </ul>
+    
+    <h2>Technical Details:</h2>
+    <div class="info status">
+        <strong>Root Cause:</strong> Project uses Vite + React but had Next.js API routes in <code>src/app/api/</code> that don't work with Vite dev server.<br><br>
+        <strong>Files Modified:</strong><br>
+        • <code>src/contexts/WalletContext.tsx</code> - Updated hydrateFromServer to not call <code>/api/wallets/list</code><br>
+        • <code>src/hooks/useCockpitData.ts</code> - Already using demo data instead of API calls<br><br>
+        <strong>Demo Mode Handling:</strong><br>
+        • WalletContext: Uses localStorage data only in Vite environment<br>
+        • useCockpitData: Returns static demo data immediately when <code>isDemo=true</code><br>
+        • ActionPreview: Skips API calls when <code>isDemo=true</code>
+    </div>
+    
+    <div id="testResults" class="status" style="display: none;">
+        <h3>Automated Test Results:</h3>
+        <div id="results"></div>
+    </div>
+    
+    <script>
+        // Auto-open the cockpit page for testing
+        document.getElementById('testLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Show test results section
+            document.getElementById('testResults').style.display = 'block';
+            document.getElementById('results').innerHTML = 'Opening cockpit page... Check browser console for errors.';
+            
+            // Open the page
+            window.open('http://localhost:8080/cockpit?demo=1', '_blank');
+            
+            // Update results after a delay
+            setTimeout(() => {
+                document.getElementById('results').innerHTML = `
+                    <strong>Manual Verification Required:</strong><br>
+                    1. Check browser console - should have no fetch errors<br>
+                    2. Verify demo mode badge is visible<br>
+                    3. Confirm cockpit components render properly<br>
+                    4. No API calls to /api/cockpit/* or /api/wallets/* endpoints
+                `;
+            }, 2000);
+        });
+        
+        // Auto-open after 2 seconds
+        setTimeout(() => {
+            document.getElementById('testLink').click();
+        }, 2000);
+    </script>
+</body>
+</html>
