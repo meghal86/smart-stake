@@ -1,32 +1,39 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { SessionState, HeaderContext } from '@/lib/header'
+import type { SessionState, HeaderContext, UserProfile } from '@/lib/header'
 import { Button } from '@/components/ui/button'
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { getTheme, nextTheme, setTheme, type Theme } from '@/lib/theme'
 import { useState, useEffect } from 'react'
+import { ProfileDropdown } from './ProfileDropdown'
+import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
+import { handleSignOut } from '@/lib/header'
 
 export interface ActionsSectionProps {
   sessionState: SessionState
   context: HeaderContext
+  user?: UserProfile
 }
 
 /**
  * ActionsSection - Right section of GlobalHeader
  * 
  * Renders session-state-specific actions:
- * - S0_GUEST: Sign In + Connect Wallet
+ * - S0_GUEST: Sign In (ghost) + Connect Wallet (primary)
  * - S1_ACCOUNT: Profile + Add Wallet + Connect Wallet
- * - S2_WALLET: WalletPill + Save Wallet + Sign In
+ * - S2_WALLET: WalletPill (non-interactive) + Save Wallet + Sign In
  * - S3_BOTH: WalletPill + Profile
  * 
  * Reserved widths prevent layout shift:
  * - Wallet slot: 180px desktop / 140px mobile
  * - Profile slot: 40px
  */
-export function ActionsSection({ sessionState, context }: ActionsSectionProps) {
+export function ActionsSection({ sessionState, context, user }: ActionsSectionProps) {
   const [theme, setThemeState] = useState<Theme>('system')
+  const router = useRouter()
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     setThemeState(getTheme())
@@ -46,6 +53,24 @@ export function ActionsSection({ sessionState, context }: ActionsSectionProps) {
         return <Moon className="h-4 w-4" />
       case 'system':
         return <Monitor className="h-4 w-4" />
+    }
+  }
+
+  const handleProfileClick = () => {
+    router.push('/profile')
+  }
+
+  const handleSettingsClick = () => {
+    router.push('/settings')
+  }
+
+  const handleSignOutClick = async () => {
+    try {
+      await handleSignOut(queryClient)
+      // After sign out, redirect to home
+      router.push('/')
+    } catch (error) {
+      console.error('Sign out failed:', error)
     }
   }
 
@@ -106,11 +131,15 @@ export function ActionsSection({ sessionState, context }: ActionsSectionProps) {
             Connect Wallet
           </Button>
 
-          {/* Profile dropdown placeholder */}
-          <div
-            className="h-10 w-10 rounded-full bg-slate-700"
-            style={{ width: 'var(--profile-slot-width, 40px)' }}
-          />
+          {/* Profile dropdown */}
+          {user && (
+            <ProfileDropdown
+              user={user}
+              onProfileClick={handleProfileClick}
+              onSettingsClick={handleSettingsClick}
+              onSignOutClick={handleSignOutClick}
+            />
+          )}
         </>
       )}
 
@@ -171,11 +200,15 @@ export function ActionsSection({ sessionState, context }: ActionsSectionProps) {
             </span>
           </div>
 
-          {/* Profile dropdown placeholder - reserved width */}
-          <div
-            className="h-10 w-10 rounded-full bg-slate-700"
-            style={{ width: 'var(--profile-slot-width, 40px)' }}
-          />
+          {/* Profile dropdown */}
+          {user && (
+            <ProfileDropdown
+              user={user}
+              onProfileClick={handleProfileClick}
+              onSettingsClick={handleSettingsClick}
+              onSignOutClick={handleSignOutClick}
+            />
+          )}
         </>
       )}
     </div>

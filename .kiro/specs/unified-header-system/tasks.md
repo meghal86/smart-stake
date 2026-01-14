@@ -113,18 +113,18 @@ This implementation plan creates a world-class fintech header that integrates se
 
 ### 6. Profile Dropdown (S1/S3 only)
 
-- [ ] 6. Profile dropdown
+- [x] 6. Profile dropdown
   - Create user profile dropdown with avatar, displayName + emailMasked only (never raw email)
   - Implement dropdown menu (Profile, Settings, Sign Out)
   - Add ARIA labels and keyboard navigation
   - Implement avatar fallback and sanitization
   - _Requirements: 2.1, 9.1, 9.2, 9.4, 9.6, 13.5, 13.6_
 
-- [ ] 6.1 Write property test for authentication state accuracy
+- [x] 6.1 Write property test for authentication state accuracy
   - **Property 6: Authentication State Accuracy**
   - **Validates: Requirements 2.1, 2.1.5, 8.4, 8.5, 14.4, 14.5**
 
-- [ ] 6.2 Implement sign out behavior (S3 → S2 data/cache handling)
+- [x] 6.2 Implement sign out behavior (S3 → S2 data/cache handling)
   - **Sign Out Lock**: Supabase sign out clears JWT/session only; Wallet (wagmi) stays connected
   - Clear registry query cache: queryClient.removeQueries(['wallets','registry']) to prevent "ghost primary wallet"
   - Header transitions S3 → S2 showing wallet pill + "Save wallet" if registry no longer available

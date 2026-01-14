@@ -2,7 +2,7 @@
  * Unified Header System Utilities
  * 
  * Core utilities for session state derivation, route context mapping,
- * CAIP-2 conversions, and wallet pill model building.
+ * CAIP-2 conversions, wallet pill model building, and sign out handling.
  */
 
 // Re-export types for convenience
@@ -20,6 +20,13 @@ export type {
   MobileOverflowMenuProps,
   HeaderTelemetryEvents,
 } from '@/types/header';
+
+// Re-export sign out utilities
+export {
+  handleSignOut,
+  shouldShowSaveWalletAfterSignOut,
+  getSessionStateAfterSignOut,
+} from './sign-out';
 
 import type {
   SessionState,
