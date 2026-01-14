@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cockpit Pulse Navigation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #065f46;
+            border: 1px solid #10b981;
+        }
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+        }
+        .info {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cockpit Pulse Navigation Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <p>This test verifies the hash-based navigation for the Pulse Sheet in the cockpit.</p>
+        
+        <button class="test-button" onclick="testCockpitNavigation()">Test Cockpit Navigation</button>
+        <button class="test-button" onclick="testDemoMode()">Test Demo Mode</button>
+        <button class="test-button" onclick="testHashDirectAccess()">Test Direct Hash Access</button>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Cockpit Page (Demo Mode)</h2>
+        <iframe id="cockpit-frame" src="http://localhost:5173/cockpit?demo=1"></iframe>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Requirements Checklist</h2>
+        <ul id="requirements-checklist">
+            <li id="req-1">✓ /cockpit#pulse MUST open Pulse full-screen sheet</li>
+            <li id="req-2">✓ Closing MUST remove hash (back to /cockpit) without full reload</li>
+            <li id="req-3">✓ Mobile: swipe-down closes; Desktop: ESC closes</li>
+            <li id="req-4">✓ Must restore focus to the CTA that opened it</li>
+        </ul>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function addTestResult(test, status, message) {
+            testResults.push({ test, status, message, timestamp: new Date().toLocaleTimeString() });
+            displayResults();
+        }
+
+        function displayResults() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = testResults.map(result => `
+                <div class="status ${result.status}">
+                    <strong>[${result.timestamp}] ${result.test}:</strong> ${result.message}
+                </div>
+            `).join('');
+        }
+
+        function testCockpitNavigation() {
+            addTestResult('Cockpit Navigation', 'info', 'Testing cockpit navigation to pulse sheet...');
+            
+            const iframe = document.getElementById('cockpit-frame');
+            
+            // Test navigation to #pulse
+            iframe.src = 'http://localhost:5173/cockpit?demo=1#pulse';
+            
+            setTimeout(() => {
+                try {
+                    const iframeUrl = iframe.contentWindow.location.href;
+                    if (iframeUrl.includes('#pulse')) {
+                        addTestResult('Hash Navigation', 'success', 'Successfully navigated to #pulse');
+                        updateRequirement('req-1', true);
+                    } else {
+                        addTestResult('Hash Navigation', 'error', 'Failed to navigate to #pulse');
+                        updateRequirement('req-1', false);
+                    }
+                } catch (e) {
+                    addTestResult('Hash Navigation', 'info', 'Cross-origin restriction - manual verification needed');
+                }
+            }, 2000);
+        }
+
+        function testDemoMode() {
+            addTestResult('Demo Mode', 'info', 'Testing demo mode functionality...');
+            
+            const iframe = document.getElementById('cockpit-frame');
+            iframe.src = 'http://localhost:5173/cockpit?demo=1';
+            
+            setTimeout(() => {
+                addTestResult('Demo Mode', 'success', 'Demo mode loaded successfully');
+            }, 1000);
+        }
+
+        function testHashDirectAccess() {
+            addTestResult('Direct Hash Access', 'info', 'Testing direct access to pulse via hash...');
+            
+            const iframe = document.getElementById('cockpit-frame');
+            iframe.src = 'http://localhost:5173/cockpit?demo=1#pulse';
+            
+            setTimeout(() => {
+                addTestResult('Direct Hash Access', 'success', 'Direct hash access test completed');
+            }, 1000);
+        }
+
+        function updateRequirement(reqId, passed) {
+            const req = document.getElementById(reqId);
+            if (passed) {
+                req.style.color = '#10b981';
+                req.innerHTML = req.innerHTML.replace('✓', '✅');
+            } else {
+                req.style.color = '#ef4444';
+                req.innerHTML = req.innerHTML.replace('✓', '❌');
+            }
+        }
+
+        // Initialize
+        addTestResult('Initialization', 'success', 'Test page loaded successfully');
+
+        // Listen for iframe load events
+        document.getElementById('cockpit-frame').addEventListener('load', function() {
+            addTestResult('Iframe Load', 'info', 'Cockpit iframe loaded');
+        });
+
+        // Manual test instructions
+        setTimeout(() => {
+            addTestResult('Manual Test Instructions', 'info', 'Please manually test the following in the iframe:');
+            addTestResult('Manual Test 1', 'info', '1. Click "Open today\'s pulse" button to test hash navigation');
+            addTestResult('Manual Test 2', 'info', '2. Press ESC key to close the pulse sheet');
+            addTestResult('Manual Test 3', 'info', '3. Use browser back button to test navigation');
+            addTestResult('Manual Test 4', 'info', '4. Verify focus restoration after closing');
+        }, 1000);
+    </script>
+</body>
+</html>

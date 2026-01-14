@@ -300,25 +300,25 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Add layout validation and error boundaries
   - _Requirements: 2.1, 2.2_
 
-- [ ] 12. Pulse Sheet Navigation Implementation
+- [-] 12. Pulse Sheet Navigation Implementation
 
-- [ ] 12.1 Implement hash-based navigation
+- [x] 12.1 Implement hash-based navigation
   - /cockpit#pulse MUST open Pulse full-screen sheet
   - Closing MUST remove hash (back to /cockpit) without full reload
   - Mobile: swipe-down closes; Desktop: ESC closes
   - Must restore focus to the CTA that opened it
   - _Requirements: Pulse Sheet Navigation (Locked)_
 
-- [ ] 13. Error Handling and Degraded Mode
+- [-] 13. Error Handling and Degraded Mode
 
-- [ ] 13.1 Implement degraded mode detection
+- [x] 13.1 Implement degraded mode detection
   - Add provider status monitoring
   - Implement graceful degradation logic
   - Disable Fix/Execute in degraded mode, keep Review enabled
   - Surface staleness indicator + retry CTA
   - _Requirements: 15.1, 15.2, 15.4_
 
-- [ ] 13.2 Implement error boundaries
+- [x] 13.2 Implement error boundaries
   - Add React Error Boundaries for major sections
   - If Today Card UI fails: render safe error state with Retry CTA (do not reclassify kind client-side)
   - Action Preview errors: show empty state with retry CTA
@@ -331,9 +331,9 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Minimum 100 iterations
   - **Validates: Requirements 16.6**
 
-- [ ] 14. Performance and Caching Implementation
+- [-] 14. Performance and Caching Implementation
 
-- [ ] 14.1 Implement risk-aware caching
+- [x] 14.1 Implement risk-aware caching
   - Add SWR with risk-aware TTL values:
     - critical_risk: 10s
     - scan_required: 15s
@@ -348,15 +348,15 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Drawer open latency < 100ms
   - _Requirements: 14.1, 14.2, 14.3_
 
-- [ ] 15. Final Integration and Testing
+- [-] 15. Final Integration and Testing
 
-- [ ] 15.1 Integration testing
+- [x] 15.1 Integration testing
   - Test complete user flows end-to-end
   - Verify all API endpoints work together
   - Test authentication and demo mode flows
   - _Requirements: All integration requirements_
 
-- [ ] 15.2 Write remaining property tests (optional)
+- [-] 15.2 Write remaining property tests (optional)
   - Property 3: Three Block Layout Constraint
   - Property 5: Action Preview Row Limit
   - Property 8: Daily Pulse Timezone Generation

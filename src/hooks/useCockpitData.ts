@@ -2,7 +2,7 @@
  * Cockpit Data Hook
  * 
  * Provides data fetching and state management for cockpit components.
- * Implements the runtime data flow specified in the design document.
+ * Implements the runtime data flow specified in the design document with risk-aware caching.
  * 
  * Runtime Data Flow (Locked):
  * 1. On mount: start fetching prefs + summary in parallel
@@ -10,10 +10,32 @@
  * 3. When prefs returns: if wallet_scope_default="all", refetch summary
  * 4. POST /api/cockpit/open after first meaningful render (debounced server-side)
  * 5. Body MUST include: { timezone?: string } from Intl.DateTimeFormat().resolvedOptions().timeZone
+ * 
+ * Caching Strategy:
+ * - Uses React Query with risk-aware TTL values
+ * - Critical risk: 10s cache, scan required: 15s, pending actions: 20s, healthy: 60s
+ * - Automatic cache invalidation on risk level changes
+ * - Background refetch for high-risk states
+ * 
+ * Requirements: 14.4, 14.5
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { CockpitSummaryResponse } from '@/lib/cockpit/types';
+import { 
+  getCockpitSummaryKey, 
+  getCockpitPreferencesKey,
+  getRiskAwareCacheConfig,
+  getCacheInvalidationConfig,
+  DEFAULT_CACHE_CONFIG,
+  trackCachePerformance,
+  warmCache
+} from '@/lib/cockpit/cache';
+import { 
+  invalidateCockpitCache,
+  setupBackgroundSync
+} from '@/lib/cockpit/query-client';
 
 // ============================================================================
 // Types
@@ -40,6 +62,8 @@ interface UseCockpitDataOptions {
   isDemo?: boolean;
   /** Initial wallet scope */
   initialWalletScope?: 'active' | 'all';
+  /** User ID for cache keys */
+  userId?: string | null;
 }
 
 // ============================================================================
@@ -138,180 +162,143 @@ const DEMO_PREFERENCES: CockpitPreferences = {
 };
 
 // ============================================================================
-// Hook Implementation
+// Hook Implementation with Risk-Aware Caching
 // ============================================================================
 
 export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
-  const { isDemo = false, initialWalletScope = 'active' } = options;
+  const { isDemo = false, initialWalletScope = 'active', userId = null } = options;
   
-  const [state, setState] = useState<CockpitDataState>({
-    summary: null,
-    preferences: null,
-    isLoading: true,
-    error: null,
-    hasInitialLoad: false,
-  });
-  
+  const queryClient = useQueryClient();
   const [walletScope, setWalletScope] = useState<'active' | 'all'>(initialWalletScope);
   const hasMarkedOpened = useRef(false);
+  const backgroundSyncCleanup = useRef<(() => void) | null>(null);
   
-  // Fetch summary data
-  const fetchSummary = useCallback(async (scope: 'active' | 'all' = walletScope) => {
-    if (isDemo) {
-      // Demo mode: return static data immediately
-      setState(prev => ({
-        ...prev,
-        summary: { ...DEMO_SUMMARY, wallet_scope: scope },
-        isLoading: false,
-        error: null,
-        hasInitialLoad: true,
-      }));
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/cockpit/summary?wallet_scope=${scope}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+  // ============================================================================
+  // Query Configurations
+  // ============================================================================
+  
+  // Summary query with risk-aware caching
+  const summaryQuery = useQuery({
+    queryKey: getCockpitSummaryKey(userId, walletScope, isDemo),
+    queryFn: async () => {
+      if (isDemo) {
+        // Demo mode: return static data immediately
+        trackCachePerformance('hit', 'demo-summary');
+        return { ...DEMO_SUMMARY, wallet_scope: walletScope };
+      }
       
-      if (!response.ok) {
-        // If API endpoint doesn't exist (404), fall back to demo data
-        if (response.status === 404) {
-          console.warn('Cockpit summary API not available, using demo data');
-          setState(prev => ({
-            ...prev,
-            summary: { ...DEMO_SUMMARY, wallet_scope: scope },
-            isLoading: false,
-            error: null,
-            hasInitialLoad: true,
-          }));
-          return;
+      const startTime = Date.now();
+      
+      try {
+        const response = await fetch(`/api/cockpit/summary?wallet_scope=${walletScope}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          // If API endpoint doesn't exist (404), fall back to demo data
+          if (response.status === 404) {
+            console.warn('Cockpit summary API not available, using demo data');
+            trackCachePerformance('miss', 'summary-fallback', Date.now() - startTime);
+            return { ...DEMO_SUMMARY, wallet_scope: walletScope };
+          }
+          throw new Error(`Failed to fetch summary: ${response.status}`);
         }
-        throw new Error(`Failed to fetch summary: ${response.status}`);
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        // If response is not JSON (likely HTML error page), fall back to demo data
-        console.warn('Cockpit summary API returned non-JSON response, using demo data');
-        setState(prev => ({
-          ...prev,
-          summary: { ...DEMO_SUMMARY, wallet_scope: scope },
-          isLoading: false,
-          error: null,
-          hasInitialLoad: true,
-        }));
-        return;
-      }
-      
-      const data: CockpitSummaryResponse = await response.json();
-      
-      // Note: CockpitSummaryResponse.error is always null in success case
-      // Error responses would have different structure or throw before this point
-      
-      setState(prev => ({
-        ...prev,
-        summary: data.data,
-        isLoading: false,
-        error: null,
-        hasInitialLoad: true,
-      }));
-    } catch (error) {
-      console.error('Failed to fetch cockpit summary:', error);
-      // Fall back to demo data on any error
-      console.warn('Using demo data due to API error');
-      setState(prev => ({
-        ...prev,
-        summary: { ...DEMO_SUMMARY, wallet_scope: scope },
-        isLoading: false,
-        error: null, // Don't show error, just use demo data
-        hasInitialLoad: true,
-      }));
-    }
-  }, [isDemo, walletScope]);
-  
-  // Fetch preferences
-  const fetchPreferences = useCallback(async () => {
-    if (isDemo) {
-      // Demo mode: return static preferences
-      setState(prev => ({
-        ...prev,
-        preferences: DEMO_PREFERENCES,
-      }));
-      return;
-    }
-    
-    try {
-      const response = await fetch('/api/cockpit/prefs', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        // If API endpoint doesn't exist (404), fall back to demo preferences
-        if (response.status === 404) {
-          console.warn('Cockpit prefs API not available, using demo preferences');
-          setState(prev => ({
-            ...prev,
-            preferences: DEMO_PREFERENCES,
-          }));
-          return;
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          // If response is not JSON (likely HTML error page), fall back to demo data
+          console.warn('Cockpit summary API returned non-JSON response, using demo data');
+          trackCachePerformance('miss', 'summary-fallback', Date.now() - startTime);
+          return { ...DEMO_SUMMARY, wallet_scope: walletScope };
         }
-        throw new Error(`Failed to fetch preferences: ${response.status}`);
+        
+        const data: CockpitSummaryResponse = await response.json();
+        
+        trackCachePerformance('hit', 'summary-api', Date.now() - startTime);
+        return data.data;
+      } catch (error) {
+        console.error('Failed to fetch cockpit summary:', error);
+        // Fall back to demo data on any error
+        console.warn('Using demo data due to API error');
+        trackCachePerformance('miss', 'summary-error', Date.now() - startTime);
+        return { ...DEMO_SUMMARY, wallet_scope: walletScope };
       }
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        // If response is not JSON (likely HTML error page), fall back to demo preferences
-        console.warn('Cockpit prefs API returned non-JSON response, using demo preferences');
-        setState(prev => ({
-          ...prev,
-          preferences: DEMO_PREFERENCES,
-        }));
-        return;
-      }
-      
-      const data = await response.json();
-      
-      // Handle API error responses
-      if (data.error) {
-        throw new Error(data.error.message || 'Failed to fetch preferences');
-      }
-      
-      setState(prev => ({
-        ...prev,
-        preferences: data.data,
-      }));
-    } catch (error) {
-      console.error('Failed to fetch preferences:', error);
-      // Don't set error state for preferences - use defaults
-      console.warn('Using demo preferences due to API error');
-      setState(prev => ({
-        ...prev,
-        preferences: DEMO_PREFERENCES,
-      }));
-    }
-  }, [isDemo]);
+    },
+    ...getRiskAwareCacheConfig(undefined), // Will be updated when we get the data
+    enabled: true,
+  });
   
-  // Update preferences
-  const updatePreferences = useCallback(async (updates: Partial<CockpitPreferences>) => {
-    if (isDemo) {
-      // Demo mode: update local state only
-      setState(prev => ({
-        ...prev,
-        preferences: prev.preferences ? { ...prev.preferences, ...updates } : null,
-      }));
-      return;
-    }
-    
-    try {
+  // Preferences query
+  const preferencesQuery = useQuery({
+    queryKey: getCockpitPreferencesKey(userId, isDemo),
+    queryFn: async () => {
+      if (isDemo) {
+        trackCachePerformance('hit', 'demo-preferences');
+        return DEMO_PREFERENCES;
+      }
+      
+      const startTime = Date.now();
+      
+      try {
+        const response = await fetch('/api/cockpit/prefs', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.warn('Cockpit prefs API not available, using demo preferences');
+            trackCachePerformance('miss', 'prefs-fallback', Date.now() - startTime);
+            return DEMO_PREFERENCES;
+          }
+          throw new Error(`Failed to fetch preferences: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.warn('Cockpit prefs API returned non-JSON response, using demo preferences');
+          trackCachePerformance('miss', 'prefs-fallback', Date.now() - startTime);
+          return DEMO_PREFERENCES;
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error.message || 'Failed to fetch preferences');
+        }
+        
+        trackCachePerformance('hit', 'prefs-api', Date.now() - startTime);
+        return data.data;
+      } catch (error) {
+        console.error('Failed to fetch preferences:', error);
+        console.warn('Using demo preferences due to API error');
+        trackCachePerformance('miss', 'prefs-error', Date.now() - startTime);
+        return DEMO_PREFERENCES;
+      }
+    },
+    ...DEFAULT_CACHE_CONFIG.preferences,
+    enabled: true,
+  });
+  
+  // ============================================================================
+  // Mutations
+  // ============================================================================
+  
+  // Update preferences mutation
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (updates: Partial<CockpitPreferences>) => {
+      if (isDemo) {
+        // Demo mode: simulate success
+        return { ...DEMO_PREFERENCES, ...updates };
+      }
+      
       const response = await fetch('/api/cockpit/prefs', {
         method: 'POST',
         credentials: 'include',
@@ -322,57 +309,50 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
       });
       
       if (!response.ok) {
-        // If API endpoint doesn't exist (404), just update local state
         if (response.status === 404) {
           console.warn('Cockpit prefs update API not available, updating locally only');
-          setState(prev => ({
-            ...prev,
-            preferences: prev.preferences ? { ...prev.preferences, ...updates } : null,
-          }));
-          return;
+          return { ...preferencesQuery.data, ...updates };
         }
         throw new Error(`Failed to update preferences: ${response.status}`);
       }
       
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        // If response is not JSON, just update local state
         console.warn('Cockpit prefs update API returned non-JSON response, updating locally only');
-        setState(prev => ({
-          ...prev,
-          preferences: prev.preferences ? { ...prev.preferences, ...updates } : null,
-        }));
-        return;
+        return { ...preferencesQuery.data, ...updates };
       }
       
       const data = await response.json();
       
-      // Handle API error responses
       if (data.error) {
         throw new Error(data.error.message || 'Failed to update preferences');
       }
       
-      setState(prev => ({
-        ...prev,
-        preferences: data.data,
-      }));
-    } catch (error) {
+      return data.data;
+    },
+    onSuccess: (data) => {
+      // Update cache optimistically
+      queryClient.setQueryData(getCockpitPreferencesKey(userId, isDemo), data);
+    },
+    onError: (error, variables) => {
       console.error('Failed to update preferences:', error);
       // Optimistically update local state anyway
       console.warn('Updating preferences locally due to API error');
-      setState(prev => ({
-        ...prev,
-        preferences: prev.preferences ? { ...prev.preferences, ...updates } : null,
-      }));
-    }
-  }, [isDemo]);
+      const currentData = queryClient.getQueryData(getCockpitPreferencesKey(userId, isDemo));
+      if (currentData) {
+        queryClient.setQueryData(
+          getCockpitPreferencesKey(userId, isDemo), 
+          { ...currentData, ...variables }
+        );
+      }
+    },
+  });
   
-  // Mark cockpit as opened
-  const markOpened = useCallback(async () => {
-    if (isDemo || hasMarkedOpened.current) return;
-    
-    try {
-      // Get timezone from browser
+  // Mark opened mutation
+  const markOpenedMutation = useMutation({
+    mutationFn: async () => {
+      if (isDemo) return { ok: true };
+      
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       
       const response = await fetch('/api/cockpit/open', {
@@ -385,75 +365,142 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
       });
       
       if (response.ok) {
-        hasMarkedOpened.current = true;
+        return { ok: true };
       } else if (response.status === 404) {
-        // API endpoint doesn't exist yet, that's okay
         console.warn('Cockpit open API not available yet');
-        hasMarkedOpened.current = true;
+        return { ok: true };
       }
-    } catch (error) {
-      console.warn('Failed to mark cockpit as opened:', error);
-      // Don't prevent the app from working if this fails
+      
+      throw new Error(`Failed to mark opened: ${response.status}`);
+    },
+    onSuccess: () => {
       hasMarkedOpened.current = true;
-    }
-  }, [isDemo]);
+    },
+    onError: (error) => {
+      console.warn('Failed to mark cockpit as opened:', error);
+      hasMarkedOpened.current = true; // Don't prevent app from working
+    },
+  });
   
-  // Change wallet scope
-  const changeWalletScope = useCallback((scope: 'active' | 'all') => {
-    setWalletScope(scope);
-    fetchSummary(scope);
-  }, [fetchSummary]);
+  // ============================================================================
+  // Effects for Risk-Aware Caching
+  // ============================================================================
   
-  // Initial data fetch - implements parallel fetching
+  // Update cache configuration when Today Card kind changes
   useEffect(() => {
-    const initializeData = async () => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+    if (summaryQuery.data?.today_card?.kind) {
+      const todayCardKind = summaryQuery.data.today_card.kind;
       
-      // Step 1 & 2: Start fetching prefs + summary in parallel
-      // Immediately fetch summary with wallet_scope="active" (default)
-      const prefsPromise = fetchPreferences();
-      const summaryPromise = fetchSummary(initialWalletScope);
+      // Update query configuration based on risk level
+      const newConfig = getRiskAwareCacheConfig(todayCardKind);
+      const invalidationConfig = getCacheInvalidationConfig(todayCardKind);
       
-      // Wait for both to complete
-      await Promise.all([prefsPromise, summaryPromise]);
-    };
+      // Setup background sync for high-risk states
+      if (backgroundSyncCleanup.current) {
+        backgroundSyncCleanup.current();
+      }
+      
+      if (userId) {
+        backgroundSyncCleanup.current = setupBackgroundSync(
+          queryClient, 
+          userId, 
+          todayCardKind
+        );
+      }
+      
+      // Invalidate cache if risk level changed significantly
+      const previousData = queryClient.getQueryData(
+        getCockpitSummaryKey(userId, walletScope, isDemo)
+      ) as any;
+      
+      if (previousData?.today_card?.kind && 
+          previousData.today_card.kind !== todayCardKind && 
+          userId) {
+        invalidateCockpitCache(
+          queryClient, 
+          userId, 
+          todayCardKind, 
+          previousData.today_card.kind
+        );
+      }
+    }
     
-    initializeData();
-  }, [fetchPreferences, fetchSummary, initialWalletScope]);
+    return () => {
+      if (backgroundSyncCleanup.current) {
+        backgroundSyncCleanup.current();
+      }
+    };
+  }, [summaryQuery.data?.today_card?.kind, queryClient, userId, walletScope, isDemo]);
   
   // Step 3: When prefs returns: if wallet_scope_default="all", refetch summary
   useEffect(() => {
-    if (state.preferences?.wallet_scope_default && 
-        state.preferences.wallet_scope_default !== walletScope &&
-        state.hasInitialLoad) {
-      changeWalletScope(state.preferences.wallet_scope_default);
+    if (preferencesQuery.data?.wallet_scope_default && 
+        preferencesQuery.data.wallet_scope_default !== walletScope &&
+        !preferencesQuery.isLoading) {
+      setWalletScope(preferencesQuery.data.wallet_scope_default);
     }
-  }, [state.preferences?.wallet_scope_default, walletScope, changeWalletScope, state.hasInitialLoad]);
+  }, [preferencesQuery.data?.wallet_scope_default, walletScope, preferencesQuery.isLoading]);
   
   // Step 4: POST /api/cockpit/open after first meaningful render
   useEffect(() => {
-    if (state.hasInitialLoad && !hasMarkedOpened.current) {
+    if (summaryQuery.data && !hasMarkedOpened.current && !markOpenedMutation.isPending) {
       // Use setTimeout to ensure this happens after render
       const timer = setTimeout(() => {
-        markOpened();
+        markOpenedMutation.mutate();
       }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [state.hasInitialLoad, markOpened]);
+  }, [summaryQuery.data, markOpenedMutation]);
+  
+  // Warm cache on mount for better performance
+  useEffect(() => {
+    if (userId && !isDemo) {
+      warmCache(queryClient, userId, walletScope);
+    }
+  }, [queryClient, userId, walletScope, isDemo]);
+  
+  // ============================================================================
+  // Actions
+  // ============================================================================
+  
+  const changeWalletScope = useCallback((scope: 'active' | 'all') => {
+    setWalletScope(scope);
+    // React Query will automatically refetch with new key
+  }, []);
+  
+  const updatePreferences = useCallback((updates: Partial<CockpitPreferences>) => {
+    updatePreferencesMutation.mutate(updates);
+  }, [updatePreferencesMutation]);
+  
+  const markOpened = useCallback(() => {
+    if (!hasMarkedOpened.current) {
+      markOpenedMutation.mutate();
+    }
+  }, [markOpenedMutation]);
+  
+  const refetch = useCallback(() => {
+    summaryQuery.refetch();
+  }, [summaryQuery]);
   
   return {
     // Data
-    summary: state.summary,
-    preferences: state.preferences,
+    summary: summaryQuery.data || null,
+    preferences: preferencesQuery.data || null,
     
     // State
-    isLoading: state.isLoading,
-    error: state.error,
+    isLoading: summaryQuery.isLoading || preferencesQuery.isLoading,
+    error: summaryQuery.error?.message || preferencesQuery.error?.message || null,
     walletScope,
     
+    // Cache info for debugging
+    isSummaryStale: summaryQuery.isStale,
+    isPreferencesStale: preferencesQuery.isStale,
+    lastSummaryFetch: summaryQuery.dataUpdatedAt,
+    lastPreferencesFetch: preferencesQuery.dataUpdatedAt,
+    
     // Actions
-    refetch: () => fetchSummary(),
+    refetch,
     changeWalletScope,
     updatePreferences,
     markOpened,

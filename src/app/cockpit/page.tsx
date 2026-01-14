@@ -1,27 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, lazy, memo, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { TodayCard } from '@/components/cockpit/TodayCard';
 import { ActionPreview } from '@/components/cockpit/ActionPreview';
-import { PeekDrawer } from '@/components/cockpit/PeekDrawer';
-import { InsightsSheet } from '@/components/cockpit/InsightsSheet';
 import { ThreeBlockLayout } from '@/components/cockpit/ThreeBlockLayout';
+import { StalenessIndicatorBanner } from '@/components/cockpit/StalenessIndicator';
 import { 
   TodayCardErrorBoundary, 
   ActionPreviewErrorBoundary,
   PeekDrawerErrorBoundary,
   InsightsSheetErrorBoundary 
 } from '@/components/cockpit/ErrorBoundary';
+import { CockpitQueryProvider } from '@/components/cockpit/CockpitQueryProvider';
 import { useCockpitData } from '@/hooks/useCockpitData';
+import { usePulseData } from '@/hooks/usePulseData';
+import { useHashNavigation } from '@/hooks/useHashNavigation';
 import { createDefaultSections } from '@/components/cockpit/PeekDrawer';
+import { 
+  preloadCriticalResources, 
+  useFirstMeaningfulPaint,
+  getDevicePerformanceTier,
+  applyDeviceOptimizations
+} from '@/lib/cockpit/performance';
 
 // ============================================================================
-// Demo Data Helpers
+// Lazy Loaded Components for Performance
 // ============================================================================
 
-const getDemoDrawerSections = () => {
+const PeekDrawer = lazy(() => import('@/components/cockpit/PeekDrawer'));
+const InsightsSheet = lazy(() => import('@/components/cockpit/InsightsSheet'));
+const PulseSheet = lazy(() => import('@/components/cockpit/PulseSheet'));
+const PerformanceMonitor = lazy(() => import('@/components/cockpit/PerformanceMonitor'));
+
+// ============================================================================
+// Optimized Demo Data Helpers
+// ============================================================================
+
+const getDemoDrawerSections = memo(() => {
   const sections = createDefaultSections();
   
   // Add some demo items to sections
@@ -48,7 +65,7 @@ const getDemoDrawerSections = () => {
   ];
   
   return sections;
-};
+});
 
 const getDemoCoverageInfo = () => ({
   wallets: 3,
@@ -64,10 +81,10 @@ const getDemoPreferences = () => ({
   notif_cap_per_day: 3
 });
 
-const getDrawerSections = () => {
+const getDrawerSections = memo(() => {
   // In a real implementation, this would extract sections from the data
   return createDefaultSections();
-};
+});
 
 const getCoverageInfo = () => ({
   wallets: 0,
@@ -140,6 +157,27 @@ export default function CockpitPage() {
     initialWalletScope: 'active'
   });
 
+  // Use pulse data hook
+  const {
+    pulseData,
+    isLoading: pulseLoading,
+    error: pulseError,
+    refetch: refetchPulse
+  } = usePulseData({
+    walletScope: preferences?.wallet_scope_default || 'active',
+    isDemo,
+    enabled: !isDemo, // Only fetch if not in demo mode
+  });
+
+  // Hash navigation for pulse sheet
+  const {
+    isOpen: pulseSheetOpen,
+    openSheet: openPulseSheet,
+    closeSheet: closePulseSheet,
+  } = useHashNavigation({
+    targetHash: 'pulse',
+  });
+
   // Show loading state while checking authentication
   if (!sessionEstablished || loading) {
     return (
@@ -168,7 +206,16 @@ export default function CockpitPage() {
 
   // Three-block layout with error boundaries
   return (
-    <ThreeBlockLayout
+    <div className="min-h-screen bg-slate-950">
+      {/* Staleness Indicator Banner */}
+      {summary?.provider_status && (
+        <StalenessIndicatorBanner
+          providerStatus={summary.provider_status}
+          onRetry={refetch}
+        />
+      )}
+      
+      <ThreeBlockLayout
       todayCard={
         <TodayCardErrorBoundary onRetry={refetch}>
           <TodayCard 
@@ -218,8 +265,19 @@ export default function CockpitPage() {
               error={error}
             />
           </InsightsSheetErrorBoundary>
+
+          {/* Pulse Sheet - Hash-based navigation */}
+          <PulseSheet
+            isOpen={pulseSheetOpen}
+            onClose={closePulseSheet}
+            pulseData={pulseData}
+            isLoading={pulseLoading}
+            error={pulseError}
+            isDemo={isDemo}
+          />
         </>
       }
     />
+    </div>
   );
 }

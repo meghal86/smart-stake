@@ -276,16 +276,38 @@ function checkOnboardingNeeded(params: {
 /**
  * Determines provider status based on system health.
  */
-function determineProviderStatus(): { status: ProviderStatus; degraded_mode: boolean } {
-  // TODO: Implement actual provider health checks
-  // For now, return online status
-  return {
-    status: {
-      state: 'online',
-      detail: null,
-    },
-    degraded_mode: false,
-  };
+async function determineProviderStatus(walletScope: 'active' | 'all'): Promise<{ status: ProviderStatus; degraded_mode: boolean }> {
+  try {
+    // Import degraded mode detection
+    const { detectDegradedMode } = await import('@/lib/cockpit/degraded-mode');
+    
+    // Create degraded mode context
+    const context = {
+      walletScope,
+      currentTime: new Date(),
+      // TODO: Get actual wallet addresses from user context
+      activeWallet: walletScope === 'active' ? '0x1234567890123456789012345678901234567890' : undefined,
+      allWallets: walletScope === 'all' ? ['0x1234567890123456789012345678901234567890'] : undefined,
+    };
+
+    const result = await detectDegradedMode(context);
+    
+    return {
+      status: result.provider_status,
+      degraded_mode: result.degraded_mode,
+    };
+  } catch (error) {
+    console.error('Error determining provider status:', error);
+    
+    // Fallback to degraded mode on error
+    return {
+      status: {
+        state: 'degraded',
+        detail: 'Health check failed',
+      },
+      degraded_mode: true,
+    };
+  }
 }
 
 /**
@@ -531,7 +553,7 @@ export async function GET(request: NextRequest) {
     const meaningfulSessionCount = (cockpitState?.prefs?.meaningful_sessions as number) || 0;
 
     // Determine provider status
-    const { status: providerStatus, degraded_mode } = determineProviderStatus();
+    const { status: providerStatus, degraded_mode } = await determineProviderStatus(walletScope);
 
     // Check onboarding needed
     const onboardingNeeded = checkOnboardingNeeded({
