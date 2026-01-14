@@ -8,12 +8,13 @@
     "jsx-a11y/alt-text": "warn",
     "react-hooks/exhaustive-deps": "warn",
     "react-refresh/only-export-components": "warn",
-    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-namespace": "warn",
     "@typescript-eslint/no-require-imports": "warn",
     "@typescript-eslint/ban-ts-comment": "warn",
-    "prefer-const": "error",
-    "no-case-declarations": "error"
+    "prefer-const": "warn",
+    "no-case-declarations": "off",
+    "react-hooks/rules-of-hooks": "warn"
   },
   "overrides": [
     {

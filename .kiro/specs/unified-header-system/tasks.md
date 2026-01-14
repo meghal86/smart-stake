@@ -21,7 +21,7 @@ This implementation plan creates a world-class fintech header that integrates se
 
 ### 1. Core Types + Context Map + Utilities
 
-- [ ] 1. Set up core header infrastructure and types
+- [x] 1. Set up core header infrastructure and types
   - Create TypeScript interfaces for all header components (WalletPillModel with isSavedToRegistry)
   - Implement SessionState enum and deriveSessionState function
   - Create HEADER_CONTEXT_MAP + getRouteContextKey helper that returns both key and context
@@ -33,23 +33,23 @@ This implementation plan creates a world-class fintech header that integrates se
   - **WalletPill Model Purity Lock**: buildWalletPillModel(...) must be pure function of sessionState, routeContext.enableWalletSelector, activeWalletFromRegistry?, signerAddress?, signerChainId?
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 4.1, 7.1_
 
-- [ ] 1.3 Add unit tests for route context helper
+- [x] 1.3 Add unit tests for route context helper
   - Test: /harvestpro/opportunities → key '/harvestpro'
   - Test: /guardian/scan/123 → key '/guardian'  
   - Test: /random → key '/'
   - _Requirements: 4.1, 4.2_
 
-- [ ] 1.1 Write property test for session state determinism
+- [x] 1.1 Write property test for session state determinism
   - **Property 1: Session State Determinism**
   - **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5**
 
-- [ ] 1.2 Write property test for context configuration consistency
+- [x] 1.2 Write property test for context configuration consistency
   - **Property 5: Context Configuration Consistency**
   - **Validates: Requirements 4.1, 4.2, 4.3, 4.4, 4.5**
 
 ### 2. GlobalHeader Skeleton + Layout Stability (No CLS)
 
-- [ ] 2. Implement GlobalHeader layout (Brand | Context | Actions)
+- [x] 2. Implement GlobalHeader layout (Brand | Context | Actions)
   - Create three-section layout with sticky positioning
   - Implement fixed height: 64px ±4px
   - Add reserved widths: wallet slot (180px desktop/140px mobile), profile slot (40px)
@@ -57,45 +57,45 @@ This implementation plan creates a world-class fintech header that integrates se
   - GlobalHeader renders on all protected routes + home via shared layout
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 14.1_
 
-- [ ] 2.1 Write property test for layout stability
+- [x] 2.1 Write property test for layout stability
   - **Property 2: Layout Stability**
   - **Validates: Requirements 1.2, 8.1, 8.4, 11.2, 11.6**
 
-- [ ] 2.2 Add CLS test for wallet count loading
+- [x] 2.2 Add CLS test for wallet count loading
   - **CLS Lock**: When walletCount transitions undefined → number, header must not shift (reserved widths handle it)
   - Add Playwright check for bounding box stability across wallet count loading
   - _Requirements: 1.2, 11.2, 11.6_
 
 ### 3. Brand Section
 
-- [ ] 3. Brand component
+- [x] 3. Brand component
   - Implement AlphaWhale logo with click navigation to /
   - Hide wordmark on mobile ≤430px
   - Add reduced-motion hover animations
   - Ensure 44px minimum touch target
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-- [ ] 3.1 Write property test for brand navigation consistency
+- [x] 3.1 Write property test for brand navigation consistency
   - **Property 15: Brand Navigation Consistency**
   - **Validates: Requirements 3.2, 3.3, 3.5**
 
 ### 4. Context Section (Route-aware)
 
-- [ ] 4. Context title/subtitle from getRouteContext(pathname)
+- [x] 4. Context title/subtitle from getRouteContext(pathname)
   - Display page-specific titles and subtitles
   - Hide subtitle on mobile
   - Ensure /harvestpro (and nested routes like /harvestpro/opportunities) uses correct context
   - Title truncates, never pushes action buttons
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
 
-- [ ] 4.1 Add unit tests for route context
+- [x] 4.1 Add unit tests for route context
   - Test: /harvestpro/opportunities inherits Harvest context
   - Test: unknown route → / context fallback
   - _Requirements: 4.1, 4.2_
 
 ### 5. WalletPill (Active vs Signer, mismatch rules)
 
-- [ ] 5. WalletPill component + model builder
+- [x] 5. WalletPill component + model builder
   - Always display Active wallet + activeNetwork (CAIP-2)
   - Show mismatch indicator when signerNetwork !== caip2ToChainId(activeNetwork)
   - Tooltip: show signer info only when differs from active
@@ -103,11 +103,11 @@ This implementation plan creates a world-class fintech header that integrates se
   - **Copy functionality**: Copy defaults to active wallet address (activeAddressChecksum), never signer unless explicitly selected
   - _Requirements: 2.6, 2.7, 2.8, 2.9, 2.10, 2.1.2, 2.1.7, 13.1, 13.2_
 
-- [ ] 5.1 Write property test for wallet display correctness
+- [x] 5.1 Write property test for wallet display correctness
   - **Property 7: Wallet Display Correctness**
   - **Validates: Requirements 2.6, 2.7, 2.8, 2.9, 2.10, 2.1.2, 2.1.7**
 
-- [ ] 5.2 Add unit test for mismatch indicator
+- [x] 5.2 Add unit test for mismatch indicator
   - Test: active Arbitrum (eip155:42161), signer Ethereum (chainId: 1) shows "Viewing Arbitrum • Signer on Ethereum"
   - _Requirements: 2.1.3, 2.1.4_
 

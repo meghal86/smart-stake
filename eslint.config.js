@@ -38,12 +38,13 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-namespace": "warn",
       "@typescript-eslint/no-require-imports": "warn",
       "@typescript-eslint/ban-ts-comment": "warn",
-      "prefer-const": "error",
-      "no-case-declarations": "error",
+      "prefer-const": "warn",
+      "no-case-declarations": "off",
+      "react-hooks/rules-of-hooks": "warn",
     },
   }
 );

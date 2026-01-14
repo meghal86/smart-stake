@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Context Section Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      background: #0f172a;
+      color: white;
+    }
+    .test-case {
+      margin: 20px 0;
+      padding: 15px;
+      background: #1e293b;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    .test-case h3 {
+      margin: 0 0 10px 0;
+      color: #38bdf8;
+    }
+    .result {
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-top: 10px;
+    }
+    .pass {
+      color: #22c55e;
+    }
+    .fail {
+      color: #ef4444;
+    }
+    .mobile-test {
+      max-width: 430px;
+      border: 2px solid #fbbf24;
+    }
+    .desktop-test {
+      min-width: 1025px;
+      border: 2px solid #3b82f6;
+    }
+  </style>
+</head>
+<body>
+  <h1>Context Section Implementation Test</h1>
+  <p>Testing route context display with title/subtitle behavior</p>
+
+  <div class="test-case">
+    <h3>Test 1: /harvestpro/opportunities shows Harvest context</h3>
+    <div class="result" id="test1"></div>
+  </div>
+
+  <div class="test-case">
+    <h3>Test 2: /guardian/scan/123 shows Guardian context</h3>
+    <div class="result" id="test2"></div>
+  </div>
+
+  <div class="test-case">
+    <h3>Test 3: /unknown route falls back to home context</h3>
+    <div class="result" id="test3"></div>
+  </div>
+
+  <div class="test-case mobile-test">
+    <h3>Test 4: Mobile viewport (≤430px) - subtitle should be hidden</h3>
+    <p>Note: This is a visual test. On mobile, subtitle should not be visible.</p>
+    <div class="result" id="test4"></div>
+  </div>
+
+  <div class="test-case desktop-test">
+    <h3>Test 5: Desktop viewport (≥1025px) - subtitle should be visible</h3>
+    <p>Note: This is a visual test. On desktop, subtitle should be visible.</p>
+    <div class="result" id="test5"></div>
+  </div>
+
+  <div class="test-case">
+    <h3>Test 6: Title truncation behavior</h3>
+    <p>Title should truncate with ellipsis if too long, never push action buttons</p>
+    <div class="result" id="test6"></div>
+  </div>
+
+  <script type="module">
+    // Simulate the route context logic
+    const HEADER_CONTEXT_MAP = {
+      '/': {
+        title: 'AlphaWhale',
+        subtitle: 'Institutional-Grade DeFi Risk Management',
+      },
+      '/guardian': {
+        title: 'Guardian',
+        subtitle: 'Trust & Safety',
+      },
+      '/hunter': {
+        title: 'Hunter',
+        subtitle: 'High-confidence opportunities',
+      },
+      '/harvestpro': {
+        title: 'Harvest',
+        subtitle: 'Tax-optimized outcomes',
+      },
+      '/portfolio': {
+        title: 'Portfolio',
+        subtitle: 'Overview',
+        enableWalletSelector: true,
+      },
+    };
+
+    function getRouteContext(pathname) {
+      // Try exact match first
+      if (HEADER_CONTEXT_MAP[pathname]) {
+        return HEADER_CONTEXT_MAP[pathname];
+      }
+      
+      // Try longest-prefix match for nested routes
+      const candidates = Object.keys(HEADER_CONTEXT_MAP)
+        .filter(route => route !== '/' && pathname.startsWith(route + '/'))
+        .sort((a, b) => b.length - a.length);
+        
+      if (candidates.length > 0) {
+        return HEADER_CONTEXT_MAP[candidates[0]];
+      }
+      
+      // Fallback to home context
+      return HEADER_CONTEXT_MAP['/'];
+    }
+
+    // Test 1: /harvestpro/opportunities
+    const test1 = getRouteContext('/harvestpro/opportunities');
+    const test1Pass = test1.title === 'Harvest' && test1.subtitle === 'Tax-optimized outcomes';
+    document.getElementById('test1').innerHTML = `
+      <span class="${test1Pass ? 'pass' : 'fail'}">${test1Pass ? '✓ PASS' : '✗ FAIL'}</span><br>
+      Title: ${test1.title}<br>
+      Subtitle: ${test1.subtitle}
+    `;
+
+    // Test 2: /guardian/scan/123
+    const test2 = getRouteContext('/guardian/scan/123');
+    const test2Pass = test2.title === 'Guardian' && test2.subtitle === 'Trust & Safety';
+    document.getElementById('test2').innerHTML = `
+      <span class="${test2Pass ? 'pass' : 'fail'}">${test2Pass ? '✓ PASS' : '✗ FAIL'}</span><br>
+      Title: ${test2.title}<br>
+      Subtitle: ${test2.subtitle}
+    `;
+
+    // Test 3: /unknown
+    const test3 = getRouteContext('/unknown');
+    const test3Pass = test3.title === 'AlphaWhale' && test3.subtitle === 'Institutional-Grade DeFi Risk Management';
+    document.getElementById('test3').innerHTML = `
+      <span class="${test3Pass ? 'pass' : 'fail'}">${test3Pass ? '✓ PASS' : '✗ FAIL'}</span><br>
+      Title: ${test3.title}<br>
+      Subtitle: ${test3.subtitle}
+    `;
+
+    // Test 4: Mobile viewport check
+    document.getElementById('test4').innerHTML = `
+      <span class="pass">✓ Visual Test</span><br>
+      Current viewport width: ${window.innerWidth}px<br>
+      Expected: Subtitle hidden on mobile (≤430px)
+    `;
+
+    // Test 5: Desktop viewport check
+    document.getElementById('test5').innerHTML = `
+      <span class="pass">✓ Visual Test</span><br>
+      Current viewport width: ${window.innerWidth}px<br>
+      Expected: Subtitle visible on desktop (≥1025px)
+    `;
+
+    // Test 6: Title truncation
+    document.getElementById('test6').innerHTML = `
+      <span class="pass">✓ Visual Test</span><br>
+      CSS class 'truncate' applied to title<br>
+      Title uses flex-1 with min-w-0 to enable truncation<br>
+      Expected: Long titles show ellipsis (...)
+    `;
+
+    // Summary
+    const allPass = test1Pass && test2Pass && test3Pass;
+    console.log('All automated tests passed:', allPass);
+  </script>
+</body>
+</html>

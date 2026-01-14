@@ -185,21 +185,55 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
   const IconComponent = useMemo(() => KIND_ICONS[todayCard?.kind || 'daily_pulse'], [todayCard?.kind]);
   
   // Optimized navigation handlers
-  const handlePrimaryClick = useCallback(() => {
-    if (!todayCard?.primary_cta?.href) return;
+  const handlePrimaryClick = useCallback((e?: React.MouseEvent) => {
+    // Prevent default link behavior if event is provided
+    e?.preventDefault();
+    
+    if (!todayCard?.primary_cta?.href) {
+      console.warn('[TodayCard] No href provided for primary CTA');
+      return;
+    }
     
     const href = todayCard.primary_cta.href;
+    console.log('[TodayCard] Primary CTA clicked, href:', href);
+    
+    // Check if it's a hash-only navigation (starts with # or ends with #something)
     if (href.startsWith('#')) {
-      // Handle hash navigation (e.g., #pulse) - faster than location.href
+      // Pure hash navigation (e.g., #pulse)
       const hash = href.substring(1);
-      window.location.hash = hash;
+      console.log('[TodayCard] Setting hash to:', hash);
       
-      // Dispatch custom event for hash navigation
-      window.dispatchEvent(new CustomEvent('hashchange', { 
-        detail: { hash, source: 'today-card' }
-      }));
+      // Use a more direct approach - set hash and manually trigger event
+      const newUrl = `${window.location.pathname}${window.location.search}#${hash}`;
+      window.history.pushState(null, '', newUrl);
+      
+      // Manually dispatch hashchange event
+      window.dispatchEvent(new Event('hashchange'));
+    } else if (href.includes('#')) {
+      // URL with hash (e.g., /cockpit#pulse)
+      const [path, hash] = href.split('#');
+      const currentPath = window.location.pathname;
+      
+      console.log('[TodayCard] Path:', path, 'Hash:', hash, 'Current path:', currentPath);
+      
+      // If we're already on the target path, just change the hash
+      if (path === currentPath || path === '') {
+        console.log('[TodayCard] Already on target path, setting hash to:', hash);
+        
+        // Use pushState to set the hash without page reload
+        const newUrl = `${window.location.pathname}${window.location.search}#${hash}`;
+        window.history.pushState(null, '', newUrl);
+        
+        // Manually dispatch hashchange event
+        window.dispatchEvent(new Event('hashchange'));
+      } else {
+        // Navigate to different path with hash
+        console.log('[TodayCard] Navigating to:', href);
+        window.location.href = href;
+      }
     } else {
       // Handle regular navigation
+      console.log('[TodayCard] Regular navigation to:', href);
       window.location.href = href;
     }
   }, [todayCard?.primary_cta?.href]);
@@ -221,6 +255,7 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
   }, [todayCard?.secondary_cta?.href]);
   
   const handleInsightsClick = useCallback(() => {
+    console.log('[TodayCard] Insights button clicked');
     onInsightsClick?.();
   }, [onInsightsClick]);
   
@@ -288,8 +323,9 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
               variant="ghost"
               size="sm"
               onClick={handleInsightsClick}
-              className="w-8 h-8 p-0 hover:bg-white/10 transition-colors duration-150"
+              className="w-8 h-8 p-0 hover:bg-white/10 transition-colors duration-150 relative z-10"
               aria-label="Open insights and settings"
+              title="Settings"
             >
               <Settings className="w-4 h-4 text-white/70" />
             </Button>

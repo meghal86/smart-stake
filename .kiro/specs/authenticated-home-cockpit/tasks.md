@@ -348,7 +348,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Drawer open latency < 100ms
   - _Requirements: 14.1, 14.2, 14.3_
 
-- [-] 15. Final Integration and Testing
+- [x] 15. Final Integration and Testing
 
 - [x] 15.1 Integration testing
   - Test complete user flows end-to-end
@@ -356,7 +356,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Test authentication and demo mode flows
   - _Requirements: All integration requirements_
 
-- [-] 15.2 Write remaining property tests (optional)
+- [x] 15.2 Write remaining property tests (optional)
   - Property 3: Three Block Layout Constraint
   - Property 5: Action Preview Row Limit
   - Property 8: Daily Pulse Timezone Generation
@@ -366,7 +366,7 @@ The authenticated decision cockpit lives at `/cockpit` to avoid conflicts with e
   - Property 15: Source Adapter Mapping
   - Ensure 100 iterations minimum per test
 
-- [ ] 15.3 Performance validation
+- [x] 15.3 Performance validation
   - Measure and validate SLO compliance
   - Test caching behavior under load
   - Verify degraded mode performance

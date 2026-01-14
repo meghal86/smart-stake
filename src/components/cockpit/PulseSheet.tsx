@@ -346,7 +346,8 @@ export const PulseSheet = ({
   }, [isOpen, onClose]);
 
   // Get pulse data (demo or real)
-  const displayData = isDemo ? getDemoPulseData() : pulseData;
+  // If pulseData is null, fall back to demo data regardless of isDemo flag
+  const displayData = (isDemo || pulseData === null) ? getDemoPulseData() : pulseData;
 
   const handleRowClick = (row: PulseRow) => {
     if (isDemo) return;

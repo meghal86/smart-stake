@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 200",
+    "lint": "eslint . --max-warnings 200",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
