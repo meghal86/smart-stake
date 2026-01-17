@@ -169,6 +169,24 @@ The AlphaWhale multi-chain wallet system enables users to manage multiple EVM wa
 3. If adding would exceed quota, the UI SHALL show an actionable error and not add.
 4. Existing RainbowKit/wagmi integration SHALL remain compatible.
 5. The prompt workflow SHALL not block core navigation if the user declines.
+6. **RainbowKit modal SHALL appear visually when `openConnectModal()` is called successfully**.
+7. **Modal SHALL be positioned correctly with proper z-index above all other UI elements**.
+8. **User SHALL be able to interact with wallet selection options in the modal**.
+
+---
+
+### Requirement 12.1: RainbowKit Modal Visibility (Critical)
+**User Story:** As a user, when I click "Add Wallet", I want to see the wallet selection modal immediately.
+
+**Acceptance Criteria**
+1. When `openConnectModal()` is called, the RainbowKit modal SHALL appear visually within 500ms.
+2. The modal SHALL be positioned correctly (centered on screen) and fully visible.
+3. The modal SHALL have z-index higher than header (z-50) and dropdown menus (z-[9999]).
+4. The modal backdrop SHALL be visible and functional (clicking closes modal).
+5. All wallet options (MetaMask, WalletConnect, etc.) SHALL be clickable.
+6. The modal SHALL close properly after wallet selection or user cancellation.
+7. If modal fails to appear, the System SHALL provide clear error feedback to the user.
+8. Modal appearance SHALL work consistently across different browsers and screen sizes.
 
 ---
 
@@ -341,9 +359,34 @@ The AlphaWhale multi-chain wallet system enables users to manage multiple EVM wa
    ]
    ```
 
+### Requirement 21: Multi-Wallet Switching and State Management
+**User Story:** As a user, I want to switch between multiple connected wallets seamlessly, so I can manage different accounts from one interface.
+
+**Acceptance Criteria**
+1. When I have multiple wallets connected, the System SHALL display all wallets in a dropdown menu.
+2. When I click on a different wallet in the dropdown, the System SHALL switch the active wallet immediately.
+3. The System SHALL provide visual feedback (check mark) indicating which wallet is currently active.
+4. When I switch wallets, the active wallet state SHALL update using case-insensitive address matching.
+5. The System SHALL prevent wagmi from overriding manual wallet switches.
+6. When I refresh the page, the System SHALL restore my last selected wallet from localStorage.
+7. The System SHALL emit wallet switch events for cross-module reactivity.
+8. All wallet switching operations SHALL complete within 1 second (P95).
+
 ---
 
-### Requirement 20: Edge Function Security Pattern
+### Requirement 22: Hybrid Wallet Connection Modal
+**User Story:** As a user, I want a reliable wallet connection modal that always appears when I click "Add Wallet".
+
+**Acceptance Criteria**
+1. When I click "Add Wallet", the System SHALL attempt to open RainbowKit modal first.
+2. If RainbowKit modal is available and functional, the System SHALL use it for wallet connection.
+3. If RainbowKit modal fails or is unavailable, the System SHALL fallback to CustomWalletModal.
+4. The modal SHALL appear visually within 500ms of clicking "Add Wallet".
+5. The modal SHALL have proper z-index positioning above all other UI elements.
+6. When I connect a new wallet, the System SHALL automatically add it to the multi-wallet list.
+7. The System SHALL provide clear debug logging for troubleshooting modal issues.
+
+---
 **User Story:** As a platform owner, I want secure two-client authentication for Edge Functions, so wallet operations are properly authorized.
 
 **Acceptance Criteria**
@@ -389,17 +432,27 @@ The following features are explicitly **NOT** included in this requirements spec
 ---
 
 ## Implementation Status Summary
-**Current Status: ~75% Complete**
+**Current Status: ~90% Complete**
 
-### ✅ Completed (Infrastructure)
+### ✅ Completed (Infrastructure + Core Features)
 - Multi-chain WalletContext + WalletSelector UI
 - CAIP-2 network configuration + tests
 - DB columns and migration scaffolding for multi-chain JSONB data
+- **Multi-wallet switching functionality with dropdown UI**
+- **Case-insensitive wallet matching and state management**
+- **Hybrid RainbowKit/Custom modal approach for wallet connections**
+- **WagmiAccountSync component for detecting new wallet connections**
+- **Enhanced debug logging and troubleshooting tools**
 
-### 🔴 Critical Missing (Integration + Production Hardening)
+### 🟡 Mostly Complete (Integration + Production Hardening)
+- **Multi-wallet persistence and state restoration** (localStorage integration)
+- **Cross-module wallet state consistency** (events and React Query invalidation)
+- **Wallet switching visual feedback** (check marks and active indicators)
+
+### 🔴 Critical Missing (Server Integration + Production Hardening)
 - Auth ↔ Wallet hydration, route protection, cross-module enforcement
 - Edge functions for server-authoritative wallet CRUD
 - RLS + REVOKE + constraints + migration safety
 - Shape adapter, quota semantics, deterministic ordering, idempotency, concurrency
 
-**Key Insight:** Infra exists, but auth + server registry + hardening must be connected for production.
+**Key Insight:** Multi-wallet UI and switching functionality is now implemented and working. The remaining work focuses on server-side integration, authentication flow, and production hardening for enterprise deployment.

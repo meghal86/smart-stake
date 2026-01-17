@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Wallet Button Visibility Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    h1 {
+      color: #06b6d4;
+      border-bottom: 2px solid #06b6d4;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #22d3ee;
+      margin-top: 30px;
+    }
+    .test-section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+    .status.pass {
+      background: #10b981;
+      color: white;
+    }
+    .status.fail {
+      background: #ef4444;
+      color: white;
+    }
+    .status.pending {
+      background: #f59e0b;
+      color: white;
+    }
+    .code-block {
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .step {
+      margin: 15px 0;
+      padding: 10px;
+      background: #334155;
+      border-left: 4px solid #06b6d4;
+      border-radius: 4px;
+    }
+    .expected {
+      color: #10b981;
+      font-weight: 600;
+    }
+    .actual {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+    ul {
+      line-height: 1.8;
+    }
+    .warning {
+      background: #451a03;
+      border: 1px solid #f59e0b;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .success {
+      background: #064e3b;
+      border: 1px solid #10b981;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Add Wallet Button Visibility Test</h1>
+  <p><strong>Issue:</strong> After connecting first wallet, user cannot see "Connect Wallet" or "Add Wallet" button to add additional wallets</p>
+  <p><strong>Root Cause:</strong> GlobalHeader only showed profile dropdown in S3_BOTH state (authenticated + wallet connected) with no option to add more wallets</p>
+  <p><strong>Fix:</strong> Added "Add Wallet" button to profile dropdown menu when user is authenticated and has a wallet connected</p>
+
+  <div class="test-section">
+    <h2>📋 Test Scenario 1: Profile Dropdown Menu (S3_BOTH State)</h2>
+    <p><strong>Context:</strong> User is authenticated AND has one wallet connected</p>
+    
+    <div class="step">
+      <strong>Step 1:</strong> Log in to your account
+      <ul>
+        <li>Navigate to <code>http://localhost:8080/signin</code></li>
+        <li>Sign in with your credentials</li>
+        <li><span class="expected">Expected:</span> Successfully authenticated</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 2:</strong> Connect your first wallet
+      <ul>
+        <li>Click "Connect Wallet" button in header</li>
+        <li>Select MetaMask (or your preferred wallet)</li>
+        <li>Approve the connection</li>
+        <li><span class="expected">Expected:</span> Wallet connected, profile icon appears in header</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 3:</strong> Open profile dropdown menu
+      <ul>
+        <li>Click the profile icon (User icon) in the top-right corner</li>
+        <li><span class="expected">Expected:</span> Dropdown menu opens</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 4:</strong> Verify "Add Wallet" button is visible
+      <ul>
+        <li>Look at the dropdown menu items</li>
+        <li><span class="expected">Expected menu structure:</span></li>
+        <li class="code-block">
+┌─────────────────────────┐<br>
+│ 🔗 0x1234...5678       │ (Current wallet address)<br>
+├─────────────────────────┤<br>
+│ 💼 Add Wallet          │ ← NEW! (cyan color)<br>
+├─────────────────────────┤<br>
+│ 👤 Profile             │<br>
+│ ⚙️  Settings            │<br>
+│ 💳 Subscription        │<br>
+├─────────────────────────┤<br>
+│ 🚪 Sign out            │<br>
+└─────────────────────────┘
+        </li>
+        <li><span class="expected">Expected:</span> "Add Wallet" button is visible at the top of the menu (cyan/blue color)</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 5:</strong> Click "Add Wallet" button
+      <ul>
+        <li>Click the "Add Wallet" button in the dropdown</li>
+        <li><span class="expected">Expected:</span> RainbowKit wallet connection modal opens</li>
+        <li><span class="expected">Expected:</span> Dropdown menu closes</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 6:</strong> Connect second wallet
+      <ul>
+        <li>Select a different wallet or account from RainbowKit modal</li>
+        <li>Approve the connection</li>
+        <li><span class="expected">Expected:</span> Second wallet is connected</li>
+        <li><span class="expected">Expected:</span> WalletContext adds second wallet to multi-wallet list</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 7:</strong> Verify multi-wallet functionality
+      <ul>
+        <li>Open browser console</li>
+        <li>Check WalletContext state: <code>console.log(walletContext.wallets)</code></li>
+        <li><span class="expected">Expected:</span> Array contains both wallet addresses</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>📋 Test Scenario 2: ActionsSection Component (S3_BOTH State)</h2>
+    <p><strong>Context:</strong> If ActionsSection is being used instead of GlobalHeader</p>
+    
+    <div class="step">
+      <strong>Step 1:</strong> Navigate to a page using ActionsSection
+      <ul>
+        <li>Check pages that might use the new unified header system</li>
+        <li><span class="expected">Expected:</span> Header shows session state S3_BOTH</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 2:</strong> Verify "Add Wallet" button is visible
+      <ul>
+        <li>Look at the header actions section</li>
+        <li><span class="expected">Expected layout:</span></li>
+        <li class="code-block">
+[Theme Toggle] [Add Wallet] [WalletPill: 0x1234...5678] [Profile Icon]
+        </li>
+        <li><span class="expected">Expected:</span> "Add Wallet" button is visible before WalletPill</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 3:</strong> Click "Add Wallet" button
+      <ul>
+        <li>Click the "Add Wallet" button</li>
+        <li><span class="expected">Expected:</span> RainbowKit wallet connection modal opens</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>🔍 Verification Checklist</h2>
+    <ul>
+      <li>✅ "Add Wallet" button appears in profile dropdown when authenticated + wallet connected</li>
+      <li>✅ "Add Wallet" button opens RainbowKit modal</li>
+      <li>✅ Dropdown menu closes after clicking "Add Wallet"</li>
+      <li>✅ Second wallet can be connected through RainbowKit</li>
+      <li>✅ WagmiAccountSync detects new wallet connection</li>
+      <li>✅ WalletContext adds second wallet to multi-wallet list</li>
+      <li>✅ Both wallets are stored in localStorage</li>
+      <li>✅ User can switch between wallets (if WalletSelector is integrated)</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>🐛 Console Checks</h2>
+    <p>Open browser console and verify:</p>
+    
+    <div class="code-block">
+// 1. Check WalletContext state
+console.log('Wallets:', walletContext.wallets);
+// Expected: Array with multiple wallet objects
+
+// 2. Check localStorage
+console.log('Stored wallets:', localStorage.getItem('aw_connected_wallets'));
+// Expected: JSON array with wallet addresses
+
+// 3. Check wagmi account
+console.log('Active account:', useAccount());
+// Expected: Currently connected wallet address
+
+// 4. Listen for wagmiAccountChanged events
+window.addEventListener('wagmiAccountChanged', (e) => {
+  console.log('Wallet changed:', e.detail);
+});
+// Expected: Event fires when switching wallets
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>📝 Code Changes Summary</h2>
+    
+    <h3>File: src/components/header/GlobalHeader.tsx</h3>
+    <div class="code-block">
+// BEFORE: No "Add Wallet" option in S3_BOTH state
+{user && activeWallet && (
+  &lt;ProfileDropdown&gt;
+    &lt;WalletAddress /&gt;
+    &lt;Profile /&gt;
+    &lt;Settings /&gt;
+    &lt;Subscription /&gt;
+    &lt;SignOut /&gt;
+  &lt;/ProfileDropdown&gt;
+)}
+
+// AFTER: Added "Add Wallet" button at top of dropdown
+{user && activeWallet && (
+  &lt;ProfileDropdown&gt;
+    &lt;WalletAddress /&gt;
+    &lt;button onClick={handleConnectWallet}&gt;Add Wallet&lt;/button&gt; ← NEW!
+    &lt;Divider /&gt;
+    &lt;Profile /&gt;
+    &lt;Settings /&gt;
+    &lt;Subscription /&gt;
+    &lt;Divider /&gt;
+    &lt;SignOut /&gt;
+  &lt;/ProfileDropdown&gt;
+)}
+    </div>
+
+    <h3>File: src/components/header/ActionsSection.tsx</h3>
+    <div class="code-block">
+// BEFORE: No "Add Wallet" button in S3_BOTH state
+{sessionState === 'S3_BOTH' && (
+  &lt;&gt;
+    &lt;WalletPill /&gt;
+    &lt;ProfileDropdown /&gt;
+  &lt;/&gt;
+)}
+
+// AFTER: Added "Add Wallet" button before WalletPill
+{sessionState === 'S3_BOTH' && (
+  &lt;&gt;
+    &lt;Button onClick={handleAddWallet}&gt;Add Wallet&lt;/Button&gt; ← NEW!
+    &lt;WalletPill /&gt;
+    &lt;ProfileDropdown /&gt;
+  &lt;/&gt;
+)}
+    </div>
+  </div>
+
+  <div class="success">
+    <h3>✅ Expected Outcome</h3>
+    <p>After this fix:</p>
+    <ul>
+      <li>Users can add multiple wallets even after connecting the first one</li>
+      <li>"Add Wallet" button is accessible from profile dropdown menu</li>
+      <li>Multi-wallet infrastructure (WagmiAccountSync, WalletContext) works correctly</li>
+      <li>All connected wallets are stored and persist across sessions</li>
+    </ul>
+  </div>
+
+  <div class="warning">
+    <h3>⚠️ Known Limitations</h3>
+    <ul>
+      <li>WalletSelector component integration may be needed on specific pages (Hunter, Guardian, HarvestPro) to allow switching between connected wallets</li>
+      <li>Profile page may need updates to display all connected wallets</li>
+      <li>Wallet removal functionality may need to be added</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>🔗 Related Files</h2>
+    <ul>
+      <li><code>src/components/header/GlobalHeader.tsx</code> - Main header component (UPDATED)</li>
+      <li><code>src/components/header/ActionsSection.tsx</code> - Actions section component (UPDATED)</li>
+      <li><code>src/components/WagmiAccountSync.tsx</code> - Syncs wagmi accounts to WalletContext</li>
+      <li><code>src/contexts/WalletContext.tsx</code> - Multi-wallet state management</li>
+      <li><code>src/components/hunter/WalletSelector.tsx</code> - Wallet switching UI</li>
+      <li><code>MULTI_WALLET_SUPPORT_IMPLEMENTATION.md</code> - Multi-wallet documentation</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>📚 Next Steps</h2>
+    <ol>
+      <li>Test the "Add Wallet" button visibility in profile dropdown</li>
+      <li>Verify RainbowKit modal opens when clicking "Add Wallet"</li>
+      <li>Connect multiple wallets and verify they're all stored</li>
+      <li>Check if WalletSelector needs to be integrated on specific pages</li>
+      <li>Consider adding wallet management UI in Profile page</li>
+      <li>Add ability to remove/disconnect individual wallets</li>
+    </ol>
+  </div>
+
+  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; color: #64748b;">
+    <p>AlphaWhale Multi-Wallet Support - Add Wallet Button Visibility Fix</p>
+    <p>Test Date: <span id="test-date"></span></p>
+  </footer>
+
+  <script>
+    document.getElementById('test-date').textContent = new Date().toLocaleString();
+  </script>
+</body>
+</html>

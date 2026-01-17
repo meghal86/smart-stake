@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug: Active Wallet Not Changing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .debug-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .debug-title {
+            color: #ef4444;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .code {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #dc2626;
+        }
+        .button.success {
+            background: #10b981;
+        }
+        .button.success:hover {
+            background: #059669;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+        }
+        .status.warning {
+            background: #78350f;
+            border: 1px solid #f59e0b;
+        }
+        .status.info {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 Debug: Active Wallet Not Changing</h1>
+        <p>Deep investigation into why the active wallet state isn't updating despite console logs showing the function is called.</p>
+
+        <div class="debug-section">
+            <div class="debug-title">🎯 Current Problem</div>
+            <div class="status error">
+                <strong>Issue:</strong> User clicks wallet switch button, console logs appear, but contextActiveWallet doesn't change in the UI or React DevTools.
+            </div>
+            <div class="code">Expected: contextActiveWallet changes from 0x18cb... to 0x7942...
+Actual: contextActiveWallet stays 0x18cb... (old wallet)
+
+This suggests either:
+1. setActiveWalletState is not actually being called
+2. React state update is being overridden immediately
+3. Component is not re-rendering with new state
+4. There's a deeper React issue (Strict Mode, concurrent features, etc.)</div>
+        </div>
+
+        <div class="grid">
+            <div class="debug-section">
+                <div class="debug-title">🔍 Step 1: Verify State Function</div>
+                <div class="code">Add this to WalletContext.tsx setActiveWallet:
+
+// Before the startTransition
+console.log('🔍 BEFORE startTransition:', {
+  targetAddress: address,
+  currentActiveWallet: activeWallet
+});
+
+// Inside startTransition, before setActiveWalletState
+console.log('🔍 INSIDE startTransition, calling setActiveWalletState');
+
+// Replace the functional update with this debug version:
+setActiveWalletState(prevActive => {
+  console.log('🔍 FUNCTIONAL UPDATE CALLED:', {
+    prevActive,
+    newActive: address,
+    timestamp: Date.now()
+  });
+  
+  // Force a different reference to ensure React sees the change
+  const result = address;
+  console.log('🔍 RETURNING FROM FUNCTIONAL UPDATE:', result);
+  return result;
+});
+
+// After setActiveWalletState
+console.log('🔍 AFTER setActiveWalletState call');</div>
+            </div>
+
+            <div class="debug-section">
+                <div class="debug-title">🔍 Step 2: Check React DevTools</div>
+                <div class="code">1. Install React Developer Tools extension
+2. Open app in another tab
+3. Open DevTools → Components tab
+4. Find WalletProvider component
+5. Look at the hooks section:
+   - State (activeWallet): should show current value
+   - When you click switch, watch this value in real-time
+
+If the State value doesn't change in React DevTools:
+- The setActiveWalletState call is not working
+- There might be a React batching issue
+- Another useEffect might be overriding it
+
+If the State value changes but UI doesn't update:
+- The useWallet hook isn't working properly
+- Component isn't re-rendering
+- There's a different activeWallet being used</div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔍 Step 3: Emergency Bypass Test</div>
+            <button class="button" onclick="showBypassTest()">Show Bypass Test Code</button>
+            <div id="bypass-test" class="code" style="display: none;">
+// Temporarily bypass useTransition and functional updates
+// Add this version to test if the issue is with React 18 features:
+
+const setActiveWallet = useCallback((address: string) => {
+  console.log('🚨 EMERGENCY BYPASS TEST - setActiveWallet called:', address);
+  
+  // Validate wallet exists
+  const walletExists = connectedWallets.some(w => 
+    w.address.toLowerCase() === address.toLowerCase()
+  );
+  
+  if (!walletExists) {
+    console.error('❌ Wallet not found');
+    return;
+  }
+  
+  console.log('🚨 BYPASS: Calling setActiveWalletState directly (no transition)');
+  
+  // Direct call without useTransition
+  setActiveWalletState(address);
+  
+  console.log('🚨 BYPASS: Called setActiveWalletState, checking state...');
+  
+  // Check state after a delay
+  setTimeout(() => {
+    console.log('🚨 BYPASS: State after 100ms timeout');
+    // We can't access activeWallet here due to closure, but React DevTools will show it
+  }, 100);
+  
+}, [connectedWallets]);
+
+// If this works, the issue is with useTransition
+// If this doesn't work, the issue is deeper in React state management
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔍 Step 4: Check for State Overrides</div>
+            <div class="code">Look for these potential state overrides in WalletContext.tsx:
+
+1. Check the wagmi sync useEffect (lines ~130-175):
+   - Should NOT run when activeWallet changes (we removed it from deps)
+   - If you see "No active wallet set, using wagmi wallet" during manual switches, this is the problem
+
+2. Check the localStorage sync useEffect (lines ~180-230):
+   - Should NOT override manual switches
+   - If it runs immediately after setActiveWalletState, it might revert the change
+
+3. Check the hydration useEffect (lines ~300-370):
+   - Should NOT run during manual switches
+   - Only runs on auth changes
+
+4. Check for any other setActiveWalletState calls:
+   - Search for all occurrences in the file
+   - Make sure none are called without user intent
+
+Console command to monitor all state changes:
+// Run this in the app's DevTools Console
+let originalSetState = React.useState;
+// This won't work in production, but helps identify the issue</div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔍 Step 5: React Strict Mode Check</div>
+            <div class="code">React Strict Mode runs effects twice in development.
+This could cause state conflicts.
+
+Check src/main.tsx or src/index.tsx for:
+&lt;React.StrictMode&gt;
+  &lt;App /&gt;
+&lt;/React.StrictMode&gt;
+
+Temporarily remove StrictMode to test:
+// Before
+ReactDOM.render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;,
+  document.getElementById('root')
+);
+
+// Test without StrictMode
+ReactDOM.render(
+  &lt;App /&gt;,
+  document.getElementById('root')
+);
+
+If wallet switching works without StrictMode:
+- The issue is with double effect execution
+- Need to make effects idempotent</div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔍 Step 6: Component Re-render Check</div>
+            <button class="button success" onclick="showRerenderTest()">Show Re-render Test</button>
+            <div id="rerender-test" class="code" style="display: none;">
+Add this to GlobalHeader.tsx to check if component re-renders:
+
+// Add this at the top of GlobalHeader component
+const renderCount = useRef(0);
+renderCount.current += 1;
+
+console.log('🔄 GlobalHeader render #', renderCount.current, {
+  contextActiveWallet,
+  wagmiActiveWallet: activeWallet,
+  timestamp: Date.now()
+});
+
+// Add this useEffect to track contextActiveWallet changes
+useEffect(() => {
+  console.log('🔄 GlobalHeader: contextActiveWallet changed to:', contextActiveWallet);
+}, [contextActiveWallet]);
+
+Expected behavior:
+1. Click wallet switch button
+2. See "GlobalHeader render #X" with NEW contextActiveWallet value
+3. See "contextActiveWallet changed to: [new-address]"
+
+If you don't see new renders:
+- The state isn't actually changing
+- The component isn't subscribed to state changes properly
+
+If you see renders but with old contextActiveWallet:
+- The useWallet hook isn't returning updated state
+- There's a context provider issue
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🚨 Nuclear Option: Complete State Reset</div>
+            <button class="button" onclick="showNuclearOption()">Show Nuclear Reset</button>
+            <div id="nuclear-option" class="code" style="display: none;">
+If nothing else works, try this complete reset approach:
+
+1. Clear all browser state:
+   - localStorage.clear()
+   - sessionStorage.clear()
+   - Clear browser cache (Cmd/Ctrl + Shift + R)
+
+2. Restart the development server:
+   - Stop npm run dev
+   - Delete node_modules/.vite (if using Vite)
+   - npm run dev
+
+3. Add this temporary debug version to WalletContext.tsx:
+
+// Replace the entire setActiveWallet function with this debug version:
+const setActiveWallet = useCallback((address: string) => {
+  console.log('🚨 NUCLEAR DEBUG - Entry point');
+  console.log('🚨 Target address:', address);
+  console.log('🚨 Current activeWallet:', activeWallet);
+  console.log('🚨 Connected wallets:', connectedWallets.length);
+  
+  // Force immediate state update with flushSync
+  import('react-dom').then(({ flushSync }) => {
+    flushSync(() => {
+      console.log('🚨 NUCLEAR: Calling setActiveWalletState with flushSync');
+      setActiveWalletState(address);
+    });
+    
+    console.log('🚨 NUCLEAR: flushSync completed');
+  });
+  
+}, [connectedWallets]);
+
+This forces synchronous state updates and bypasses all React optimizations.
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">📋 Debugging Checklist</div>
+            <div class="code">Run through this checklist systematically:
+
+□ Step 1: Add detailed logging to setActiveWallet function
+□ Step 2: Check React DevTools for state changes in WalletProvider
+□ Step 3: Try emergency bypass test (no useTransition)
+□ Step 4: Check for state override useEffects
+□ Step 5: Test without React.StrictMode
+□ Step 6: Add re-render logging to GlobalHeader
+□ Step 7: Try nuclear option with flushSync
+
+Report back with:
+1. Which step revealed the issue
+2. Exact console output from the failing step
+3. What you see in React DevTools during wallet switch
+4. Whether the bypass test works
+
+This will help identify the exact point of failure.</div>
+        </div>
+    </div>
+
+    <script>
+        function showBypassTest() {
+            const element = document.getElementById('bypass-test');
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function showRerenderTest() {
+            const element = document.getElementById('rerender-test');
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function showNuclearOption() {
+            const element = document.getElementById('nuclear-option');
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainbowKit Modal & Profile Dropdown Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fef2f2; color: #dc2626; }
+        .info { background: #dbeafe; color: #1d4ed8; }
+        
+        /* Simulate profile dropdown */
+        .profile-dropdown {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 200px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 9999;
+            padding: 8px 0;
+            display: none;
+        }
+        
+        .profile-dropdown.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .dropdown-item:hover {
+            background: #f3f4f6;
+        }
+        
+        .add-wallet-item {
+            color: #06b6d4;
+            font-weight: 500;
+        }
+        
+        /* Mock RainbowKit modal */
+        .mock-rainbowkit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 2147483647;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mock-rainbowkit-modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .wallet-option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 8px 0;
+            cursor: pointer;
+            background: white;
+            width: 100%;
+        }
+        
+        .wallet-option:hover {
+            background: #f9fafb;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>RainbowKit Modal & Profile Dropdown Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <p>This test verifies that both the RainbowKit modal and profile dropdown work correctly after the CSS fixes.</p>
+        
+        <div class="status info">
+            <strong>Step 1:</strong> Test Profile Dropdown (should appear above everything)
+        </div>
+        <button class="test-button" onclick="toggleProfileDropdown()">
+            Toggle Profile Dropdown
+        </button>
+        
+        <div class="status info">
+            <strong>Step 2:</strong> Test RainbowKit Modal (should appear above dropdown)
+        </div>
+        <button class="test-button" onclick="showRainbowKitModal()">
+            Show RainbowKit Modal
+        </button>
+        
+        <div class="status info">
+            <strong>Step 3:</strong> Test "Add Wallet" from Dropdown (should open modal)
+        </div>
+        <p>Click profile dropdown, then click "Add Wallet" - modal should appear.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Expected Results</h2>
+        <ul>
+            <li>✅ Profile dropdown appears above page content (z-index: 9999)</li>
+            <li>✅ RainbowKit modal appears above everything (z-index: 2147483647)</li>
+            <li>✅ "Add Wallet" button in dropdown opens RainbowKit modal</li>
+            <li>✅ Modal is centered and fully visible</li>
+            <li>✅ Clicking modal backdrop closes modal</li>
+            <li>✅ Wallet options in modal are clickable</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Debug Information</h2>
+        <button class="test-button" onclick="runDebugChecks()">Run Debug Checks</button>
+        <div id="debug-output"></div>
+    </div>
+    
+    <!-- Mock Profile Dropdown -->
+    <div id="profileDropdown" class="profile-dropdown">
+        <div class="dropdown-item">
+            <small style="color: #6b7280;">0x1234...5678</small>
+        </div>
+        <button class="dropdown-item add-wallet-item" onclick="addWalletFromDropdown()">
+            🔗 Add Wallet
+        </button>
+        <hr style="margin: 8px 0; border: none; border-top: 1px solid #e5e7eb;">
+        <button class="dropdown-item">👤 Profile</button>
+        <button class="dropdown-item">⚙️ Settings</button>
+        <button class="dropdown-item">💳 Subscription</button>
+        <hr style="margin: 8px 0; border: none; border-top: 1px solid #e5e7eb;">
+        <button class="dropdown-item" style="color: #dc2626;">🚪 Sign out</button>
+    </div>
+    
+    <!-- Mock RainbowKit Modal -->
+    <div id="rainbowkitModal" class="mock-rainbowkit-modal" data-rk role="dialog">
+        <div class="modal-content">
+            <button class="close-modal" onclick="hideRainbowKitModal()">&times;</button>
+            <h3 style="margin-top: 0;">Connect Wallet</h3>
+            <p style="color: #6b7280; font-size: 14px;">Choose how you want to connect</p>
+            
+            <button class="wallet-option" data-testid="rk-wallet-option-metamask" onclick="selectWallet('MetaMask')">
+                <div style="width: 32px; height: 32px; background: #f6851b; border-radius: 8px; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">M</div>
+                <div>
+                    <div style="font-weight: 500;">MetaMask</div>
+                    <div style="font-size: 12px; color: #6b7280;">Connect using browser wallet</div>
+                </div>
+            </button>
+            
+            <button class="wallet-option" data-testid="rk-wallet-option-walletconnect" onclick="selectWallet('WalletConnect')">
+                <div style="width: 32px; height: 32px; background: #3b99fc; border-radius: 8px; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">W</div>
+                <div>
+                    <div style="font-weight: 500;">WalletConnect</div>
+                    <div style="font-size: 12px; color: #6b7280;">Scan with mobile wallet</div>
+                </div>
+            </button>
+            
+            <button class="wallet-option" data-testid="rk-wallet-option-coinbase" onclick="selectWallet('Coinbase')">
+                <div style="width: 32px; height: 32px; background: #0052ff; border-radius: 8px; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">C</div>
+                <div>
+                    <div style="font-weight: 500;">Coinbase Wallet</div>
+                    <div style="font-size: 12px; color: #6b7280;">Connect using Coinbase</div>
+                </div>
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        let dropdownVisible = false;
+        let modalVisible = false;
+        
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdownVisible = !dropdownVisible;
+            
+            if (dropdownVisible) {
+                dropdown.classList.add('show');
+                console.log('Profile dropdown opened');
+                
+                // Check z-index
+                const computedStyle = window.getComputedStyle(dropdown);
+                console.log('Profile dropdown z-index:', computedStyle.zIndex);
+                
+                if (parseInt(computedStyle.zIndex) < 9999) {
+                    showStatus('Profile dropdown z-index too low!', 'error');
+                } else {
+                    showStatus('Profile dropdown z-index correct', 'success');
+                }
+            } else {
+                dropdown.classList.remove('show');
+                console.log('Profile dropdown closed');
+            }
+        }
+        
+        function showRainbowKitModal() {
+            const modal = document.getElementById('rainbowkitModal');
+            modal.classList.add('show');
+            modalVisible = true;
+            
+            console.log('RainbowKit modal opened');
+            
+            // Check z-index
+            const computedStyle = window.getComputedStyle(modal);
+            console.log('RainbowKit modal z-index:', computedStyle.zIndex);
+            
+            if (parseInt(computedStyle.zIndex) < 2147483647) {
+                showStatus('RainbowKit modal z-index too low!', 'error');
+            } else {
+                showStatus('RainbowKit modal z-index correct', 'success');
+            }
+            
+            // Hide dropdown if open
+            if (dropdownVisible) {
+                toggleProfileDropdown();
+            }
+        }
+        
+        function hideRainbowKitModal() {
+            const modal = document.getElementById('rainbowkitModal');
+            modal.classList.remove('show');
+            modalVisible = false;
+            console.log('RainbowKit modal closed');
+        }
+        
+        function addWalletFromDropdown() {
+            console.log('Add Wallet clicked from dropdown');
+            showStatus('Add Wallet clicked - opening RainbowKit modal', 'info');
+            
+            // Hide dropdown first
+            if (dropdownVisible) {
+                toggleProfileDropdown();
+            }
+            
+            // Show modal
+            setTimeout(() => {
+                showRainbowKitModal();
+            }, 100);
+        }
+        
+        function selectWallet(walletName) {
+            console.log('Wallet selected:', walletName);
+            showStatus(`${walletName} selected - connection would happen here`, 'success');
+            
+            // Close modal after selection
+            setTimeout(() => {
+                hideRainbowKitModal();
+            }, 1000);
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            
+            // Insert after the last test section
+            const testSections = document.querySelectorAll('.test-section');
+            const lastSection = testSections[testSections.length - 1];
+            lastSection.parentNode.insertBefore(statusDiv, lastSection.nextSibling);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+        }
+        
+        function runDebugChecks() {
+            const output = document.getElementById('debug-output');
+            let html = '<h4>Debug Results:</h4>';
+            
+            // Check for RainbowKit elements
+            const rkElements = document.querySelectorAll('[data-rk]');
+            html += `<p><strong>RainbowKit elements found:</strong> ${rkElements.length}</p>`;
+            
+            // Check z-index hierarchy
+            const dropdown = document.getElementById('profileDropdown');
+            const modal = document.getElementById('rainbowkitModal');
+            
+            const dropdownZ = window.getComputedStyle(dropdown).zIndex;
+            const modalZ = window.getComputedStyle(modal).zIndex;
+            
+            html += `<p><strong>Profile dropdown z-index:</strong> ${dropdownZ}</p>`;
+            html += `<p><strong>RainbowKit modal z-index:</strong> ${modalZ}</p>`;
+            
+            // Check positioning
+            const modalRect = modal.getBoundingClientRect();
+            html += `<p><strong>Modal position:</strong> top: ${modalRect.top}, left: ${modalRect.left}</p>`;
+            
+            // Check visibility
+            const dropdownVisible = dropdown.classList.contains('show');
+            const modalVisible = modal.classList.contains('show');
+            
+            html += `<p><strong>Dropdown visible:</strong> ${dropdownVisible}</p>`;
+            html += `<p><strong>Modal visible:</strong> ${modalVisible}</p>`;
+            
+            // Check for CSS conflicts
+            const bodyOverflow = window.getComputedStyle(document.body).overflow;
+            html += `<p><strong>Body overflow:</strong> ${bodyOverflow}</p>`;
+            
+            output.innerHTML = html;
+        }
+        
+        // Close modal when clicking backdrop
+        document.getElementById('rainbowkitModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideRainbowKitModal();
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const isClickInsideDropdown = dropdown.contains(e.target);
+            const isToggleButton = e.target.textContent.includes('Toggle Profile Dropdown');
+            
+            if (!isClickInsideDropdown && !isToggleButton && dropdownVisible) {
+                toggleProfileDropdown();
+            }
+        });
+        
+        // Initial status
+        showStatus('Test page loaded - ready for testing', 'info');
+    </script>
+</body>
+</html>

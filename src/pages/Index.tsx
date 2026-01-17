@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { trackEvent } from '@/lib/telemetry'
-import LiteGlobalHeader from '@/components/navigation/LiteGlobalHeader'
+import { GlobalHeader } from '@/components/header/GlobalHeader'
 import QuickActionsBar from '@/components/lite/QuickActionsBar'
 import DigestCard from '@/components/lite/DigestCard'
 import PortfolioDemo from '@/components/lite/PortfolioDemo'
@@ -22,6 +22,7 @@ import '../styles/theme.css'
 
 const Index = () => {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const tab = searchParams.get('tab')
   const { user } = useAuth()
   const { userPlan } = useSubscription()
@@ -30,6 +31,13 @@ const Index = () => {
   const [alertCreated, setAlertCreated] = useState(false)
   const [digestShared, setDigestShared] = useState(false)
   const [kpiData, setKpiData] = useState<unknown>(null)
+  
+  // Redirect to cockpit if signed in
+  useEffect(() => {
+    if (user) {
+      navigate('/cockpit')
+    }
+  }, [user, navigate])
   
   // Simulate streak advancement (would come from real data)
   useEffect(() => {
@@ -78,7 +86,7 @@ const Index = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <LiteGlobalHeader />
+        <GlobalHeader />
         <div className="animate-pulse space-y-4 p-4">
           <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
           <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
@@ -95,7 +103,7 @@ const Index = () => {
       
       {/* 1. Global Header */}
       <div data-tour="header">
-        <LiteGlobalHeader />
+        <GlobalHeader />
       </div>
       
       <main className="mx-auto max-w-7xl px-4 space-y-4" role="main">

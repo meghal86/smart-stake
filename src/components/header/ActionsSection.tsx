@@ -7,9 +7,13 @@ import { Sun, Moon, Monitor } from 'lucide-react'
 import { getTheme, nextTheme, setTheme, type Theme } from '@/lib/theme'
 import { useState, useEffect } from 'react'
 import { ProfileDropdown } from './ProfileDropdown'
-import { useRouter } from 'next/navigation'
+import { WalletPill } from './WalletPill'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { handleSignOut } from '@/lib/header'
+import { useAccount } from 'wagmi'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface ActionsSectionProps {
   sessionState: SessionState
@@ -32,8 +36,11 @@ export interface ActionsSectionProps {
  */
 export function ActionsSection({ sessionState, context, user }: ActionsSectionProps) {
   const [theme, setThemeState] = useState<Theme>('system')
-  const router = useRouter()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { address: activeWallet } = useAccount()
+  const { openConnectModal } = useConnectModal()
+  const { user: authUser } = useAuth()
 
   useEffect(() => {
     setThemeState(getTheme())
@@ -57,20 +64,41 @@ export function ActionsSection({ sessionState, context, user }: ActionsSectionPr
   }
 
   const handleProfileClick = () => {
-    router.push('/profile')
+    navigate('/profile')
   }
 
   const handleSettingsClick = () => {
-    router.push('/settings')
+    navigate('/settings')
   }
 
   const handleSignOutClick = async () => {
     try {
       await handleSignOut(queryClient)
-      // After sign out, redirect to home
-      router.push('/')
+      navigate('/')
     } catch (error) {
       console.error('Sign out failed:', error)
+    }
+  }
+
+  const handleConnectWallet = () => {
+    // Open RainbowKit wallet connection modal
+    if (openConnectModal) {
+      openConnectModal()
+    } else {
+      console.error('RainbowKit connect modal not available')
+    }
+  }
+
+  const handleSignIn = () => {
+    navigate('/auth/signin')
+  }
+
+  const handleAddWallet = () => {
+    // Open RainbowKit wallet connection modal
+    if (openConnectModal) {
+      openConnectModal()
+    } else {
+      console.error('RainbowKit connect modal not available')
     }
   }
 
@@ -93,18 +121,17 @@ export function ActionsSection({ sessionState, context, user }: ActionsSectionPr
       {/* Session-state-specific actions */}
       {sessionState === 'S0_GUEST' && (
         <>
-          {/* Sign In (ghost) */}
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleSignIn}
             className="text-slate-300 hover:text-white"
           >
             Sign In
           </Button>
-
-          {/* Connect Wallet (primary) */}
           <Button
             size="sm"
+            onClick={handleConnectWallet}
             className="bg-cyan-500 text-white hover:bg-cyan-600"
           >
             Connect Wallet
@@ -114,27 +141,24 @@ export function ActionsSection({ sessionState, context, user }: ActionsSectionPr
 
       {sessionState === 'S1_ACCOUNT' && (
         <>
-          {/* Add Wallet (primary) */}
           <Button
             size="sm"
+            onClick={handleAddWallet}
             className="bg-cyan-500 text-white hover:bg-cyan-600"
           >
             Add Wallet
           </Button>
-
-          {/* Connect Wallet (secondary) */}
           <Button
             variant="outline"
             size="sm"
+            onClick={handleConnectWallet}
             className="border-slate-600 text-slate-300 hover:bg-slate-800"
           >
             Connect Wallet
           </Button>
-
-          {/* Profile dropdown */}
-          {user && (
+          {(user || authUser) && (
             <ProfileDropdown
-              user={user}
+              user={user || { email: authUser?.email || '', name: authUser?.user_metadata?.name }}
               onProfileClick={handleProfileClick}
               onSettingsClick={handleSettingsClick}
               onSignOutClick={handleSignOutClick}
@@ -143,37 +167,32 @@ export function ActionsSection({ sessionState, context, user }: ActionsSectionPr
         </>
       )}
 
-      {sessionState === 'S2_WALLET' && (
+      {sessionState === 'S2_WALLET' && activeWallet && (
         <>
-          {/* WalletPill (non-interactive) - reserved width */}
-          <div
-            className={cn(
-              'flex h-10 items-center gap-2 rounded-full bg-slate-800 px-3',
-              'border border-slate-700'
-            )}
-            style={{ 
-              width: 'var(--wallet-slot-width, 180px)',
-              minWidth: 'var(--wallet-slot-width, 180px)'
+          <WalletPill
+            wallet={{
+              activeAddressShort: `${activeWallet.slice(0, 6)}...${activeWallet.slice(-4)}`,
+              activeAddressChecksum: activeWallet,
+              activeNetwork: 'eip155:1',
+              activeChainName: 'Ethereum',
+              canSignForActive: true,
+              isInteractive: false,
+              showMismatchIndicator: false,
+              isSavedToRegistry: false,
             }}
-          >
-            <span className="truncate text-sm text-slate-300">
-              0x1234...5678
-            </span>
-          </div>
-
-          {/* Save Wallet */}
+          />
           <Button
             size="sm"
             variant="outline"
+            onClick={handleSignIn}
             className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
           >
             Save
           </Button>
-
-          {/* Sign In (ghost) */}
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleSignIn}
             className="text-slate-300 hover:text-white"
           >
             Sign In
@@ -181,29 +200,31 @@ export function ActionsSection({ sessionState, context, user }: ActionsSectionPr
         </>
       )}
 
-      {sessionState === 'S3_BOTH' && (
+      {sessionState === 'S3_BOTH' && activeWallet && (
         <>
-          {/* WalletPill (interactive on Portfolio) - reserved width */}
-          <div
-            className={cn(
-              'flex h-10 items-center gap-2 rounded-full bg-slate-800 px-3',
-              'border border-slate-700',
-              context.enableWalletSelector && 'cursor-pointer hover:bg-slate-700'
-            )}
-            style={{ 
-              width: 'var(--wallet-slot-width, 180px)',
-              minWidth: 'var(--wallet-slot-width, 180px)'
-            }}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAddWallet}
+            className="border-cyan-500 text-cyan-400 hover:bg-cyan-500/10"
           >
-            <span className="truncate text-sm text-slate-300">
-              0x1234...5678
-            </span>
-          </div>
-
-          {/* Profile dropdown */}
-          {user && (
+            Add Wallet
+          </Button>
+          <WalletPill
+            wallet={{
+              activeAddressShort: `${activeWallet.slice(0, 6)}...${activeWallet.slice(-4)}`,
+              activeAddressChecksum: activeWallet,
+              activeNetwork: 'eip155:1',
+              activeChainName: 'Ethereum',
+              canSignForActive: true,
+              isInteractive: context.enableWalletSelector || false,
+              showMismatchIndicator: false,
+              isSavedToRegistry: true,
+            }}
+          />
+          {(user || authUser) && (
             <ProfileDropdown
-              user={user}
+              user={user || { email: authUser?.email || '', name: authUser?.user_metadata?.name }}
               onProfileClick={handleProfileClick}
               onSettingsClick={handleSettingsClick}
               onSignOutClick={handleSignOutClick}

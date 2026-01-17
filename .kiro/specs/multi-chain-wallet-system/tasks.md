@@ -530,9 +530,151 @@ Tasks that can be deferred to future iterations.
 
 ---
 
+## PHASE 2.5: RAINBOWKIT INTEGRATION FIX (CRITICAL PATH)
+
+### Task 12: Multi-Wallet Switching Implementation 🔴
+**Priority**: CRITICAL PATH  
+**Estimated Effort**: 6 hours  
+**Dependencies**: Task 1  
+**Validates**: Requirements 12.1-12.5, 15.4-15.7
+
+**Description**: Complete the multi-wallet switching functionality to allow users to switch between connected wallets and persist their selection.
+
+**Current Status**: 🟡 MOSTLY COMPLETE - Wallet switching implemented but needs final integration testing
+
+**Progress Summary**:
+- ✅ **Multi-wallet dropdown UI implemented** in GlobalHeader.tsx
+- ✅ **Wallet switching logic implemented** in WalletContext.tsx  
+- ✅ **Case-insensitive wallet matching** fixed
+- ✅ **Wagmi override prevention** implemented
+- ✅ **Enhanced debug logging** added
+- ✅ **RainbowKit modal integration** with hybrid fallback approach
+- ✅ **WagmiAccountSync component** for detecting new wallet connections
+- 🔴 **Final integration testing** needed to verify end-to-end flow
+
+**Recent Fixes Applied**:
+1. **Case-Insensitive Wallet Matching**: Fixed `setActiveWallet` to use `toLowerCase()` comparison
+2. **Wagmi Override Prevention**: Prevents wagmi from overriding manual wallet switches
+3. **Enhanced Debug Logging**: Comprehensive console logging for troubleshooting
+4. **Hybrid Modal Approach**: RainbowKit preferred, CustomWalletModal as fallback
+
+**Acceptance Criteria**:
+- [x] Multi-wallet dropdown displays all connected wallets
+- [x] Wallet switching buttons are clickable with proper event handling
+- [x] Active wallet state updates correctly when switching
+- [x] Visual feedback (check mark) moves to selected wallet
+- [x] Wallet selection persists in localStorage (`aw_active_address`)
+- [x] RainbowKit modal opens for adding new wallets
+- [x] WagmiAccountSync detects and adds new wallet connections
+- [ ] **FINAL TESTING**: End-to-end user flow validation
+
+**Implementation Steps**:
+1. ✅ **COMPLETE**: Implement multi-wallet dropdown UI in GlobalHeader
+2. ✅ **COMPLETE**: Add wallet switching logic to WalletContext
+3. ✅ **COMPLETE**: Fix case-insensitive wallet matching
+4. ✅ **COMPLETE**: Prevent wagmi from overriding manual switches
+5. ✅ **COMPLETE**: Add comprehensive debug logging
+6. ✅ **COMPLETE**: Implement hybrid RainbowKit/Custom modal approach
+7. 🔴 **PENDING**: Final integration testing and validation
+
+**Testing Checklist**:
+- [ ] User can connect multiple wallets via RainbowKit modal
+- [ ] All connected wallets appear in profile dropdown
+- [ ] Clicking wallet buttons switches active wallet
+- [ ] Check mark moves to selected wallet
+- [ ] Active wallet persists after page refresh
+- [ ] Console logs show successful wallet switching
+- [ ] No "wallet not found" errors occur
+- [ ] localStorage `aw_active_address` updates correctly
+
+**Files Implemented**:
+- ✅ `src/components/header/GlobalHeader.tsx` - Multi-wallet dropdown UI
+- ✅ `src/contexts/WalletContext.tsx` - Wallet switching logic with fixes
+- ✅ `src/components/WagmiAccountSync.tsx` - Wallet connection detection
+- ✅ `src/components/wallet/CustomWalletModal.tsx` - Fallback modal
+- ✅ `test-wallet-switching-final.html` - Comprehensive testing tool
+
+**Debug Console Output** (Expected when working):
+```javascript
+🔘 Wallet button clicked: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+
+=== WALLET SWITCH DEBUG ===
+Switching to wallet: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+Current active wallet: 0x18cbcBe89507d7494cA51796C2945A41e3BB3527
+Connected wallets: 3
+Wallet switch completed
+
+🔄 setActiveWallet called with: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+🔍 Current connectedWallets: ['0x18cbcBe89507d7494cA51796C2945A41e3BB3527', '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E']
+✅ Wallet found, proceeding with switch...
+🔄 Setting active wallet state to: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+✅ Active wallet state updated
+
+🔄 WalletContext state updated: {
+  contextActiveWallet: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E'  // ← Should update!
+}
+```
+
+**Troubleshooting Guide**:
+- **If buttons not clickable**: Check `pointer-events: auto` and z-index values
+- **If state doesn't update**: Verify case-insensitive matching and wagmi override prevention
+- **If modal doesn't appear**: Use hybrid approach with CustomWalletModal fallback
+- **If selection doesn't persist**: Check localStorage `aw_active_address` updates
+
+### Task 12.1: Multi-Wallet System Validation 🔴
+**Priority**: CRITICAL PATH  
+**Estimated Effort**: 2 hours  
+**Dependencies**: Task 12  
+**Validates**: Requirements 21.1-21.8, 22.1-22.7
+
+**Description**: Comprehensive validation of the multi-wallet switching functionality using the validation checklist to ensure all components work correctly before proceeding to server-side integration.
+
+**Acceptance Criteria**:
+- [ ] All wallet connection flows work (RainbowKit + Custom modal fallback)
+- [ ] Multi-wallet dropdown displays correctly with all connected wallets
+- [ ] Wallet switching updates active state immediately with visual feedback
+- [ ] Wallet selection persists across page refreshes via localStorage
+- [ ] Case-insensitive wallet matching prevents "wallet not found" errors
+- [ ] Cross-module consistency ensures all pages reflect wallet changes
+- [ ] Performance meets requirements (< 1 second switch time)
+- [ ] No memory leaks or console errors during normal operation
+
+**Implementation Steps**:
+1. Use `validation-checklist.md` to systematically test all functionality
+2. Document any issues found and their resolution
+3. Verify all 5 validation phases pass completely
+4. Create test report with screenshots/console logs as evidence
+5. Address any failing tests before marking task complete
+
+**Files to Test**:
+- `src/components/header/GlobalHeader.tsx` - Multi-wallet dropdown UI
+- `src/contexts/WalletContext.tsx` - Wallet switching logic
+- `src/components/WagmiAccountSync.tsx` - New wallet detection
+- `src/components/wallet/CustomWalletModal.tsx` - Fallback modal
+
+**Testing Tools**:
+- `test-wallet-switching-final.html` - Comprehensive testing interface
+- `.kiro/specs/multi-chain-wallet-system/validation-checklist.md` - Systematic validation guide
+- Browser DevTools Console - Debug logging and performance monitoring
+
+**Success Criteria**:
+- [ ] **Phase 1**: Wallet connection works (both RainbowKit and Custom modal)
+- [ ] **Phase 2**: Wallet switching works with proper state updates and persistence
+- [ ] **Phase 3**: Error handling works (case sensitivity, modal fallback)
+- [ ] **Phase 4**: Integration works (cross-module consistency, events)
+- [ ] **Phase 5**: Performance acceptable (< 1s switch time, no memory leaks)
+
+**Deliverables**:
+- [ ] Completed validation checklist with all phases marked ✅ PASS
+- [ ] Test report documenting any issues found and resolved
+- [ ] Screenshots/console logs demonstrating successful functionality
+- [ ] Performance metrics showing switch times under 1 second
+
+---
+
 ## PHASE 4: TESTING & VALIDATION (MEDIUM PRIORITY)
 
-### Task 12: Property-Based Test Suite 🟢
+### Task 13: Property-Based Test Suite 🟢
 **Priority**: MEDIUM PRIORITY  
 **Estimated Effort**: 12 hours  
 **Dependencies**: Tasks 1-8  
@@ -576,7 +718,7 @@ Tasks that can be deferred to future iterations.
 
 ---
 
-### Task 13: Integration Test Suite 🟢
+### Task 14: Integration Test Suite 🟢
 **Priority**: MEDIUM PRIORITY  
 **Estimated Effort**: 8 hours  
 **Dependencies**: Tasks 1-8  
@@ -615,7 +757,7 @@ Tasks that can be deferred to future iterations.
 
 ---
 
-### Task 14: End-to-End Test Suite 🟢
+### Task 15: End-to-End Test Suite 🟢
 **Priority**: MEDIUM PRIORITY  
 **Estimated Effort**: 10 hours  
 **Dependencies**: Tasks 1-11  
@@ -657,7 +799,7 @@ Tasks that can be deferred to future iterations.
 
 ## PHASE 5: PERFORMANCE & POLISH (LOW PRIORITY)
 
-### Task 15: Performance Optimization 🔵
+### Task 16: Performance Optimization 🔵
 **Priority**: LOW PRIORITY  
 **Estimated Effort**: 6 hours  
 **Dependencies**: Tasks 1-11  
@@ -696,7 +838,7 @@ Tasks that can be deferred to future iterations.
 
 ---
 
-### Task 16: UI/UX Polish 🔵
+### Task 17: UI/UX Polish 🔵
 **Priority**: LOW PRIORITY  
 **Estimated Effort**: 8 hours  
 **Dependencies**: Tasks 1-11  
@@ -737,7 +879,7 @@ Tasks that can be deferred to future iterations.
 
 ---
 
-### Task 17: Documentation & Monitoring 🔵
+### Task 18: Documentation & Monitoring 🔵
 **Priority**: LOW PRIORITY  
 **Estimated Effort**: 4 hours  
 **Dependencies**: Tasks 1-16  
@@ -781,6 +923,7 @@ graph TD
     T1[Task 1: Auth Integration] --> T2[Task 2: Edge Functions]
     T1 --> T4[Task 4: Shape Adapter]
     T1 --> T9[Task 9: Cross-Module Integration]
+    T1 --> T12[Task 12: RainbowKit Modal Fix]
     
     T2 --> T5[Task 5: Quota Management]
     T2 --> T6[Task 6: Primary Wallet]
@@ -796,24 +939,25 @@ graph TD
     
     T9 --> T11[Task 11: React Query]
     
-    T1 --> T12[Task 12: Property Tests]
-    T2 --> T12
-    T3 --> T12
-    T4 --> T12
-    T5 --> T12
-    T6 --> T12
-    T7 --> T12
-    T8 --> T12
-    
-    T1 --> T13[Task 13: Integration Tests]
+    T12 --> T13[Task 13: Property Tests]
+    T1 --> T13
+    T2 --> T13
+    T3 --> T13
+    T4 --> T13
+    T5 --> T13
+    T6 --> T13
+    T7 --> T13
     T8 --> T13
     
-    T11 --> T14[Task 14: E2E Tests]
+    T1 --> T14[Task 14: Integration Tests]
+    T8 --> T14
     
-    T11 --> T15[Task 15: Performance]
-    T11 --> T16[Task 16: UI Polish]
+    T11 --> T15[Task 15: E2E Tests]
     
-    T16 --> T17[Task 17: Documentation]
+    T11 --> T16[Task 16: Performance]
+    T11 --> T17[Task 17: UI Polish]
+    
+    T17 --> T18[Task 18: Documentation]
 ```
 
 ---
@@ -824,7 +968,7 @@ graph TD
 Focus on getting the system functional end-to-end:
 - **Day 1-2**: Task 1 (Auth Integration)
 - **Day 3-4**: Task 2 (Edge Functions) 
-- **Day 5**: Task 3 (Database Security)
+- **Day 5**: Task 3 (Database Security) + Task 12 (RainbowKit Modal Fix)
 - **Weekend**: Task 4 (Shape Adapter)
 
 ### Phase 2: Production Hardening (Week 2)
@@ -837,13 +981,13 @@ Ensure system is production-ready:
 Ensure system works cohesively:
 - **Day 1-2**: Task 9 (Cross-Module Integration)
 - **Day 3**: Task 10 (Active Selection) + Task 11 (React Query)
-- **Day 4-5**: Task 12 (Property Tests) + Task 13 (Integration Tests)
+- **Day 4-5**: Task 13 (Property Tests) + Task 14 (Integration Tests)
 
 ### Phase 4: Validation & Polish (Week 4)
 Final validation and user experience:
-- **Day 1-2**: Task 14 (E2E Tests)
-- **Day 3**: Task 15 (Performance) + Task 16 (UI Polish)
-- **Day 4-5**: Task 17 (Documentation) + Final testing
+- **Day 1-2**: Task 15 (E2E Tests)
+- **Day 3**: Task 16 (Performance) + Task 17 (UI Polish)
+- **Day 4-5**: Task 18 (Documentation) + Final testing
 
 ---
 

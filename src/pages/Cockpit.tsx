@@ -11,6 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { TodayCard } from '@/components/cockpit/TodayCard';
 import { ActionPreview } from '@/components/cockpit/ActionPreview';
 import { PeekDrawer, createDefaultSections } from '@/components/cockpit/PeekDrawer';
@@ -243,6 +244,7 @@ const Cockpit: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950">
+      <GlobalHeader />
       {/* Three-block layout as per requirements */}
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Today Card */}

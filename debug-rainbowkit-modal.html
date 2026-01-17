@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RainbowKit Modal Debug</title>
+</head>
+<body>
+    <h1>RainbowKit Modal Debug Tool</h1>
+    <p>Open this in your browser console after clicking "Add Wallet" button</p>
+    
+    <script>
+        console.log('=== RainbowKit Modal Debug Tool ===');
+        
+        // Check if RainbowKit modal elements exist in DOM
+        function checkModalElements() {
+            console.log('\n1. Checking for RainbowKit modal elements...');
+            const modalElements = document.querySelectorAll('[data-rk][role="dialog"]');
+            console.log('RainbowKit modal elements found:', modalElements.length);
+            
+            modalElements.forEach((modal, index) => {
+                console.log(`Modal ${index}:`, modal);
+                const style = getComputedStyle(modal);
+                console.log(`Modal ${index} computed style:`, {
+                    display: style.display,
+                    visibility: style.visibility,
+                    opacity: style.opacity,
+                    zIndex: style.zIndex,
+                    position: style.position,
+                    top: style.top,
+                    left: style.left,
+                    width: style.width,
+                    height: style.height,
+                    transform: style.transform
+                });
+            });
+            
+            // Check for RainbowKit portal containers
+            const rkPortals = document.querySelectorAll('[data-rk]');
+            console.log('\n2. All RainbowKit elements:', rkPortals.length);
+            rkPortals.forEach((el, index) => {
+                console.log(`RK Element ${index}:`, el);
+                console.log(`RK Element ${index} role:`, el.getAttribute('role'));
+                console.log(`RK Element ${index} z-index:`, getComputedStyle(el).zIndex);
+            });
+        }
+        
+        // Check z-index hierarchy
+        function checkZIndexHierarchy() {
+            console.log('\n3. Checking z-index hierarchy...');
+            const positionedElements = Array.from(document.querySelectorAll('*')).filter(el => {
+                const style = getComputedStyle(el);
+                return style.position !== 'static' && style.zIndex !== 'auto';
+            });
+
+            console.log('Positioned elements with z-index:');
+            positionedElements.forEach(el => {
+                const style = getComputedStyle(el);
+                console.log({
+                    element: el,
+                    tagName: el.tagName,
+                    className: el.className,
+                    zIndex: style.zIndex,
+                    position: style.position,
+                    display: style.display,
+                    visibility: style.visibility,
+                    opacity: style.opacity
+                });
+            });
+        }
+        
+        // Check header elements
+        function checkHeaderElements() {
+            console.log('\n4. Checking header/menu elements...');
+            const headerElements = document.querySelectorAll('header, [class*="header"], [class*="menu"], [class*="dropdown"]');
+            console.log('Header/Menu elements z-index:');
+            headerElements.forEach(el => {
+                const style = getComputedStyle(el);
+                console.log({
+                    element: el,
+                    className: el.className,
+                    zIndex: style.zIndex,
+                    position: style.position
+                });
+            });
+        }
+        
+        // Force modal visibility (testing)
+        function forceModalVisibility() {
+            console.log('\n5. Attempting to force modal visibility...');
+            const modal = document.querySelector('[data-rk][role="dialog"]');
+            if (modal) {
+                console.log('Found modal, attempting to force visibility...');
+                modal.style.zIndex = '2147483647';
+                modal.style.position = 'fixed';
+                modal.style.top = '50px';
+                modal.style.left = '50px';
+                modal.style.display = 'block';
+                modal.style.visibility = 'visible';
+                modal.style.opacity = '1';
+                modal.style.backgroundColor = 'white';
+                modal.style.border = '2px solid red';
+                modal.style.width = '400px';
+                modal.style.height = '300px';
+                console.log('Modal forced visible - check if you can see it now');
+                return true;
+            } else {
+                console.log('No modal found in DOM');
+                return false;
+            }
+        }
+        
+        // Run all checks
+        function runAllChecks() {
+            checkModalElements();
+            checkZIndexHierarchy();
+            checkHeaderElements();
+            forceModalVisibility();
+        }
+        
+        // Make functions available globally
+        window.checkModalElements = checkModalElements;
+        window.checkZIndexHierarchy = checkZIndexHierarchy;
+        window.checkHeaderElements = checkHeaderElements;
+        window.forceModalVisibility = forceModalVisibility;
+        window.runAllChecks = runAllChecks;
+        
+        console.log('\nAvailable functions:');
+        console.log('- checkModalElements()');
+        console.log('- checkZIndexHierarchy()');
+        console.log('- checkHeaderElements()');
+        console.log('- forceModalVisibility()');
+        console.log('- runAllChecks()');
+        console.log('\nAfter clicking "Add Wallet", run: runAllChecks()');
+    </script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Switching Debug Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #06b6d4;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 4px;
+            border-left: 3px solid #06b6d4;
+        }
+        .success {
+            border-left-color: #10b981;
+            background: #064e3b;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background: #7f1d1d;
+        }
+        .warning {
+            border-left-color: #f59e0b;
+            background: #78350f;
+        }
+        .code {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #334155;
+        }
+        .button {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0891b2;
+        }
+        .debug-info {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Wallet Switching Debug Test</h1>
+        <p>This test helps debug why wallet switching buttons are not clickable in the dropdown.</p>
+
+        <div class="test-section">
+            <div class="test-title">🎯 Problem Diagnosis</div>
+            <div class="test-step error">
+                <strong>Issue:</strong> User can see wallets in dropdown but cannot click to switch
+            </div>
+            <div class="test-step warning">
+                <strong>Symptoms:</strong>
+                <ul>
+                    <li>Dropdown opens and shows multiple wallets</li>
+                    <li>Wallet buttons appear but don't respond to clicks</li>
+                    <li>No console logs from handleWalletSwitch function</li>
+                    <li>Cursor may not change to pointer on hover</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔍 Debug Steps</div>
+            
+            <div class="test-step">
+                <strong>Step 1: Check Console Logs</strong>
+                <div class="code">
+// Open DevTools Console (F12)
+// Look for these logs when clicking wallet buttons:
+
+"=== WALLET SWITCH DEBUG ==="
+"Switching to wallet: 0x..."
+"Current active wallet: 0x..."
+"Connected wallets: 2"
+"Wallet switch completed"
+                </div>
+                <div class="test-step error">
+                    ❌ If you don't see these logs, the click event isn't firing
+                </div>
+            </div>
+
+            <div class="test-step">
+                <strong>Step 2: Check Element Inspection</strong>
+                <div class="code">
+// Right-click on wallet button → Inspect Element
+// Check these CSS properties:
+
+pointer-events: auto;  // Should be 'auto', not 'none'
+cursor: pointer;       // Should show pointer cursor
+z-index: 9999;        // Should be high enough
+position: fixed;      // Dropdown should be positioned correctly
+                </div>
+            </div>
+
+            <div class="test-step">
+                <strong>Step 3: Test Click Events Manually</strong>
+                <div class="code">
+// In DevTools Console, try clicking programmatically:
+
+// Find wallet buttons
+const walletButtons = document.querySelectorAll('[data-testid="wallet-switch-button"]');
+console.log('Found wallet buttons:', walletButtons.length);
+
+// Try clicking first button
+if (walletButtons[0]) {
+    walletButtons[0].click();
+    console.log('Clicked first wallet button');
+}
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🛠️ Applied Fixes</div>
+            
+            <div class="test-step success">
+                <strong>Fix 1: Enhanced Event Handling</strong>
+                <div class="code">
+onClick={(e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  handleWalletSwitch(wallet.address)
+}}
+                </div>
+                <p>Prevents event bubbling and default behavior that might interfere</p>
+            </div>
+
+            <div class="test-step success">
+                <strong>Fix 2: Explicit Pointer Events</strong>
+                <div class="code">
+style={{ pointerEvents: 'auto' }}
+                </div>
+                <p>Ensures buttons are clickable even if parent has pointer-events: none</p>
+            </div>
+
+            <div class="test-step success">
+                <strong>Fix 3: Enhanced Debug Logging</strong>
+                <div class="code">
+const handleWalletSwitch = (address: string) => {
+  console.log('=== WALLET SWITCH DEBUG ===')
+  console.log('Switching to wallet:', address)
+  console.log('Current active wallet:', contextActiveWallet)
+  console.log('Connected wallets:', connectedWallets.length)
+  
+  setContextActiveWallet(address)
+  setShowMenu(false)
+  
+  console.log('Wallet switch completed')
+}
+                </div>
+                <p>Provides detailed logging to track function execution</p>
+            </div>
+
+            <div class="test-step success">
+                <strong>Fix 4: Added Transition Classes</strong>
+                <div class="code">
+className="... cursor-pointer transition-colors"
+                </div>
+                <p>Ensures proper cursor and smooth hover transitions</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🧪 Testing Instructions</div>
+            
+            <div class="test-step">
+                <strong>1. Open the App</strong>
+                <ul>
+                    <li>Make sure you have multiple wallets connected</li>
+                    <li>Click the profile icon in the header</li>
+                    <li>Verify dropdown opens with wallet list</li>
+                </ul>
+            </div>
+
+            <div class="test-step">
+                <strong>2. Test Wallet Switching</strong>
+                <ul>
+                    <li>Hover over wallet buttons - cursor should change to pointer</li>
+                    <li>Click on a different wallet</li>
+                    <li>Check console for debug logs</li>
+                    <li>Verify active wallet changes (check mark moves)</li>
+                </ul>
+            </div>
+
+            <div class="test-step">
+                <strong>3. Verify State Changes</strong>
+                <ul>
+                    <li>Check localStorage: aw_active_address should update</li>
+                    <li>Dropdown should close after selection</li>
+                    <li>Header should reflect new active wallet</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🚨 Common Issues & Solutions</div>
+            
+            <div class="test-step error">
+                <strong>Issue: No console logs when clicking</strong>
+                <p><strong>Solution:</strong> Event handler not attached. Check React DevTools for component state.</p>
+            </div>
+
+            <div class="test-step error">
+                <strong>Issue: Cursor doesn't change to pointer</strong>
+                <p><strong>Solution:</strong> CSS pointer-events issue. Check computed styles in DevTools.</p>
+            </div>
+
+            <div class="test-step error">
+                <strong>Issue: Click goes through to backdrop</strong>
+                <p><strong>Solution:</strong> Z-index or event propagation issue. Check modal positioning.</p>
+            </div>
+
+            <div class="test-step error">
+                <strong>Issue: Dropdown closes immediately</strong>
+                <p><strong>Solution:</strong> Event bubbling to backdrop. Ensure e.stopPropagation() is called.</p>
+            </div>
+
+            <div class="test-step error">
+                <strong>Issue: WalletContext not updating</strong>
+                <p><strong>Solution:</strong> Check if setContextActiveWallet function is properly imported and called.</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔧 Manual Testing Tools</div>
+            <button class="button" onclick="testWalletButtons()">Test Wallet Buttons</button>
+            <button class="button" onclick="checkDropdownState()">Check Dropdown State</button>
+            <button class="button" onclick="simulateWalletSwitch()">Simulate Wallet Switch</button>
+            
+            <div id="test-results" class="debug-info" style="margin-top: 15px;">
+                <strong>Test Results:</strong>
+                <div id="results-content">Click a test button above to run diagnostics</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">✅ Expected Working Behavior</div>
+            <div class="test-step success">
+                1. Click profile icon → Dropdown opens
+            </div>
+            <div class="test-step success">
+                2. See "Switch Wallet" section with multiple wallets
+            </div>
+            <div class="test-step success">
+                3. Hover wallet button → Cursor changes to pointer
+            </div>
+            <div class="test-step success">
+                4. Click wallet button → Console shows debug logs
+            </div>
+            <div class="test-step success">
+                5. Active wallet updates → Check mark moves
+            </div>
+            <div class="test-step success">
+                6. Dropdown closes → Selection persists
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testWalletButtons() {
+            const results = document.getElementById('results-content');
+            
+            // Look for wallet buttons in the DOM
+            const walletButtons = document.querySelectorAll('button[data-testid="wallet-switch-button"], button:has(.w-4.h-4)');
+            const dropdownButtons = document.querySelectorAll('[role="menu"] button, .fixed button');
+            
+            results.innerHTML = `
+                <div class="code">
+                    <strong>Button Detection Results:</strong><br>
+                    Wallet buttons found: ${walletButtons.length}<br>
+                    Dropdown buttons found: ${dropdownButtons.length}<br><br>
+                    
+                    <strong>Next Steps:</strong><br>
+                    1. Open the app and connect multiple wallets<br>
+                    2. Click profile icon to open dropdown<br>
+                    3. Run this test again to detect buttons<br>
+                    4. Check console for click event logs
+                </div>
+            `;
+        }
+
+        function checkDropdownState() {
+            const results = document.getElementById('results-content');
+            
+            // Check localStorage for wallet state
+            const activeAddress = localStorage.getItem('aw_active_address');
+            const connectedWallets = localStorage.getItem('connectedWallets');
+            
+            let walletCount = 0;
+            if (connectedWallets) {
+                try {
+                    const wallets = JSON.parse(connectedWallets);
+                    walletCount = wallets.length;
+                } catch (e) {
+                    console.error('Failed to parse connectedWallets:', e);
+                }
+            }
+            
+            results.innerHTML = `
+                <div class="code">
+                    <strong>Wallet State:</strong><br>
+                    Active Address: ${activeAddress || 'None'}<br>
+                    Connected Wallets: ${walletCount}<br>
+                    LocalStorage Keys: ${Object.keys(localStorage).filter(k => k.startsWith('aw_')).join(', ')}<br><br>
+                    
+                    <strong>Status:</strong><br>
+                    ${walletCount > 1 ? '✅ Multiple wallets detected - dropdown should show switch options' : '❌ Need multiple wallets for switching test'}
+                </div>
+            `;
+        }
+
+        function simulateWalletSwitch() {
+            const results = document.getElementById('results-content');
+            
+            // Try to trigger wallet switch event
+            const testAddress = '0x1234567890123456789012345678901234567890';
+            
+            // Dispatch custom event that WalletContext might listen to
+            const event = new CustomEvent('walletConnected', {
+                detail: { address: testAddress, timestamp: new Date().toISOString() }
+            });
+            window.dispatchEvent(event);
+            
+            results.innerHTML = `
+                <div class="code">
+                    <strong>Simulation Results:</strong><br>
+                    Dispatched walletConnected event<br>
+                    Test Address: ${testAddress}<br><br>
+                    
+                    <strong>Check Console:</strong><br>
+                    Look for any event listeners that caught this event<br>
+                    WalletContext should log if it received the event
+                </div>
+            `;
+        }
+
+        // Auto-run initial diagnostics
+        window.addEventListener('load', () => {
+            checkDropdownState();
+        });
+    </script>
+</body>
+</html>

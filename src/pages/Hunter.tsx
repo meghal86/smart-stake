@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Header } from '@/components/hunter/Header';
+import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { OpportunityCard } from '@/components/hunter/OpportunityCard';
 import { OpportunityGridSkeleton } from '@/components/hunter/OpportunityCardSkeleton';
 import { EmptyState } from '@/components/hunter/EmptyState';
@@ -185,18 +185,7 @@ export default function Hunter() {
           ))}
         </div>
       )}
-      <Header
-        isDemo={isDemo}
-        setIsDemo={setIsDemo}
-        copilotEnabled={copilotEnabled}
-        setCopilotEnabled={setCopilotEnabled}
-        lastUpdated={lastUpdated}
-        onRefresh={refetch}
-        isDarkTheme={isDarkTheme}
-        setIsDarkTheme={setIsDarkTheme}
-        activeFilter={activeFilter}
-        setActiveFilter={setActiveFilter}
-      />
+      <GlobalHeader />
 
       {/* Main Content with RightRail - Three-Column "Alpha Sidecar" Layout */}
       <div className="flex flex-1 w-full max-w-7xl mx-auto gap-6 px-4 md:px-6 pt-32 pb-28">

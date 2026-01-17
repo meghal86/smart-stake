@@ -1,5 +1,5 @@
 import { HomeErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { DashboardHeader } from '@/components/home/DashboardHeader';
+import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { HeroSection } from '@/components/home/HeroSection';
 import { GuardianFeatureCard } from '@/components/home/GuardianFeatureCard';
 import { HunterFeatureCard } from '@/components/home/HunterFeatureCard';
@@ -13,6 +13,9 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useHomeMetrics } from '@/hooks/useHomeMetrics';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 /**
  * AlphaWhale Home Page
@@ -28,6 +31,15 @@ import { motion } from 'framer-motion';
  */
 export default function AlphaWhaleHome() {
   const { manualRefresh } = useHomeMetrics();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to cockpit if signed in
+  useEffect(() => {
+    if (user) {
+      navigate('/cockpit');
+    }
+  }, [user, navigate]);
 
   const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
     onRefresh: manualRefresh,
@@ -64,7 +76,7 @@ export default function AlphaWhaleHome() {
         
         {/* Header */}
         <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load header</div>}>
-          <DashboardHeader />
+          <GlobalHeader />
         </HomeErrorBoundary>
         
         {/* Hero Section */}

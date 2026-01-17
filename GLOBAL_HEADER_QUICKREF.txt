@@ -1,0 +1,102 @@
+┌─────────────────────────────────────────────────────────────────────┐
+│                    GLOBAL HEADER - QUICK REFERENCE                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+📦 IMPORT
+  import { GlobalHeader } from '@/components/header/GlobalHeader';
+
+🎯 USAGE
+  <GlobalHeader />
+
+✨ FEATURES (All Built-In)
+  ✅ Sign In          → Redirects to /auth/signin
+  ✅ Connect Wallet   → Opens wallet modal (WalletContext)
+  ✅ Add Wallet       → Connects additional wallet
+  ✅ Sign Out         → Clears session, redirects home
+  ✅ Theme Toggle     → Light/Dark/System
+  ✅ Wallet Pill      → Shows address, copy button
+  ✅ Profile Dropdown → Profile, Settings, Sign Out
+
+🔄 SESSION STATES (Automatic)
+  S0_GUEST    → No auth, no wallet    → [Sign In] [Connect Wallet]
+  S1_ACCOUNT  → Auth, no wallet       → [Add Wallet] [Profile]
+  S2_WALLET   → No auth, wallet       → [Wallet Pill] [Sign In]
+  S3_BOTH     → Auth + wallet         → [Wallet Pill] [Profile]
+
+📝 MIGRATION (3 Steps)
+  1. Remove old header import
+     ❌ import { Header } from '@/components/hunter/Header';
+     
+  2. Add GlobalHeader
+     ✅ import { GlobalHeader } from '@/components/header/GlobalHeader';
+     
+  3. Replace component
+     ❌ <Header isDemo={...} setIsDemo={...} ... />
+     ✅ <GlobalHeader />
+
+🧪 TEST CHECKLIST
+  □ Click "Sign In" → Redirects to /auth/signin
+  □ Click "Connect Wallet" → Opens wallet modal
+  □ Click "Add Wallet" → Connects wallet
+  □ Click "Sign Out" → Clears session
+  □ Click theme toggle → Changes theme
+  □ Click wallet pill → Shows tooltip
+  □ Click copy → Copies address
+  □ Resize window → Responsive layout
+
+📁 FILES TO UPDATE
+  High Priority:
+    □ src/pages/Hunter.tsx
+    □ src/pages/HarvestPro.tsx
+    □ src/pages/Home.tsx
+    □ src/pages/GuardianEnhanced.tsx
+  
+  Medium Priority:
+    □ src/pages/Portfolio.tsx
+    □ src/pages/Index.tsx
+    □ src/pages/SignalsFeed.tsx
+
+🚀 QUICK START
+  // Option 1: Direct (Recommended)
+  import { GlobalHeader } from '@/components/header/GlobalHeader';
+  
+  export default function MyPage() {
+    return (
+      <div>
+        <GlobalHeader />
+        <div>Content</div>
+      </div>
+    );
+  }
+
+  // Option 2: With Layout Wrapper
+  import { PageLayout } from '@/components/layout/PageLayout';
+  
+  export default function MyPage() {
+    return (
+      <PageLayout>
+        <div>Content</div>
+      </PageLayout>
+    );
+  }
+
+📚 DOCS
+  • Full Guide: /GLOBAL_HEADER_INTEGRATION.md
+  • Examples: /src/components/header/INTEGRATION_EXAMPLE.tsx
+  • Summary: /GLOBAL_HEADER_COMPLETE.md
+
+💡 TIPS
+  • No props needed - everything is automatic
+  • No state management - handled internally
+  • Works with AuthContext and WalletContext
+  • Responsive by default
+  • Accessible (ARIA labels, keyboard nav)
+  • Theme persists across pages
+
+⚡ ONE-LINE INTEGRATION
+  Just add: <GlobalHeader />
+  That's it! Everything else is automatic.
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  Questions? Check /GLOBAL_HEADER_COMPLETE.md for detailed guide    │
+└─────────────────────────────────────────────────────────────────────┘

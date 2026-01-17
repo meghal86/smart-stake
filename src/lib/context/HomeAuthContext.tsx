@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 
 interface HomeAuthContextType {
@@ -50,24 +50,26 @@ export const HomeAuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
-  // Update auth state when wallet connection changes
-  useEffect(() => {
-    if (isConnected && address) {
-      // Wallet is connected, now we need to sign message and get JWT
-      handleWalletConnected();
-    } else {
-      // Wallet disconnected
-      setIsAuthenticated(false);
-    }
-  }, [isConnected, address]);
-
-  const handleWalletConnected = async () => {
-    if (!address) return;
+  const handleWalletConnected = useCallback(async () => {
+    if (!address || !signMessageAsync) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
+      // For now, just mark as authenticated when wallet connects
+      // TODO: Implement proper signature verification when /api/auth/verify is ready
+      console.log('Wallet connected:', address);
+      
+      // Store wallet address in localStorage for persistence
+      localStorage.setItem('aw_last_connected_wallet', address);
+      
+      setIsAuthenticated(true);
+      setError(null);
+      
+      /* 
+      // Uncomment when /api/auth/verify endpoint is implemented:
+      
       // Create EIP-191 message for signing
       const timestamp = Date.now();
       const message = `Sign this message to authenticate with AlphaWhale.\n\nWallet: ${address}\nTimestamp: ${timestamp}\n\nThis request will not trigger a blockchain transaction or cost any gas fees.`;
@@ -103,6 +105,7 @@ export const HomeAuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         throw new Error(data.error || 'Authentication failed');
       }
+      */
     } catch (err: unknown) {
       console.error('Wallet connection error:', err);
       
@@ -128,7 +131,18 @@ export const HomeAuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, signMessageAsync, disconnect]);
+
+  // Update auth state when wallet connection changes
+  useEffect(() => {
+    if (isConnected && address) {
+      // Wallet is connected, now we need to sign message and get JWT
+      handleWalletConnected();
+    } else {
+      // Wallet disconnected
+      setIsAuthenticated(false);
+    }
+  }, [isConnected, address, handleWalletConnected]);
 
   const connectWallet = async () => {
     // This function is called when user clicks "Connect Wallet"

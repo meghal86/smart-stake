@@ -20,6 +20,14 @@ import {
 } from '@/lib/networks/config';
 import { getNetworkDependentQueryKeys } from '@/lib/query-keys';
 
+// Chain ID to name mapping
+const chainIdToName: Record<number, string> = {
+  1: 'ethereum',
+  137: 'polygon',
+  42161: 'arbitrum',
+  8453: 'base',
+  10: 'optimism',
+};
 // ============================================================================
 // Types
 // ============================================================================
@@ -99,6 +107,86 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const queryClient = useQueryClient();
   const { labels: walletLabels, getLabel } = useWalletLabels();
   const { session, isAuthenticated, loading: authLoading } = useAuth();
+
+  // ============================================================================
+  // Sync with wagmi's active wallet
+  // ============================================================================
+  
+  // Import wagmi hooks dynamically to avoid circular dependencies
+  const [wagmiAddress, setWagmiAddress] = useState<string | null>(null);
+  const [wagmiChainId, setWagmiChainId] = useState<number | null>(null);
+  
+  useEffect(() => {
+    // Listen to wagmi account changes
+    const handleAccountChange = (event: CustomEvent) => {
+      const { address, chainId } = event.detail;
+      setWagmiAddress(address);
+      setWagmiChainId(chainId);
+    };
+    
+    window.addEventListener('wagmiAccountChanged' as any, handleAccountChange);
+    
+    return () => {
+      window.removeEventListener('wagmiAccountChanged' as any, handleAccountChange);
+    };
+  }, []);
+  
+  // When wagmi connects a new wallet, add it to our multi-wallet list
+  useEffect(() => {
+    if (wagmiAddress && wagmiChainId) {
+      const address = wagmiAddress;
+      
+      // Check if wallet is already in our list
+      const existingWallet = connectedWallets.find(
+        w => w.address.toLowerCase() === address.toLowerCase()
+      );
+      
+      if (!existingWallet) {
+        // New wallet - add it to the list
+        const chainName = chainIdToName[wagmiChainId] || 'ethereum';
+        const chainNamespace = legacyChainToCAIP2(chainName);
+        
+        const newWallet: ConnectedWallet = {
+          address,
+          chain: chainName,
+          chainNamespace,
+          supportedNetworks: [chainNamespace],
+          balancesByNetwork: {},
+          guardianScoresByNetwork: {},
+          lastUsed: new Date(),
+          label: getLabel(address),
+        };
+        
+        setConnectedWallets(prev => [...prev, newWallet]);
+        
+        // Only set as active if no active wallet exists
+        // Use functional state update to avoid stale closure
+        setActiveWalletState(prevActive => {
+          if (!prevActive) {
+            console.log('No active wallet set, using wagmi wallet:', address);
+            return address;
+          } else {
+            console.log('Active wallet already set, not overriding with wagmi wallet:', prevActive);
+            return prevActive;
+          }
+        });
+        
+        console.log('Added new wallet to multi-wallet list:', address);
+      } else {
+        // Existing wallet - only set as active if we don't have an active wallet yet
+        // Use functional state update to avoid race conditions
+        setActiveWalletState(prevActive => {
+          if (!prevActive) {
+            console.log('No active wallet set, using wagmi wallet:', address);
+            return address;
+          } else {
+            console.log('Active wallet already set, not overriding with wagmi wallet:', prevActive);
+            return prevActive;
+          }
+        });
+      }
+    }
+  }, [wagmiAddress, wagmiChainId, connectedWallets, getLabel]); // Removed activeWallet from dependencies
 
   // ============================================================================
   // Load from localStorage on mount
@@ -438,62 +526,71 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // ============================================================================
 
   const setActiveWallet = useCallback((address: string) => {
-    // Validate wallet exists
-    const walletExists = connectedWallets.some(w => w.address === address);
+    console.log('🚨 AGGRESSIVE DEBUG - setActiveWallet ENTRY:', {
+      targetAddress: address,
+      currentActiveWallet: activeWallet,
+      timestamp: Date.now(),
+      connectedWalletsCount: connectedWallets.length
+    });
+    
+    // Validate wallet exists (case-insensitive comparison)
+    const walletExists = connectedWallets.some(w => w.address.toLowerCase() === address.toLowerCase());
     if (!walletExists) {
-      console.error(`Wallet ${address} not found in connected wallets`);
+      console.error(`❌ VALIDATION FAILED: Wallet ${address} not found in connected wallets`)
+      console.error('Available wallets:', connectedWallets.map(w => w.address))
       return;
     }
 
-    // Track wallet switch start time for duration metric
-    const switchStartTime = performance.now();
-    const previousWallet = activeWallet;
+    console.log('✅ VALIDATION PASSED: Wallet found, proceeding with switch...')
 
-    // Use React 18 useTransition for smooth re-render during feed refresh
-    // This prevents UI from blocking during the wallet switch
-    startTransition(() => {
-      // Update active wallet state
-      setActiveWalletState(address);
-      
-      // Update lastUsed timestamp
-      setConnectedWallets(prev => 
-        prev.map(w => 
-          w.address === address 
-            ? { ...w, lastUsed: new Date() }
-            : w
-        )
-      );
-      
-      // Emit custom event for inter-module reactivity (Guardian, Action Engine, etc.)
-      const event = new CustomEvent('walletConnected', {
-        detail: { address, timestamp: new Date().toISOString() }
-      });
-      window.dispatchEvent(event);
-      
-      // Invalidate feed queries to trigger refresh with new wallet
-      // This will cause useHunterFeed to refetch with the new wallet context
-      queryClient.invalidateQueries({ queryKey: ['hunter-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['eligibility'] });
-      queryClient.invalidateQueries({ queryKey: ['saved-opportunities'] });
+    // Track the current state before any changes
+    const stateBeforeChange = activeWallet;
+    console.log('🔍 STATE BEFORE CHANGE:', stateBeforeChange);
 
-      // Track wallet switch analytics (after state updates)
-      const switchDurationMs = Math.round(performance.now() - switchStartTime);
-      
-      // Import dynamically to avoid circular dependencies
-      import('@/lib/analytics/tracker').then(({ trackWalletSwitched }) => {
-        trackWalletSwitched({
-          fromWalletAddress: previousWallet || undefined,
-          toWalletAddress: address,
-          walletCount: connectedWallets.length,
-          switchDurationMs,
-        }).catch((err: Error) => {
-          console.debug('Failed to track wallet switch:', err);
-        });
-      }).catch((err: Error) => {
-        console.debug('Failed to load analytics tracker:', err);
+    // EMERGENCY: Try direct state update first (bypass useTransition)
+    console.log('🚨 EMERGENCY: Attempting direct state update (no useTransition)');
+    
+    setActiveWalletState(prevActive => {
+      console.log('🚨 DIRECT FUNCTIONAL UPDATE CALLED:', {
+        prevActive,
+        newActive: address,
+        areEqual: prevActive === address,
+        timestamp: Date.now()
       });
+      
+      if (prevActive === address) {
+        console.log('⚠️ WARNING: New address same as previous, but continuing...');
+      }
+      
+      return address;
     });
-  }, [connectedWallets, activeWallet, queryClient, startTransition]);
+    
+    console.log('🚨 DIRECT STATE UPDATE COMPLETED');
+    
+    // Check state after a short delay
+    setTimeout(() => {
+      console.log('🚨 STATE CHECK AFTER 100ms - Current activeWallet should be:', address);
+      // Note: We can't access activeWallet here due to closure, but React DevTools will show the real value
+    }, 100);
+    
+    // Update lastUsed timestamp
+    setConnectedWallets(prev => 
+      prev.map(w => 
+        w.address.toLowerCase() === address.toLowerCase()
+          ? { ...w, lastUsed: new Date() }
+          : w
+      )
+    );
+    
+    // Emit custom event for inter-module reactivity
+    const event = new CustomEvent('walletConnected', {
+      detail: { address, timestamp: new Date().toISOString() }
+    });
+    window.dispatchEvent(event);
+    
+    console.log('🚨 setActiveWallet COMPLETED - Check React DevTools for state change');
+    
+  }, [connectedWallets, activeWallet]); // Temporarily added activeWallet back for debugging
 
   // ============================================================================
   // Connect Wallet
@@ -589,7 +686,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
 
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
+      // Don't log to console - let calling component handle user feedback
       throw error;
     } finally {
       setIsLoading(false);

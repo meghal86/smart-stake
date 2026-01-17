@@ -11,71 +11,57 @@ import { WalletScopeHeader } from '@/components/guardian/WalletScopeHeader';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
 import { useGuardianAnalytics } from '@/lib/analytics/guardian';
 import { Hub2Footer } from '@/components/hub2/Hub2Footer';
-
-// Simple wallet connection - works with existing setup
-const useWallet = () => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-
-  const connect = () => {
-    // For demo purposes - in production this would connect to actual wallet
-    const mockAddress = '0xA6bF1D4E9c34d12BfC5e8A946f912e7cC42D2D9C';
-    setAddress(mockAddress);
-    setIsConnected(true);
-    console.log('Wallet connected:', mockAddress);
-  };
-
-  return { address, isConnected, connect };
-};
+import { GlobalHeader } from '@/components/header/GlobalHeader';
+import { useWallet as useWalletContext } from '@/contexts/WalletContext';
 
 export function GuardianUX2() {
-  const { address, isConnected, connect } = useWallet();
+  const { activeWallet, connectWallet } = useWalletContext();
   const [isScanning, setIsScanning] = useState(false);
   const [scanStartTime, setScanStartTime] = useState<number | null>(null);
   const analytics = useGuardianAnalytics();
 
   const { data, isLoading, rescan, isRescanning } = useGuardianScan({
-    walletAddress: address || undefined,
+    walletAddress: activeWallet || undefined,
     network: 'ethereum',
-    enabled: isConnected && !!address,
+    enabled: !!activeWallet,
   });
 
   // Auto-scan on connect
   useEffect(() => {
-    if (isConnected && address && !data) {
+    if (activeWallet && !data) {
       setIsScanning(true);
       setScanStartTime(Date.now());
-      analytics.scanStarted(address, 'ethereum', true);
+      analytics.scanStarted(activeWallet, 'ethereum', true);
       setTimeout(() => setIsScanning(false), 3000);
     }
-  }, [isConnected, address, data, analytics]);
+  }, [activeWallet, data, analytics]);
 
   // Track scan completion
   useEffect(() => {
     if (data && scanStartTime) {
       const duration = Date.now() - scanStartTime;
       analytics.scanCompleted(
-        address || '',
+        activeWallet || '',
         data.trustScorePercent || 0,
         data.confidence || 0.8,
         data.flags?.length || 0,
-        data.flags?.filter((f: unknown) => f.severity === 'high').length || 0,
+        data.flags?.filter((f: any) => f.severity === 'high').length || 0,
         duration
       );
       setScanStartTime(null);
     }
-  }, [data, scanStartTime, address, analytics]);
+  }, [data, scanStartTime, activeWallet, analytics]);
 
   const handleRescan = async () => {
-    if (!address) return;
+    if (!activeWallet) return;
     setIsScanning(true);
     setScanStartTime(Date.now());
-    analytics.track('guardian_rescan_requested' as unknown, { wallet_address: address });
+    analytics.track('guardian_rescan_requested' as any, { wallet_address: activeWallet });
     try {
       await rescan();
       setTimeout(() => setIsScanning(false), 2000);
     } catch (error) {
-      analytics.scanFailed(address, error instanceof Error ? error.message : 'Unknown error');
+      analytics.scanFailed(activeWallet, error instanceof Error ? error.message : 'Unknown error');
       setIsScanning(false);
     }
   };
@@ -122,9 +108,11 @@ export function GuardianUX2() {
   const MessageIcon = message.icon;
 
   // Welcome screen
-  if (!isConnected) {
+  if (!activeWallet) {
     return (
-      <div 
+      <>
+        <GlobalHeader />
+        <div 
         className="relative min-h-screen overflow-hidden" 
         style={{
           background: 'radial-gradient(circle at top right, #0B0F1A, #020409)',
@@ -184,11 +172,10 @@ export function GuardianUX2() {
             </p>
 
             <GlowButton 
-              onClick={connect} 
+              onClick={connectWallet} 
               className="mb-4"
-              disabled={isConnected}
             >
-              {isConnected ? 'Wallet Connected' : 'Connect Wallet'}
+              Connect Wallet
             </GlowButton>
 
             <p className="text-xs text-slate-500 tracking-wide">
@@ -199,12 +186,15 @@ export function GuardianUX2() {
 
         <Hub2Footer />
       </div>
+      </>
     );
   }
 
   // Main Guardian screen
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,_#0B0F1A,_#020409)]">
+    <>
+      <GlobalHeader />
+      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,_#0B0F1A,_#020409)]">
       {/* Animated background gradient with slow drift */}
       <motion.div
         className="absolute inset-0 opacity-20"
@@ -237,7 +227,7 @@ export function GuardianUX2() {
       <div className="relative z-10 flex flex-col items-center px-6 pt-12 pb-32">
         {/* Wallet Scope Header */}
         <WalletScopeHeader 
-          walletAddress={address || undefined}
+          walletAddress={activeWallet || undefined}
           walletLabel="Connected Wallet"
         />
 
@@ -279,7 +269,7 @@ export function GuardianUX2() {
         >
           <GlowButton
             onClick={handleRescan}
-            disabled={isRescanning || isScanning || !address}
+            disabled={isRescanning || isScanning || !activeWallet}
             variant="outlineGlow"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRescanning ? 'animate-spin' : ''}`} />
@@ -392,6 +382,7 @@ export function GuardianUX2() {
       {/* Hub2 Footer - Same footer across all pages */}
       <Hub2Footer />
     </div>
+    </>
   );
 }
 

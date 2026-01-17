@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RainbowKit Modal Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>RainbowKit Modal Fix Test</h1>
+    
+    <div class="test-section info">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Navigate to your app: <code>http://localhost:8080/cockpit</code></li>
+            <li>Login and connect one wallet</li>
+            <li>Click profile icon → "Add Wallet" button</li>
+            <li>The RainbowKit modal should now appear visually</li>
+            <li>If it doesn't appear, run the debug commands below</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h3>Debug Commands (Run in Browser Console):</h3>
+        <button onclick="copyToClipboard('runAllChecks()')">Copy Debug Command</button>
+        <pre id="debug-command">runAllChecks()</pre>
+    </div>
+    
+    <div class="test-section">
+        <h3>Manual Modal Force (If Still Not Visible):</h3>
+        <button onclick="copyToClipboard(forceModalCode)">Copy Force Modal Code</button>
+        <pre id="force-modal-code">// Run this after clicking Add Wallet
+const modal = document.querySelector('[data-rk][role=&quot;dialog&quot;]');
+if (modal) {
+  modal.style.cssText = `
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 2147483647 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: white !important;
+    border: 2px solid red !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    width: 400px !important;
+    height: 300px !important;
+  `;
+  console.log('Modal forced visible with red border');
+} else {
+  console.log('No modal found - check if RainbowKit is creating the modal');
+}</pre>
+    </div>
+    
+    <div class="test-section">
+        <h3>Expected Results:</h3>
+        <ul>
+            <li>✅ Modal appears centered on screen</li>
+            <li>✅ Modal has white background and rounded corners</li>
+            <li>✅ Modal shows wallet options (MetaMask, WalletConnect, etc.)</li>
+            <li>✅ Clicking wallet options works</li>
+            <li>✅ Modal closes after wallet selection</li>
+            <li>✅ Second wallet is detected and added to multi-wallet list</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h3>CSS Changes Applied:</h3>
+        <ul>
+            <li>Increased z-index to maximum value (2147483647)</li>
+            <li>Added explicit positioning and visibility rules</li>
+            <li>Ensured modal is centered on screen</li>
+            <li>Added fallback selectors for different RainbowKit versions</li>
+            <li>Fixed pointer events for modal interactions</li>
+        </ul>
+    </div>
+    
+    <script>
+        const forceModalCode = `// Run this after clicking Add Wallet
+const modal = document.querySelector('[data-rk][role="dialog"]');
+if (modal) {
+  modal.style.cssText = \`
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 2147483647 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: white !important;
+    border: 2px solid red !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    width: 400px !important;
+    height: 300px !important;
+  \`;
+  console.log('Modal forced visible with red border');
+} else {
+  console.log('No modal found - check if RainbowKit is creating the modal');
+}`;
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

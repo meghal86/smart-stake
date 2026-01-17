@@ -19,6 +19,7 @@ import { WalletProvider as GuardianWalletProvider } from '@/contexts/WalletConte
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { DevInfo } from '@/components/DevInfo';
+import { WagmiAccountSync } from '@/components/WagmiAccountSync';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +62,7 @@ export function ClientProviders({ children }: { children: ReactNode }) {
                         <NotificationProvider>
                           <DemoModeProvider>
                             <TooltipProvider>
+                              <WagmiAccountSync />
                               <Toaster />
                               <Sonner />
                               <DevInfo />

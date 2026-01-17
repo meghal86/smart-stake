@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Wallet State Issue</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .debug-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .debug-title {
+            color: #06b6d4;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .code {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .button {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0891b2;
+        }
+        .button.danger {
+            background: #ef4444;
+        }
+        .button.danger:hover {
+            background: #dc2626;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #064e3b;
+            border: 1px solid #10b981;
+        }
+        .status.error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+        }
+        .status.warning {
+            background: #78350f;
+            border: 1px solid #f59e0b;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Wallet State Issue</h1>
+        <p>Comprehensive debugging tool to identify why wallet switching state isn't updating.</p>
+
+        <div class="grid">
+            <div class="debug-section">
+                <div class="debug-title">🎯 Current Issue Analysis</div>
+                <div class="status error">
+                    <strong>Problem:</strong> Console logs show setActiveWallet is called, but contextActiveWallet doesn't update
+                </div>
+                <div class="code">// User reports seeing this:
+🔄 setActiveWallet called with: 0x7942...
+✅ Active wallet state updated
+
+// But contextActiveWallet remains:
+contextActiveWallet: '0x18cb...' // Old wallet!</div>
+            </div>
+
+            <div class="debug-section">
+                <div class="debug-title">🔧 Potential Root Causes</div>
+                <div class="status warning">
+                    <strong>1. React State Batching</strong><br>
+                    Multiple setState calls might be batched/overridden
+                </div>
+                <div class="status warning">
+                    <strong>2. Wagmi Sync Override</strong><br>
+                    wagmi useEffect might be overriding manual switches
+                </div>
+                <div class="status warning">
+                    <strong>3. useTransition Issues</strong><br>
+                    startTransition might be causing state update delays
+                </div>
+                <div class="status warning">
+                    <strong>4. Stale Closure</strong><br>
+                    useCallback dependencies might be stale
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🧪 Diagnostic Tests</div>
+            <button class="button" onclick="testLocalStorage()">Test localStorage</button>
+            <button class="button" onclick="testReactDevTools()">Check React DevTools</button>
+            <button class="button" onclick="testWagmiState()">Test wagmi State</button>
+            <button class="button" onclick="testStateUpdates()">Test State Updates</button>
+            <button class="button danger" onclick="clearAllState()">Clear All State</button>
+            
+            <div id="diagnostic-results" class="code" style="margin-top: 15px; min-height: 200px;">
+Click a diagnostic test above to run analysis...
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔍 Step-by-Step Debugging</div>
+            <div class="code">1. Open the app in another tab
+2. Open DevTools Console in that tab
+3. Run this command to monitor state changes:
+
+// Monitor React state changes
+let originalSetState = React.useState;
+React.useState = function(initial) {
+  const [state, setState] = originalSetState(initial);
+  const wrappedSetState = (newState) => {
+    console.log('🔄 React setState called:', { 
+      from: state, 
+      to: newState,
+      stack: new Error().stack.split('\n')[2]
+    });
+    return setState(newState);
+  };
+  return [state, wrappedSetState];
+};
+
+4. Try switching wallets and watch for setState calls
+5. Check if setActiveWalletState is actually being called
+6. Verify no other code is overriding the state</div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🎯 Focused Investigation</div>
+            <div class="code">// Add this to WalletContext.tsx setActiveWallet function:
+
+const setActiveWallet = useCallback((address: string) => {
+  console.log('🔄 setActiveWallet START:', { 
+    targetAddress: address,
+    currentActiveWallet: activeWallet,
+    connectedWalletsCount: connectedWallets.length 
+  });
+  
+  // Add state change listener
+  const originalState = activeWallet;
+  
+  startTransition(() => {
+    console.log('🔄 BEFORE setActiveWalletState:', originalState);
+    setActiveWalletState(address);
+    
+    // Check state immediately after (might not work due to async)
+    setTimeout(() => {
+      console.log('🔄 AFTER setActiveWalletState (100ms later):', activeWallet);
+    }, 100);
+    
+    // Check state after longer delay
+    setTimeout(() => {
+      console.log('🔄 FINAL STATE (1s later):', activeWallet);
+    }, 1000);
+  });
+}, [connectedWallets, activeWallet, queryClient, startTransition]);</div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🚨 Critical Checks</div>
+            <div class="status error">
+                <strong>Check 1: Multiple useEffect Conflicts</strong><br>
+                Look for multiple useEffect hooks that might be setting activeWallet
+            </div>
+            <div class="status error">
+                <strong>Check 2: React Strict Mode</strong><br>
+                Strict mode runs effects twice - might cause state conflicts
+            </div>
+            <div class="status error">
+                <strong>Check 3: wagmi Account Sync</strong><br>
+                The wagmi sync useEffect might be overriding manual switches
+            </div>
+            <div class="status error">
+                <strong>Check 4: localStorage Sync</strong><br>
+                localStorage sync might be reverting state changes
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-title">🔧 Immediate Fix Attempts</div>
+            <div class="code">// Try these fixes in order:
+
+// Fix 1: Remove useTransition temporarily
+const setActiveWallet = useCallback((address: string) => {
+  console.log('🔄 Direct state update (no transition)');
+  setActiveWalletState(address);
+  // ... rest of function without startTransition
+}, [connectedWallets, activeWallet, queryClient]);
+
+// Fix 2: Add flushSync for immediate update
+import { flushSync } from 'react-dom';
+
+const setActiveWallet = useCallback((address: string) => {
+  flushSync(() => {
+    setActiveWalletState(address);
+  });
+}, [connectedWallets, activeWallet, queryClient]);
+
+// Fix 3: Disable wagmi sync temporarily
+// Comment out the wagmi sync useEffect to test
+
+// Fix 4: Use functional state update
+setActiveWalletState(prev => {
+  console.log('🔄 Functional update:', { prev, new: address });
+  return address;
+});</div>
+        </div>
+    </div>
+
+    <script>
+        function testLocalStorage() {
+            const results = document.getElementById('diagnostic-results');
+            
+            const activeAddress = localStorage.getItem('aw_active_address');
+            const activeNetwork = localStorage.getItem('aw_active_network');
+            const connectedWallets = localStorage.getItem('connectedWallets');
+            
+            let walletData = [];
+            if (connectedWallets) {
+                try {
+                    walletData = JSON.parse(connectedWallets);
+                } catch (e) {
+                    console.error('Failed to parse connectedWallets:', e);
+                }
+            }
+            
+            results.textContent = `localStorage Test Results:
+
+Active Address: ${activeAddress || 'None'}
+Active Network: ${activeNetwork || 'None'}
+Connected Wallets Count: ${walletData.length}
+
+Wallet Details:
+${walletData.map((w, i) => `${i + 1}. ${w.address} (${w.label || 'No label'}) ${w.address === activeAddress ? '← ACTIVE' : ''}`).join('\n')}
+
+Status: ${activeAddress ? 'localStorage has active wallet' : 'No active wallet in localStorage'}
+
+Next: Check if React state matches localStorage state`;
+        }
+
+        function testReactDevTools() {
+            const results = document.getElementById('diagnostic-results');
+            
+            results.textContent = `React DevTools Investigation:
+
+1. Install React Developer Tools browser extension
+2. Open the app in another tab
+3. Open DevTools → Components tab
+4. Find WalletProvider component
+5. Look for these state values:
+   - activeWallet (should match selected wallet)
+   - connectedWallets (array of wallet objects)
+   - isSwitching (should be false when not switching)
+
+6. When you click a wallet switch button:
+   - Watch activeWallet value in real-time
+   - See if it changes immediately or stays the same
+   - Check if isSwitching becomes true temporarily
+
+7. If activeWallet doesn't change in React DevTools:
+   - The issue is in React state management
+   - setActiveWalletState is not working properly
+   
+8. If activeWallet changes but UI doesn't update:
+   - The issue is in component re-rendering
+   - Check useWallet hook usage`;
+        }
+
+        function testWagmiState() {
+            const results = document.getElementById('diagnostic-results');
+            
+            results.textContent = `wagmi State Investigation:
+
+The wagmi sync might be overriding manual wallet switches.
+
+In the app console, run these commands:
+
+1. Check wagmi state:
+   console.log('wagmi address:', window.wagmi?.address);
+
+2. Monitor wagmi account changes:
+   window.addEventListener('wagmiAccountChanged', (e) => {
+     console.log('🔄 wagmi account changed:', e.detail);
+   });
+
+3. Check if wagmi sync is interfering:
+   // Look for this in console when switching wallets:
+   "No active wallet set, using wagmi wallet: 0x..."
+   "Active wallet already set, not overriding with wagmi wallet"
+
+4. Temporarily disable wagmi sync:
+   // Comment out the wagmi sync useEffect in WalletContext.tsx
+   // Lines ~130-175 (the useEffect with wagmiAddress dependency)
+
+5. Test wallet switching without wagmi sync:
+   // If switching works without wagmi sync, that's the culprit
+
+Expected behavior:
+- wagmi should NOT override manual wallet switches
+- Only set wagmi wallet as active if no active wallet exists`;
+        }
+
+        function testStateUpdates() {
+            const results = document.getElementById('diagnostic-results');
+            
+            results.textContent = `State Update Investigation:
+
+Add this debugging code to WalletContext.tsx setActiveWallet function:
+
+const setActiveWallet = useCallback((address: string) => {
+  console.log('🔄 setActiveWallet ENTRY:', {
+    targetAddress: address,
+    currentActiveWallet: activeWallet,
+    timestamp: Date.now()
+  });
+  
+  // Validate wallet exists
+  const walletExists = connectedWallets.some(w => 
+    w.address.toLowerCase() === address.toLowerCase()
+  );
+  
+  if (!walletExists) {
+    console.error('❌ VALIDATION FAILED: Wallet not found');
+    return;
+  }
+  
+  console.log('✅ VALIDATION PASSED: Wallet found');
+  
+  // Track state before update
+  const beforeState = activeWallet;
+  
+  startTransition(() => {
+    console.log('🔄 INSIDE TRANSITION: About to call setActiveWalletState');
+    console.log('🔄 BEFORE UPDATE:', beforeState);
+    
+    setActiveWalletState(address);
+    
+    console.log('🔄 AFTER setActiveWalletState CALL (sync)');
+    
+    // Check state after React has processed the update
+    Promise.resolve().then(() => {
+      console.log('🔄 AFTER PROMISE RESOLVE:', activeWallet);
+    });
+    
+    setTimeout(() => {
+      console.log('🔄 AFTER 100ms TIMEOUT:', activeWallet);
+    }, 100);
+  });
+  
+  console.log('🔄 setActiveWallet EXIT');
+}, [connectedWallets, activeWallet, queryClient, startTransition]);
+
+This will show exactly where the state update is failing.`;
+        }
+
+        function clearAllState() {
+            // Clear all wallet-related state
+            localStorage.removeItem('aw_active_address');
+            localStorage.removeItem('aw_active_network');
+            localStorage.removeItem('connectedWallets');
+            localStorage.removeItem('activeWallet'); // Legacy key
+            
+            const results = document.getElementById('diagnostic-results');
+            results.textContent = `All wallet state cleared:
+
+Removed from localStorage:
+- aw_active_address
+- aw_active_network
+- connectedWallets
+- activeWallet (legacy)
+
+Next steps:
+1. Refresh the app
+2. Connect wallets again (start fresh)
+3. Test wallet switching with clean state
+4. Monitor console for any state conflicts
+
+This will help identify if the issue is with:
+- Corrupted localStorage data
+- State initialization problems
+- Conflicting state updates`;
+        }
+
+        // Auto-run localStorage test on load
+        window.addEventListener('load', () => {
+            testLocalStorage();
+        });
+    </script>
+</body>
+</html>
+</body>
+</html>

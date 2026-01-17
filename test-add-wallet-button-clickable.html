@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Wallet Button Clickable Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    h1 {
+      color: #06b6d4;
+      border-bottom: 2px solid #06b6d4;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #22d3ee;
+      margin-top: 30px;
+    }
+    .test-section {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+    .status.pass {
+      background: #10b981;
+      color: white;
+    }
+    .status.fail {
+      background: #ef4444;
+      color: white;
+    }
+    .status.pending {
+      background: #f59e0b;
+      color: white;
+    }
+    .code-block {
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .step {
+      margin: 15px 0;
+      padding: 10px;
+      background: #334155;
+      border-left: 4px solid #06b6d4;
+      border-radius: 4px;
+    }
+    .expected {
+      color: #10b981;
+      font-weight: 600;
+    }
+    .actual {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+    ul {
+      line-height: 1.8;
+    }
+    .warning {
+      background: #451a03;
+      border: 1px solid #f59e0b;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .success {
+      background: #064e3b;
+      border: 1px solid #10b981;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .error {
+      background: #450a0a;
+      border: 1px solid #ef4444;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Add Wallet Button Clickable Test</h1>
+  <p><strong>Issue:</strong> "Add Wallet" button is visible but not clickable after connecting first wallet</p>
+  <p><strong>Status:</strong> Button appears in profile dropdown but clicking does nothing</p>
+
+  <div class="test-section">
+    <h2>🐛 Debugging Steps</h2>
+    
+    <div class="step">
+      <strong>Step 1:</strong> Open Browser Console
+      <ul>
+        <li>Press F12 or right-click → Inspect → Console tab</li>
+        <li>Clear any existing logs</li>
+        <li><span class="expected">Expected:</span> Console is ready for debugging</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 2:</strong> Navigate to authenticated page with wallet
+      <ul>
+        <li>Go to <code>http://localhost:8080/cockpit</code> (or any page with GlobalHeader)</li>
+        <li>Ensure you are logged in and have a wallet connected</li>
+        <li><span class="expected">Expected:</span> Profile icon visible in header</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 3:</strong> Open profile dropdown
+      <ul>
+        <li>Click the profile icon (User icon) in top-right corner</li>
+        <li><span class="expected">Expected:</span> Dropdown menu opens</li>
+        <li><span class="expected">Expected:</span> "Add Wallet" button visible at top (cyan color)</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <strong>Step 4:</strong> Test button click with console logging
+      <ul>
+        <li>Click the "Add Wallet" button</li>
+        <li>Watch the browser console for debug messages</li>
+        <li><span class="expected">Expected console logs:</span></li>
+        <li class="code-block">
+Add Wallet button clicked<br>
+Add Wallet clicked - openConnectModal available: true
+        </li>
+        <li><span class="expected">Expected behavior:</span> RainbowKit modal opens</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>🔍 Potential Issues & Solutions</h2>
+
+    <h3>Issue 1: Event Not Firing</h3>
+    <div class="code-block">
+// Check if click event is being captured
+document.addEventListener('click', (e) => {
+  if (e.target.textContent?.includes('Add Wallet')) {
+    console.log('Add Wallet click detected:', e.target);
+  }
+});
+    </div>
+
+    <h3>Issue 2: RainbowKit Modal Not Available</h3>
+    <div class="code-block">
+// Check if useConnectModal hook is working
+console.log('openConnectModal available:', !!openConnectModal);
+
+// If false, check RainbowKit setup in ClientProviders
+    </div>
+
+    <h3>Issue 3: Z-Index or CSS Issues</h3>
+    <div class="code-block">
+// Check if button is being covered by another element
+const button = document.querySelector('button:has-text("Add Wallet")');
+console.log('Button element:', button);
+console.log('Button computed style:', getComputedStyle(button));
+    </div>
+
+    <h3>Issue 4: Event Propagation</h3>
+    <div class="code-block">
+// Check if event is being stopped by parent elements
+// The fix includes e.preventDefault() and e.stopPropagation()
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>🛠️ Applied Fixes</h2>
+
+    <h3>Fix 1: Added Event Debugging</h3>
+    <div class="code-block">
+// Before
+&lt;button onClick={handleConnectWallet}&gt;Add Wallet&lt;/button&gt;
+
+// After
+&lt;button 
+  onClick={(e) =&gt; {
+    e.preventDefault()
+    e.stopPropagation()
+    console.log('Add Wallet button clicked')
+    handleConnectWallet()
+  }}
+&gt;
+  Add Wallet
+&lt;/button&gt;
+    </div>
+
+    <h3>Fix 2: Enhanced handleConnectWallet Function</h3>
+    <div class="code-block">
+// Before
+const handleConnectWallet = () =&gt; {
+  if (openConnectModal) {
+    openConnectModal()
+    setShowMenu(false)
+  }
+}
+
+// After
+const handleConnectWallet = () =&gt; {
+  console.log('Add Wallet clicked - openConnectModal available:', !!openConnectModal)
+  if (openConnectModal) {
+    openConnectModal()
+    setShowMenu(false)
+  } else {
+    console.error('RainbowKit connect modal not available')
+  }
+}
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>📋 Troubleshooting Checklist</h2>
+    
+    <h3>Console Debugging</h3>
+    <ul>
+      <li>[ ] "Add Wallet button clicked" appears when clicking button</li>
+      <li>[ ] "Add Wallet clicked - openConnectModal available: true" appears</li>
+      <li>[ ] No JavaScript errors in console</li>
+      <li>[ ] RainbowKit modal opens after click</li>
+      <li>[ ] Dropdown menu closes after click</li>
+    </ul>
+
+    <h3>Visual Debugging</h3>
+    <ul>
+      <li>[ ] Button has cyan color (#06b6d4)</li>
+      <li>[ ] Button has hover effect (background changes)</li>
+      <li>[ ] Button cursor changes to pointer on hover</li>
+      <li>[ ] Button is not covered by other elements</li>
+      <li>[ ] Button has proper spacing and padding</li>
+    </ul>
+
+    <h3>Functional Testing</h3>
+    <ul>
+      <li>[ ] Profile dropdown opens when clicking profile icon</li>
+      <li>[ ] "Add Wallet" button is visible in dropdown</li>
+      <li>[ ] Clicking "Add Wallet" triggers console logs</li>
+      <li>[ ] RainbowKit modal appears</li>
+      <li>[ ] Can select different wallet in modal</li>
+      <li>[ ] Second wallet connection is detected</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>🔧 Manual Testing Commands</h2>
+    
+    <h3>Test Button Element</h3>
+    <div class="code-block">
+// Find the Add Wallet button
+const addWalletButton = Array.from(document.querySelectorAll('button'))
+  .find(btn => btn.textContent?.includes('Add Wallet'));
+
+console.log('Add Wallet button found:', addWalletButton);
+console.log('Button onclick:', addWalletButton?.onclick);
+console.log('Button disabled:', addWalletButton?.disabled);
+    </div>
+
+    <h3>Test Click Programmatically</h3>
+    <div class="code-block">
+// Simulate click on Add Wallet button
+const addWalletButton = Array.from(document.querySelectorAll('button'))
+  .find(btn => btn.textContent?.includes('Add Wallet'));
+
+if (addWalletButton) {
+  addWalletButton.click();
+  console.log('Programmatic click executed');
+} else {
+  console.log('Add Wallet button not found');
+}
+    </div>
+
+    <h3>Test RainbowKit Availability</h3>
+    <div class="code-block">
+// Check if RainbowKit is properly loaded
+console.log('RainbowKit elements:', document.querySelectorAll('[data-rk]'));
+console.log('Wagmi provider:', document.querySelector('[data-testid="wagmi-provider"]'));
+
+// Check if useConnectModal is available in React DevTools
+// Look for components using useConnectModal hook
+    </div>
+  </div>
+
+  <div class="error">
+    <h3>⚠️ Common Issues</h3>
+    <ul>
+      <li><strong>RainbowKit Not Initialized:</strong> Check if RainbowKitProvider is properly set up in ClientProviders</li>
+      <li><strong>useConnectModal Hook Missing:</strong> Verify import and usage of useConnectModal from @rainbow-me/rainbowkit</li>
+      <li><strong>Event Propagation:</strong> Parent elements might be intercepting click events</li>
+      <li><strong>Z-Index Issues:</strong> Button might be covered by invisible overlay</li>
+      <li><strong>CSS Pointer Events:</strong> Button might have pointer-events: none</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>🔄 Next Steps Based on Results</h2>
+
+    <h3>If Console Shows "Add Wallet button clicked" but no modal:</h3>
+    <ul>
+      <li>Check if openConnectModal is undefined</li>
+      <li>Verify RainbowKit setup in ClientProviders</li>
+      <li>Check for JavaScript errors preventing modal</li>
+    </ul>
+
+    <h3>If No Console Logs Appear:</h3>
+    <ul>
+      <li>Button click event is not firing</li>
+      <li>Check for CSS issues (pointer-events, z-index)</li>
+      <li>Check for event propagation issues</li>
+      <li>Verify button element exists in DOM</li>
+    </ul>
+
+    <h3>If Modal Opens but Doesn't Work:</h3>
+    <ul>
+      <li>Check RainbowKit configuration</li>
+      <li>Verify wallet providers are available</li>
+      <li>Check network configuration</li>
+    </ul>
+  </div>
+
+  <div class="success">
+    <h3>✅ Success Criteria</h3>
+    <p>The fix is successful when:</p>
+    <ul>
+      <li>Console shows both debug messages when clicking "Add Wallet"</li>
+      <li>RainbowKit modal opens immediately after click</li>
+      <li>Profile dropdown closes after clicking "Add Wallet"</li>
+      <li>User can select and connect a second wallet</li>
+      <li>Both wallets are stored in WalletContext and localStorage</li>
+    </ul>
+  </div>
+
+  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; color: #64748b;">
+    <p>AlphaWhale Multi-Wallet Support - Add Wallet Button Clickable Fix</p>
+    <p>Test Date: <span id="test-date"></span></p>
+  </footer>
+
+  <script>
+    document.getElementById('test-date').textContent = new Date().toLocaleString();
+  </script>
+</body>
+</html>

@@ -10,8 +10,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GlobalHeader } from '@/components/header/GlobalHeader';
 import {
-  HarvestProHeader,
   FilterChipRow,
   HarvestSummaryCard,
   HarvestOpportunityCard,
@@ -606,11 +606,7 @@ export default function HarvestPro() {
           onEnterDemoMode={handleServiceDegradation}
           cacheKey="harvestpro-header"
         >
-          <HarvestProHeader
-            lastUpdated={lastUpdated}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
+          <GlobalHeader />
         </HarvestProErrorBoundary>
       </header>
 

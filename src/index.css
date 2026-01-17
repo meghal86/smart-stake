@@ -10,117 +10,114 @@
 @tailwind components;
 @tailwind utilities;
 
-/* RainbowKit Modal Fixes - ULTRA AGGRESSIVE */
-/* Main RainbowKit portal container */
-div[data-rk],
-div[data-rk] *,
-[data-rk],
-[data-rk] * {
-  z-index: 999999 !important;
-  pointer-events: auto !important;
-}
+/* RainbowKit Modal Fixes - Enhanced JavaScript-Compatible Approach */
+/* CRITICAL: Prevent RainbowKit modal from disappearing */
 
-/* RainbowKit backdrop/overlay - make it clickable */
-div[data-rk] > div:first-child {
-  z-index: 999998 !important;
-  pointer-events: auto !important;
+/* Target RainbowKit portal containers at document root */
+body > div[data-rk] {
+  z-index: 2147483647 !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-}
-
-/* RainbowKit modal dialog */
-div[role="dialog"][data-rk],
-div[data-rk] div[role="dialog"],
-div[data-rk] [role="dialog"] {
-  z-index: 999999 !important;
-  pointer-events: auto !important;
-  position: fixed !important;
-}
-
-/* ALL buttons inside RainbowKit - ULTRA AGGRESSIVE */
-div[data-rk] button,
-div[data-rk] button *,
-div[data-rk] button > *,
-div[data-rk] a,
-div[data-rk] a *,
-[data-rk] button,
-[data-rk] button *,
-[data-rk] a,
-[data-rk] a * {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  -webkit-tap-highlight-color: transparent !important;
-  user-select: none !important;
-  -webkit-user-select: none !important;
-}
-
-/* Wallet option buttons and containers */
-div[data-rk] [role="button"],
-div[data-rk] [data-testid*="rk"],
-div[data-rk] [data-testid*="wallet"],
-[data-rk] [role="button"],
-[data-rk] [data-testid*="rk"],
-[data-rk] [data-testid*="wallet"] {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  z-index: 999999 !important;
-}
-
-/* Images and SVGs inside buttons */
-div[data-rk] button img,
-div[data-rk] button svg,
-div[data-rk] button span,
-div[data-rk] button div,
-[data-rk] button img,
-[data-rk] button svg,
-[data-rk] button span,
-[data-rk] button div {
+  width: 100vw !important;
+  height: 100vh !important;
   pointer-events: none !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* Close button */
-div[data-rk] button[aria-label*="Close"],
-div[data-rk] button[aria-label*="close"],
-[data-rk] button[aria-label*="Close"],
-[data-rk] button[aria-label*="close"] {
+/* Enable interactions only with modal content inside portal */
+body > div[data-rk] > * {
   pointer-events: auto !important;
-  cursor: pointer !important;
-  z-index: 1000000 !important;
 }
 
-/* Remove any transform that might block clicks */
-div[data-rk],
-div[data-rk] *,
-[data-rk],
-[data-rk] * {
-  transform: none !important;
-}
-
-/* Fix for wallet option buttons - make them super clickable */
-button[data-testid^="rk-wallet-option"],
-[data-testid^="rk-wallet-option"] {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  z-index: 999999 !important;
-  position: relative !important;
-}
-
-button[data-testid^="rk-wallet-option"] *,
-[data-testid^="rk-wallet-option"] * {
-  pointer-events: none !important;
-}
-
-/* Make sure nothing blocks the modal */
-body > div:not([data-rk]) {
-  z-index: auto !important;
-}
-
-/* Force RainbowKit to be on top of everything */
-body > div[data-rk] {
+/* Target actual modal dialogs inside RainbowKit portals */
+body > div[data-rk] [role="dialog"] {
   z-index: 2147483647 !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  /* Prevent modal from being hidden */
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Dark mode support for RainbowKit modal */
+.dark body > div[data-rk] [role="dialog"] {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Ensure RainbowKit modal backdrop is visible */
+body > div[data-rk] > div:first-child:not([role="dialog"]) {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  z-index: 2147483646 !important;
+  pointer-events: auto !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Wallet option buttons inside RainbowKit modal */
+body > div[data-rk] button[data-testid^="rk-wallet-option"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 2147483647 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Prevent child elements from capturing clicks */
+body > div[data-rk] button[data-testid^="rk-wallet-option"] * {
+  pointer-events: none !important;
+}
+
+/* General RainbowKit button styling */
+body > div[data-rk] button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Prevent images/icons from capturing clicks */
+body > div[data-rk] button img,
+body > div[data-rk] button svg {
+  pointer-events: none !important;
+}
+
+/* Force all RainbowKit modal content to be visible */
+body > div[data-rk] * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Prevent any animations that might hide the modal */
+body > div[data-rk],
+body > div[data-rk] * {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
 }
 
 /* Style RainbowKit Connect Button to match Guardian theme */
