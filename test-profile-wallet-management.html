@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Wallet Management Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0A0F1F 0%, #1E293B 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #3B82F6, #06B6D4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .card h3 {
+            margin: 0 0 16px 0;
+            color: #3B82F6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .wallet-item {
+            display: flex;
+            align-items: center;
+            justify-between;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+        }
+        .wallet-item:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .wallet-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .wallet-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .wallet-icon {
+            font-size: 24px;
+        }
+        .wallet-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .wallet-address {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            color: #94A3B8;
+        }
+        .wallet-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #3B82F6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563EB;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #94A3B8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+        .btn-danger {
+            background: transparent;
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .add-wallet-btn {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .add-wallet-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22C55E;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #94A3B8;
+        }
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3B82F6;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94A3B8;
+        }
+        .comparison {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 32px;
+        }
+        .comparison h3 {
+            color: #22C55E;
+            margin-bottom: 16px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .comparison-item {
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .before {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+        .after {
+            background: rgba(34, 197, 94, 0.05);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
+        .before h4 {
+            color: #EF4444;
+        }
+        .after h4 {
+            color: #22C55E;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Profile Wallet Management</h1>
+            <p>Testing the new wallet management system moved to the Profile page</p>
+        </div>
+
+        <div class="layout">
+            <!-- Main Content - Wallet Management -->
+            <div class="card">
+                <h3>💼 Wallet Management</h3>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Connected</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Providers</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div>
+                        <h4 style="margin: 0 0 4px 0;">Connected Wallets</h4>
+                        <p style="margin: 0; color: #94A3B8; font-size: 14px;">Manage your wallet connections</p>
+                    </div>
+                    <button class="add-wallet-btn" onclick="showAddWalletDemo()">
+                        <span>➕</span>
+                        Add Wallet
+                    </button>
+                </div>
+
+                <!-- Mock Connected Wallets -->
+                <div class="wallet-item active">
+                    <div class="wallet-info">
+                        <div class="wallet-icon">🦊</div>
+                        <div class="wallet-details">
+                            <h4>MetaMask Account 1</h4>
+                            <div class="wallet-address">0x379c18...d72e3</div>
+                        </div>
+                        <div class="badge">
+                            <span>✓</span>
+                            Active
+                        </div>
+                    </div>
+                    <div class="wallet-actions">
+                        <button class="btn btn-outline" onclick="viewOnExplorer('0x379c186a7582706388d20cd4258bfd5f9d7d72e3')">
+                            🔗
+                        </button>
+                        <button class="btn btn-danger" onclick="disconnectWallet('MetaMask Account 1')">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+
+                <div class="wallet-item">
+                    <div class="wallet-info">
+                        <div class="wallet-icon">🦊</div>
+                        <div class="wallet-details">
+                            <h4>MetaMask Account 2</h4>
+                            <div class="wallet-address">0xfe74dd...433c</div>
+                        </div>
+                    </div>
+                    <div class="wallet-actions">
+                        <button class="btn btn-primary" onclick="setActiveWallet('MetaMask Account 2')">
+                            Set Active
+                        </button>
+                        <button class="btn btn-outline" onclick="viewOnExplorer('0xfe74dd4c1433c')">
+                            🔗
+                        </button>
+                        <button class="btn btn-danger" onclick="disconnectWallet('MetaMask Account 2')">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+
+                <div class="wallet-item">
+                    <div class="wallet-info">
+                        <div class="wallet-icon">🌈</div>
+                        <div class="wallet-details">
+                            <h4>Rainbow Wallet</h4>
+                            <div class="wallet-address">0xd65fe4...68c2</div>
+                        </div>
+                    </div>
+                    <div class="wallet-actions">
+                        <button class="btn btn-primary" onclick="setActiveWallet('Rainbow Wallet')">
+                            Set Active
+                        </button>
+                        <button class="btn btn-outline" onclick="viewOnExplorer('0xd65fe4868c2')">
+                            🔗
+                        </button>
+                        <button class="btn btn-danger" onclick="disconnectWallet('Rainbow Wallet')">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar - Profile Info -->
+            <div class="card">
+                <h3>👤 Profile Info</h3>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #3B82F6, #06B6D4); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
+                        👤
+                    </div>
+                    <h4 style="margin: 0 0 4px 0;">John Doe</h4>
+                    <p style="margin: 0; color: #94A3B8; font-size: 14px;">john@example.com</p>
+                </div>
+                
+                <div style="space-y: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: #94A3B8;">Plan</span>
+                        <span style="background: rgba(168, 85, 247, 0.2); color: #A855F7; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+                            🏢 Enterprise
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: #94A3B8;">Member Since</span>
+                        <span style="font-size: 14px;">Jan 2024</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #94A3B8;">Status</span>
+                        <span style="background: rgba(34, 197, 94, 0.2); color: #22C55E; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+                            Active
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Before/After Comparison -->
+        <div class="comparison">
+            <h3>✨ Improvement: Header vs Profile Wallet Management</h3>
+            <div class="comparison-grid">
+                <div class="comparison-item before">
+                    <h4>❌ Before: Header Dropdown</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #94A3B8;">
+                        <li>Cluttered header dropdown</li>
+                        <li>Limited space for wallet details</li>
+                        <li>Mixed with profile actions</li>
+                        <li>Poor mobile experience</li>
+                        <li>Hard to manage multiple wallets</li>
+                    </ul>
+                </div>
+                <div class="comparison-item after">
+                    <h4>✅ After: Profile Page</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #94A3B8;">
+                        <li>Dedicated wallet management section</li>
+                        <li>Full space for wallet details</li>
+                        <li>Organized with profile settings</li>
+                        <li>Better mobile layout</li>
+                        <li>Easy multi-wallet management</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showAddWalletDemo() {
+            alert('🎉 Add Wallet feature triggered!\n\nThis would open your existing AddWalletButton component with:\n• MetaMask multi-account support\n• Rainbow, Base, Coinbase options\n• Manual address input\n• Professional provider selection');
+        }
+
+        function setActiveWallet(walletName) {
+            // Update UI to show new active wallet
+            document.querySelectorAll('.wallet-item').forEach(item => {
+                item.classList.remove('active');
+                const badge = item.querySelector('.badge');
+                if (badge) badge.remove();
+                
+                const setActiveBtn = item.querySelector('.btn-primary');
+                if (setActiveBtn && setActiveBtn.textContent === 'Set Active') {
+                    setActiveBtn.style.display = 'block';
+                }
+            });
+            
+            // Find and activate the selected wallet
+            const walletItems = document.querySelectorAll('.wallet-item');
+            walletItems.forEach(item => {
+                const walletTitle = item.querySelector('h4').textContent;
+                if (walletTitle === walletName) {
+                    item.classList.add('active');
+                    
+                    // Add active badge
+                    const walletInfo = item.querySelector('.wallet-info');
+                    const badge = document.createElement('div');
+                    badge.className = 'badge';
+                    badge.innerHTML = '<span>✓</span>Active';
+                    walletInfo.appendChild(badge);
+                    
+                    // Hide set active button
+                    const setActiveBtn = item.querySelector('.btn-primary');
+                    if (setActiveBtn) setActiveBtn.style.display = 'none';
+                }
+            });
+            
+            alert(`✅ ${walletName} is now your active wallet!`);
+        }
+
+        function disconnectWallet(walletName) {
+            if (confirm(`Are you sure you want to disconnect ${walletName}?`)) {
+                // Find and remove the wallet item
+                const walletItems = document.querySelectorAll('.wallet-item');
+                walletItems.forEach(item => {
+                    const walletTitle = item.querySelector('h4').textContent;
+                    if (walletTitle === walletName) {
+                        item.style.opacity = '0.5';
+                        item.style.transform = 'translateX(-20px)';
+                        setTimeout(() => {
+                            item.remove();
+                            updateStats();
+                        }, 300);
+                    }
+                });
+                
+                alert(`🗑️ ${walletName} has been disconnected`);
+            }
+        }
+
+        function viewOnExplorer(address) {
+            alert(`🔗 Opening Etherscan for ${address}\n\nThis would open: https://etherscan.io/address/${address}`);
+        }
+
+        function updateStats() {
+            const connectedCount = document.querySelectorAll('.wallet-item').length;
+            document.querySelector('.stat-number').textContent = connectedCount;
+        }
+
+        // Demo initialization
+        window.addEventListener('load', () => {
+            console.log('🎯 Profile Wallet Management Demo Loaded');
+            console.log('✅ Features demonstrated:');
+            console.log('  - Dedicated wallet management section');
+            console.log('  - Active wallet indication');
+            console.log('  - Set active wallet functionality');
+            console.log('  - Disconnect wallet with confirmation');
+            console.log('  - View on explorer links');
+            console.log('  - Add wallet integration');
+            console.log('  - Clean separation from header');
+        });
+    </script>
+</body>
+</html>

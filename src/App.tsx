@@ -75,6 +75,8 @@ import Hunter from "./pages/Hunter";
 import HarvestPro from "./pages/HarvestPro";
 import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
+import AddWalletWizard from "./pages/AddWalletWizard";
+import WalletSettings from "./pages/WalletSettings";
 import { ProtectedRouteWrapper } from '@/components/ProtectedRouteWrapper';
 import { ClientProviders } from "@/providers/ClientProviders";
 
@@ -207,6 +209,10 @@ const App = () => {
                   <Route path="/scanner" element={<Scanner />} />
                   <Route path="/reports" element={<ReportsExports />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/settings/wallets" element={<ProtectedRouteWrapper><WalletSettings /></ProtectedRouteWrapper>} />
+                  <Route path="/settings/wallets/add" element={<ProtectedRouteWrapper><AddWalletWizard /></ProtectedRouteWrapper>} />
+                  <Route path="/settings/wallets/connecting" element={<ProtectedRouteWrapper><AddWalletWizard /></ProtectedRouteWrapper>} />
+                  <Route path="/settings/wallets/success" element={<ProtectedRouteWrapper><AddWalletWizard /></ProtectedRouteWrapper>} />
                   <Route path="/legal/terms" element={<Terms />} />
                   <Route path="/legal/privacy" element={<Privacy />} />
                   <Route path="/legal/contact" element={<Contact />} />

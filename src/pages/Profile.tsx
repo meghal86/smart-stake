@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTier } from "@/hooks/useTier";
 import { useUserMetadata } from "@/hooks/useUserMetadata";
+import { useWallet, truncateAddress } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { DisabledTooltipButton } from "@/components/ui/disabled-tooltip-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AddWalletButton } from "@/components/wallet/AddWalletButton";
 import { NavigationRouter } from "@/lib/navigation/NavigationRouter";
 import { 
   User, 
@@ -20,16 +22,22 @@ import {
   ArrowLeft,
   Save,
   Key,
-  Settings
+  Settings,
+  Wallet,
+  Check,
+  Trash2,
+  ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FooterNav } from "@/components/layout/FooterNav";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { tier, isPremium, isEnterprise } = useTier();
   const { metadata, loading } = useUserMetadata();
+  const { connectedWallets, activeWallet, setActiveWallet, disconnectWallet } = useWallet();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -38,12 +46,37 @@ export default function ProfilePage() {
       // In a real implementation, this would save the profile data
       console.log('Saving profile...');
       // For now, just show a message
-      alert('Profile saved successfully!');
+      toast.success('Profile saved successfully!');
     } catch (error) {
       console.error('Save failed:', error);
+      toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleWalletSwitch = (address: string) => {
+    setActiveWallet(address);
+    toast.success('Active wallet switched');
+  };
+
+  const handleWalletDisconnect = async (address: string) => {
+    try {
+      await disconnectWallet(address);
+      toast.success('Wallet disconnected');
+    } catch (error) {
+      console.error('Disconnect failed:', error);
+      toast.error('Failed to disconnect wallet');
+    }
+  };
+
+  const getWalletProvider = (wallet: any) => {
+    // Simple provider detection based on label or address pattern
+    if (wallet.label?.toLowerCase().includes('metamask')) return { name: 'MetaMask', icon: '🦊' };
+    if (wallet.label?.toLowerCase().includes('rainbow')) return { name: 'Rainbow', icon: '🌈' };
+    if (wallet.label?.toLowerCase().includes('base')) return { name: 'Base Wallet', icon: '🔵' };
+    if (wallet.label?.toLowerCase().includes('coinbase')) return { name: 'Coinbase Wallet', icon: '💙' };
+    return { name: 'Wallet', icon: '💼' };
   };
 
   const getTierIcon = (tier: string) => {
@@ -97,7 +130,8 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Information */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Personal Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -147,6 +181,110 @@ export default function ProfilePage() {
                   <Save className="w-4 h-4 mr-2" />
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </DisabledTooltipButton>
+              </CardContent>
+            </Card>
+
+            {/* Wallet Management Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Wallet Management
+                </CardTitle>
+                <CardDescription>
+                  Manage your connected wallets and add new ones
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Add Wallet Button */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">Connected Wallets</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {connectedWallets.length} wallet{connectedWallets.length !== 1 ? 's' : ''} connected
+                    </p>
+                  </div>
+                  <AddWalletButton />
+                </div>
+
+                {/* Connected Wallets List */}
+                {connectedWallets.length > 0 ? (
+                  <div className="space-y-3">
+                    {connectedWallets.map((wallet) => {
+                      const provider = getWalletProvider(wallet);
+                      const isActive = wallet.address === activeWallet;
+                      
+                      return (
+                        <div
+                          key={wallet.address}
+                          className={cn(
+                            "flex items-center justify-between p-4 rounded-lg border transition-colors",
+                            isActive 
+                              ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800" 
+                              : "bg-muted/50 hover:bg-muted"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl">{provider.icon}</div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">
+                                  {wallet.label || provider.name}
+                                </span>
+                                {isActive && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Check className="w-3 h-3 mr-1" />
+                                    Active
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground font-mono">
+                                {truncateAddress(wallet.address, 6)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {!isActive && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleWalletSwitch(wallet.address)}
+                              >
+                                Set Active
+                              </Button>
+                            )}
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(`https://etherscan.io/address/${wallet.address}`, '_blank')}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleWalletDisconnect(wallet.address)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">No wallets connected</p>
+                    <p className="text-sm">
+                      Connect your first wallet to start using AlphaWhale
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
