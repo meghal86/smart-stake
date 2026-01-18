@@ -3,11 +3,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAccount } from 'wagmi'
 import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { useNavigate } from 'react-router-dom'
-import { User, Wallet, Settings, CreditCard, LogOut, Check, TestTube2 } from 'lucide-react'
+import { User, Wallet, Settings, CreditCard, LogOut, Check, TestTube2, Plus } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/integrations/supabase/client'
-import { CustomWalletModal } from '@/components/wallet/CustomWalletModal'
+import { AddWalletButton } from '@/components/wallet/AddWalletButton'
 import { useWallet } from '@/contexts/WalletContext'
 import { useDemoMode } from '@/lib/ux/DemoModeManager'
 
@@ -21,7 +21,6 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   const { address: activeWallet } = useAccount()
   const { openConnectModal } = useConnectModal()
   const [showMenu, setShowMenu] = useState(false)
-  const [showCustomModal, setShowCustomModal] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 })
   
@@ -53,8 +52,6 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
     setShowMenu(false)
     if (openConnectModal) {
       openConnectModal()
-    } else {
-      setShowCustomModal(true)
     }
   }
 
@@ -103,9 +100,9 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
                         {contextActiveWallet === wallet.address && <Check className="w-4 h-4 ml-auto" />}
                       </button>
                     ))}
-                    <button onClick={handleWalletConnect} className="w-full px-3 py-2 text-left text-sm text-cyan-600 dark:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
-                      <Wallet className="w-4 h-4" /> Add Wallet
-                    </button>
+                    <div className="px-3 py-2">
+                      <AddWalletButton />
+                    </div>
                     <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                     <button onClick={() => { navigate('/profile'); setShowMenu(false) }} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
                       <User className="w-4 h-4" /> Profile
@@ -139,9 +136,9 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
                 </button>
                 {renderMenu(
                   <>
-                    <button onClick={handleWalletConnect} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
-                      <Wallet className="w-4 h-4" /> Connect Wallet
-                    </button>
+                    <div className="px-3 py-2">
+                      <AddWalletButton />
+                    </div>
                     <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
                     <button onClick={() => { navigate('/profile'); setShowMenu(false) }} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
                       <User className="w-4 h-4" /> Profile
@@ -167,8 +164,6 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
           </div>
         </div>
       </div>
-
-      <CustomWalletModal isOpen={showCustomModal} onClose={() => setShowCustomModal(false)} onSuccess={() => setShowCustomModal(false)} />
     </header>
   )
 }

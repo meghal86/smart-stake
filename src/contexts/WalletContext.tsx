@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { resolveName, type ResolvedName } from '@/lib/name-resolution';
 import { useWalletLabels } from '@/hooks/useWalletLabels';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWalletRegistry } from '@/hooks/useWalletRegistry';
 import { 
   legacyChainToCAIP2, 
   caip2ToLegacyChain,
@@ -97,16 +98,41 @@ interface WalletProviderProps {
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  const [connectedWallets, setConnectedWallets] = useState<ConnectedWallet[]>([]);
+  // Use the persistent wallet registry instead of local state
+  const {
+    wallets: registryWallets,
+    isLoading: registryLoading,
+    addWallet: addToRegistry,
+    removeWallet: removeFromRegistry,
+    updateWallet: updateInRegistry,
+    userId,
+    connectedAddress,
+    isConnected,
+  } = useWalletRegistry();
+
   const [activeWallet, setActiveWalletState] = useState<string | null>(null);
   const [activeNetwork, setActiveNetworkState] = useState<string>('eip155:1'); // Default to Ethereum
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitching, startTransition] = useTransition();
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
   const [hydratedForUserId, setHydratedForUserId] = useState<string | null>(null);
+  const [addingWallets, setAddingWallets] = useState<Set<string>>(new Set()); // Track wallets being added
+  const [failedWallets, setFailedWallets] = useState<Set<string>>(new Set()); // Track wallets that failed to add
   const queryClient = useQueryClient();
   const { labels: walletLabels, getLabel } = useWalletLabels();
   const { session, isAuthenticated, loading: authLoading } = useAuth();
+
+  // Convert registry wallets to ConnectedWallet format
+  const connectedWallets: ConnectedWallet[] = registryWallets.map(wallet => ({
+    address: wallet.address,
+    label: wallet.label,
+    chain: caip2ToLegacyChain(wallet.chain_namespace),
+    chainNamespace: wallet.chain_namespace,
+    supportedNetworks: [wallet.chain_namespace],
+    balancesByNetwork: wallet.balance_cache as Record<string, TokenBalance[]> || {},
+    guardianScoresByNetwork: wallet.guardian_scores as Record<string, number> || {},
+    lastUsed: new Date(wallet.updated_at),
+  }));
 
   // ============================================================================
   // Sync with wagmi's active wallet
@@ -131,126 +157,76 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     };
   }, []);
   
-  // When wagmi connects a new wallet, add it to our multi-wallet list
+  // When wagmi connects a new wallet, add it to our registry
   useEffect(() => {
-    if (wagmiAddress && wagmiChainId) {
-      const address = wagmiAddress;
+    if (wagmiAddress && wagmiChainId && userId) {
+      const address = wagmiAddress.toLowerCase();
       
-      // Check if wallet is already in our list
+      // Check if wallet is already in our registry, currently being added, or previously failed
       const existingWallet = connectedWallets.find(
-        w => w.address.toLowerCase() === address.toLowerCase()
+        w => w.address.toLowerCase() === address
       );
       
-      if (!existingWallet) {
-        // New wallet - add it to the list
+      if (!existingWallet && !addingWallets.has(address) && !failedWallets.has(address)) {
+        // New wallet - add it to the registry (only once)
         const chainName = chainIdToName[wagmiChainId] || 'ethereum';
         const chainNamespace = legacyChainToCAIP2(chainName);
         
-        const newWallet: ConnectedWallet = {
+        console.log('Adding new wagmi wallet to registry:', address);
+        
+        // Mark as being added to prevent duplicates
+        setAddingWallets(prev => new Set(prev).add(address));
+        
+        addToRegistry({
           address,
-          chain: chainName,
-          chainNamespace,
-          supportedNetworks: [chainNamespace],
-          balancesByNetwork: {},
-          guardianScoresByNetwork: {},
-          lastUsed: new Date(),
-          label: getLabel(address),
-        };
-        
-        setConnectedWallets(prev => [...prev, newWallet]);
-        
-        // Only set as active if no active wallet exists
-        // Use functional state update to avoid stale closure
-        setActiveWalletState(prevActive => {
-          if (!prevActive) {
-            console.log('No active wallet set, using wagmi wallet:', address);
-            return address;
-          } else {
-            console.log('Active wallet already set, not overriding with wagmi wallet:', prevActive);
-            return prevActive;
-          }
-        });
-        
-        console.log('Added new wallet to multi-wallet list:', address);
-      } else {
-        // Existing wallet - only set as active if we don't have an active wallet yet
-        // Use functional state update to avoid race conditions
-        setActiveWalletState(prevActive => {
-          if (!prevActive) {
-            console.log('No active wallet set, using wagmi wallet:', address);
-            return address;
-          } else {
-            console.log('Active wallet already set, not overriding with wagmi wallet:', prevActive);
-            return prevActive;
-          }
-        });
-      }
-    }
-  }, [wagmiAddress, wagmiChainId, connectedWallets, getLabel]); // Removed activeWallet from dependencies
-
-  // ============================================================================
-  // Load from localStorage on mount
-  // ============================================================================
-
-  useEffect(() => {
-    try {
-      // Use new localStorage keys: aw_active_address, aw_active_network
-      const savedAddress = localStorage.getItem('aw_active_address');
-      const savedNetwork = localStorage.getItem('aw_active_network');
-      const savedWallets = localStorage.getItem('connectedWallets');
-      
-      // Restore active network
-      if (savedNetwork && getSupportedNetworks().includes(savedNetwork)) {
-        setActiveNetworkState(savedNetwork);
-      }
-      
-      if (savedWallets) {
-        const wallets: ConnectedWallet[] = JSON.parse(savedWallets);
-        
-        // Convert lastUsed strings back to Date objects and migrate legacy data
-        const walletsWithDates = wallets.map(w => {
-          // Migrate legacy chain to chainNamespace if needed
-          const chainNamespace = w.chainNamespace || legacyChainToCAIP2(w.chain);
+          label: `Connected Wallet`,
+          chain_namespace: chainNamespace,
+        }).then(() => {
+          console.log('Successfully added wagmi wallet to registry:', address);
+          // Remove from adding set
+          setAddingWallets(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(address);
+            return newSet;
+          });
+        }).catch(err => {
+          console.error('Failed to add wagmi wallet to registry:', err);
           
-          return {
-            ...w,
-            chainNamespace,
-            supportedNetworks: w.supportedNetworks || [chainNamespace], // Default to current network
-            balancesByNetwork: w.balancesByNetwork || {},
-            guardianScoresByNetwork: w.guardianScoresByNetwork || {},
-            lastUsed: w.lastUsed ? new Date(w.lastUsed) : undefined,
-          };
-        });
-        
-        setConnectedWallets(walletsWithDates);
-        
-        // Restore active wallet if it's still in the list
-        if (savedAddress && walletsWithDates.some(w => w.address === savedAddress)) {
-          setActiveWalletState(savedAddress);
-        } else if (walletsWithDates.length > 0) {
-          // Default to first wallet if saved wallet is not found
-          setActiveWalletState(walletsWithDates[0].address);
-        }
-
-        // Resolve names for all wallets in background
-        walletsWithDates.forEach(wallet => {
-          // Only resolve if we don't have a cached name
-          if (!wallet.ens && !wallet.lens && !wallet.unstoppable) {
-            resolveWalletName(wallet.address).catch(err => {
-              console.debug('Failed to resolve wallet name:', err);
-            });
+          // Handle different error types
+          const errorCode = err?.code || err?.error?.code;
+          const errorMessage = err?.message || err?.error?.message || '';
+          
+          // If it's a duplicate key error, treat as success
+          if (errorCode === '23505' || 
+              errorMessage.includes('duplicate key') || 
+              errorMessage.includes('uq_user_wallets_user_addr_chain')) {
+            console.log('✅ Wallet already exists in database, treating as success');
+          } else {
+            // Add to failed set to prevent retry loops for other errors
+            setFailedWallets(prev => new Set(prev).add(address));
+            
+            // If it's a permission error, show user-friendly message
+            if (errorCode === '42501' || errorMessage.includes('permission denied')) {
+              console.error('❌ Database permission error. Please check RLS policies.');
+            }
           }
+          
+          // Remove from adding set
+          setAddingWallets(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(address);
+            return newSet;
+          });
         });
       }
-    } catch (error) {
-      console.error('Failed to load wallet state from localStorage:', error);
-      // Clear corrupted data
-      localStorage.removeItem('aw_active_address');
-      localStorage.removeItem('aw_active_network');
-      localStorage.removeItem('connectedWallets');
+      
+      // Set as active if no active wallet exists
+      if (!activeWallet) {
+        setActiveWalletState(address);
+        console.log('Set wagmi wallet as active:', address);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [wagmiAddress, wagmiChainId, userId, addToRegistry, connectedWallets, activeWallet, addingWallets, failedWallets]);
 
   // ============================================================================
   // Active Selection Restoration (Task 10)
@@ -262,19 +238,42 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
    * 2. server primary wallet + default network
    * 3. ordered-first wallet (deterministic ordering: is_primary DESC, created_at DESC, id ASC)
    * 
+   * CROSS-BROWSER FIX: Enhanced fallback logic for when localStorage is empty (new browser)
+   * 
    * Validates: Requirements 15.4, 15.5, 15.6
    */
   const restoreActiveSelection = useCallback((
     wallets: ConnectedWallet[],
     serverWallets: any[]
   ): { address: string | null; network: string } => {
+    console.log('🔍 CROSS-BROWSER DEBUG - restoreActiveSelection called:', {
+      walletsCount: wallets.length,
+      serverWalletsCount: serverWallets.length,
+      hasLocalStorage: typeof localStorage !== 'undefined',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+    });
+
     if (wallets.length === 0) {
+      console.log('❌ No wallets available, returning null selection');
       return { address: null, network: 'eip155:1' };
     }
 
     // Priority 1: Check localStorage for saved selection
-    const savedAddress = localStorage.getItem('aw_active_address');
-    const savedNetwork = localStorage.getItem('aw_active_network');
+    let savedAddress: string | null = null;
+    let savedNetwork: string | null = null;
+    
+    try {
+      savedAddress = localStorage.getItem('aw_active_address');
+      savedNetwork = localStorage.getItem('aw_active_network');
+      
+      console.log('📱 localStorage values:', {
+        savedAddress,
+        savedNetwork,
+        isNewBrowser: !savedAddress && !savedNetwork
+      });
+    } catch (error) {
+      console.warn('⚠️ localStorage access failed (private browsing?):', error);
+    }
 
     // Validate localStorage selection exists in server data
     if (savedAddress && savedNetwork) {
@@ -285,18 +284,32 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       );
 
       if (isValidInServerData) {
-        // localStorage selection is valid - use it
+        console.log('✅ localStorage selection is valid, using it:', { savedAddress, savedNetwork });
         return { address: savedAddress, network: savedNetwork };
       } else {
+        console.log('🔄 localStorage selection is invalid, clearing and falling back:', {
+          savedAddress,
+          savedNetwork,
+          serverWallets: serverWallets.map(w => ({ address: w.address, chain: w.chain_namespace }))
+        });
+        
         // localStorage selection is invalid - self-heal by clearing it
-        localStorage.removeItem('aw_active_address');
-        localStorage.removeItem('aw_active_network');
+        try {
+          localStorage.removeItem('aw_active_address');
+          localStorage.removeItem('aw_active_network');
+        } catch (error) {
+          console.warn('Failed to clear invalid localStorage:', error);
+        }
       }
     }
 
     // Priority 2: Use server primary wallet + default network
     const primaryWallet = serverWallets.find((w: any) => w.is_primary);
     if (primaryWallet) {
+      console.log('✅ Using server primary wallet:', {
+        address: primaryWallet.address,
+        network: primaryWallet.chain_namespace
+      });
       return { 
         address: primaryWallet.address, 
         network: primaryWallet.chain_namespace || 'eip155:1' 
@@ -306,12 +319,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     // Priority 3: Use ordered-first wallet (deterministic ordering)
     // Server returns wallets sorted by: is_primary DESC, created_at DESC, id ASC
     if (wallets.length > 0) {
+      const firstWallet = wallets[0];
+      console.log('✅ Using first available wallet (cross-browser fallback):', {
+        address: firstWallet.address,
+        network: firstWallet.chainNamespace,
+        label: firstWallet.label,
+        isNewBrowser: !savedAddress && !savedNetwork
+      });
+      
+      // CROSS-BROWSER FIX: Immediately save this selection to localStorage
+      // so it persists for future visits in this browser
+      try {
+        localStorage.setItem('aw_active_address', firstWallet.address);
+        localStorage.setItem('aw_active_network', firstWallet.chainNamespace || 'eip155:1');
+        console.log('💾 Saved active selection to localStorage for future visits');
+      } catch (error) {
+        console.warn('Failed to save to localStorage:', error);
+      }
+      
       return { 
-        address: wallets[0].address, 
-        network: wallets[0].chainNamespace || 'eip155:1' 
+        address: firstWallet.address, 
+        network: firstWallet.chainNamespace || 'eip155:1' 
       };
     }
 
+    console.log('❌ No valid wallet selection found');
     return { address: null, network: 'eip155:1' };
   }, []);
 
@@ -320,9 +352,17 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   // ============================================================================
 
   const hydrateFromServer = useCallback(async () => {
+    console.log('🔄 CROSS-BROWSER DEBUG - hydrateFromServer called:', {
+      isAuthenticated,
+      userId: session?.user?.id,
+      hydratedForUserId,
+      connectedWalletsCount: connectedWallets.length,
+      currentActiveWallet: activeWallet
+    });
+
     if (!isAuthenticated || !session?.user?.id) {
+      console.log('❌ Not authenticated, clearing wallet state');
       // Clear wallet state if not authenticated
-      setConnectedWallets([]);
       setActiveWalletState(null);
       setHydratedForUserId(null);
       return;
@@ -330,72 +370,104 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Skip if already hydrated for this user
     if (hydratedForUserId === session.user.id) {
+      console.log('✅ Already hydrated for this user, skipping');
       return;
     }
 
+    console.log('🚀 Starting wallet hydration for user:', session.user.id);
     setIsLoading(true);
+    
     try {
-      // In Vite environment, we don't have the wallet list API endpoint yet
-      // For now, use localStorage data only and mark as hydrated
-      console.debug('Wallet hydration: Using localStorage data only (Vite environment)');
+      // The useWalletRegistry hook handles loading wallets from the database
+      // We need to wait for wallets to load, then restore active selection
       
       // Mark as hydrated for this user to prevent repeated attempts
       setHydratedForUserId(session.user.id);
       
-      // Get wallets from localStorage instead of state to avoid circular dependency
-      const savedWallets = localStorage.getItem('connectedWallets');
-      if (savedWallets) {
-        try {
-          const wallets: ConnectedWallet[] = JSON.parse(savedWallets);
-          
-          if (wallets.length > 0) {
-            const { address: restoredAddress, network: restoredNetwork } = restoreActiveSelection(
-              wallets,
-              [] // Empty server wallets array since we don't have server data
-            );
-
-            if (restoredAddress) {
-              setActiveWalletState(restoredAddress);
-            }
-
-            if (restoredNetwork) {
-              setActiveNetworkState(restoredNetwork);
-            }
-          }
-        } catch (parseError) {
-          console.error('Failed to parse saved wallets:', parseError);
+      // Wait a moment for wallets to load from useWalletRegistry
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('💾 Wallets loaded, restoring active selection:', {
+        walletsCount: connectedWallets.length,
+        wallets: connectedWallets.map(w => ({ address: w.address, label: w.label }))
+      });
+      
+      if (connectedWallets.length > 0) {
+        // Use the enhanced restoreActiveSelection logic
+        const { address: restoredAddress, network: restoredNetwork } = restoreActiveSelection(
+          connectedWallets,
+          registryWallets
+        );
+        
+        console.log('🎯 Restored selection:', {
+          address: restoredAddress,
+          network: restoredNetwork,
+          isNewBrowser: !localStorage.getItem('aw_active_address')
+        });
+        
+        if (restoredAddress) {
+          setActiveWalletState(restoredAddress);
+          console.log('✅ Set active wallet:', restoredAddress);
         }
+        
+        if (restoredNetwork && getSupportedNetworks().includes(restoredNetwork)) {
+          setActiveNetworkState(restoredNetwork);
+          console.log('✅ Set active network:', restoredNetwork);
+        }
+        
+        // Emit wallet connected event for other components
+        if (restoredAddress) {
+          const event = new CustomEvent('walletConnected', {
+            detail: { 
+              address: restoredAddress, 
+              timestamp: new Date().toISOString(),
+              source: 'cross-browser-hydration'
+            }
+          });
+          window.dispatchEvent(event);
+        }
+        
+      } else {
+        console.log('⚠️ No wallets found in registry, user needs to connect');
+        setActiveWalletState(null);
       }
       
-      // TODO: When Supabase Edge Functions are deployed, replace with:
-      // const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      // const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      // const response = await fetch(`${supabaseUrl}/functions/v1/wallets-list`, {
-      //   method: 'GET',
-      //   headers: {
-      //     'Authorization': `Bearer ${session.access_token}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      // });
-      
     } catch (error) {
-      console.error('Failed to hydrate wallets from server:', error);
+      console.error('❌ Failed to hydrate wallets from server:', error);
       // Fall back to localStorage data - don't block app loading
       setHydratedForUserId(session.user.id);
+      
+      // Try localStorage fallback
+      try {
+        const savedAddress = localStorage.getItem('aw_active_address');
+        const savedNetwork = localStorage.getItem('aw_active_network');
+        
+        if (savedAddress && connectedWallets.some(w => w.address.toLowerCase() === savedAddress.toLowerCase())) {
+          console.log('🔄 Using localStorage fallback:', savedAddress);
+          setActiveWalletState(savedAddress);
+        }
+        
+        if (savedNetwork && getSupportedNetworks().includes(savedNetwork)) {
+          setActiveNetworkState(savedNetwork);
+        }
+      } catch (localStorageError) {
+        console.warn('localStorage fallback also failed:', localStorageError);
+      }
     } finally {
       setIsLoading(false);
+      console.log('✅ Wallet hydration completed');
     }
-  }, [isAuthenticated, session, hydratedForUserId, restoreActiveSelection]);
+  }, [isAuthenticated, session, hydratedForUserId, connectedWallets, registryWallets, restoreActiveSelection]);
 
   // Trigger hydration when auth session changes
   useEffect(() => {
     if (!authLoading) {
       hydrateFromServer();
     }
-  }, [isAuthenticated, session?.user?.id, authLoading]); // Remove hydrateFromServer from deps
+  }, [isAuthenticated, session?.user?.id, authLoading, hydrateFromServer]);
 
   // ============================================================================
-  // Save to localStorage on change
+  // Save active wallet/network to localStorage on change
   // ============================================================================
 
   useEffect(() => {
@@ -409,16 +481,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       if (activeNetwork) {
         localStorage.setItem('aw_active_network', activeNetwork);
       }
-      
-      if (connectedWallets.length > 0) {
-        localStorage.setItem('connectedWallets', JSON.stringify(connectedWallets));
-      } else {
-        localStorage.removeItem('connectedWallets');
-      }
     } catch (error) {
       console.error('Failed to save wallet state to localStorage:', error);
     }
-  }, [activeWallet, activeNetwork, connectedWallets]);
+  }, [activeWallet, activeNetwork]);
 
   // ============================================================================
   // Set Active Network
@@ -573,14 +639,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Note: We can't access activeWallet here due to closure, but React DevTools will show the real value
     }, 100);
     
-    // Update lastUsed timestamp
-    setConnectedWallets(prev => 
-      prev.map(w => 
-        w.address.toLowerCase() === address.toLowerCase()
-          ? { ...w, lastUsed: new Date() }
-          : w
-      )
-    );
+    // Update lastUsed timestamp in registry - this is handled automatically by the database trigger
+    // No need to manually update updated_at field
     
     // Emit custom event for inter-module reactivity
     const event = new CustomEvent('walletConnected', {
@@ -590,7 +650,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     
     console.log('🚨 setActiveWallet COMPLETED - Check React DevTools for state change');
     
-  }, [connectedWallets, activeWallet]); // Temporarily added activeWallet back for debugging
+  }, [connectedWallets, activeWallet, registryWallets]);
 
   // ============================================================================
   // Connect Wallet
@@ -628,22 +688,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const chainName = getChainName(chainId);
       const chainNamespace = legacyChainToCAIP2(chainName);
 
-      // Create new wallet entry with label from user preferences
-      const newWallet: ConnectedWallet = {
+      // Add to persistent registry instead of local state
+      await addToRegistry({
         address,
-        chain: chainName,
-        chainNamespace,
-        supportedNetworks: [chainNamespace],
-        balancesByNetwork: {},
-        guardianScoresByNetwork: {},
-        lastUsed: new Date(),
-        label: getLabel(address), // Get label from user preferences
-      };
+        label: `Connected Wallet`,
+        chain_namespace: chainNamespace,
+      });
 
-      // Add to connected wallets
-      setConnectedWallets(prev => [...prev, newWallet]);
-      
-      // Set as active wallet directly (bypass validation since we just added it)
+      // Set as active wallet
       setActiveWalletState(address);
 
       // Emit connection event
@@ -691,57 +743,26 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [connectedWallets, setActiveWallet]);
-
-  // ============================================================================
-  // Sync wallet labels from user preferences
-  // ============================================================================
-
-  useEffect(() => {
-    // Update wallet labels when they change in user preferences
-    // Only update if labels actually changed to prevent infinite loops
-    setConnectedWallets(prev => {
-      const updated = prev.map(w => ({
-        ...w,
-        label: getLabel(w.address),
-      }));
-      
-      // Check if any labels actually changed
-      const hasChanges = updated.some((w, i) => w.label !== prev[i].label);
-      
-      return hasChanges ? updated : prev;
-    });
-  }, [walletLabels]); // Only depend on walletLabels, not getLabel
+  }, [connectedWallets, setActiveWallet, addToRegistry]);
 
   // ============================================================================
   // Resolve Wallet Name
   // ============================================================================
 
   const resolveWalletName = useCallback(async (address: string) => {
-    try {
-      const resolved = await resolveName(address);
-      
-      if (resolved && resolved.name) {
-        // Update wallet with resolved name
-        setConnectedWallets(prev => 
-          prev.map(w => 
-            w.address.toLowerCase() === address.toLowerCase()
-              ? {
-                  ...w,
-                  resolvedName: resolved,
-                  // Set specific fields based on provider
-                  ens: resolved.provider === 'ens' ? resolved.name : w.ens,
-                  lens: resolved.provider === 'lens' ? resolved.name : w.lens,
-                  unstoppable: resolved.provider === 'unstoppable' ? resolved.name : w.unstoppable,
-                }
-              : w
-          )
-        );
+    const resolved = await resolveName(address);
+    
+    if (resolved && resolved.name) {
+      // Find the wallet in the registry and update it
+      const walletToUpdate = registryWallets.find(w => w.address.toLowerCase() === address.toLowerCase());
+      if (walletToUpdate) {
+        // Update the label with the resolved name
+        await updateInRegistry(walletToUpdate.id, { 
+          label: resolved.name 
+        });
       }
-    } catch (error) {
-      console.debug('Failed to resolve wallet name:', error);
     }
-  }, []);
+  }, [registryWallets, updateInRegistry]);
 
   // ============================================================================
   // Disconnect Wallet
@@ -754,8 +775,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const hadActiveWallet = activeWallet === address;
       const remainingCount = connectedWallets.filter(w => w.address !== address).length;
       
-      // Remove wallet from connected wallets
-      setConnectedWallets(prev => prev.filter(w => w.address !== address));
+      // Find the wallet in the registry to get its ID
+      const walletToRemove = registryWallets.find(w => w.address.toLowerCase() === address.toLowerCase());
+      if (walletToRemove) {
+        // Remove from persistent registry
+        await removeFromRegistry(walletToRemove.id);
+      }
       
       // If disconnecting active wallet, switch to another or null
       if (activeWallet === address) {
@@ -764,7 +789,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           setActiveWallet(remaining[0].address);
         } else {
           setActiveWalletState(null);
-          localStorage.removeItem('activeWallet');
+          localStorage.removeItem('aw_active_address');
         }
       }
 
@@ -796,7 +821,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeWallet, connectedWallets, setActiveWallet]);
+  }, [activeWallet, connectedWallets, registryWallets, removeFromRegistry, setActiveWallet]);
 
   // ============================================================================
   // Context Value
@@ -812,7 +837,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     disconnectWallet,
     getSupportedNetworks: getWalletSupportedNetworks,
     getWalletByNetwork,
-    isLoading,
+    isLoading: isLoading || registryLoading,
     isSwitching,
     isNetworkSwitching,
     isAuthenticated,

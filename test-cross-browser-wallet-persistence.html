@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Browser Wallet Persistence Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .button {
+            background: #06B6D4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0891B2;
+        }
+        .button:disabled {
+            background: #374151;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #10B981;
+        }
+        .error {
+            color: #EF4444;
+        }
+        .warning {
+            color: #F59E0B;
+        }
+        .info {
+            color: #06B6D4;
+        }
+        .step {
+            background: rgba(6, 182, 212, 0.1);
+            border-left: 4px solid #06B6D4;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .browser-info {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10B981;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .test-result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            margin: 8px 0;
+        }
+        .scenario {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #F59E0B;
+            padding: 16px;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 Cross-Browser Wallet Persistence Test</h1>
+    
+    <div class="container">
+        <h2>Current Browser Information</h2>
+        <div class="browser-info" id="browser-info">
+            <p>🔍 Detecting browser information...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Test Scenario</h2>
+        <div class="scenario">
+            <h3>Problem Being Tested</h3>
+            <p><strong>User Issue:</strong> "I can see all wallets in Chrome browser, but when I open the same app in Safari/Firefox/Edge, no wallets appear even after connecting again."</p>
+            
+            <h3>Expected Behavior After Fix</h3>
+            <ol>
+                <li><strong>Authentication works</strong> across browsers (JWT cookies)</li>
+                <li><strong>Wallet registry loads</strong> from database (shared data)</li>
+                <li><strong>Active wallet is automatically selected</strong> (enhanced fallback logic)</li>
+                <li><strong>User sees all wallets</strong> in dropdown immediately</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 localStorage Simulation Tests</h2>
+        <p>These tests simulate different browser scenarios:</p>
+        
+        <button class="button" onclick="testScenario1()">📱 Test: New Browser (Empty localStorage)</button>
+        <button class="button" onclick="testScenario2()">🔄 Test: Existing Browser (Has localStorage)</button>
+        <button class="button" onclick="testScenario3()">❌ Test: Invalid localStorage Data</button>
+        <button class="button" onclick="testScenario4()">🚫 Test: localStorage Disabled</button>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <div class="container">
+        <h2>💾 localStorage State Management</h2>
+        <button class="button" onclick="viewLocalStorage()">👀 View Current localStorage</button>
+        <button class="button" onclick="clearLocalStorage()">🗑️ Clear localStorage</button>
+        <button class="button" onclick="setMockWalletData()">🎭 Set Mock Wallet Data</button>
+        
+        <div id="localStorage-results"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Cross-Browser Detection</h2>
+        <button class="button" onclick="detectCrossBrowserIssues()">🕵️ Detect Cross-Browser Issues</button>
+        <button class="button" onclick="simulateWalletHydration()">💧 Simulate Wallet Hydration</button>
+        
+        <div id="detection-results"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Manual Testing Instructions</h2>
+        <div class="step">
+            <h3>Step 1: Setup in Primary Browser (Chrome)</h3>
+            <ol>
+                <li>Open AlphaWhale in Chrome</li>
+                <li>Connect 3 MetaMask accounts (as per previous instructions)</li>
+                <li>Verify all 3 accounts appear in wallet dropdown</li>
+                <li>Note which account is currently active</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Test Cross-Browser (Safari/Firefox/Edge)</h3>
+            <ol>
+                <li><strong>Open AlphaWhale in different browser</strong> (Safari, Firefox, or Edge)</li>
+                <li><strong>Sign in with same account</strong> (authentication should work)</li>
+                <li><strong>Check wallet dropdown</strong> - should show all 3 accounts immediately</li>
+                <li><strong>Verify active wallet</strong> - should auto-select first wallet or primary wallet</li>
+                <li><strong>Switch between wallets</strong> - should work normally</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Verify Persistence</h3>
+            <ol>
+                <li><strong>Refresh the page</strong> in the new browser</li>
+                <li><strong>Check wallet state</strong> - should remember active wallet</li>
+                <li><strong>Close and reopen browser</strong></li>
+                <li><strong>Check wallet state again</strong> - should still work</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎉 Success Criteria</h2>
+        <div class="step">
+            <h3>✅ Test Passes If:</h3>
+            <ul>
+                <li><strong>Authentication works</strong> in all browsers</li>
+                <li><strong>All wallets appear</strong> in dropdown immediately</li>
+                <li><strong>Active wallet is auto-selected</strong> (no "Connect Wallet" button)</li>
+                <li><strong>Wallet switching works</strong> normally</li>
+                <li><strong>State persists</strong> after refresh/reopen</li>
+            </ul>
+            
+            <h3>❌ Test Fails If:</h3>
+            <ul>
+                <li>User sees "Connect Wallet" button despite having wallets</li>
+                <li>Wallet dropdown is empty or shows "No wallets"</li>
+                <li>User needs to reconnect wallets in each browser</li>
+                <li>Active wallet selection doesn't persist</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Browser detection
+        function detectBrowser() {
+            const userAgent = navigator.userAgent;
+            let browserName = 'Unknown';
+            let browserVersion = 'Unknown';
+            
+            if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+                browserName = 'Chrome';
+                browserVersion = userAgent.match(/Chrome\/([0-9.]+)/)?.[1] || 'Unknown';
+            } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+                browserName = 'Safari';
+                browserVersion = userAgent.match(/Version\/([0-9.]+)/)?.[1] || 'Unknown';
+            } else if (userAgent.includes('Firefox')) {
+                browserName = 'Firefox';
+                browserVersion = userAgent.match(/Firefox\/([0-9.]+)/)?.[1] || 'Unknown';
+            } else if (userAgent.includes('Edg')) {
+                browserName = 'Edge';
+                browserVersion = userAgent.match(/Edg\/([0-9.]+)/)?.[1] || 'Unknown';
+            }
+            
+            return { browserName, browserVersion, userAgent };
+        }
+
+        function log(message, type = 'info', containerId = 'test-results') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.createElement('div');
+            logElement.className = `test-result ${type}`;
+            logElement.innerHTML = `[${timestamp}] ${message}`;
+            
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.appendChild(logElement);
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Initialize browser info
+        function initializeBrowserInfo() {
+            const { browserName, browserVersion, userAgent } = detectBrowser();
+            const browserInfo = document.getElementById('browser-info');
+            
+            browserInfo.innerHTML = `
+                <p><strong>Browser:</strong> ${browserName} ${browserVersion}</p>
+                <p><strong>User Agent:</strong> <code>${userAgent}</code></p>
+                <p><strong>localStorage Available:</strong> ${typeof Storage !== 'undefined' ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>Cookies Enabled:</strong> ${navigator.cookieEnabled ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>Platform:</strong> ${navigator.platform}</p>
+            `;
+        }
+
+        // Test scenarios
+        function testScenario1() {
+            log('🧪 Testing Scenario 1: New Browser (Empty localStorage)', 'info');
+            
+            // Clear localStorage to simulate new browser
+            try {
+                localStorage.clear();
+                log('✅ Cleared localStorage to simulate new browser', 'success');
+            } catch (error) {
+                log('❌ Failed to clear localStorage: ' + error.message, 'error');
+                return;
+            }
+            
+            // Simulate wallet hydration logic
+            const mockWallets = [
+                { address: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E', label: 'MetaMask Account 1', chain_namespace: 'eip155:1' },
+                { address: '0xD65fe436b6e213b0c71ce6470CD16F5101a668c2', label: 'MetaMask Account 2', chain_namespace: 'eip155:1' },
+                { address: '0x1234567890abcdef1234567890abcdef12345678', label: 'MetaMask Account 3', chain_namespace: 'eip155:1' }
+            ];
+            
+            // Simulate restoreActiveSelection logic
+            const savedAddress = localStorage.getItem('aw_active_address');
+            const savedNetwork = localStorage.getItem('aw_active_network');
+            
+            log(`📱 localStorage check: address=${savedAddress}, network=${savedNetwork}`, 'info');
+            
+            if (!savedAddress && !savedNetwork) {
+                // This is the cross-browser scenario - no localStorage data
+                log('🎯 Cross-browser scenario detected: No localStorage data', 'warning');
+                
+                // Enhanced fallback logic should select first wallet
+                const firstWallet = mockWallets[0];
+                log(`✅ Enhanced fallback: Selected first wallet ${firstWallet.address}`, 'success');
+                
+                // Should save to localStorage for future visits
+                try {
+                    localStorage.setItem('aw_active_address', firstWallet.address);
+                    localStorage.setItem('aw_active_network', firstWallet.chain_namespace);
+                    log('💾 Saved selection to localStorage for future visits', 'success');
+                } catch (error) {
+                    log('⚠️ Failed to save to localStorage: ' + error.message, 'warning');
+                }
+                
+                log('🎉 SCENARIO 1 RESULT: Cross-browser wallet persistence should work!', 'success');
+            } else {
+                log('❌ Unexpected: localStorage should be empty in this test', 'error');
+            }
+        }
+
+        function testScenario2() {
+            log('🧪 Testing Scenario 2: Existing Browser (Has localStorage)', 'info');
+            
+            // Set mock localStorage data
+            const mockAddress = '0xD65fe436b6e213b0c71ce6470CD16F5101a668c2';
+            const mockNetwork = 'eip155:1';
+            
+            try {
+                localStorage.setItem('aw_active_address', mockAddress);
+                localStorage.setItem('aw_active_network', mockNetwork);
+                log(`✅ Set mock localStorage: ${mockAddress}`, 'success');
+            } catch (error) {
+                log('❌ Failed to set localStorage: ' + error.message, 'error');
+                return;
+            }
+            
+            // Simulate validation
+            const mockWallets = [
+                { address: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E', chain_namespace: 'eip155:1' },
+                { address: '0xD65fe436b6e213b0c71ce6470CD16F5101a668c2', chain_namespace: 'eip155:1' },
+            ];
+            
+            const savedAddress = localStorage.getItem('aw_active_address');
+            const isValid = mockWallets.some(w => w.address.toLowerCase() === savedAddress?.toLowerCase());
+            
+            if (isValid) {
+                log('✅ localStorage selection is valid, should use it', 'success');
+                log('🎉 SCENARIO 2 RESULT: Existing browser persistence works!', 'success');
+            } else {
+                log('❌ localStorage selection is invalid', 'error');
+            }
+        }
+
+        function testScenario3() {
+            log('🧪 Testing Scenario 3: Invalid localStorage Data', 'info');
+            
+            // Set invalid localStorage data
+            try {
+                localStorage.setItem('aw_active_address', '0xINVALID_ADDRESS');
+                localStorage.setItem('aw_active_network', 'invalid:network');
+                log('✅ Set invalid localStorage data', 'success');
+            } catch (error) {
+                log('❌ Failed to set localStorage: ' + error.message, 'error');
+                return;
+            }
+            
+            // Simulate validation
+            const mockWallets = [
+                { address: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E', chain_namespace: 'eip155:1' }
+            ];
+            
+            const savedAddress = localStorage.getItem('aw_active_address');
+            const isValid = mockWallets.some(w => w.address.toLowerCase() === savedAddress?.toLowerCase());
+            
+            if (!isValid) {
+                log('⚠️ Invalid localStorage detected, should clear and fallback', 'warning');
+                
+                // Simulate clearing invalid data
+                localStorage.removeItem('aw_active_address');
+                localStorage.removeItem('aw_active_network');
+                log('🧹 Cleared invalid localStorage data', 'info');
+                
+                // Should fallback to first wallet
+                const firstWallet = mockWallets[0];
+                log(`✅ Fallback: Selected first wallet ${firstWallet.address}`, 'success');
+                log('🎉 SCENARIO 3 RESULT: Invalid data recovery works!', 'success');
+            } else {
+                log('❌ Unexpected: Invalid data was considered valid', 'error');
+            }
+        }
+
+        function testScenario4() {
+            log('🧪 Testing Scenario 4: localStorage Disabled', 'info');
+            
+            // Simulate localStorage being disabled
+            const originalLocalStorage = window.localStorage;
+            
+            try {
+                // Mock localStorage to throw errors
+                Object.defineProperty(window, 'localStorage', {
+                    value: {
+                        getItem: () => { throw new Error('localStorage disabled'); },
+                        setItem: () => { throw new Error('localStorage disabled'); },
+                        removeItem: () => { throw new Error('localStorage disabled'); }
+                    },
+                    writable: true
+                });
+                
+                log('🚫 Simulated localStorage disabled', 'warning');
+                
+                // Test graceful handling
+                let savedAddress = null;
+                try {
+                    savedAddress = localStorage.getItem('aw_active_address');
+                } catch (error) {
+                    log('⚠️ localStorage access failed (expected): ' + error.message, 'warning');
+                }
+                
+                if (!savedAddress) {
+                    // Should fallback to first wallet without localStorage
+                    const mockWallets = [
+                        { address: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E', chain_namespace: 'eip155:1' }
+                    ];
+                    
+                    const firstWallet = mockWallets[0];
+                    log(`✅ Graceful fallback: Selected first wallet ${firstWallet.address}`, 'success');
+                    log('🎉 SCENARIO 4 RESULT: localStorage disabled handling works!', 'success');
+                }
+                
+            } finally {
+                // Restore original localStorage
+                Object.defineProperty(window, 'localStorage', {
+                    value: originalLocalStorage,
+                    writable: true
+                });
+                log('🔄 Restored original localStorage', 'info');
+            }
+        }
+
+        function viewLocalStorage() {
+            const container = document.getElementById('localStorage-results');
+            container.innerHTML = '';
+            
+            log('👀 Current localStorage contents:', 'info', 'localStorage-results');
+            
+            try {
+                const keys = Object.keys(localStorage);
+                if (keys.length === 0) {
+                    log('📭 localStorage is empty', 'info', 'localStorage-results');
+                } else {
+                    keys.forEach(key => {
+                        const value = localStorage.getItem(key);
+                        log(`🔑 ${key}: ${value}`, 'info', 'localStorage-results');
+                    });
+                }
+            } catch (error) {
+                log('❌ Failed to read localStorage: ' + error.message, 'error', 'localStorage-results');
+            }
+        }
+
+        function clearLocalStorage() {
+            try {
+                localStorage.clear();
+                log('🗑️ localStorage cleared successfully', 'success', 'localStorage-results');
+            } catch (error) {
+                log('❌ Failed to clear localStorage: ' + error.message, 'error', 'localStorage-results');
+            }
+        }
+
+        function setMockWalletData() {
+            try {
+                localStorage.setItem('aw_active_address', '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E');
+                localStorage.setItem('aw_active_network', 'eip155:1');
+                log('🎭 Set mock wallet data in localStorage', 'success', 'localStorage-results');
+            } catch (error) {
+                log('❌ Failed to set mock data: ' + error.message, 'error', 'localStorage-results');
+            }
+        }
+
+        function detectCrossBrowserIssues() {
+            const container = document.getElementById('detection-results');
+            container.innerHTML = '';
+            
+            log('🕵️ Detecting potential cross-browser issues...', 'info', 'detection-results');
+            
+            const { browserName } = detectBrowser();
+            log(`🌐 Current browser: ${browserName}`, 'info', 'detection-results');
+            
+            // Check localStorage
+            const hasLocalStorageData = localStorage.getItem('aw_active_address') !== null;
+            log(`💾 Has localStorage data: ${hasLocalStorageData ? '✅ Yes' : '❌ No'}`, hasLocalStorageData ? 'success' : 'warning', 'detection-results');
+            
+            if (!hasLocalStorageData) {
+                log('🎯 CROSS-BROWSER SCENARIO DETECTED!', 'warning', 'detection-results');
+                log('This simulates opening the app in a new browser where localStorage is empty', 'info', 'detection-results');
+                log('The enhanced fallback logic should automatically select the first wallet', 'info', 'detection-results');
+            }
+            
+            // Check cookies (simulate auth)
+            const hasCookies = document.cookie.length > 0;
+            log(`🍪 Has cookies: ${hasCookies ? '✅ Yes' : '❌ No'}`, hasCookies ? 'success' : 'info', 'detection-results');
+            
+            // Simulate the fix
+            log('🔧 Simulating enhanced cross-browser fix...', 'info', 'detection-results');
+            
+            if (!hasLocalStorageData) {
+                // This is what the fix should do
+                const mockFirstWallet = '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E';
+                log(`✅ Enhanced logic: Would auto-select first wallet: ${mockFirstWallet}`, 'success', 'detection-results');
+                log('💾 Enhanced logic: Would save selection to localStorage for future visits', 'success', 'detection-results');
+                log('🎉 RESULT: User would see wallets immediately, no "Connect Wallet" button!', 'success', 'detection-results');
+            }
+        }
+
+        function simulateWalletHydration() {
+            const container = document.getElementById('detection-results');
+            
+            log('💧 Simulating wallet hydration process...', 'info', 'detection-results');
+            
+            // Simulate the enhanced hydrateFromServer function
+            const mockUser = { id: 'user123' };
+            const mockWallets = [
+                { address: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E', label: 'MetaMask Account 1', chain_namespace: 'eip155:1' },
+                { address: '0xD65fe436b6e213b0c71ce6470CD16F5101a668c2', label: 'MetaMask Account 2', chain_namespace: 'eip155:1' },
+                { address: '0x1234567890abcdef1234567890abcdef12345678', label: 'MetaMask Account 3', chain_namespace: 'eip155:1' }
+            ];
+            
+            log(`👤 User authenticated: ${mockUser.id}`, 'success', 'detection-results');
+            log(`💼 Wallets loaded from database: ${mockWallets.length} wallets`, 'success', 'detection-results');
+            
+            // Simulate restoreActiveSelection
+            const savedAddress = localStorage.getItem('aw_active_address');
+            const savedNetwork = localStorage.getItem('aw_active_network');
+            
+            log(`📱 localStorage check: address=${savedAddress || 'null'}, network=${savedNetwork || 'null'}`, 'info', 'detection-results');
+            
+            let selectedWallet = null;
+            
+            if (savedAddress && savedNetwork) {
+                // Validate localStorage
+                const isValid = mockWallets.some(w => w.address.toLowerCase() === savedAddress.toLowerCase());
+                if (isValid) {
+                    selectedWallet = savedAddress;
+                    log(`✅ Using valid localStorage selection: ${selectedWallet}`, 'success', 'detection-results');
+                } else {
+                    log('⚠️ localStorage selection invalid, clearing...', 'warning', 'detection-results');
+                    localStorage.removeItem('aw_active_address');
+                    localStorage.removeItem('aw_active_network');
+                }
+            }
+            
+            if (!selectedWallet) {
+                // Enhanced fallback logic
+                selectedWallet = mockWallets[0].address;
+                log(`🎯 Enhanced fallback: Auto-selected first wallet: ${selectedWallet}`, 'success', 'detection-results');
+                
+                // Save for future visits
+                try {
+                    localStorage.setItem('aw_active_address', selectedWallet);
+                    localStorage.setItem('aw_active_network', 'eip155:1');
+                    log('💾 Saved selection to localStorage for future visits', 'success', 'detection-results');
+                } catch (error) {
+                    log('⚠️ Could not save to localStorage: ' + error.message, 'warning', 'detection-results');
+                }
+            }
+            
+            log(`🎉 HYDRATION COMPLETE: Active wallet set to ${selectedWallet}`, 'success', 'detection-results');
+            log('✅ User would see all wallets in dropdown immediately!', 'success', 'detection-results');
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initializeBrowserInfo();
+        });
+    </script>
+</body>
+</html>

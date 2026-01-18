@@ -19,13 +19,13 @@ export interface UserWallet {
   id: string
   user_id: string
   address: string
+  address_lc?: string
   label?: string
-  chain: string
-  source?: string
-  verified: boolean
-  last_scan?: string
-  trust_score?: number
-  risk_flags?: unknown[]
+  chain_namespace: string
+  network_metadata?: unknown
+  balance_cache?: unknown
+  guardian_scores?: unknown
+  is_primary: boolean
   created_at: string
   updated_at: string
 }
@@ -33,8 +33,7 @@ export interface UserWallet {
 export interface AddWalletOptions {
   address: string
   label?: string
-  chain?: string
-  source?: string
+  chain_namespace?: string
 }
 
 /**
@@ -97,15 +96,17 @@ export function useWalletRegistry() {
       if (!userId) throw new Error('User not authenticated')
 
       const normalizedAddress = options.address.toLowerCase()
+      const chainNamespace = options.chain_namespace || 'eip155:1'
 
-      // Check if wallet already exists
+      // Check if wallet already exists (more robust check)
       const existing = wallets.find(
-        w => w.address.toLowerCase() === normalizedAddress && w.chain === (options.chain || 'ethereum')
+        w => w.address.toLowerCase() === normalizedAddress && w.chain_namespace === chainNamespace
       )
 
       if (existing) {
+        console.log('Wallet already exists in registry, returning existing:', existing.address)
         // Update label if provided
-        if (options.label) {
+        if (options.label && options.label !== existing.label) {
           const { data, error } = await supabase
             .from('user_wallets')
             .update({ label: options.label, updated_at: new Date().toISOString() })
@@ -113,27 +114,51 @@ export function useWalletRegistry() {
             .select()
             .single()
 
-          if (error) throw error
+          if (error) {
+            console.error('Failed to update wallet label:', error)
+            // Return existing wallet even if label update fails
+            return existing
+          }
           return data
         }
         return existing
       }
 
-      // Insert new wallet
+      // Insert new wallet with duplicate handling
       const { data, error } = await supabase
         .from('user_wallets')
         .insert({
           user_id: userId,
           address: normalizedAddress,
           label: options.label,
-          chain: options.chain || 'ethereum',
-          source: options.source || 'manual',
-          verified: false,
+          chain_namespace: chainNamespace,
+          is_primary: false,
         })
         .select()
         .single()
 
       if (error) {
+        // Handle duplicate key constraint violation gracefully
+        if (error.code === '23505' || error.message?.includes('duplicate key') || error.message?.includes('uq_user_wallets_user_addr_chain')) {
+          console.log('Wallet already exists in database (duplicate key), fetching existing wallet')
+          
+          // Fetch the existing wallet from database
+          const { data: existingData, error: fetchError } = await supabase
+            .from('user_wallets')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('address', normalizedAddress)
+            .eq('chain_namespace', chainNamespace)
+            .single()
+          
+          if (fetchError) {
+            console.error('Failed to fetch existing wallet after duplicate error:', fetchError)
+            throw new Error('Wallet already exists but could not be retrieved')
+          }
+          
+          return existingData
+        }
+        
         console.error('Failed to add wallet:', error)
         throw error
       }
@@ -193,7 +218,7 @@ export function useWalletRegistry() {
       updates 
     }: { 
       walletId: string
-      updates: Partial<Pick<UserWallet, 'label' | 'verified' | 'trust_score' | 'risk_flags'>>
+      updates: Partial<Pick<UserWallet, 'label' | 'is_primary' | 'balance_cache' | 'guardian_scores'>>
     }) => {
       if (!userId) throw new Error('User not authenticated')
 
@@ -236,17 +261,52 @@ export function useWalletRegistry() {
 
       if (!alreadyAdded) {
         console.log('🔗 Auto-syncing connected wallet:', connectedAddress)
-        await addWalletMutation.mutateAsync({
-          address: connectedAddress,
-          label: connector?.name || 'Connected Wallet',
-          chain: 'ethereum',
-          source: 'rainbowkit',
-        })
+        try {
+          await addWalletMutation.mutateAsync({
+            address: connectedAddress,
+            label: connector?.name || 'Connected Wallet',
+            chain_namespace: 'eip155:1',
+          })
+          console.log('✅ Successfully auto-synced wallet:', connectedAddress)
+        } catch (err: any) {
+          console.error('Failed to auto-sync wallet:', err)
+          
+          // Handle different error types gracefully
+          const errorCode = err?.code || err?.error?.code
+          const errorMessage = err?.message || err?.error?.message || ''
+          
+          // If it's a duplicate key error, the wallet already exists - treat as success
+          if (errorCode === '23505' || 
+              errorMessage.includes('duplicate key') || 
+              errorMessage.includes('uq_user_wallets_user_addr_chain')) {
+            console.log('✅ Wallet already exists in database, auto-sync complete')
+            // Disable auto-sync temporarily to prevent further attempts
+            setAutoSyncEnabled(false)
+            // Re-enable after a delay to allow for future wallet connections
+            setTimeout(() => setAutoSyncEnabled(true), 5000)
+            return
+          }
+          
+          // If it's a permission error, disable auto-sync to prevent loops
+          if (errorCode === '42501' || errorMessage.includes('permission denied')) {
+            console.error('❌ Permission denied. Disabling auto-sync to prevent loops.')
+            setAutoSyncEnabled(false)
+            return
+          }
+          
+          // For other errors, disable auto-sync temporarily
+          console.error('❌ Auto-sync failed with error:', errorCode, errorMessage)
+          setAutoSyncEnabled(false)
+          // Re-enable after a longer delay for other errors
+          setTimeout(() => setAutoSyncEnabled(true), 10000)
+        }
       }
     }
 
-    syncConnectedWallet()
-  }, [connectedAddress, isConnected, userId, autoSyncEnabled, connector])
+    // Add a small delay to prevent rapid-fire attempts
+    const timeoutId = setTimeout(syncConnectedWallet, 100)
+    return () => clearTimeout(timeoutId)
+  }, [connectedAddress, isConnected, userId, autoSyncEnabled, connector, addWalletMutation, wallets])
 
   // Helper functions
   const addWallet = useCallback(
@@ -264,7 +324,7 @@ export function useWalletRegistry() {
   )
 
   const updateWallet = useCallback(
-    async (walletId: string, updates: Partial<Pick<UserWallet, 'label' | 'verified' | 'trust_score' | 'risk_flags'>>) => {
+    async (walletId: string, updates: Partial<Pick<UserWallet, 'label' | 'is_primary' | 'balance_cache' | 'guardian_scores'>>) => {
       return updateWalletMutation.mutateAsync({ walletId, updates })
     },
     [updateWalletMutation]
@@ -282,9 +342,9 @@ export function useWalletRegistry() {
   )
 
   const getWalletByAddress = useCallback(
-    (address: string, chain: string = 'ethereum') => {
+    (address: string, chain_namespace: string = 'eip155:1') => {
       return wallets.find(
-        w => w.address.toLowerCase() === address.toLowerCase() && w.chain === chain
+        w => w.address.toLowerCase() === address.toLowerCase() && w.chain_namespace === chain_namespace
       )
     },
     [wallets]
@@ -337,10 +397,10 @@ export function useWallet(walletId: string | undefined) {
 /**
  * Hook to get wallets for a specific chain
  */
-export function useWalletsByChain(chain: string = 'ethereum') {
+export function useWalletsByChain(chain_namespace: string = 'eip155:1') {
   const { wallets, isLoading } = useWalletRegistry()
   
-  const chainWallets = wallets.filter(w => w.chain === chain)
+  const chainWallets = wallets.filter(w => w.chain_namespace === chain_namespace)
   
   return {
     wallets: chainWallets,

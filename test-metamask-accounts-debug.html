@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Accounts Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #6b7280; cursor: not-allowed; }
+        .account {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .address {
+            font-family: monospace;
+            color: #06b6d4;
+            font-size: 14px;
+        }
+        .balance {
+            color: #22c55e;
+            font-size: 12px;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+        .warning { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; }
+        .info { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🦊 MetaMask Accounts Debug</h1>
+    <p>This tool helps debug why you're only seeing one MetaMask account.</p>
+
+    <div class="section">
+        <h2>1. Check MetaMask Connection</h2>
+        <button onclick="checkMetaMask()">Check MetaMask</button>
+        <div id="metamask-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Fetch All Accounts</h2>
+        <button onclick="fetchAccounts()">Fetch All Accounts</button>
+        <div id="accounts-status"></div>
+        <div id="accounts-list"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. How to Add More MetaMask Accounts</h2>
+        <div class="status info">
+            <h3>📝 Steps to Add More Accounts:</h3>
+            <ol>
+                <li><strong>Open MetaMask extension</strong> (click the fox icon)</li>
+                <li><strong>Click your account circle</strong> (top right corner)</li>
+                <li><strong>Click "Add account or hardware wallet"</strong></li>
+                <li><strong>Click "Add a new account"</strong></li>
+                <li><strong>Name it</strong> (e.g., "Account 2") and click "Create"</li>
+                <li><strong>Repeat</strong> to create Account 3, Account 4, etc.</li>
+                <li><strong>Come back here</strong> and click "Fetch All Accounts" again</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. Test Account Switching</h2>
+        <button onclick="testAccountSwitching()">Test Account Switching</button>
+        <div id="switching-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>Console Log</h2>
+        <div id="console-log" class="log"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        let logElement = document.getElementById('console-log');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            logElement.textContent = '';
+        }
+
+        function setStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function checkMetaMask() {
+            log('Checking MetaMask...');
+            
+            if (typeof window.ethereum === 'undefined') {
+                setStatus('metamask-status', '❌ MetaMask not detected. Please install MetaMask extension.', 'error');
+                log('❌ MetaMask not detected');
+                return;
+            }
+            
+            try {
+                const isMetaMask = window.ethereum.isMetaMask;
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const networkId = await window.ethereum.request({ method: 'net_version' });
+                
+                setStatus('metamask-status', `✅ MetaMask detected! Chain ID: ${chainId}, Network: ${networkId}`, 'success');
+                log(`✅ MetaMask detected - Chain: ${chainId}, Network: ${networkId}`);
+                
+            } catch (error) {
+                setStatus('metamask-status', `❌ Error checking MetaMask: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+
+        async function fetchAccounts() {
+            log('Fetching all MetaMask accounts...');
+            
+            if (typeof window.ethereum === 'undefined') {
+                setStatus('accounts-status', '❌ MetaMask not detected', 'error');
+                return;
+            }
+            
+            try {
+                // First, request account access
+                log('Requesting account access...');
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                // Then get all accounts
+                log('Fetching all accounts...');
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                
+                log(`Found ${accounts.length} accounts: ${JSON.stringify(accounts)}`);
+                
+                if (accounts.length === 0) {
+                    setStatus('accounts-status', '❌ No accounts found. Make sure MetaMask is unlocked.', 'error');
+                    return;
+                }
+                
+                if (accounts.length === 1) {
+                    setStatus('accounts-status', `⚠️ Only 1 account found. You need to create more accounts in MetaMask.`, 'warning');
+                } else {
+                    setStatus('accounts-status', `✅ Found ${accounts.length} accounts!`, 'success');
+                }
+                
+                // Display accounts with balances
+                let accountsHtml = '';
+                for (let i = 0; i < accounts.length; i++) {
+                    const address = accounts[i];
+                    
+                    try {
+                        const balance = await window.ethereum.request({
+                            method: 'eth_getBalance',
+                            params: [address, 'latest']
+                        });
+                        
+                        const balanceInEth = (parseInt(balance, 16) / 1e18).toFixed(4);
+                        
+                        accountsHtml += `
+                            <div class="account">
+                                <div><strong>Account ${i + 1}</strong></div>
+                                <div class="address">${address}</div>
+                                <div class="balance">${balanceInEth} ETH</div>
+                            </div>
+                        `;
+                        
+                        log(`Account ${i + 1}: ${address} (${balanceInEth} ETH)`);
+                        
+                    } catch (balanceError) {
+                        accountsHtml += `
+                            <div class="account">
+                                <div><strong>Account ${i + 1}</strong></div>
+                                <div class="address">${address}</div>
+                                <div class="balance">Balance: Error</div>
+                            </div>
+                        `;
+                        log(`Account ${i + 1}: ${address} (balance error)`);
+                    }
+                }
+                
+                document.getElementById('accounts-list').innerHTML = accountsHtml;
+                
+            } catch (error) {
+                setStatus('accounts-status', `❌ Error fetching accounts: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+
+        async function testAccountSwitching() {
+            log('Testing account switching...');
+            
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                
+                if (accounts.length < 2) {
+                    setStatus('switching-status', '⚠️ Need at least 2 accounts to test switching', 'warning');
+                    return;
+                }
+                
+                log('Testing if we can detect account changes...');
+                
+                // Listen for account changes
+                window.ethereum.on('accountsChanged', (newAccounts) => {
+                    log(`Account changed to: ${newAccounts[0]}`);
+                    setStatus('switching-status', `✅ Account change detected: ${newAccounts[0].slice(0, 10)}...`, 'success');
+                });
+                
+                setStatus('switching-status', '✅ Listening for account changes. Switch accounts in MetaMask to test.', 'info');
+                
+            } catch (error) {
+                setStatus('switching-status', `❌ Error: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+
+        // Initialize
+        log('🦊 MetaMask Accounts Debug Tool initialized');
+        log('Click "Check MetaMask" to start debugging');
+    </script>
+</body>
+</html>

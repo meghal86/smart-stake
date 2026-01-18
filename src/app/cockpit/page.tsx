@@ -7,6 +7,7 @@ import { TodayCard } from '@/components/cockpit/TodayCard';
 import { ActionPreview } from '@/components/cockpit/ActionPreview';
 import { ThreeBlockLayout } from '@/components/cockpit/ThreeBlockLayout';
 import { StalenessIndicatorBanner } from '@/components/cockpit/StalenessIndicator';
+import { FooterNav } from '@/components/layout/FooterNav';
 import { 
   TodayCardErrorBoundary, 
   ActionPreviewErrorBoundary,
@@ -278,6 +279,8 @@ export default function CockpitPage() {
         </>
       }
     />
+    
+    <FooterNav />
     </div>
   );
 }

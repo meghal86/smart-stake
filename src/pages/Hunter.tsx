@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { OpportunityCard } from '@/components/hunter/OpportunityCard';
 import { OpportunityGridSkeleton } from '@/components/hunter/OpportunityCardSkeleton';
 import { EmptyState } from '@/components/hunter/EmptyState';
 import { ExecuteQuestModal } from '@/components/hunter/ExecuteQuestModal';
-import { CopilotPanel } from '@/components/hunter/CopilotPanel';
 import { RightRail } from '@/components/hunter/RightRail';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useHunterFeed } from '@/hooks/useHunterFeed';
@@ -36,9 +36,7 @@ export default function Hunter() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDemo, setIsDemo] = useState(true);
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
-  const [showCopilotToast, setShowCopilotToast] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
 
   // Wallet connection status
@@ -53,20 +51,9 @@ export default function Hunter() {
   const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
     onRefresh: handleRefresh,
     threshold: 80,
-    disabled: isModalOpen || copilotEnabled,
+    disabled: isModalOpen,
   });
 
-  // Show Copilot toast occasionally
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        setShowCopilotToast(true);
-        setTimeout(() => setShowCopilotToast(false), 4000);
-      }
-    }, 15000);
-    return () => clearInterval(interval);
-  }, []);
-  
   const { 
     opportunities, 
     isLoading, 
@@ -78,9 +65,9 @@ export default function Hunter() {
   } = useHunterFeed({
     filter: activeFilter,
     isDemo,
-    copilotEnabled,
+    copilotEnabled: false,
     realTimeEnabled,
-    sort: 'recommended', // Use ranking by default
+    sort: 'recommended',
   });
 
   const filteredOpportunities = opportunities.filter((opp: Opportunity) => {
@@ -267,6 +254,40 @@ export default function Hunter() {
                   You've reached the end of the feed
                 </motion.div>
               )}
+              
+              {/* AI Digestion Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="py-8 flex justify-center"
+              >
+                <motion.button
+                  className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-medium transition-all duration-300 ${
+                    isDarkTheme 
+                      ? 'bg-gradient-to-r from-[#00F5A0]/20 to-[#7B61FF]/20 border border-[#00F5A0]/30 text-white hover:from-[#00F5A0]/30 hover:to-[#7B61FF]/30' 
+                      : 'bg-gradient-to-r from-[#14B8A6]/20 to-[#7B61FF]/20 border border-[#14B8A6]/30 text-[#1E293B] hover:from-[#14B8A6]/30 hover:to-[#7B61FF]/30'
+                  }`}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    // Handle AI digestion action
+                    console.log('AI Digestion clicked');
+                  }}
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Sparkles className="w-5 h-5" />
+                  </motion.div>
+                  <span>AI Digestion</span>
+                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                    isDarkTheme ? 'bg-[#00F5A0]/20 text-[#00F5A0]' : 'bg-[#14B8A6]/20 text-[#14B8A6]'
+                  }`}>
+                    Beta
+                  </div>
+                </motion.button>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -284,51 +305,6 @@ export default function Hunter() {
         opportunity={selectedOpportunity}
         isConnected={isConnected}
       />
-      
-      <CopilotPanel
-        isOpen={copilotEnabled}
-        onClose={() => setCopilotEnabled(false)}
-      />
-      
-      {/* Copilot Toast */}
-      <AnimatePresence>
-        {showCopilotToast && (
-          <motion.div
-            className="fixed top-20 right-4 bg-white/10 backdrop-blur-xl rounded-xl p-4 border border-white/20 shadow-2xl z-40 max-w-sm"
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <div className="flex items-center gap-3">
-              <motion.div
-                className="p-2 bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] rounded-lg"
-                animate={{
-                  boxShadow: [
-                    '0 0 20px rgba(0, 245, 160, 0.4)',
-                    '0 0 30px rgba(123, 97, 255, 0.6)',
-                    '0 0 20px rgba(0, 245, 160, 0.4)'
-                  ]
-                }}
-                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              >
-                <span className="text-sm">🤖</span>
-              </motion.div>
-              <div>
-                <p className="text-sm font-medium text-[#E4E8F3] mb-1">
-                  Copilot found 2 new opportunities
-                </p>
-                <button 
-                  onClick={() => setCopilotEnabled(true)}
-                  className="text-xs text-[#00F5A0] hover:text-[#7B61FF] transition-colors"
-                >
-                  View Digest →
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

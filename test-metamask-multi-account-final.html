@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Multi-Account Test - Final Solution</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .button {
+            background: #06B6D4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0891B2;
+        }
+        .button:disabled {
+            background: #374151;
+            cursor: not-allowed;
+        }
+        .account-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+        }
+        .success {
+            color: #10B981;
+        }
+        .error {
+            color: #EF4444;
+        }
+        .warning {
+            color: #F59E0B;
+        }
+        .info {
+            color: #06B6D4;
+        }
+        .step {
+            background: rgba(6, 182, 212, 0.1);
+            border-left: 4px solid #06B6D4;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦊 MetaMask Multi-Account Test - Final Solution</h1>
+    
+    <div class="container">
+        <h2>Current Status</h2>
+        <div id="status">
+            <p>🔍 Checking MetaMask connection...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 The MetaMask Multi-Account Problem</h2>
+        <div class="step">
+            <h3>Why MetaMask Only Shows 1 Account</h3>
+            <p><strong>MetaMask Security Model:</strong> MetaMask only shares accounts that have been explicitly connected to a dApp. Even if you have 3 accounts in MetaMask, the dApp can only see accounts that have been granted permission.</p>
+            
+            <p><strong>This is by design</strong> - it prevents websites from seeing all your accounts without permission.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>✅ Solution: Manual Account Connection Process</h2>
+        
+        <div class="step">
+            <h3>Step 1: Connect Account 1 (Already Done)</h3>
+            <p>✅ Your first MetaMask account is already connected.</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Connect Account 2</h3>
+            <ol>
+                <li><strong>Switch to Account 2</strong> in MetaMask extension</li>
+                <li><strong>Click "Test Account 2 Connection"</strong> below</li>
+                <li><strong>Approve the connection</strong> in MetaMask popup</li>
+                <li><strong>Account 2 will be added</strong> to your wallet registry</li>
+            </ol>
+            <button class="button" onclick="connectAccount2()">🦊 Test Account 2 Connection</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Connect Account 3</h3>
+            <ol>
+                <li><strong>Switch to Account 3</strong> in MetaMask extension</li>
+                <li><strong>Click "Test Account 3 Connection"</strong> below</li>
+                <li><strong>Approve the connection</strong> in MetaMask popup</li>
+                <li><strong>Account 3 will be added</strong> to your wallet registry</li>
+            </ol>
+            <button class="button" onclick="connectAccount3()">🦊 Test Account 3 Connection</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Account Discovery Test</h2>
+        <button class="button" onclick="discoverAccounts()">🔍 Discover All Connected Accounts</button>
+        <div id="accounts"></div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Advanced MetaMask Tests</h2>
+        <button class="button" onclick="requestPermissions()">🔐 Request Fresh Permissions</button>
+        <button class="button" onclick="checkMetaMaskState()">🦊 Check MetaMask State</button>
+        <button class="button" onclick="forceAccountSelection()">🎯 Force Account Selection</button>
+        <div id="advanced-results"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Implementation in Your App</h2>
+        <div class="step">
+            <h3>How This Works in AlphaWhale</h3>
+            <p>1. <strong>User clicks "Add Wallet" → "MetaMask"</strong></p>
+            <p>2. <strong>App detects only 1 account</strong> (the currently active one)</p>
+            <p>3. <strong>App shows instructions</strong> to switch accounts manually</p>
+            <p>4. <strong>User switches to Account 2</strong> in MetaMask</p>
+            <p>5. <strong>User clicks "Add Wallet" → "MetaMask" again</strong></p>
+            <p>6. <strong>App connects Account 2</strong> and adds it to registry</p>
+            <p>7. <strong>Repeat for Account 3</strong></p>
+        </div>
+        
+        <div class="code">
+// This is what happens in MultiAccountSelector.tsx
+if (walletName.toLowerCase().includes('metamask') && accountsWithData.length === 1) {
+  console.log('🔍 MetaMask DEBUG INFO:');
+  console.log('- MetaMask is only sharing 1 account with this dApp');
+  console.log('- You have 3 accounts in MetaMask but only 1 is connected to this site');
+  console.log('- Solution: Switch to Account 2 in MetaMask, then try "Add Wallet" → "MetaMask" again');
+  console.log('- Each account needs to be manually connected to this dApp');
+}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎉 Expected Final Result</h2>
+        <div class="step">
+            <p>After following the manual connection process:</p>
+            <ul>
+                <li>✅ <strong>Account 1:</strong> 0x7942...b43E (already connected)</li>
+                <li>✅ <strong>Account 2:</strong> 0xD65f...8c2 (manually connected)</li>
+                <li>✅ <strong>Account 3:</strong> 0x[third account] (manually connected)</li>
+            </ul>
+            <p><strong>All 3 accounts will appear in your wallet dropdown</strong> and you can switch between them.</p>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.createElement('div');
+            logElement.className = type;
+            logElement.innerHTML = `[${timestamp}] ${message}`;
+            
+            // Add to status or results
+            const container = document.getElementById('status') || document.getElementById('advanced-results');
+            if (container) {
+                container.appendChild(logElement);
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        async function checkMetaMaskAvailability() {
+            if (typeof window.ethereum === 'undefined') {
+                log('❌ MetaMask not detected. Please install MetaMask extension.', 'error');
+                return false;
+            }
+
+            if (!window.ethereum.isMetaMask) {
+                log('⚠️ Ethereum provider detected but not MetaMask', 'warning');
+                return false;
+            }
+
+            log('✅ MetaMask detected and available', 'success');
+            return true;
+        }
+
+        async function discoverAccounts() {
+            const accountsDiv = document.getElementById('accounts');
+            accountsDiv.innerHTML = '<p>🔍 Discovering accounts...</p>';
+
+            try {
+                if (!await checkMetaMaskAvailability()) return;
+
+                // Get currently connected accounts
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_accounts' 
+                });
+
+                log(`🎯 Found ${accounts.length} connected accounts`, 'success');
+
+                if (accounts.length === 0) {
+                    accountsDiv.innerHTML = '<p class="warning">⚠️ No accounts connected. Click "Connect Account" first.</p>';
+                    return;
+                }
+
+                // Display accounts
+                let html = `<h3>Connected Accounts (${accounts.length})</h3>`;
+                
+                for (let i = 0; i < accounts.length; i++) {
+                    const address = accounts[i];
+                    
+                    // Get balance
+                    try {
+                        const balance = await window.ethereum.request({
+                            method: 'eth_getBalance',
+                            params: [address, 'latest']
+                        });
+                        const balanceInEth = (parseInt(balance, 16) / 1e18).toFixed(4);
+                        
+                        html += `
+                            <div class="account-card">
+                                <div><strong>Account ${i + 1}</strong></div>
+                                <div>Address: <code>${address}</code></div>
+                                <div>Balance: ${balanceInEth} ETH</div>
+                            </div>
+                        `;
+                    } catch (error) {
+                        html += `
+                            <div class="account-card">
+                                <div><strong>Account ${i + 1}</strong></div>
+                                <div>Address: <code>${address}</code></div>
+                                <div class="error">Balance: Failed to fetch</div>
+                            </div>
+                        `;
+                    }
+                }
+
+                accountsDiv.innerHTML = html;
+
+                // Analysis
+                if (accounts.length === 1) {
+                    log('🔍 Only 1 account connected. This is normal for MetaMask.', 'info');
+                    log('💡 To connect more accounts: Switch account in MetaMask, then connect again.', 'info');
+                } else {
+                    log(`🎉 ${accounts.length} accounts connected! Multi-account setup working.`, 'success');
+                }
+
+            } catch (error) {
+                log(`❌ Error discovering accounts: ${error.message}`, 'error');
+                accountsDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function connectAccount2() {
+            try {
+                log('🦊 Attempting to connect Account 2...', 'info');
+                log('💡 Make sure you have switched to Account 2 in MetaMask first!', 'warning');
+
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                log(`✅ Connection successful! Active account: ${accounts[0]}`, 'success');
+                log('🎯 This account will be added to your wallet registry', 'info');
+
+                // Refresh the account discovery
+                setTimeout(() => discoverAccounts(), 1000);
+
+            } catch (error) {
+                log(`❌ Account 2 connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function connectAccount3() {
+            try {
+                log('🦊 Attempting to connect Account 3...', 'info');
+                log('💡 Make sure you have switched to Account 3 in MetaMask first!', 'warning');
+
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                log(`✅ Connection successful! Active account: ${accounts[0]}`, 'success');
+                log('🎯 This account will be added to your wallet registry', 'info');
+
+                // Refresh the account discovery
+                setTimeout(() => discoverAccounts(), 1000);
+
+            } catch (error) {
+                log(`❌ Account 3 connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function requestPermissions() {
+            const resultsDiv = document.getElementById('advanced-results');
+            
+            try {
+                log('🔐 Requesting fresh permissions from MetaMask...', 'info');
+
+                const permissions = await window.ethereum.request({
+                    method: 'wallet_requestPermissions',
+                    params: [{ eth_accounts: {} }]
+                });
+
+                log(`✅ Permissions granted: ${JSON.stringify(permissions)}`, 'success');
+
+                // Get accounts after permission request
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                log(`🎯 Accounts after permission request: ${accounts.length}`, 'info');
+
+            } catch (error) {
+                log(`⚠️ Permission request failed (this is normal): ${error.message}`, 'warning');
+            }
+        }
+
+        async function checkMetaMaskState() {
+            const resultsDiv = document.getElementById('advanced-results');
+            
+            try {
+                log('🦊 Checking MetaMask state...', 'info');
+
+                // Check basic properties
+                log(`isMetaMask: ${window.ethereum.isMetaMask}`, 'info');
+                log(`selectedAddress: ${window.ethereum.selectedAddress || 'null'}`, 'info');
+                log(`chainId: ${window.ethereum.chainId || 'null'}`, 'info');
+
+                // Get current accounts
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                log(`Connected accounts: ${accounts.length}`, 'info');
+                accounts.forEach((account, i) => {
+                    log(`  Account ${i + 1}: ${account}`, 'info');
+                });
+
+            } catch (error) {
+                log(`❌ Error checking MetaMask state: ${error.message}`, 'error');
+            }
+        }
+
+        async function forceAccountSelection() {
+            try {
+                log('🎯 Attempting to force account selection dialog...', 'info');
+
+                // This might trigger MetaMask's account selection UI
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                log(`Current active account: ${accounts[0]}`, 'info');
+                log('💡 If you want to connect a different account, switch in MetaMask first', 'warning');
+
+            } catch (error) {
+                log(`❌ Force account selection failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            await checkMetaMaskAvailability();
+            await discoverAccounts();
+        });
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                log(`🔄 MetaMask accounts changed: ${accounts.length} accounts`, 'info');
+                setTimeout(() => discoverAccounts(), 500);
+            });
+
+            window.ethereum.on('chainChanged', (chainId) => {
+                log(`🔄 MetaMask chain changed: ${chainId}`, 'info');
+            });
+        }
+    </script>
+</body>
+</html>

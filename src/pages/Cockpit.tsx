@@ -17,6 +17,7 @@ import { ActionPreview } from '@/components/cockpit/ActionPreview';
 import { PeekDrawer, createDefaultSections } from '@/components/cockpit/PeekDrawer';
 import { InsightsSheet } from '@/components/cockpit/InsightsSheet';
 import { PulseSheet } from '@/components/cockpit/PulseSheet';
+import { FooterNav } from '@/components/layout/FooterNav';
 import { useCockpitData } from '@/hooks/useCockpitData';
 
 // Demo data helpers
@@ -318,6 +319,8 @@ const Cockpit: React.FC = () => {
         error={null}
         isDemo={isDemo || !isAuthenticated} // Use demo mode if not authenticated or explicitly in demo mode
       />
+      
+      <FooterNav />
     </div>
   );
 };
