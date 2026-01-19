@@ -69,8 +69,8 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Wallet Chip - Only show if user has connected wallets and they're loaded */}
-            {user && !walletsLoading && connectedWallets.length > 0 && (
+            {/* Wallet Chip - Show if user has connected wallets OR in demo mode */}
+            {user && !walletsLoading && (connectedWallets.length > 0 || isDemo) && (
               <WalletChip 
                 onClick={handleWalletChipClick}
                 className="mr-2"

@@ -3,7 +3,6 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { getFeedPage, FeedQueryParams } from '@/lib/feed/query';
 import { Opportunity as NewOpportunity, OpportunityType, SortOption } from '@/types/hunter';
 import { useWallet } from '@/contexts/WalletContext';
-import { hashWalletAddress } from '@/lib/analytics/hash';
 import { hunterKeys } from '@/lib/query-keys';
 
 // Legacy opportunity interface for backward compatibility with existing UI
@@ -127,6 +126,7 @@ function mapFilterToType(filter: string): OpportunityType[] | undefined {
 
 /**
  * Transform new Opportunity format to legacy format for backward compatibility
+ * Handles missing/undefined properties gracefully for API compatibility
  */
 function transformToLegacyOpportunity(opp: NewOpportunity): LegacyOpportunity {
   // Map type to legacy format
@@ -146,18 +146,23 @@ function transformToLegacyOpportunity(opp: NewOpportunity): LegacyOpportunity {
     'red': 'High',
   };
 
+  // Safe access to trust properties with fallbacks
+  // Handle both undefined trust object and missing properties
+  const trustScore = (opp.trust && typeof opp.trust.score === 'number') ? opp.trust.score : 80;
+  const trustLevel = (opp.trust && opp.trust.level) ? opp.trust.level : 'amber';
+
   return {
     id: opp.id,
     type: typeMap[opp.type] || 'Quest',
     title: opp.title,
     description: opp.description || '',
     reward: formatReward(opp),
-    confidence: Math.round(opp.trust.score),
+    confidence: Math.round(trustScore),
     duration: formatDuration(opp),
-    guardianScore: Math.round(opp.trust.score / 10),
-    riskLevel: riskMap[opp.trust.level] || 'Medium',
-    chain: opp.chains[0] || 'Multi-chain',
-    protocol: opp.protocol.name,
+    guardianScore: Math.round(trustScore / 10),
+    riskLevel: riskMap[trustLevel] || 'Medium',
+    chain: (opp.chains && opp.chains.length > 0) ? opp.chains[0] : 'Multi-chain',
+    protocol: (opp.protocol && opp.protocol.name) ? opp.protocol.name : 'Unknown',
     estimatedAPY: opp.apr,
   };
 }
@@ -167,6 +172,11 @@ function formatReward(opp: NewOpportunity): string {
   
   if (apr) {
     return `${apr.toFixed(1)}% APY`;
+  }
+  
+  // Safe access to reward properties with fallbacks
+  if (!reward) {
+    return 'TBD';
   }
   
   if (reward.currency === 'USD') {
@@ -179,14 +189,14 @@ function formatReward(opp: NewOpportunity): string {
   }
   
   if (reward.currency === 'POINTS') {
-    return `${reward.max} Points`;
+    return `${reward.max || 0} Points`;
   }
   
   if (reward.currency === 'NFT') {
     return 'Exclusive NFT';
   }
   
-  return `${reward.max} ${reward.currency}`;
+  return `${reward.max || 0} ${reward.currency || 'TBD'}`;
 }
 
 function formatDuration(opp: NewOpportunity): string {
@@ -239,7 +249,6 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     search: props.search,
     trustMin: props.trustMin ?? 80,
     showRisky: props.showRisky ?? false,
-    featured: props.filter === 'Featured' ? true : undefined, // Filter by featured flag for Featured tab
     limit: 12, // 12 items per page (one fold)
     walletAddress: activeWallet ?? undefined, // Include active wallet for personalization
   };

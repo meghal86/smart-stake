@@ -33,6 +33,7 @@ interface OpportunityCardProps {
   index: number;
   onJoinQuest: (opportunity: Opportunity) => void;
   isDarkTheme?: boolean;
+  isConnected?: boolean;
 }
 
 const typeIcons = {
@@ -61,9 +62,9 @@ const riskIcons = {
   High: AlertTriangle
 };
 
-export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme = true }: OpportunityCardProps) {
-  const TypeIcon = typeIcons[opportunity.type];
-  const RiskIcon = riskIcons[opportunity.riskLevel];
+export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme = true, isConnected = false }: OpportunityCardProps) {
+  const TypeIcon = opportunity.type ? typeIcons[opportunity.type] : typeIcons.Quest;
+  const RiskIcon = opportunity.riskLevel ? riskIcons[opportunity.riskLevel] : riskIcons.Medium;
   
   return (
     <motion.div
@@ -122,7 +123,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               {/* Header with Icon & Badges */}
               <div className="flex items-start gap-4 mb-4">
                 <motion.div
-                  className={`p-3 rounded-xl ${typeColors[opportunity.type]} shadow-lg`}
+                  className={`p-3 rounded-xl ${opportunity.type ? typeColors[opportunity.type] : typeColors.Quest} shadow-lg`}
                   whileHover={{ scale: 1.05 }}
                 >
                   <TypeIcon className="w-6 h-6 text-white" />
@@ -132,10 +133,10 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`px-3 py-1 text-xs font-bold rounded-full ${
                       isDarkTheme 
-                        ? `${typeColors[opportunity.type]} text-white`
+                        ? `${opportunity.type ? typeColors[opportunity.type] : typeColors.Quest} text-white`
                         : 'bg-[#14B8A6]/10 text-[#14B8A6]'
                     }`}>
-                      {opportunity.type.toUpperCase()}
+                      {opportunity.type?.toUpperCase() || 'QUEST'}
                     </span>
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       isDarkTheme 
@@ -147,7 +148,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
                             : 'text-red-600 bg-red-50'
                     }`}>
                       <RiskIcon className="w-3 h-3" />
-                      {opportunity.riskLevel.toUpperCase()} RISK
+                      {opportunity.riskLevel?.toUpperCase() || 'UNKNOWN'} RISK
                     </div>
                   </div>
                   
