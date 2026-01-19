@@ -5,7 +5,7 @@
  * Design: Navigation Architecture → Route Canonicalization & Enforcement
  */
 
-export type RouteId = "home" | "guardian" | "hunter" | "harvestpro" | "portfolio" | "settings";
+export type RouteId = "home" | "guardian" | "hunter" | "harvestpro" | "portfolio" | "settings" | "cockpit";
 export type CanonicalTab = "scan" | "risks" | "alerts" | "history" | "all" | "airdrops" | "quests" | "yield";
 
 export interface CanonicalRoute {
@@ -39,7 +39,8 @@ export const CANONICAL_ROUTES: Record<RouteId, { path: string; defaultTab?: Cano
   },
   harvestpro: { path: "/harvestpro" },
   portfolio: { path: "/portfolio" },
-  settings: { path: "/settings" }
+  settings: { path: "/settings" },
+  cockpit: { path: "/cockpit" }
 };
 
 /**
@@ -143,12 +144,28 @@ export class NavigationRouter {
     const pathname = url.pathname;
     const tabParam = url.searchParams.get('tab') as CanonicalTab | null;
 
+    // Allow sub-routes under /settings (like /settings/wallets, /settings/wallets/add)
+    if (pathname.startsWith('/settings/')) {
+      return {
+        isValid: true,
+        canonicalPath: path
+      };
+    }
+
     // Find matching canonical route
     const routeEntry = Object.entries(CANONICAL_ROUTES).find(([_, config]) => 
       config.path === pathname
     );
 
     if (!routeEntry) {
+      // Don't show error for /cockpit during transition period
+      if (pathname === '/cockpit') {
+        return {
+          isValid: true,
+          canonicalPath: pathname
+        };
+      }
+      
       return {
         isValid: false,
         canonicalPath: "/",
@@ -236,7 +253,8 @@ export class NavigationRouter {
         hunter: "Hunter",
         harvestpro: "HarvestPro",
         portfolio: "Portfolio",
-        settings: "Settings"
+        settings: "Settings",
+        cockpit: "Cockpit"
       };
       showToast(`Redirected to ${routeNames[canonicalRoute.id]}`);
     }

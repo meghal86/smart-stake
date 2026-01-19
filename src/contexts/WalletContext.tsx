@@ -20,6 +20,7 @@ import {
   getSupportedNetworks
 } from '@/lib/networks/config';
 import { getNetworkDependentQueryKeys } from '@/lib/query-keys';
+import { supabase } from '@/lib/supabase';
 
 // Chain ID to name mapping
 const chainIdToName: Record<number, string> = {
@@ -378,17 +379,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     setIsLoading(true);
     
     try {
-      // The useWalletRegistry hook handles loading wallets from the database
-      // We need to wait for wallets to load, then restore active selection
-      
       // Mark as hydrated for this user to prevent repeated attempts
       setHydratedForUserId(session.user.id);
       
-      // Wait a moment for wallets to load from useWalletRegistry
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      console.log('💾 Wallets loaded, restoring active selection:', {
+      console.log('💾 Wallets loaded from registry, restoring active selection:', {
         walletsCount: connectedWallets.length,
+        registryWalletsCount: registryWallets.length,
         wallets: connectedWallets.map(w => ({ address: w.address, label: w.label }))
       });
       
@@ -459,12 +455,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   }, [isAuthenticated, session, hydratedForUserId, connectedWallets, registryWallets, restoreActiveSelection]);
 
-  // Trigger hydration when auth session changes
+  // Trigger hydration when auth session changes AND wallets have loaded
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && !registryLoading) {
       hydrateFromServer();
     }
-  }, [isAuthenticated, session?.user?.id, authLoading, hydrateFromServer]);
+  }, [isAuthenticated, session?.user?.id, authLoading, registryLoading, hydrateFromServer]);
 
   // ============================================================================
   // Save active wallet/network to localStorage on change
@@ -632,6 +628,40 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     });
     
     console.log('🚨 DIRECT STATE UPDATE COMPLETED');
+    
+    // Update is_primary in database - SIMPLE DIRECT UPDATE
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // First, set all wallets to NOT primary
+          const { error: clearError } = await supabase
+            .from('user_wallets')
+            .update({ is_primary: false })
+            .eq('user_id', user.id);
+          
+          if (clearError) {
+            console.error('Failed to clear primary flags:', clearError);
+            return;
+          }
+          
+          // Then, set this wallet to primary
+          const { error: setPrimaryError } = await supabase
+            .from('user_wallets')
+            .update({ is_primary: true })
+            .eq('user_id', user.id)
+            .ilike('address', address);
+          
+          if (setPrimaryError) {
+            console.error('Failed to set primary wallet:', setPrimaryError);
+          } else {
+            console.log('✅ Primary wallet updated in database');
+          }
+        }
+      } catch (error) {
+        console.error('Error updating primary wallet:', error);
+      }
+    })();
     
     // Check state after a short delay
     setTimeout(() => {

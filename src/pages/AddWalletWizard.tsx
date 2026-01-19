@@ -23,7 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useWalletRegistry } from '@/hooks/useWalletRegistry';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { toast } from 'sonner';
 
 type WizardStep = 'providers' | 'connecting' | 'success';
@@ -81,10 +81,11 @@ export default function AddWalletWizard() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { connectWallet, setActiveWallet, connectedWallets } = useWallet();
+  const { setActiveWallet, connectedWallets } = useWallet();
   const { addWallet } = useWalletRegistry();
   const { openConnectModal } = useConnectModal();
-  const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
+  const { address: wagmiAddress, isConnected: wagmiConnected, chain } = useAccount();
+  const { connectors, connectAsync, error: connectError } = useConnect();
 
   // Debug RainbowKit availability
   useEffect(() => {
@@ -96,22 +97,8 @@ export default function AddWalletWizard() {
     });
   }, [openConnectModal, wagmiAddress, wagmiConnected]);
 
-  // Track the previous wagmi address to detect new connections
-  const [previousWagmiAddress, setPreviousWagmiAddress] = useState<string | null>(
-    // Initialize with current wagmi address to prevent false positives on mount
-    wagmiAddress ? wagmiAddress.toLowerCase() : null
-  );
-
-  // Initialize previousWagmiAddress on component mount to prevent false positives
-  useEffect(() => {
-    if (wagmiAddress && !previousWagmiAddress) {
-      console.log('🔧 Initializing previousWagmiAddress on mount:', wagmiAddress);
-      setPreviousWagmiAddress(wagmiAddress.toLowerCase());
-    }
-  }, [wagmiAddress, previousWagmiAddress]);
-
-  // Remove wagmi detection since we're going direct
-  // The wallet connection happens immediately in handleProviderSelect
+  // Track the last address handled during the connect flow
+  const [handledAddress, setHandledAddress] = useState<string | null>(null);
 
   // Handle connection timeout - SIMPLIFIED
   useEffect(() => {
@@ -135,16 +122,34 @@ export default function AddWalletWizard() {
     }
   }, [currentStep]);
 
-  // Utility function to convert chain ID to chain name
-  const getChainName = (chainId: string): string => {
-    const chainMap: Record<string, string> = {
-      '0x1': 'ethereum',
-      '0x89': 'polygon', 
-      '0xa4b1': 'arbitrum',
-      '0xa': 'optimism',
-      '0x2105': 'base',
-    };
-    return chainMap[chainId] || 'ethereum';
+  const findConnectorForProvider = (provider: WalletProvider) => {
+    const providerId = provider.id.toLowerCase();
+    
+    console.log('🔍 Looking for connector for provider:', providerId);
+    console.log('🔍 Available connector IDs:', connectors.map(c => c.id));
+    console.log('🔍 Available connector names:', connectors.map(c => c.name));
+    
+    const found = connectors.find((connector) => {
+      const connectorId = connector.id.toLowerCase();
+      const connectorName = connector.name.toLowerCase();
+
+      if (providerId === 'metamask') {
+        return connectorId.includes('metamask') || connectorName.includes('metamask');
+      }
+      if (providerId === 'coinbase') {
+        return connectorId.includes('coinbase') || connectorName.includes('coinbase');
+      }
+      if (providerId === 'walletconnect') {
+        return connectorId.includes('walletconnect') || connectorName.includes('walletconnect');
+      }
+      if (providerId === 'rainbow') {
+        return connectorId.includes('rainbow') || connectorName.includes('rainbow');
+      }
+      return false;
+    });
+    
+    console.log('🔍 Found connector:', found ? { id: found.id, name: found.name } : 'null');
+    return found;
   };
 
   // Handle back navigation
@@ -164,81 +169,165 @@ export default function AddWalletWizard() {
     }
   };
 
-  // Handle provider selection - BYPASS RAINBOWKIT, GO DIRECT
+  // Handle provider selection - use wagmi connectors
   const handleProviderSelect = async (provider: WalletProvider) => {
+    setHandledAddress(null);
     setSelectedProvider(provider);
     setConnectionError(null);
     setCurrentStep('connecting');
     
-    console.log(`🔗 Adding ${provider.name} wallet directly...`);
+    console.log(`🔗 Connecting ${provider.name} wallet...`);
+    console.log('📋 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
     
-    // Skip RainbowKit entirely - go straight to wallet connection
     try {
-      if (typeof window.ethereum !== 'undefined') {
-        console.log('✅ Connecting directly to wallet...');
-        
-        // Request account access - this will show the wallet's account selector
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        }) as string[];
-        
-        if (accounts && accounts.length > 0) {
-          const newAddress = accounts[0].toLowerCase();
-          console.log('✅ Direct connection successful:', newAddress);
-          
-          // Check if this wallet is already in collection
-          const isAlreadyInCollection = connectedWallets.some(
-            w => w.address.toLowerCase() === newAddress
-          );
-          
-          if (!isAlreadyInCollection) {
-            console.log('🆕 New wallet detected, adding to registry...');
-            
-            await addWallet({
-              address: newAddress,
-              label: `${provider.name} Wallet`,
-              chain_namespace: 'eip155:1',
-            });
-            
-            setConnectedAddress(newAddress);
-            setCurrentStep('success');
-            
-            // Emit wallet added event
-            const event = new CustomEvent('walletAdded', {
-              detail: { 
-                address: newAddress, 
-                provider: provider.name,
-                timestamp: new Date().toISOString() 
-              }
-            });
-            window.dispatchEvent(event);
-          } else {
-            console.log('ℹ️ Wallet already in collection');
-            setConnectionError('This wallet is already in your collection. Please switch to a different account in your wallet.');
-            setTimeout(() => {
-              setCurrentStep('providers');
-              setConnectionError(null);
-            }, 3000);
-          }
+      if (provider.id === 'other') {
+        if (!openConnectModal) {
+          throw new Error('No wallet connector available. Please refresh and try again.');
         }
-      } else {
-        throw new Error('No wallet detected. Please install MetaMask or another Web3 wallet.');
+        openConnectModal();
+        return;
       }
+
+      const connector = findConnectorForProvider(provider);
+      console.log('🔌 Found connector:', connector ? { id: connector.id, name: connector.name } : 'null');
+      
+      if (!connector) {
+        console.error(`❌ No connector found for ${provider.name}`);
+        if (!openConnectModal) {
+          throw new Error(`No ${provider.name} connector found. Please use another provider.`);
+        }
+        openConnectModal();
+        return;
+      }
+
+      console.log('⏳ Attempting to connect with connector:', connector.name);
+      await connectAsync({ connector });
+      console.log('✅ Connect async completed');
     } catch (error: any) {
-      console.error('❌ Direct wallet connection failed:', error);
+      console.error('❌ Wallet connection failed:', error);
+      console.error('Error details:', { code: error.code, message: error.message, stack: error.stack });
       
       if (error.code === 4001) {
         setConnectionError('Connection cancelled by user.');
-      } else if (error.message?.includes('No wallet detected')) {
-        setConnectionError('No wallet detected. Please install MetaMask or another Web3 wallet.');
+      } else if (error.message?.includes('No wallet connector')) {
+        setConnectionError('No wallet connector available. Please install a wallet extension or try WalletConnect.');
+      } else if (error.message?.includes('User rejected')) {
+        setConnectionError('Connection cancelled by user.');
       } else {
-        setConnectionError('Failed to connect wallet. Please try again.');
+        setConnectionError(`Failed to connect wallet: ${error.message || 'Please try again.'}`);
       }
       
       setCurrentStep('providers');
       setSelectedProvider(null);
     }
   };
+
+  // Handle connect errors from wagmi
+  useEffect(() => {
+    if (!connectError || currentStep !== 'connecting') return;
+
+    console.error('❌ wagmi connect error:', connectError);
+    setConnectionError(connectError.message || 'Failed to connect wallet. Please try again.');
+    setCurrentStep('providers');
+    setSelectedProvider(null);
+  }, [connectError, currentStep]);
+
+  // Handle successful connection and add wallet
+  useEffect(() => {
+    if (currentStep !== 'connecting' || !selectedProvider) return;
+    if (!wagmiConnected || !wagmiAddress) return;
+
+    const normalizedAddress = wagmiAddress.toLowerCase();
+    if (handledAddress === normalizedAddress) return;
+
+    setHandledAddress(normalizedAddress);
+
+    const isAlreadyInCollection = connectedWallets.some(
+      (wallet) => wallet.address.toLowerCase() === normalizedAddress
+    );
+
+    if (isAlreadyInCollection) {
+      console.log('ℹ️ Wallet already in collection - returning to provider selection');
+
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+        setConnectionTimeout(null);
+      }
+
+      toast.error('Wallet already added', {
+        description: 'This wallet is already in your collection. Switch accounts in your wallet to add a different one.',
+        duration: 5000
+      });
+
+      setConnectionError('This wallet is already in your collection. Please switch to a different account in your wallet and try again.');
+      setSelectedProvider(null);
+      setCurrentStep('providers');
+      return;
+    }
+
+    const chainNamespace = chain?.id ? `eip155:${chain.id}` : 'eip155:1';
+
+    const addConnectedWallet = async () => {
+      try {
+        console.log('🆕 New wallet detected, adding to registry...');
+
+        await addWallet({
+          address: normalizedAddress,
+          label: `${selectedProvider.name} Wallet`,
+          chain_namespace: chainNamespace,
+        });
+
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+          setConnectionTimeout(null);
+        }
+
+        setConnectedAddress(normalizedAddress);
+        setCurrentStep('success');
+
+        const event = new CustomEvent('walletAdded', {
+          detail: {
+            address: normalizedAddress,
+            provider: selectedProvider.name,
+            timestamp: new Date().toISOString(),
+          }
+        });
+        window.dispatchEvent(event);
+      } catch (error: any) {
+        console.error('❌ Failed to add wallet:', error);
+        
+        // Check if it's a duplicate wallet error (409 Conflict)
+        if (error.message?.includes('409') || error.message?.includes('duplicate') || error.message?.includes('unique')) {
+          toast.error('Wallet already exists', {
+            description: 'This wallet is already in your collection. Please switch to a different account in your wallet.',
+            duration: 5000
+          });
+          setConnectionError('This wallet is already in your collection. Please switch to a different account and try again.');
+        } else {
+          toast.error('Failed to add wallet', {
+            description: error.message || 'Please try again.',
+            duration: 5000
+          });
+          setConnectionError(`Failed to add wallet: ${error.message || 'Please try again.'}`);
+        }
+        
+        setCurrentStep('providers');
+        setSelectedProvider(null);
+      }
+    };
+
+    addConnectedWallet();
+  }, [
+    currentStep,
+    selectedProvider,
+    wagmiConnected,
+    wagmiAddress,
+    connectedWallets,
+    addWallet,
+    chain?.id,
+    handledAddress,
+    connectionTimeout
+  ]);
 
   // Handle setting wallet as active
   const handleSetAsActive = () => {

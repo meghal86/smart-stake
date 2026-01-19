@@ -30,14 +30,14 @@ const Login: React.FC = () => {
 
   // Validate next parameter to prevent open redirects
   const getValidRedirectPath = (path: string | null): string => {
-    if (!path) return '/guardian';
+    if (!path) return '/cockpit';
     
     // Must start with / and must not start with //
     if (path.startsWith('/') && !path.startsWith('//')) {
       return path;
     }
     
-    return '/guardian';
+    return '/cockpit';
   };
 
   const redirectPath = getValidRedirectPath(nextParam);
@@ -70,9 +70,8 @@ const Login: React.FC = () => {
         // This ensures wallet count is available for routing decisions
         await hydrateFromServer();
         
-        // Redirect to next parameter or default to /guardian
-        // Both zero wallets and ≥1 wallet go to /guardian
-        // Guardian component handles empty state vs. main interface
+        // Redirect to next parameter or default to /cockpit
+        // Cockpit is the authenticated home page
         navigate(redirectPath);
       }
     } catch (err) {

@@ -330,6 +330,37 @@ export function useWalletRegistry() {
     [updateWalletMutation]
   )
 
+  const setPrimaryWallet = useCallback(
+    async (address: string) => {
+      if (!userId) throw new Error('User not authenticated')
+      
+      console.log('🔄 Setting primary wallet:', address)
+      
+      // Find the wallet to set as primary
+      const targetWallet = wallets.find(w => w.address.toLowerCase() === address.toLowerCase())
+      if (!targetWallet) {
+        throw new Error(`Wallet ${address} not found`)
+      }
+      
+      // Update in database: set all to false, then set target to true
+      const { error } = await supabase.rpc('set_primary_wallet', {
+        p_user_id: userId,
+        p_wallet_address: address.toLowerCase()
+      })
+      
+      if (error) {
+        console.error('Failed to set primary wallet:', error)
+        throw error
+      }
+      
+      // Invalidate queries to refresh
+      queryClient.invalidateQueries({ queryKey: walletKeys.registry() })
+      
+      console.log('✅ Primary wallet set successfully')
+    },
+    [userId, wallets, queryClient]
+  )
+
   const refreshWallets = useCallback(async () => {
     await refetch()
   }, [refetch])
@@ -363,6 +394,7 @@ export function useWalletRegistry() {
     addWallet,
     removeWallet,
     updateWallet,
+    setPrimaryWallet,
     refreshWallets,
     
     // Helpers

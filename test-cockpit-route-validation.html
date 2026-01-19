@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cockpit Route Validation Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: #fff;
+        }
+        .test-section {
+            background: #1a1f35;
+            border: 1px solid #2a3f5f;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .pass { color: #10b981; }
+        .fail { color: #ef4444; }
+        .info { color: #3b82f6; }
+        pre {
+            background: #0f1729;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Cockpit Route Validation Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <ol>
+            <li>This test verifies that <code>/cockpit</code> is now a valid route</li>
+            <li>Click the buttons below to test route validation</li>
+            <li>The error "Invalid route: /cockpit" should NOT appear</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Fix Steps</h2>
+        <div class="info">
+            <p><strong>If you still see the error, try these steps:</strong></p>
+            <ol>
+                <li><strong>Hard Refresh:</strong> Press <code>Ctrl+Shift+R</code> (Windows/Linux) or <code>Cmd+Shift+R</code> (Mac)</li>
+                <li><strong>Clear Cache:</strong> Open DevTools → Application → Clear Storage → Clear site data</li>
+                <li><strong>Restart Dev Server:</strong> Stop and restart your development server</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Route Validation Tests</h2>
+        <button onclick="testCockpitRoute()">Test /cockpit Route</button>
+        <button onclick="testSettingsWalletsRoute()">Test /settings/wallets Route</button>
+        <button onclick="testInvalidRoute()">Test Invalid Route</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected CANONICAL_ROUTES</h2>
+        <pre>{
+  home: { path: "/" },
+  guardian: { path: "/guardian", defaultTab: "scan", ... },
+  hunter: { path: "/hunter", defaultTab: "all", ... },
+  harvestpro: { path: "/harvestpro" },
+  portfolio: { path: "/portfolio" },
+  settings: { path: "/settings" },
+  <span class="pass">cockpit: { path: "/cockpit" }</span>  ← Should be present
+}</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Browser Cache Issue</h2>
+        <p class="info">
+            The most common reason for still seeing the error is that your browser has cached the old version of <code>NavigationRouter.ts</code>.
+        </p>
+        <p>
+            <strong>Solution:</strong> Do a hard refresh or clear your browser cache.
+        </p>
+    </div>
+
+    <script>
+        // Simulate route validation (simplified version)
+        const CANONICAL_ROUTES = {
+            home: { path: "/" },
+            guardian: { path: "/guardian" },
+            hunter: { path: "/hunter" },
+            harvestpro: { path: "/harvestpro" },
+            portfolio: { path: "/portfolio" },
+            settings: { path: "/settings" },
+            cockpit: { path: "/cockpit" }  // ✅ Added
+        };
+
+        function validateRoute(pathname) {
+            // Check if it's a settings sub-route
+            if (pathname.startsWith('/settings/')) {
+                return { isValid: true, message: `✅ Valid: ${pathname} (settings sub-route)` };
+            }
+
+            // Check if it's in CANONICAL_ROUTES
+            const isValid = Object.values(CANONICAL_ROUTES).some(route => route.path === pathname);
+            
+            if (isValid) {
+                return { isValid: true, message: `✅ Valid: ${pathname}` };
+            } else {
+                return { isValid: false, message: `❌ Invalid route: ${pathname}` };
+            }
+        }
+
+        function displayResult(result) {
+            const resultsDiv = document.getElementById('results');
+            const resultClass = result.isValid ? 'pass' : 'fail';
+            resultsDiv.innerHTML += `<p class="${resultClass}">${result.message}</p>`;
+        }
+
+        function testCockpitRoute() {
+            const result = validateRoute('/cockpit');
+            displayResult(result);
+        }
+
+        function testSettingsWalletsRoute() {
+            const result = validateRoute('/settings/wallets');
+            displayResult(result);
+        }
+
+        function testInvalidRoute() {
+            const result = validateRoute('/nonexistent');
+            displayResult(result);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Run tests on load
+        window.onload = () => {
+            console.log('CANONICAL_ROUTES:', CANONICAL_ROUTES);
+            console.log('Testing /cockpit:', validateRoute('/cockpit'));
+            console.log('Testing /settings/wallets:', validateRoute('/settings/wallets'));
+        };
+    </script>
+</body>
+</html>

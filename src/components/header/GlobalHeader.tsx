@@ -20,7 +20,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 })
   
-  const { connectedWallets } = useWallet()
+  const { connectedWallets, isLoading: walletsLoading } = useWallet()
   const { isDemo, setDemoMode } = useDemoMode()
 
   useEffect(() => {
@@ -69,8 +69,8 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Wallet Chip - Only show if user has connected wallets */}
-            {user && connectedWallets.length > 0 && (
+            {/* Wallet Chip - Only show if user has connected wallets and they're loaded */}
+            {user && !walletsLoading && connectedWallets.length > 0 && (
               <WalletChip 
                 onClick={handleWalletChipClick}
                 className="mr-2"
@@ -111,9 +111,20 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
                 )}
               </>
             ) : (
-              <button onClick={() => navigate('/settings/wallets/add')} className="px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-sm font-medium text-white dark:text-slate-900 hover:opacity-90 transition-opacity">
-                Connect Wallet
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => navigate('/signin')} 
+                  className="px-4 py-2 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => navigate('/signup')} 
+                  className="px-4 py-2 rounded-full bg-cyan-500 text-sm font-medium text-white hover:bg-cyan-600 transition-colors"
+                >
+                  Sign Up
+                </button>
+              </div>
             )}
           </div>
         </div>

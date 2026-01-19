@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Set Primary Wallet</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #0A0F1F;
+      color: #fff;
+    }
+    .test-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #00D9FF;
+    }
+    button {
+      background: #00D9FF;
+      color: #0A0F1F;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #00B8D9;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .status.success {
+      background: rgba(0, 217, 255, 0.1);
+      border: 1px solid #00D9FF;
+      color: #00D9FF;
+    }
+    .status.error {
+      background: rgba(255, 68, 68, 0.1);
+      border: 1px solid #FF4444;
+      color: #FF4444;
+    }
+    .status.info {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .wallet-list {
+      margin-top: 10px;
+    }
+    .wallet-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .wallet-item.primary {
+      border: 2px solid #00D9FF;
+      background: rgba(0, 217, 255, 0.05);
+    }
+    .wallet-address {
+      font-family: monospace;
+      font-size: 14px;
+    }
+    .primary-badge {
+      background: #00D9FF;
+      color: #0A0F1F;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Set Primary Wallet</h1>
+  
+  <div class="test-section">
+    <h2>Test Instructions</h2>
+    <div class="status info">
+      <strong>Purpose:</strong> Verify that clicking "Set Active" updates the database correctly
+      <br><br>
+      <strong>Steps:</strong>
+      <ol>
+        <li>Open your app at <code>http://localhost:8080/settings/wallets</code></li>
+        <li>Click "Set Active" on any wallet</li>
+        <li>Check the console for: <code>✅ Primary wallet updated in database</code></li>
+        <li>Verify no errors appear</li>
+        <li>Refresh the page and verify the same wallet is still active</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Expected Behavior</h2>
+    <div class="status success">
+      ✅ <strong>No "supabase is not defined" error</strong>
+      <br>
+      ✅ <strong>Console shows "Primary wallet updated in database"</strong>
+      <br>
+      ✅ <strong>Only ONE wallet has is_primary = true</strong>
+      <br>
+      ✅ <strong>Active wallet persists across page refreshes</strong>
+      <br>
+      ✅ <strong>Active wallet syncs across different browsers</strong>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Database Verification</h2>
+    <p>Run this SQL query in your Supabase SQL Editor to verify:</p>
+    <pre>-- Check which wallet is primary
+SELECT 
+  address,
+  is_primary,
+  label,
+  created_at,
+  updated_at
+FROM user_wallets
+WHERE user_id = auth.uid()
+ORDER BY is_primary DESC, created_at DESC;</pre>
+    
+    <p><strong>Expected Result:</strong> Only ONE row should have <code>is_primary = true</code></p>
+  </div>
+
+  <div class="test-section">
+    <h2>Code Changes Summary</h2>
+    <div class="status info">
+      <strong>File Changed:</strong> <code>src/contexts/WalletContext.tsx</code>
+      <br><br>
+      <strong>Change:</strong> Added missing import
+      <pre>import { supabase } from '@/lib/supabase';</pre>
+      
+      <strong>Function:</strong> <code>setActiveWallet</code> now calls database function
+      <pre>const { error } = await supabase.rpc('set_primary_wallet', {
+  p_user_id: user.id,
+  p_wallet_address: address.toLowerCase()
+});</pre>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Troubleshooting</h2>
+    <div class="status info">
+      <strong>If you see "function set_primary_wallet does not exist":</strong>
+      <br>
+      Run the migration file in Supabase SQL Editor:
+      <pre>-- File: supabase/migrations/20260120000000_set_primary_wallet_function.sql
+CREATE OR REPLACE FUNCTION set_primary_wallet(
+  p_user_id UUID,
+  p_wallet_address TEXT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE user_wallets
+  SET is_primary = FALSE,
+      updated_at = NOW()
+  WHERE user_id = p_user_id;
+  
+  UPDATE user_wallets
+  SET is_primary = TRUE,
+      updated_at = NOW()
+  WHERE user_id = p_user_id
+    AND LOWER(address) = LOWER(p_wallet_address);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION set_primary_wallet(UUID, TEXT) TO authenticated;</pre>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test Status</h2>
+    <div id="testStatus" class="status info">
+      <strong>Status:</strong> Ready for testing
+      <br>
+      <strong>Date:</strong> January 19, 2026
+      <br>
+      <strong>Fix Applied:</strong> ✅ Added supabase import to WalletContext.tsx
+    </div>
+  </div>
+
+  <script>
+    console.log('🧪 Test page loaded');
+    console.log('📝 Follow the instructions above to test the fix');
+    console.log('✅ The fix has been applied - supabase import added to WalletContext.tsx');
+  </script>
+</body>
+</html>

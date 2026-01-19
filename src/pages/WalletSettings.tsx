@@ -13,7 +13,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useWallet, truncateAddress } from '@/contexts/WalletContext';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import { 
@@ -45,9 +45,15 @@ interface WalletDisplayData {
 
 export default function WalletSettings() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { connectedWallets, activeWallet, setActiveWallet, disconnectWallet } = useWallet();
   const [editingWallet, setEditingWallet] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
+
+  // Back button handler - uses browser history
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   // Get wallet addresses for debugging
   const walletAddresses = connectedWallets.map(w => w.address);
@@ -143,7 +149,7 @@ export default function WalletSettings() {
       <div className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors min-h-[44px] px-2"
           >
             <ArrowLeft className="w-5 h-5" />
