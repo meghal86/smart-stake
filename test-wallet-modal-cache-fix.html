@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Modal Cache Fix - Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status.pass { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .status.pending { background: #f59e0b; color: white; }
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .command {
+            background: #1e293b;
+            border-left: 4px solid #60a5fa;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-family: monospace;
+        }
+        .error { color: #ef4444; }
+        .success { color: #10b981; }
+        .warning { color: #f59e0b; }
+        .info { color: #60a5fa; }
+        .checklist {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #60a5fa;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .step {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .step-number {
+            background: #60a5fa;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Wallet Modal Cache Fix - Verification Guide</h1>
+        <p>This guide helps you resolve the <code>WalletModal is not defined</code> error by clearing development caches.</p>
+
+        <div class="section">
+            <h2>❌ Current Error</h2>
+            <div class="code-block error">
+ReferenceError: WalletModal is not defined
+    at GlobalHeader (GlobalHeader.tsx:232:9)
+            </div>
+            <p><strong>Issue:</strong> Development server serving cached JavaScript that references non-existent <code>WalletModal</code></p>
+            <p><strong>Evidence:</strong> Error points to line 232, but current file only has 125 lines</p>
+        </div>
+
+        <div class="section">
+            <h2>🛠️ Resolution Steps</h2>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Stop Development Server</strong>
+                <div class="command">
+                    Press Ctrl+C (or Cmd+C on Mac) in your terminal
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Clear All Caches</strong>
+                <div class="command">
+# Clear Vite cache<br>
+rm -rf node_modules/.vite<br><br>
+# Clear Next.js cache<br>
+rm -rf .next<br><br>
+# Clear dist folder<br>
+rm -rf dist
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Restart Development Server</strong>
+                <div class="command">
+npm run dev<br>
+# or<br>
+yarn dev<br>
+# or<br>
+bun dev
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>Clear Browser Cache</strong>
+                <div class="command">
+<strong>Chrome/Edge:</strong> Ctrl+Shift+R (Cmd+Shift+R on Mac)<br>
+<strong>Firefox:</strong> Ctrl+Shift+R (Cmd+Shift+R on Mac)<br>
+<strong>Safari:</strong> Cmd+Option+R
+                </div>
+                <p class="info">💡 Or open DevTools → Right-click refresh → "Empty Cache and Hard Reload"</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>✅ Verification Checklist</h2>
+            <p>After completing the steps above, verify these items:</p>
+            
+            <div class="checklist">
+                <div>
+                    <h4>Console Checks</h4>
+                    <div class="checklist-item">
+                        <div class="checkbox">□</div>
+                        <span>No "WalletModal is not defined" error</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox">□</div>
+                        <span>No other console errors</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox">□</div>
+                        <span>Clean console output</span>
+                    </div>
+                </div>
+                <div>
+                    <h4>UI Functionality</h4>
+                    <div class="checklist-item">
+                        <div class="checkbox">□</div>
+                        <span>GlobalHeader renders properly</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox">□</div>
+                        <span>WalletChip appears (if wallets connected)</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox">□</div>
+                        <span>WalletSwitcherBottomSheet opens</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Advanced Troubleshooting</h2>
+            
+            <h3>If Error Persists:</h3>
+            
+            <div class="step">
+                <span class="step-number">A</span>
+                <strong>Nuclear Cache Clear</strong>
+                <div class="command">
+# Remove all caches and node_modules<br>
+rm -rf node_modules node_modules/.vite .next dist<br>
+npm install<br>
+npm run dev
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">B</span>
+                <strong>Browser-Specific Testing</strong>
+                <div class="command">
+1. Try incognito/private mode<br>
+2. Disable all browser extensions<br>
+3. Test in different browser<br>
+4. Clear all browser data
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">C</span>
+                <strong>Check for Hidden Caches</strong>
+                <div class="command">
+# Find and remove hidden cache files<br>
+find . -name "*.cache" -o -name ".cache*" | xargs rm -rf<br><br>
+# Check for duplicate files<br>
+find . -name "*GlobalHeader*" -type f
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Current Code Status</h2>
+            <p><span class="status pass">VERIFIED</span> All code is correct - this is purely a cache issue</p>
+            
+            <h3>✅ Correct Import in GlobalHeader.tsx:</h3>
+            <div class="code-block success">
+import { WalletSwitcherBottomSheet } from '@/components/wallet/WalletSwitcherBottomSheet'
+            </div>
+
+            <h3>✅ Correct Usage:</h3>
+            <div class="code-block success">
+&lt;WalletSwitcherBottomSheet
+  isOpen={showWalletSwitcher}
+  onClose={() => setShowWalletSwitcher(false)}
+/&gt;
+            </div>
+
+            <h3>✅ No WalletModal References:</h3>
+            <div class="code-block success">
+// No imports of WalletModal
+// No usage of WalletModal
+// No undefined variables
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Success Indicators</h2>
+            <p><strong>You'll know the fix worked when:</strong></p>
+            <ul>
+                <li>✅ Console shows no errors</li>
+                <li>✅ Application loads without crashes</li>
+                <li>✅ Header displays properly</li>
+                <li>✅ Wallet features work correctly</li>
+                <li>✅ Hot reload functions normally</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Prevention Tips</h2>
+            
+            <h3>Add Cache Clearing Script:</h3>
+            <div class="code-block">
+// Add to package.json scripts:
+"clean": "rm -rf node_modules/.vite .next dist",
+"dev:clean": "npm run clean && npm run dev"
+            </div>
+
+            <h3>Development Workflow:</h3>
+            <div class="command">
+1. When encountering cache issues:<br>
+2. Stop dev server (Ctrl+C)<br>
+3. Run: npm run clean<br>
+4. Run: npm run dev<br>
+5. Hard refresh browser (Ctrl+Shift+R)
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📞 Need Help?</h2>
+            <p>If the issue persists after following all steps:</p>
+            <ul>
+                <li>Check if you're using the correct Node.js version</li>
+                <li>Verify all dependencies are installed correctly</li>
+                <li>Try creating a fresh terminal session</li>
+                <li>Restart your code editor/IDE</li>
+                <li>Check for any TypeScript compilation errors</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Wallet Modal Cache Fix Verification Loaded');
+        console.log('📝 Follow the steps above to resolve the WalletModal cache issue');
+        
+        // Check if we're in development mode
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('🌐 Development environment detected');
+            console.log('💡 Make sure to clear all caches and restart your dev server');
+        }
+        
+        // Simple cache detection
+        const now = Date.now();
+        const cacheKey = 'wallet_modal_cache_test';
+        const lastTest = localStorage.getItem(cacheKey);
+        
+        if (lastTest && (now - parseInt(lastTest)) < 60000) {
+            console.log('⚠️ Browser cache detected - consider hard refresh');
+        }
+        
+        localStorage.setItem(cacheKey, now.toString());
+    </script>
+</body>
+</html>

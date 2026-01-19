@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AddWalletWizard False Positive Fix - Final Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: #E2E8F0;
+        }
+        .test-section {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-case {
+            background: #0F172A;
+            border-left: 4px solid #06B6D4;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { border-left-color: #10B981; }
+        .warning { border-left-color: #F59E0B; }
+        .error { border-left-color: #EF4444; }
+        .code {
+            background: #000;
+            color: #00FF00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        button {
+            background: #06B6D4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0891B2; }
+        .status { 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .status.pass { background: #10B981; color: white; }
+        .status.fail { background: #EF4444; color: white; }
+        .status.pending { background: #F59E0B; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔧 AddWalletWizard False Positive Fix - Final Test</h1>
+    
+    <div class="test-section">
+        <h2>🎯 Issue Summary</h2>
+        <p><strong>Problem:</strong> AddWalletWizard showing "Wallet Added!" success screen for ALL wallet providers without actually connecting new wallets.</p>
+        
+        <div class="test-case">
+            <h3>Root Causes Identified:</h3>
+            <ul>
+                <li>❌ <code>openConnectModal: false</code> - RainbowKit modal not available</li>
+                <li>❌ False positive detection - treating existing connections as "new"</li>
+                <li>❌ No validation that wallet is genuinely different from existing collection</li>
+                <li>❌ Success screen shown even when no new wallet was added</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🛠️ Fixes Applied</h2>
+        
+        <div class="test-case success">
+            <h3>1. Pre-Connection Validation</h3>
+            <p>Added checks BEFORE entering connecting state:</p>
+            <div class="code">// CRITICAL FIX: Check if user is trying to add the same wallet
+if (wagmiAddress && wagmiAddress.toLowerCase() === previousWagmiAddress) {
+  setConnectionError('This wallet is already connected. Please switch to a different account...');
+  return; // Don't proceed to connecting step
+}
+
+// Check if current wagmi wallet is already in collection
+if (wagmiAddress) {
+  const isAlreadyInCollection = connectedWallets.some(
+    w => w.address.toLowerCase() === wagmiAddress.toLowerCase()
+  );
+  
+  if (isAlreadyInCollection) {
+    setConnectionError('This wallet is already in your collection...');
+    return; // Don't proceed to connecting step
+  }
+}</div>
+        </div>
+
+        <div class="test-case success">
+            <h3>2. Enhanced Wallet Detection Logic</h3>
+            <p>Improved detection to prevent false positives:</p>
+            <div class="code">// Only treat as new if genuinely different AND not in collection
+const isActuallyNewConnection = previousWagmiAddress && newAddress !== previousWagmiAddress;
+const isAlreadyInCollection = connectedWallets.some(
+  w => w.address.toLowerCase() === newAddress
+);
+
+if (isActuallyNewConnection && !isAlreadyInCollection) {
+  // Genuinely new wallet - proceed with success
+} else if (isAlreadyInCollection) {
+  // Already in collection - show message and return to providers
+  setConnectionError('This wallet is already in your collection...');
+  setTimeout(() => {
+    setCurrentStep('providers');
+    setConnectionError(null);
+  }, 3000);
+}</div>
+        </div>
+
+        <div class="test-case success">
+            <h3>3. Robust Direct Connection Fallback</h3>
+            <p>Enhanced fallback when RainbowKit is unavailable:</p>
+            <div class="code">// More robust check for different wallet
+const isDifferentFromPrevious = !previousWagmiAddress || newAddress !== previousWagmiAddress;
+const isNotInCollection = !connectedWallets.some(
+  w => w.address.toLowerCase() === newAddress
+);
+
+if (isDifferentFromPrevious && isNotInCollection) {
+  // Genuinely new wallet - add to registry
+} else {
+  setConnectionError('This wallet is already in your collection...');
+}</div>
+        </div>
+
+        <div class="test-case success">
+            <h3>4. Auto-Redirect Timeout Extended</h3>
+            <p>Changed from 3 seconds to 20 seconds as requested:</p>
+            <div class="code">setTimeout(() => {
+  handleKeepCurrent();
+}, 20000); // Changed from 3000ms to 20000ms</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Scenarios</h2>
+        
+        <div class="test-case">
+            <h3>Scenario 1: Same Wallet Re-Connection</h3>
+            <p><strong>Expected:</strong> Error message, no success screen</p>
+            <div class="status pending">READY TO TEST</div>
+            <p>Steps:</p>
+            <ol>
+                <li>Go to /settings/wallets/add</li>
+                <li>Click MetaMask (or any provider)</li>
+                <li>Try to connect the same wallet that's already connected</li>
+                <li>Should see error: "This wallet is already connected..."</li>
+                <li>Should NOT see success screen</li>
+            </ol>
+        </div>
+
+        <div class="test-case">
+            <h3>Scenario 2: Wallet Already in Collection</h3>
+            <p><strong>Expected:</strong> Error message, return to provider selection</p>
+            <div class="status pending">READY TO TEST</div>
+            <p>Steps:</p>
+            <ol>
+                <li>Have multiple wallets in collection</li>
+                <li>Try to add a wallet that's already in the collection</li>
+                <li>Should see error: "This wallet is already in your collection..."</li>
+                <li>Should return to provider selection after 3 seconds</li>
+            </ol>
+        </div>
+
+        <div class="test-case">
+            <h3>Scenario 3: Genuinely New Wallet</h3>
+            <p><strong>Expected:</strong> Success screen with correct address</p>
+            <div class="status pending">READY TO TEST</div>
+            <p>Steps:</p>
+            <ol>
+                <li>Switch to a different account in MetaMask</li>
+                <li>Go to /settings/wallets/add</li>
+                <li>Click MetaMask</li>
+                <li>Connect the different account</li>
+                <li>Should see success screen with new address</li>
+                <li>Should be added to wallet collection</li>
+            </ol>
+        </div>
+
+        <div class="test-case">
+            <h3>Scenario 4: RainbowKit Modal Unavailable</h3>
+            <p><strong>Expected:</strong> Direct connection fallback works</p>
+            <div class="status pending">READY TO TEST</div>
+            <p>Steps:</p>
+            <ol>
+                <li>When openConnectModal is false</li>
+                <li>Should use direct window.ethereum connection</li>
+                <li>Should still validate wallet is different</li>
+                <li>Should show appropriate error or success</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Debug Information</h2>
+        
+        <div class="test-case">
+            <h3>Console Logs to Watch For:</h3>
+            <div class="code">✅ Expected Success Logs:
+🔗 Attempting to add MetaMask wallet...
+✅ Genuinely new wallet connected via RainbowKit: 0x...
+🆕 New wallet detected, adding to registry...
+✅ New wallet added to registry successfully
+
+❌ Expected Error Logs:
+⚠️ User is trying to add the same wallet that is already connected
+⚠️ Current wagmi wallet is already in user collection
+ℹ️ Wallet already in collection, setting as active and showing message
+
+🔍 Debug Information:
+🔍 Current state: {openConnectModal: false/true, wagmiConnected: true/false, ...}
+🔍 Wallet detection effect triggered: {isNewConnection: true/false, ...}</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Validation Checklist</h2>
+        
+        <div class="test-case">
+            <h3>Before Testing:</h3>
+            <ul>
+                <li>□ Have at least one wallet already connected</li>
+                <li>□ Have access to multiple wallet accounts</li>
+                <li>□ Open browser dev tools to monitor console logs</li>
+                <li>□ Clear any cached state if needed</li>
+            </ul>
+        </div>
+
+        <div class="test-case">
+            <h3>Success Criteria:</h3>
+            <ul>
+                <li>□ No false positive success screens</li>
+                <li>□ Clear error messages for existing wallets</li>
+                <li>□ Genuine new wallets show success screen</li>
+                <li>□ Auto-redirect timeout is 20 seconds</li>
+                <li>□ Direct connection fallback works when RainbowKit unavailable</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Next Steps</h2>
+        <p>After testing these scenarios:</p>
+        <ol>
+            <li>Verify all false positive cases are eliminated</li>
+            <li>Confirm genuine new wallet additions work correctly</li>
+            <li>Test cross-browser compatibility</li>
+            <li>Validate error messages are user-friendly</li>
+            <li>Ensure wallet collection updates properly</li>
+        </ol>
+    </div>
+
+    <script>
+        console.log('🧪 AddWalletWizard False Positive Fix Test Page Loaded');
+        console.log('📋 Test all scenarios above and verify console logs match expected patterns');
+        
+        // Listen for wallet events
+        window.addEventListener('walletAdded', (event) => {
+            console.log('🎉 walletAdded event received:', event.detail);
+        });
+        
+        window.addEventListener('walletConnected', (event) => {
+            console.log('🔗 walletConnected event received:', event.detail);
+        });
+    </script>
+</body>
+</html>

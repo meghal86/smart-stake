@@ -45,20 +45,36 @@ class EthBalanceProvider_Etherscan {
   }
 
   private async fetchFromEtherscan(address: string): Promise<number> {
+    // Use Etherscan API without API key (limited requests allowed)
     const response = await fetch(
-      `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest&apikey=YourApiKeyToken`,
-      { timeout: 5000 } as unknown);
+      `https://api.etherscan.io/api?module=account&action=balance&address=${address}&tag=latest`,
+      { 
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        }
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Etherscan API error: ${response.status}`);
     }
 
     const data = await response.json();
+    
+    // Log the response for debugging
+    console.log('Etherscan API response for', address.slice(0, 6) + '...', data);
+    
     if (data.status !== '1') {
-      throw new Error(`Etherscan error: ${data.message}`);
+      throw new Error(`Etherscan error: ${data.message || 'Unknown error'}`);
     }
 
-    return parseInt(data.result) / 1e18;
+    const balanceWei = data.result;
+    if (!balanceWei || balanceWei === '0') {
+      return 0;
+    }
+
+    return parseInt(balanceWei) / 1e18;
   }
 
   private handleFailure(): void {

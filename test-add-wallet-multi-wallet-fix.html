@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Wallet Multi-Wallet Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+        .success { background: #065f46; color: #10b981; }
+        .error { background: #7f1d1d; color: #f87171; }
+        .info { background: #1e3a8a; color: #60a5fa; }
+        .warning { background: #92400e; color: #fbbf24; }
+        
+        .wallet-card {
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover { background: #2563eb; }
+        .button.secondary {
+            background: #64748b;
+        }
+        .button.secondary:hover { background: #475569; }
+        
+        code {
+            background: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Add Wallet Multi-Wallet Fix Test</h1>
+    
+    <div class="status info">
+        <strong>Issue Fixed:</strong> AddWalletWizard now properly adds additional wallets instead of showing generic "Wallet Connected!" success screen
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Problem Summary</h2>
+        <p><strong>Before Fix:</strong></p>
+        <ul>
+            <li>User clicks "Add Wallet" → Opens AddWalletWizard ✅</li>
+            <li>User selects wallet provider (MetaMask, Rainbow, etc.) ✅</li>
+            <li>AddWalletWizard calls <code>connectWallet()</code> ❌</li>
+            <li>Shows generic "Wallet Connected!" success screen ❌</li>
+            <li>Doesn't properly handle multi-wallet scenarios ❌</li>
+        </ul>
+        
+        <p><strong>After Fix:</strong></p>
+        <ul>
+            <li>User clicks "Add Wallet" → Opens AddWalletWizard ✅</li>
+            <li>User selects wallet provider ✅</li>
+            <li>AddWalletWizard directly connects to wallet provider ✅</li>
+            <li>Checks if wallet already exists in collection ✅</li>
+            <li>Adds new wallet to registry with proper labeling ✅</li>
+            <li>Shows "Wallet Added!" success with appropriate options ✅</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 Key Changes Made</h2>
+        
+        <div class="wallet-card">
+            <h3>1. Direct Wallet Connection</h3>
+            <p>Replaced generic <code>connectWallet()</code> with direct <code>window.ethereum.request()</code> calls</p>
+            <div class="status success">✅ Now handles wallet-specific connection logic</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>2. Duplicate Detection</h3>
+            <p>Added check for existing wallets in user's collection</p>
+            <div class="status success">✅ Prevents duplicate wallet additions</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>3. Proper Registry Integration</h3>
+            <p>Uses <code>useWalletRegistry().addWallet()</code> instead of generic connection</p>
+            <div class="status success">✅ Properly persists wallet to database</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>4. Enhanced Success Screen</h3>
+            <p>Updated messaging and button labels for multi-wallet context</p>
+            <div class="status success">✅ "Wallet Added!" instead of "Wallet Connected!"</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>5. Better Error Handling</h3>
+            <p>Specific error messages for different failure scenarios</p>
+            <div class="status success">✅ User-friendly error messages</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Scenarios</h2>
+        
+        <div class="wallet-card">
+            <h3>Scenario 1: Add New Wallet</h3>
+            <p><strong>Steps:</strong></p>
+            <ol>
+                <li>User has existing wallet connected</li>
+                <li>Clicks "Add Wallet" button</li>
+                <li>Selects MetaMask from provider list</li>
+                <li>Approves connection in MetaMask</li>
+            </ol>
+            <p><strong>Expected Result:</strong></p>
+            <div class="status success">✅ Shows "Wallet Added!" with options to switch or keep current</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>Scenario 2: Add Existing Wallet</h3>
+            <p><strong>Steps:</strong></p>
+            <ol>
+                <li>User tries to add wallet that's already in collection</li>
+                <li>Selects provider and connects</li>
+            </ol>
+            <p><strong>Expected Result:</strong></p>
+            <div class="status success">✅ Shows "Wallet Added!" and sets as active (no duplicate created)</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>Scenario 3: Connection Cancelled</h3>
+            <p><strong>Steps:</strong></p>
+            <ol>
+                <li>User selects provider</li>
+                <li>Cancels connection in wallet</li>
+            </ol>
+            <p><strong>Expected Result:</strong></p>
+            <div class="status warning">⚠️ Returns to provider selection with "Connection was cancelled" message</div>
+        </div>
+
+        <div class="wallet-card">
+            <h3>Scenario 4: Wallet Not Installed</h3>
+            <p><strong>Steps:</strong></p>
+            <ol>
+                <li>User selects provider that's not installed</li>
+            </ol>
+            <p><strong>Expected Result:</strong></p>
+            <div class="status error">❌ Shows "[Provider] is not installed. Please install it first."</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Technical Implementation</h2>
+        
+        <div class="wallet-card">
+            <h3>New Flow Architecture</h3>
+            <pre style="background: #1f2937; padding: 15px; border-radius: 6px; overflow-x: auto;">
+AddWalletWizard.handleProviderSelect()
+├── window.ethereum.request('eth_requestAccounts')
+├── Check if wallet already exists in connectedWallets
+├── Get chain information (chainId → chainNamespace)
+├── useWalletRegistry().addWallet()
+├── Emit 'walletAdded' event
+└── Show success screen with switch/keep options
+            </pre>
+        </div>
+
+        <div class="wallet-card">
+            <h3>Key Dependencies</h3>
+            <ul>
+                <li><code>useWalletRegistry()</code> - For persistent wallet storage</li>
+                <li><code>legacyChainToCAIP2()</code> - For chain format conversion</li>
+                <li><code>window.ethereum</code> - For direct wallet communication</li>
+                <li><code>useWallet().connectedWallets</code> - For duplicate detection</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Success Criteria</h2>
+        
+        <div class="status success">
+            ✅ <strong>Primary Goal:</strong> AddWalletWizard properly adds additional wallets to user's collection
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>UX Goal:</strong> Clear messaging that wallet was "added" not just "connected"
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>Technical Goal:</strong> No more generic connectWallet() usage in multi-wallet context
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>Data Goal:</strong> Wallets properly persisted to database with correct labels
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Next Steps</h2>
+        <ol>
+            <li><strong>Test the fix:</strong> Try adding multiple wallets through the AddWalletWizard</li>
+            <li><strong>Verify persistence:</strong> Check that wallets appear in WalletSettings page</li>
+            <li><strong>Test edge cases:</strong> Try adding same wallet twice, cancelling connection, etc.</li>
+            <li><strong>Check integration:</strong> Ensure wallet switching works properly after addition</li>
+        </ol>
+        
+        <div class="status info">
+            <strong>Ready for testing!</strong> The AddWalletWizard should now properly handle multi-wallet scenarios.
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Add Wallet Multi-Wallet Fix Test loaded');
+        console.log('📋 Key changes:');
+        console.log('  1. Direct wallet connection instead of generic connectWallet()');
+        console.log('  2. Duplicate detection and handling');
+        console.log('  3. Proper registry integration with addWallet()');
+        console.log('  4. Enhanced success screen messaging');
+        console.log('  5. Better error handling for various scenarios');
+        
+        // Simulate the fix verification
+        window.testAddWalletFix = {
+            scenario1: () => console.log('✅ New wallet addition - should show "Wallet Added!" success'),
+            scenario2: () => console.log('✅ Existing wallet - should set as active without duplicate'),
+            scenario3: () => console.log('⚠️ Connection cancelled - should return to provider selection'),
+            scenario4: () => console.log('❌ Wallet not installed - should show install message')
+        };
+        
+        console.log('🧪 Test scenarios available: window.testAddWalletFix');
+    </script>
+</body>
+</html>

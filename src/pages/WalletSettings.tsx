@@ -15,6 +15,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet, truncateAddress } from '@/contexts/WalletContext';
+import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import { 
   ArrowLeft, 
   Plus, 
@@ -26,7 +27,8 @@ import {
   ExternalLink,
   GripVertical,
   Check,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -36,7 +38,6 @@ interface WalletDisplayData {
   label: string;
   provider: string;
   icon: string;
-  balance: string;
   isActive: boolean;
   isHidden: boolean;
   isPrimary: boolean;
@@ -48,13 +49,15 @@ export default function WalletSettings() {
   const [editingWallet, setEditingWallet] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
 
+  // Get wallet addresses for debugging
+  const walletAddresses = connectedWallets.map(w => w.address);
+
   // Transform wallet data for display
   const walletDisplayData: WalletDisplayData[] = connectedWallets.map((wallet, index) => ({
     address: wallet.address,
     label: getWalletLabel(wallet),
     provider: getWalletProvider(wallet),
     icon: getWalletIcon(wallet),
-    balance: getWalletBalance(wallet.address),
     isActive: wallet.address === activeWallet,
     isHidden: false, // TODO: Implement hidden state
     isPrimary: index === 0, // TODO: Implement primary state
@@ -86,16 +89,6 @@ export default function WalletSettings() {
       'Coinbase': '💙',
     };
     return iconMap[provider] || '💼';
-  }
-
-  function getWalletBalance(address: string): string {
-    // Mock balances - replace with real balance fetching
-    const mockBalances: Record<string, string> = {
-      '0x379c186a7582706388d20cd4258bfd5f9d7d72e3': '$2,547.82',
-      '0xfe74dd4c1433c': '$843.20',
-      '0xd65fe4868c2': '$156.45',
-    };
-    return mockBalances[address] || '$0.00';
   }
 
   // Handle wallet actions
@@ -216,15 +209,15 @@ export default function WalletSettings() {
                     : 'border-slate-200 dark:border-slate-700'
                 }`}
               >
-                <div className="p-6">
-                  <div className="flex items-center gap-4">
-                    {/* Drag Handle */}
-                    <div className="cursor-grab hover:cursor-grabbing text-slate-400">
+                <div className="p-4 sm:p-6">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Drag Handle - Hidden on mobile */}
+                    <div className="hidden sm:block cursor-grab hover:cursor-grabbing text-slate-400">
                       <GripVertical className="w-5 h-5" />
                     </div>
 
                     {/* Wallet Icon */}
-                    <div className="text-3xl">{wallet.icon}</div>
+                    <div className="text-2xl sm:text-3xl">{wallet.icon}</div>
 
                     {/* Wallet Info */}
                     <div className="flex-1 min-w-0">
@@ -234,18 +227,18 @@ export default function WalletSettings() {
                             type="text"
                             value={editLabel}
                             onChange={(e) => setEditLabel(e.target.value)}
-                            className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm sm:text-base"
                             autoFocus
                           />
                           <button
                             onClick={handleSaveEdit}
-                            className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
                           >
                             <Check className="w-4 h-4" />
                           </button>
                           <button
                             onClick={handleCancelEdit}
-                            className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -253,63 +246,77 @@ export default function WalletSettings() {
                       ) : (
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-slate-900 dark:text-white truncate">
+                            <span className="font-semibold text-slate-900 dark:text-white truncate text-sm sm:text-base">
                               {wallet.label}
                             </span>
-                            {wallet.isActive && (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-teal-100 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 text-xs font-medium rounded-full">
-                                <Check className="w-3 h-3" />
-                                Active
-                              </span>
-                            )}
                             {wallet.isPrimary && (
                               <Star className="w-4 h-4 text-yellow-500" />
                             )}
                           </div>
-                          <div className="text-sm text-slate-500 dark:text-slate-400 font-mono">
-                            {truncateAddress(wallet.address, 8)}
+                          <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono">
+                            {truncateAddress(wallet.address, 6)}
                           </div>
-                          <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                            {wallet.provider} • {wallet.balance}
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
+                            <span>{wallet.provider}</span>
+                            <span>•</span>
+                            <WalletBalanceDisplay 
+                              address={wallet.address}
+                              className="text-xs sm:text-sm"
+                            />
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      {!wallet.isActive && (
+                    {/* Actions - Responsive layout */}
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                      {/* Active State Button - Always show for consistency */}
+                      {wallet.isActive ? (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-teal-100 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 text-xs sm:text-sm font-medium rounded-lg min-h-[44px]">
+                          <Check className="w-4 h-4" />
+                          <span className="hidden sm:inline">Active</span>
+                          <span className="sm:hidden">✓</span>
+                        </div>
+                      ) : (
                         <button
                           onClick={() => handleSetActive(wallet.address, wallet.label)}
-                          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors min-h-[44px] whitespace-nowrap"
                         >
                           Set Active
                         </button>
                       )}
                       
-                      <button
-                        onClick={() => handleStartEdit(wallet.address, wallet.label)}
-                        className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                        title="Rename wallet"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      
-                      <button
-                        onClick={() => handleViewOnExplorer(wallet.address)}
-                        className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                        title="View on explorer"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                      
-                      <button
-                        onClick={() => handleRemoveWallet(wallet.address, wallet.label)}
-                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Remove wallet"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Secondary Actions - Horizontal on mobile, vertical on desktop */}
+                      <div className="flex sm:flex-row gap-1 sm:gap-2">
+                        <button
+                          onClick={() => handleStartEdit(wallet.address, wallet.label)}
+                          className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
+                          title="Rename wallet"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleViewOnExplorer(wallet.address)}
+                          className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
+                          title="View on explorer"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => handleRemoveWallet(wallet.address, wallet.label)}
+                          className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] ${
+                            wallet.isActive 
+                              ? 'text-red-300 opacity-50 cursor-not-allowed' 
+                              : 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                          }`}
+                          title="Remove wallet"
+                          disabled={wallet.isActive}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

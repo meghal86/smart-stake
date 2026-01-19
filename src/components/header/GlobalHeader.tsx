@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client'
 import { useWallet } from '@/contexts/WalletContext'
 import { useDemoMode } from '@/lib/ux/DemoModeManager'
 import { WalletChip } from './WalletChip'
-import { WalletSwitcherBottomSheet } from '@/components/wallet/WalletSwitcherBottomSheet'
 
 export interface GlobalHeaderProps {
   className?: string
@@ -18,7 +17,6 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
-  const [showWalletSwitcher, setShowWalletSwitcher] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 })
   
@@ -39,6 +37,11 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
     await supabase.auth.signOut()
     setShowMenu(false)
     navigate('/')
+  }
+
+  const handleWalletChipClick = () => {
+    // Simple navigation to wallet settings instead of complex modal
+    navigate('/settings/wallets')
   }
 
   const renderMenu = (content: React.ReactNode) => {
@@ -69,7 +72,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
             {/* Wallet Chip - Only show if user has connected wallets */}
             {user && connectedWallets.length > 0 && (
               <WalletChip 
-                onClick={() => setShowWalletSwitcher(true)}
+                onClick={handleWalletChipClick}
                 className="mr-2"
               />
             )}
@@ -112,12 +115,6 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
                 Connect Wallet
               </button>
             )}
-
-            {/* Wallet Switcher Bottom Sheet */}
-            <WalletSwitcherBottomSheet
-              isOpen={showWalletSwitcher}
-              onClose={() => setShowWalletSwitcher(false)}
-            />
           </div>
         </div>
       </div>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Wallet Timeout Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+        .success { background: #065f46; color: #10b981; }
+        .error { background: #7f1d1d; color: #f87171; }
+        .info { background: #1e3a8a; color: #60a5fa; }
+        .warning { background: #92400e; color: #fbbf24; }
+        
+        .timeline {
+            background: #374151;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        code {
+            background: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>⏰ Add Wallet Timeout Fix</h1>
+    
+    <div class="status warning">
+        <strong>Issue:</strong> AddWalletWizard gets stuck on "Connecting..." screen indefinitely
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Timeout Fix Implementation</h2>
+        
+        <h3>Problem Analysis</h3>
+        <p>The wizard was getting stuck because:</p>
+        <ul>
+            <li>RainbowKit modal might not open properly</li>
+            <li>User might not complete the connection</li>
+            <li>Timeout wasn't working correctly</li>
+            <li>No fallback mechanism</li>
+        </ul>
+        
+        <h3>Solution Implemented</h3>
+        <div class="timeline">
+Timeline of Connection Attempt:
+
+0s:  User clicks wallet provider
+     → currentStep = 'connecting'
+     → Try to open RainbowKit modal
+
+10s: If no RainbowKit connection detected
+     → Try WalletContext.connectWallet() fallback
+     → Continue waiting for either to succeed
+
+30s: Final timeout reached
+     → Show error message
+     → Return to provider selection
+     → Clear all timeouts
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Key Improvements</h2>
+        
+        <div class="status success">
+            ✅ <strong>Dual Timeout System:</strong> 10s fallback + 30s final timeout
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>Fallback Mechanism:</strong> Tries WalletContext if RainbowKit fails
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>Better Cancel Button:</strong> Properly clears timeouts and resets state
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>Progress Indicator:</strong> Shows connection status and timeout countdown
+        </div>
+        
+        <div class="status success">
+            ✅ <strong>Enhanced Logging:</strong> Better console logs for debugging
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Testing Scenarios</h2>
+        
+        <h3>Scenario 1: Normal RainbowKit Connection ✅</h3>
+        <div class="timeline">
+1. Click wallet provider
+2. RainbowKit modal opens
+3. User connects wallet
+4. Success screen appears
+        </div>
+        
+        <h3>Scenario 2: RainbowKit Fails, Fallback Works ✅</h3>
+        <div class="timeline">
+1. Click wallet provider
+2. RainbowKit modal doesn't open or fails
+3. After 10s: Fallback to WalletContext.connectWallet()
+4. Direct wallet connection (MetaMask popup)
+5. Success screen appears
+        </div>
+        
+        <h3>Scenario 3: Both Fail, Timeout ⚠️</h3>
+        <div class="timeline">
+1. Click wallet provider
+2. RainbowKit modal doesn't open
+3. After 10s: Fallback attempt fails
+4. After 30s: Timeout reached
+5. Error message shown
+6. Return to provider selection
+        </div>
+        
+        <h3>Scenario 4: User Cancels ✅</h3>
+        <div class="timeline">
+1. Click wallet provider
+2. User clicks "Cancel" button
+3. Timeouts cleared immediately
+4. Return to provider selection
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Console Logs to Watch</h2>
+        
+        <div class="timeline">
+Expected Console Output:
+
+🔗 Attempting to connect MetaMask...
+⏰ Starting connection timeout and fallback logic
+✅ Opening RainbowKit modal...
+
+// If RainbowKit works:
+✅ New wallet connected via RainbowKit: 0x...
+
+// If RainbowKit fails:
+🔄 No RainbowKit connection after 10s, trying fallback...
+🔄 Falling back to WalletContext connectWallet...
+
+// If both fail:
+⏰ Final timeout reached - returning to provider selection
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 User Experience Improvements</h2>
+        
+        <div class="status info">
+            <strong>Before:</strong> Gets stuck on "Connecting..." forever
+        </div>
+        
+        <div class="status success">
+            <strong>After:</strong> Multiple connection attempts with clear timeouts
+        </div>
+        
+        <h3>New Connecting Screen Features</h3>
+        <ul>
+            <li>Progress indicator with pulsing dot</li>
+            <li>"Connection will timeout in 30 seconds" message</li>
+            <li>Working "Cancel" button that clears all timeouts</li>
+            <li>"Open Wallet Modal" button to retry RainbowKit</li>
+            <li>Better error messages with specific guidance</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Testing Instructions</h2>
+        
+        <ol>
+            <li><strong>Test Normal Flow:</strong> Click wallet provider, complete connection</li>
+            <li><strong>Test Timeout:</strong> Click wallet provider, don't connect, wait 30s</li>
+            <li><strong>Test Cancel:</strong> Click wallet provider, then click "Cancel"</li>
+            <li><strong>Test Fallback:</strong> If RainbowKit fails, should try direct connection</li>
+        </ol>
+        
+        <div class="status success">
+            <strong>Success Criteria:</strong> No more infinite "Connecting..." screens!
+        </div>
+    </div>
+
+    <script>
+        console.log('⏰ Add Wallet Timeout Fix Test loaded');
+        console.log('📋 Key improvements:');
+        console.log('  1. Dual timeout system (10s fallback + 30s final)');
+        console.log('  2. WalletContext fallback mechanism');
+        console.log('  3. Better cancel button with proper cleanup');
+        console.log('  4. Progress indicator and timeout countdown');
+        console.log('  5. Enhanced error handling and logging');
+        
+        // Test helper
+        window.testTimeout = {
+            simulate: () => {
+                console.log('🧪 Simulating connection timeout...');
+                setTimeout(() => console.log('⏰ 10s: Fallback attempt'), 1000);
+                setTimeout(() => console.log('⏰ 30s: Final timeout'), 3000);
+            }
+        };
+        
+        console.log('🧪 Test helper: window.testTimeout.simulate()');
+    </script>
+</body>
+</html>

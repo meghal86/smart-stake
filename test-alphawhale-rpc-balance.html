@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaWhale RPC Balance Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .test-result {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 8px 8px 8px 0;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        input {
+            background: #374151;
+            border: 1px solid #4b5563;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 400px;
+            font-family: monospace;
+        }
+        .architecture-diagram {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ AlphaWhale RPC Balance Architecture Test</h1>
+        <p>Testing the new architecture: <strong>Wallet Provider = Signer, AlphaWhale RPC = Source of Truth</strong></p>
+
+        <div class="section">
+            <h2>Architecture Overview</h2>
+            <div class="architecture-diagram">
+<span class="success">✅ CORRECT FLOW (AlphaWhale)</span>
+1. User connects MetaMask → Get addresses for signing
+2. AlphaWhale RPC → Get balance data via provider.getBalance()
+3. AlphaWhale API → Cache and aggregate portfolio data
+4. Frontend → Display consistent data across all features
+
+<span class="error">❌ WRONG FLOW (Wallet-dependent)</span>
+1. User connects MetaMask → Get addresses
+2. MetaMask RPC → Get balance via wallet's internal RPC
+3. Frontend → Show inconsistent data, rate limits, no fallbacks
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test AlphaWhale RPC Endpoints</h2>
+            <input 
+                type="text" 
+                id="testAddress" 
+                placeholder="Enter wallet address (0x...)"
+                value="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+            />
+            <br><br>
+            <button onclick="testEthereumRPC()">Test Ethereum RPC</button>
+            <button onclick="testPolygonRPC()">Test Polygon RPC</button>
+            <button onclick="testMultiChain()">Test Multi-Chain</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div class="section">
+            <h2>RPC Provider Configuration</h2>
+            <div class="test-result info">
+Primary Providers:
+• Alchemy: eth-mainnet.g.alchemy.com
+• QuickNode: ethereum-mainnet.core.chainstack.com
+• Public: ethereum.publicnode.com
+
+Fallback Strategy:
+1. Try primary provider (Alchemy)
+2. If fails, try secondary (QuickNode)
+3. If fails, try public endpoint
+4. If all fail, return cached data
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test Results</h2>
+            <div id="results"></div>
+        </div>
+
+        <div class="section">
+            <h2>Benefits of AlphaWhale RPC</h2>
+            <ul>
+                <li><strong>Consistent Data:</strong> Same data across Guardian/Hunter/HarvestPro</li>
+                <li><strong>MEV Protection:</strong> Can use Flashbots, Eden, etc.</li>
+                <li><strong>Multiple Providers:</strong> Alchemy + QuickNode + Chainstack fallbacks</li>
+                <li><strong>Rate Limit Control:</strong> Configure your own limits</li>
+                <li><strong>Observability:</strong> Monitor RPC health and performance</li>
+                <li><strong>Cost Optimization:</strong> Choose cost-effective providers</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testEthereumRPC() {
+            const address = document.getElementById('testAddress').value.trim();
+            if (!address) {
+                log('Please enter a wallet address', 'error');
+                return;
+            }
+
+            log(`🔍 Testing Ethereum RPC for ${address.slice(0, 6)}...${address.slice(-4)}`, 'info');
+            
+            // Test multiple RPC endpoints in fallback order
+            const rpcEndpoints = [
+                'https://eth-mainnet.g.alchemy.com/v2/demo',
+                'https://ethereum.publicnode.com',
+                'https://rpc.ankr.com/eth',
+            ];
+
+            for (let i = 0; i < rpcEndpoints.length; i++) {
+                const endpoint = rpcEndpoints[i];
+                const providerName = endpoint.includes('alchemy') ? 'Alchemy' : 
+                                   endpoint.includes('publicnode') ? 'PublicNode' : 'Ankr';
+                
+                try {
+                    log(`Trying ${providerName}: ${endpoint}`, 'info');
+                    
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            method: 'eth_getBalance',
+                            params: [address, 'latest'],
+                            id: 1
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.result) {
+                        const balanceWei = BigInt(data.result);
+                        const balanceEth = Number(balanceWei) / 1e18;
+                        
+                        log(`✅ ${providerName} SUCCESS: ${balanceEth.toFixed(4)} ETH`, 'success');
+                        
+                        // Get USD value
+                        const ethPrice = await getEthPrice();
+                        const usdValue = balanceEth * ethPrice;
+                        log(`💰 USD Value: $${usdValue.toFixed(2)} (ETH @ $${ethPrice})`, 'success');
+                        
+                        return; // Success, no need to try other providers
+                    } else {
+                        log(`❌ ${providerName} ERROR: ${data.error?.message || 'Unknown error'}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${providerName} FAILED: ${error.message}`, 'error');
+                }
+            }
+            
+            log('❌ All RPC providers failed', 'error');
+        }
+
+        async function testPolygonRPC() {
+            const address = document.getElementById('testAddress').value.trim();
+            if (!address) {
+                log('Please enter a wallet address', 'error');
+                return;
+            }
+
+            log(`🔍 Testing Polygon RPC for ${address.slice(0, 6)}...${address.slice(-4)}`, 'info');
+            
+            try {
+                const response = await fetch('https://polygon.publicnode.com', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'eth_getBalance',
+                        params: [address, 'latest'],
+                        id: 1
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.result) {
+                    const balanceWei = BigInt(data.result);
+                    const balanceMatic = Number(balanceWei) / 1e18;
+                    
+                    log(`✅ Polygon SUCCESS: ${balanceMatic.toFixed(4)} MATIC`, 'success');
+                    
+                    // Get MATIC price
+                    const maticPrice = await getMaticPrice();
+                    const usdValue = balanceMatic * maticPrice;
+                    log(`💰 USD Value: $${usdValue.toFixed(2)} (MATIC @ $${maticPrice})`, 'success');
+                } else {
+                    log(`❌ Polygon ERROR: ${data.error?.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Polygon RPC FAILED: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMultiChain() {
+            const address = document.getElementById('testAddress').value.trim();
+            if (!address) {
+                log('Please enter a wallet address', 'error');
+                return;
+            }
+
+            log(`🌐 Testing Multi-Chain Balance for ${address.slice(0, 6)}...${address.slice(-4)}`, 'info');
+            
+            const chains = [
+                { name: 'Ethereum', rpc: 'https://ethereum.publicnode.com', symbol: 'ETH' },
+                { name: 'Polygon', rpc: 'https://polygon.publicnode.com', symbol: 'MATIC' },
+                { name: 'Arbitrum', rpc: 'https://arbitrum.publicnode.com', symbol: 'ETH' },
+            ];
+
+            let totalUsdValue = 0;
+            const prices = await getTokenPrices();
+
+            for (const chain of chains) {
+                try {
+                    log(`Checking ${chain.name}...`, 'info');
+                    
+                    const response = await fetch(chain.rpc, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            jsonrpc: '2.0',
+                            method: 'eth_getBalance',
+                            params: [address, 'latest'],
+                            id: 1
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.result) {
+                        const balanceWei = BigInt(data.result);
+                        const balance = Number(balanceWei) / 1e18;
+                        
+                        const price = chain.symbol === 'ETH' ? prices.eth : prices.matic;
+                        const usdValue = balance * price;
+                        totalUsdValue += usdValue;
+                        
+                        log(`✅ ${chain.name}: ${balance.toFixed(4)} ${chain.symbol} = $${usdValue.toFixed(2)}`, 'success');
+                    } else {
+                        log(`❌ ${chain.name}: ${data.error?.message || 'Failed'}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${chain.name}: ${error.message}`, 'error');
+                }
+                
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            log(`🎯 TOTAL PORTFOLIO VALUE: $${totalUsdValue.toFixed(2)}`, 'success');
+        }
+
+        async function getEthPrice() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+                const data = await response.json();
+                return data.ethereum?.usd || 3500;
+            } catch {
+                return 3500;
+            }
+        }
+
+        async function getMaticPrice() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
+                const data = await response.json();
+                return data['matic-network']?.usd || 1;
+            } catch {
+                return 1;
+            }
+        }
+
+        async function getTokenPrices() {
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,matic-network&vs_currencies=usd');
+                const data = await response.json();
+                return {
+                    eth: data.ethereum?.usd || 3500,
+                    matic: data['matic-network']?.usd || 1,
+                };
+            } catch {
+                return { eth: 3500, matic: 1 };
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            log('🚀 AlphaWhale RPC Balance Architecture Test loaded', 'info');
+            log('🏗️ Architecture: Wallet Provider = Signer, AlphaWhale RPC = Source of Truth', 'info');
+            log('Click buttons above to test RPC endpoints', 'info');
+        });
+    </script>
+</body>
+</html>

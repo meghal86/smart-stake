@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainbowKit Debug - AddWalletWizard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .debug-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+        .success { background: #065f46; color: #10b981; }
+        .error { background: #7f1d1d; color: #f87171; }
+        .info { background: #1e3a8a; color: #60a5fa; }
+        .warning { background: #92400e; color: #fbbf24; }
+        
+        .debug-info {
+            background: #374151;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover { background: #2563eb; }
+        
+        code {
+            background: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 RainbowKit Debug - AddWalletWizard Issue</h1>
+    
+    <div class="status error">
+        <strong>Current Issue:</strong> "RainbowKit modal not available" error when clicking wallet providers
+    </div>
+
+    <div class="debug-section">
+        <h2>🔍 Issue Analysis</h2>
+        
+        <div class="debug-info">
+Error: RainbowKit modal not available
+    at handleProviderSelect (AddWalletWizard.tsx:217:15)
+    at onClick (AddWalletWizard.tsx:339:36)
+        </div>
+        
+        <p><strong>Root Cause:</strong> The <code>useConnectModal</code> hook is returning <code>undefined</code> instead of the expected function.</p>
+        
+        <div class="status warning">
+            ⚠️ This suggests RainbowKit context is not properly available in AddWalletWizard
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🧪 Debugging Steps</h2>
+        
+        <h3>Step 1: Check Provider Hierarchy</h3>
+        <div class="debug-info">
+App.tsx
+├── ClientProviders
+    ├── WagmiProvider
+    ├── QueryClientProvider  
+    ├── ThemeProvider
+    ├── RainbowKitThemeWrapper
+        └── RainbowKitProvider ← Should provide useConnectModal
+            └── AddWalletWizard ← Should receive useConnectModal
+        </div>
+        <div class="status success">✅ Provider hierarchy looks correct</div>
+        
+        <h3>Step 2: Check Hook Usage</h3>
+        <div class="debug-info">
+// In AddWalletWizard.tsx
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+
+const { openConnectModal } = useConnectModal();
+console.log('openConnectModal:', openConnectModal); // Should be function, getting undefined
+        </div>
+        
+        <h3>Step 3: Check RainbowKit Version Compatibility</h3>
+        <p>Ensure RainbowKit and wagmi versions are compatible</p>
+        
+        <h3>Step 4: Check for Multiple RainbowKit Providers</h3>
+        <p>Look for duplicate RainbowKitProvider instances that might conflict</p>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔧 Potential Solutions</h2>
+        
+        <div class="debug-info">
+Solution 1: Add null check and fallback
+✅ IMPLEMENTED: Added fallback to WalletContext.connectWallet()
+
+Solution 2: Debug RainbowKit availability  
+✅ IMPLEMENTED: Added debug logging and UI indicators
+
+Solution 3: Check for provider conflicts
+🔄 INVESTIGATING: Look for multiple RainbowKit setups
+        </div>
+        
+        <h3>Current Fallback Implementation</h3>
+        <div class="debug-info">
+if (!openConnectModal) {
+  console.warn('⚠️ RainbowKit openConnectModal not available, using fallback');
+  await connectWallet(); // Use WalletContext fallback
+  return;
+}
+        </div>
+        <div class="status info">ℹ️ This should allow wallet connections to work even if RainbowKit modal fails</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🧪 Testing Instructions</h2>
+        
+        <ol>
+            <li><strong>Open AddWalletWizard:</strong> Navigate to /settings/wallets/add</li>
+            <li><strong>Check Debug Info:</strong> Look for debug panel showing RainbowKit status</li>
+            <li><strong>Try Wallet Connection:</strong> Click any wallet provider</li>
+            <li><strong>Check Console:</strong> Look for debug logs about RainbowKit state</li>
+            <li><strong>Verify Fallback:</strong> Should use WalletContext.connectWallet() if RainbowKit fails</li>
+        </ol>
+        
+        <div class="status info">
+            <strong>Expected Behavior:</strong> Even if RainbowKit modal fails, wallet connection should work via fallback
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🔍 Debug Console Commands</h2>
+        
+        <p>Run these in browser console to debug RainbowKit:</p>
+        
+        <div class="debug-info">
+// Check if RainbowKit elements exist
+console.log('RainbowKit elements:', document.querySelectorAll('[data-rk]'));
+
+// Check wagmi config
+console.log('Wagmi config:', window.wagmi);
+
+// Check React context (if React DevTools available)
+// Look for RainbowKitProvider in component tree
+
+// Check for multiple providers
+console.log('Multiple RK providers:', document.querySelectorAll('[data-rk="provider"]'));
+        </div>
+        
+        <button class="button" onclick="runDebugChecks()">Run Debug Checks</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>🎯 Next Steps</h2>
+        
+        <div class="status warning">
+            <strong>Priority 1:</strong> Test the fallback mechanism - wallet connections should work via WalletContext
+        </div>
+        
+        <div class="status info">
+            <strong>Priority 2:</strong> Investigate why useConnectModal returns undefined
+        </div>
+        
+        <div class="status info">
+            <strong>Priority 3:</strong> Check for RainbowKit version/config issues
+        </div>
+        
+        <p><strong>Success Criteria:</strong></p>
+        <ul>
+            <li>✅ Wallet connections work (via fallback if needed)</li>
+            <li>🔄 RainbowKit modal opens properly</li>
+            <li>🔄 All wallet providers work consistently</li>
+        </ul>
+    </div>
+
+    <script>
+        function runDebugChecks() {
+            console.log('🔍 Running RainbowKit Debug Checks...');
+            
+            // Check for RainbowKit elements
+            const rkElements = document.querySelectorAll('[data-rk]');
+            console.log('RainbowKit elements found:', rkElements.length);
+            rkElements.forEach((el, i) => {
+                console.log(`  ${i + 1}. ${el.tagName} [data-rk="${el.getAttribute('data-rk')}"]`);
+            });
+            
+            // Check for providers
+            const providers = document.querySelectorAll('[data-rk="provider"]');
+            console.log('RainbowKit providers found:', providers.length);
+            
+            // Check for modals
+            const modals = document.querySelectorAll('[data-rk*="modal"]');
+            console.log('RainbowKit modals found:', modals.length);
+            
+            // Check wagmi
+            if (window.wagmi) {
+                console.log('Wagmi available:', !!window.wagmi);
+            } else {
+                console.log('Wagmi not found on window object');
+            }
+            
+            console.log('✅ Debug checks complete - see results above');
+        }
+        
+        console.log('🐛 RainbowKit Debug page loaded');
+        console.log('📋 Current issue: useConnectModal returns undefined');
+        console.log('🔧 Fallback implemented: Uses WalletContext.connectWallet()');
+        console.log('🧪 Run runDebugChecks() to investigate RainbowKit setup');
+    </script>
+</body>
+</html>

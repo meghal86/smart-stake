@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AddWalletWizard Simple Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: #E2E8F0;
+        }
+        .test-section {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .simple { border-left: 4px solid #10B981; }
+        .code {
+            background: #000;
+            color: #00FF00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 AddWalletWizard - Simple Fix</h1>
+    
+    <div class="test-section simple">
+        <h2>✅ Simplified Approach</h2>
+        <p><strong>What I did:</strong> Removed all the complex validation logic that was blocking you.</p>
+        
+        <h3>Key Changes:</h3>
+        <ul>
+            <li>✅ Removed pre-connection validation that was blocking same wallet</li>
+            <li>✅ Simplified wallet detection logic</li>
+            <li>✅ Only check if wallet is in collection AFTER connection</li>
+            <li>✅ Let RainbowKit/MetaMask handle account switching</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 How It Works Now</h2>
+        
+        <div class="code">1. Click wallet provider (MetaMask, Coinbase, etc.)
+2. Goes to connecting screen
+3. Opens wallet modal OR uses direct connection
+4. User selects account in their wallet
+5. Only AFTER connection, check if wallet is already in collection
+6. If new → Success screen
+7. If existing → Error message</div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Steps</h2>
+        <ol>
+            <li><strong>Go to:</strong> /settings/wallets/add</li>
+            <li><strong>Click:</strong> Any wallet provider (MetaMask, Coinbase, etc.)</li>
+            <li><strong>In your wallet:</strong> Switch to a different account</li>
+            <li><strong>Connect:</strong> The different account</li>
+            <li><strong>Expected:</strong> Success screen with new wallet added</li>
+        </ol>
+        
+        <p><strong>Key:</strong> The system will now let you proceed to connection and only validate AFTER you've selected an account.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 What to Look For</h2>
+        
+        <h3>✅ Success Case:</h3>
+        <div class="code">🔗 Attempting to add MetaMask wallet...
+✅ Wallet connected: 0x[different address]
+🆕 New wallet detected, adding to registry...
+✅ New wallet added to registry successfully</div>
+        
+        <h3>ℹ️ Already Exists Case:</h3>
+        <div class="code">🔗 Attempting to add MetaMask wallet...
+✅ Wallet connected: 0x[same address]
+ℹ️ Wallet already in collection</div>
+    </div>
+
+    <div class="test-section simple">
+        <h2>💡 The Simple Truth</h2>
+        <p>You're right - this should be simple! The wizard now:</p>
+        <ul>
+            <li>✅ Lets you click any provider</li>
+            <li>✅ Opens the wallet connection</li>
+            <li>✅ Lets YOU choose which account to connect</li>
+            <li>✅ Only validates after you've made your choice</li>
+        </ul>
+        <p><strong>No more blocking you before you even get to choose!</strong></p>
+    </div>
+
+    <script>
+        console.log('🧪 Simple AddWalletWizard Fix Test Ready');
+        console.log('📝 Test by going to /settings/wallets/add and clicking any provider');
+    </script>
+</body>
+</html>

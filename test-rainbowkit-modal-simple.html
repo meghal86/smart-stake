@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainbowKit Modal Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: #E2E8F0;
+        }
+        .test-section {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .code {
+            background: #000;
+            color: #00FF00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        button {
+            background: #06B6D4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0891B2; }
+    </style>
+</head>
+<body>
+    <h1>🧪 RainbowKit Modal Test</h1>
+    
+    <div class="test-section">
+        <h2>🎯 Issue Analysis</h2>
+        <p>The "Extension context invalidated" errors are from browser extensions (MetaMask, etc.) being reloaded. This is normal and not your code's fault.</p>
+        
+        <p><strong>Real Issue:</strong> RainbowKit modal might not be opening properly.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Debug Steps</h2>
+        
+        <h3>1. Check Console Logs</h3>
+        <p>When you click a wallet provider, look for these logs:</p>
+        <div class="code">🔗 Adding Rainbow wallet...
+🔍 RainbowKit status: {
+  openConnectModal: true/false,
+  openConnectModalType: "function",
+  openConnectModalFunction: "function() { ... }"
+}
+✅ Opening RainbowKit modal...
+✅ RainbowKit modal opened successfully</div>
+
+        <h3>2. Check if Modal Actually Opens</h3>
+        <p>After clicking a provider, look for:</p>
+        <ul>
+            <li>A modal/overlay appearing on screen</li>
+            <li>List of wallet options (MetaMask, Coinbase, etc.)</li>
+            <li>Background dimming/blur effect</li>
+        </ul>
+
+        <h3>3. Test the Debug Button</h3>
+        <p>In development mode, you should see a "Test RainbowKit Modal" button. Click it to test manually.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🛠️ Possible Solutions</h2>
+        
+        <h3>If openConnectModal is false:</h3>
+        <ul>
+            <li>Refresh the page completely</li>
+            <li>Check if RainbowKit is properly imported</li>
+            <li>Make sure you're inside the RainbowKitProvider</li>
+        </ul>
+
+        <h3>If openConnectModal is true but modal doesn't open:</h3>
+        <ul>
+            <li>Check for CSS z-index issues</li>
+            <li>Look for JavaScript errors in console</li>
+            <li>Try disabling browser extensions temporarily</li>
+        </ul>
+
+        <h3>If modal opens but doesn't connect:</h3>
+        <ul>
+            <li>Make sure MetaMask/wallet is unlocked</li>
+            <li>Try switching to a different account in your wallet</li>
+            <li>Check wallet permissions</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Simple Test</h2>
+        <p>Try this simple test:</p>
+        <ol>
+            <li>Go to <code>/settings/wallets/add</code></li>
+            <li>Open browser dev tools (F12)</li>
+            <li>Click any wallet provider</li>
+            <li>Check console for the debug logs above</li>
+            <li>If you see "Test RainbowKit Modal" button, click it</li>
+        </ol>
+        
+        <p><strong>Expected:</strong> A modal should appear with wallet options.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🚨 Quick Fix</h2>
+        <p>If RainbowKit modal still doesn't work, we can add a simple fallback:</p>
+        <div class="code">// Fallback: Direct MetaMask connection
+if (window.ethereum) {
+  const accounts = await window.ethereum.request({
+    method: 'eth_requestAccounts'
+  });
+  // Handle the accounts...
+}</div>
+        
+        <p>But let's first see what the debug logs show!</p>
+    </div>
+
+    <script>
+        console.log('🧪 RainbowKit Modal Test Page Loaded');
+        console.log('📋 Follow the debug steps above to diagnose the issue');
+        
+        // Check if we can access RainbowKit from here
+        if (typeof window !== 'undefined') {
+            console.log('🔍 Window object available');
+            console.log('🔍 Ethereum available:', !!window.ethereum);
+        }
+    </script>
+</body>
+</html>
