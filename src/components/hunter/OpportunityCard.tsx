@@ -24,7 +24,7 @@ interface Opportunity {
   guardianScore: number;
   riskLevel: 'Low' | 'Medium' | 'High';
   chain?: string;
-  protocol?: string;
+  protocol?: string | { name: string; logo?: string };
   estimatedAPY?: number;
 }
 
@@ -64,7 +64,10 @@ const riskIcons = {
 
 export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme = true, isConnected = false }: OpportunityCardProps) {
   const TypeIcon = opportunity.type ? typeIcons[opportunity.type] : typeIcons.Quest;
-  const RiskIcon = opportunity.riskLevel ? riskIcons[opportunity.riskLevel] : riskIcons.Medium;
+  // Ensure RiskIcon is always a valid component, never undefined
+  const RiskIcon = (opportunity.riskLevel && riskIcons[opportunity.riskLevel]) 
+    ? riskIcons[opportunity.riskLevel] 
+    : riskIcons.Medium;
   
   return (
     <motion.div
@@ -123,7 +126,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               {/* Header with Icon & Badges */}
               <div className="flex items-start gap-4 mb-4">
                 <motion.div
-                  className={`p-3 rounded-xl ${opportunity.type ? typeColors[opportunity.type] : typeColors.Quest} shadow-lg`}
+                  className={`p-3 rounded-xl ${opportunity.type ? (typeColors[opportunity.type] || typeColors.Quest) : typeColors.Quest} shadow-lg`}
                   whileHover={{ scale: 1.05 }}
                 >
                   <TypeIcon className="w-6 h-6 text-white" />
@@ -133,21 +136,21 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`px-3 py-1 text-xs font-bold rounded-full ${
                       isDarkTheme 
-                        ? `${opportunity.type ? typeColors[opportunity.type] : typeColors.Quest} text-white`
+                        ? `${opportunity.type ? (typeColors[opportunity.type] || typeColors.Quest) : typeColors.Quest} text-white`
                         : 'bg-[#14B8A6]/10 text-[#14B8A6]'
                     }`}>
                       {opportunity.type?.toUpperCase() || 'QUEST'}
                     </span>
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       isDarkTheme 
-                        ? riskColors[opportunity.riskLevel]
+                        ? (riskColors[opportunity.riskLevel] || riskColors.Medium)
                         : opportunity.riskLevel === 'Low' 
                           ? 'text-emerald-600 bg-emerald-50'
                           : opportunity.riskLevel === 'Medium'
                             ? 'text-amber-600 bg-amber-50'
                             : 'text-red-600 bg-red-50'
                     }`}>
-                      <RiskIcon className="w-3 h-3" />
+                      {RiskIcon && <RiskIcon className="w-3 h-3" />}
                       {opportunity.riskLevel?.toUpperCase() || 'UNKNOWN'} RISK
                     </div>
                   </div>
@@ -155,14 +158,14 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
                   <h3 className={`text-xl font-bold font-display leading-tight mb-1 ${
                     isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#0F172A]'
                   }`}>
-                    {opportunity.title}
+                    {opportunity.title || 'Untitled Opportunity'}
                   </h3>
                   
                   {opportunity.protocol && (
                     <p className={`text-sm ${
                       isDarkTheme ? 'text-gray-400' : 'text-[#475569]'
                     }`}>
-                      {opportunity.protocol} {opportunity.chain && `• ${opportunity.chain}`}
+                      {typeof opportunity.protocol === 'string' ? opportunity.protocol : opportunity.protocol?.name || 'Unknown'} {opportunity.chain && `• ${typeof opportunity.chain === 'string' ? opportunity.chain : 'Multi-chain'}`}
                     </p>
                   )}
                 </div>
@@ -171,7 +174,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               <p className={`text-sm line-clamp-2 mb-6 leading-relaxed ${
                 isDarkTheme ? 'text-gray-300' : 'text-[#475569]'
               }`}>
-                {opportunity.description.replace(/on \w+\s*[•·]\s*\w+/gi, '').trim()}
+                {opportunity.description?.replace(/on \w+\s*[•·]\s*\w+/gi, '').trim() || 'No description available'}
               </p>
               
               {/* Divider */}
@@ -189,7 +192,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               }`} />
               <span className={`font-bold ${
                 isDarkTheme ? 'text-[#00F5A0]' : 'text-[#FBBF24]'
-              }`}>{opportunity.reward}</span>
+              }`}>{typeof opportunity.reward === 'string' ? opportunity.reward : 'TBD'}</span>
               <span className={isDarkTheme ? 'text-gray-500' : 'text-[#475569]'}>APY</span>
             </div>
             <div className="flex items-center gap-2">
@@ -198,7 +201,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               }`} />
               <span className={`font-semibold ${
                 isDarkTheme ? 'text-white' : 'text-[#0F172A]'
-              }`}>{opportunity.confidence}%</span>
+              }`}>{typeof opportunity.confidence === 'number' ? opportunity.confidence : 0}%</span>
               <span className={isDarkTheme ? 'text-gray-500' : 'text-[#475569]'}>Confidence</span>
             </div>
             <div className="flex items-center gap-2">
@@ -207,7 +210,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               }`} />
               <span className={`font-semibold ${
                 isDarkTheme ? 'text-blue-400' : 'text-[#14B8A6]'
-              }`}>{opportunity.guardianScore}/10</span>
+              }`}>{typeof opportunity.guardianScore === 'number' ? opportunity.guardianScore : 0}/10</span>
               <span className={isDarkTheme ? 'text-gray-500' : 'text-[#475569]'}>Guardian</span>
             </div>
             <div className="flex items-center gap-2">
@@ -216,7 +219,7 @@ export function OpportunityCard({ opportunity, index, onJoinQuest, isDarkTheme =
               }`} />
               <span className={`font-semibold ${
                 isDarkTheme ? 'text-white' : 'text-[#0F172A]'
-              }`}>{opportunity.duration}</span>
+              }`}>{opportunity.duration || 'TBD'}</span>
               <span className={isDarkTheme ? 'text-gray-500' : 'text-[#475569]'}>Duration</span>
             </div>
           </div>

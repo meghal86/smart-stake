@@ -19,7 +19,7 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 interface Opportunity {
   id: string;
-  type: 'Airdrop' | 'Staking' | 'NFT' | 'Points' | 'Quest';
+  type: 'Airdrop' | 'Staking' | 'NFT' | 'Quest';
   title: string;
   description: string;
   reward: string;
@@ -39,12 +39,24 @@ export default function Hunter() {
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
 
-  // Use centralized demo mode management
-  const { isDemo } = useDemoMode();
-
   // Wallet connection status
   const { connectedWallets, activeWallet } = useWallet();
   const isConnected = connectedWallets.length > 0 && !!activeWallet;
+
+  // Use centralized demo mode management
+  const { isDemo, setDemoMode } = useDemoMode();
+  
+  // Debug logging for manual testing
+  useEffect(() => {
+    console.log('🎭 Hunter Page State:', {
+      isDemo,
+      isConnected,
+      activeWallet,
+      connectedWalletsCount: connectedWallets.length,
+      activeFilter,
+      timestamp: new Date().toISOString()
+    });
+  }, [isDemo, isConnected, activeWallet, connectedWallets.length, activeFilter]);
 
   // Pull-to-refresh
   const handleRefresh = async () => {
@@ -221,7 +233,7 @@ export default function Hunter() {
               exit={{ opacity: 0 }}
               className="grid gap-6"
             >
-              {filteredOpportunities.map((opportunity, index) => (
+              {filteredOpportunities.map((opportunity: Opportunity, index: number) => (
                 <motion.div
                   key={opportunity.id}
                   initial={{ opacity: 0, y: 30, scale: 0.95 }}

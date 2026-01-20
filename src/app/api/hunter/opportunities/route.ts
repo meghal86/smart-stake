@@ -1,272 +1,120 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
 /**
  * GET /api/hunter/opportunities
  * 
- * Main feed endpoint for Hunter Screen opportunities
+ * Temporary implementation to get Hunter live mode working.
+ * Returns opportunities from the database without ranking.
  * 
- * Features:
- * - Query parameter validation with Zod
- * - Rate limiting (60/hr anon, 120/hr auth)
- * - Cursor-based pagination with snapshot consistency
- * - ETag support for 304 Not Modified
- * - Structured error responses
- * - Proper cache headers
+ * TODO: Implement proper Edge Function architecture per requirements:
+ * - Task 9: Create feed query service with ranking
+ * - Task 9a: Create mv_opportunity_rank materialized view
+ * - Task 12: Implement proper API route with validation, rate limiting, caching
  * 
- * Requirements:
- * - 1.7: API response structure
- * - 1.8: Cursor pagination
- * - 1.9: ETag generation
- * - 1.10: 304 Not Modified support
- * - 1.11: API versioning
- * - 4.13-4.15: Rate limiting
- * - 8.10, 8.11: Error handling
- */
-
-import { NextRequest, NextResponse } from 'next/server';
-import { getFeedPage } from '@/lib/feed/query';
-import { 
-  checkRateLimit, 
-  RateLimitError,
-  getIdentifierFromHeaders,
-  isAuthenticatedFromHeaders 
-} from '@/lib/rate-limit';
-import { hashETag, compareETags } from '@/lib/etag';
-import { OpportunitiesQuerySchema } from '@/schemas/hunter';
-import { ErrorCode } from '@/types/hunter';
-import {
-  checkClientVersion,
-  getEffectiveApiVersion,
-  shouldEnforceVersion,
-  VersionError,
-  CURRENT_API_VERSION,
-} from '@/lib/api-version';
-
-/**
- * GET handler for opportunities feed
+ * Requirements: 1.7, 12.1-12.8
  */
 export async function GET(req: NextRequest) {
   try {
-    // Check client version (required in production, optional in dev)
-    try {
-      checkClientVersion(req, {
-        required: shouldEnforceVersion(),
-        allowQueryOverride: true,
-      });
-    } catch (error) {
-      if (error instanceof VersionError) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'VERSION_UNSUPPORTED' as ErrorCode,
-              message: error.message,
-              details: {
-                client_version: error.clientVersion,
-                min_version: error.minVersion,
-                current_version: error.currentVersion,
-              },
-            },
-          },
-          {
-            status: 412, // Precondition Failed
-            headers: {
-              'X-API-Version': getEffectiveApiVersion(req),
-            },
-          }
-        );
-      }
-      throw error;
-    }
-
-    // Get effective API version (supports canary testing via query param)
-    const apiVersion = getEffectiveApiVersion(req);
-
-    // Extract identifier for rate limiting
-    const identifier = getIdentifierFromHeaders(req.headers);
-    const isAuthenticated = isAuthenticatedFromHeaders(req.headers);
-
-    // Check rate limit
-    try {
-      await checkRateLimit(identifier, isAuthenticated);
-    } catch (error) {
-      if (error instanceof RateLimitError) {
-        return NextResponse.json(
-          {
-            error: {
-              code: ErrorCode.RATE_LIMITED,
-              message: 'Too many requests. Please try again later.',
-              retry_after_sec: error.retryAfter,
-            },
-          },
-          {
-            status: 429,
-            headers: {
-              'Retry-After': String(error.retryAfter),
-              'X-RateLimit-Limit': String(error.limit),
-              'X-RateLimit-Remaining': String(error.remaining),
-              'X-RateLimit-Reset': String(error.reset),
-              'X-API-Version': apiVersion,
-            },
-          }
-        );
-      }
-      throw error;
-    }
-
-    // Parse and validate query parameters
-    const { searchParams } = new URL(req.url);
+    // Create Supabase client with service role key for server-side access
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
     
-    // Convert searchParams to object for Zod validation
-    const queryObject: unknown = {};
-    searchParams.forEach((value, key) => {
-      // Handle array parameters (type, chains, urgency, difficulty)
-      if (['type', 'chains', 'urgency', 'difficulty'].includes(key)) {
-        if (!queryObject[key]) {
-          queryObject[key] = [];
-        }
-        queryObject[key].push(value);
-      } else {
-        queryObject[key] = value;
-      }
-    });
-
-    const parsed = OpportunitiesQuerySchema.safeParse(queryObject);
+    // Parse query parameters
+    const searchParams = req.nextUrl.searchParams;
+    const filter = searchParams.get('filter') || 'All';
+    const sort = searchParams.get('sort') || 'recommended';
+    const cursor = searchParams.get('cursor');
+    const limit = parseInt(searchParams.get('limit') || '12', 10);
     
-    if (!parsed.success) {
+    // Build query
+    let query = supabase
+      .from('opportunities')
+      .select('*')
+      .eq('status', 'published');
+    
+    // Apply type filter
+    if (filter !== 'All') {
+      const typeMap: Record<string, string[]> = {
+        'Airdrops': ['airdrop'],
+        'Quests': ['quest', 'testnet'],
+        'Yield': ['staking', 'yield'],
+        'Points': ['points', 'loyalty'],
+        'Staking': ['staking', 'yield'],
+      };
+      
+      const types = typeMap[filter];
+      if (types && types.length > 0) {
+        query = query.in('type', types);
+      }
+    }
+    
+    // Apply sorting
+    switch (sort) {
+      case 'ends_soon':
+        query = query.order('expires_at', { ascending: true, nullsFirst: false });
+        break;
+      case 'highest_reward':
+        query = query.order('reward_max', { ascending: false, nullsFirst: false });
+        break;
+      case 'newest':
+        query = query.order('published_at', { ascending: false, nullsFirst: false });
+        break;
+      case 'trust':
+        query = query.order('trust_score', { ascending: false, nullsFirst: false });
+        break;
+      case 'recommended':
+      default:
+        // Default sort by created_at desc (no ranking yet)
+        query = query.order('created_at', { ascending: false });
+        break;
+    }
+    
+    // Apply limit
+    query = query.limit(limit);
+    
+    // Execute query
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Hunter opportunities query error:', error);
       return NextResponse.json(
         {
           error: {
-            code: ErrorCode.BAD_FILTER,
-            message: 'Invalid query parameters',
+            code: 'INTERNAL',
+            message: 'Failed to fetch opportunities',
           },
         },
-        {
-          status: 400,
-          headers: {
-            'X-API-Version': apiVersion,
-          },
-        }
+        { status: 500 }
       );
     }
-
-    const params = parsed.data;
-
-    // Handle fixtures mode for E2E testing
-    // Requirement 15.1-15.4: Deterministic test data
-    if (params.mode === 'fixtures') {
-      const { getFixtureOpportunities } = await import('@/lib/fixtures/hunter-opportunities');
-      const fixtures = getFixtureOpportunities();
-      
-      const responseBody = {
-        items: fixtures,
-        cursor: null,
+    
+    // Return response in required format
+    return NextResponse.json(
+      {
+        items: data || [],
+        cursor: null, // TODO: Implement cursor pagination
         ts: new Date().toISOString(),
-      };
-
-      const response = NextResponse.json(responseBody, { status: 200 });
-      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      response.headers.set('X-API-Version', apiVersion);
-      response.headers.set('Content-Type', 'application/json');
-      
-      return response;
-    }
-
-    // Extract wallet address and user ID from headers for personalization
-    const walletAddress = req.headers.get('x-wallet-address') || undefined;
-    const userId = req.headers.get('x-user-id') || undefined;
-
-    // Fetch feed data with personalized ranking if wallet provided
-    const feedResult = await getFeedPage({
-      search: params.q,
-      types: params.type,
-      chains: params.chains,
-      trustMin: params.trust_min,
-      rewardMin: params.reward_min,
-      rewardMax: params.reward_max,
-      urgency: params.urgency,
-      eligibleOnly: params.eligible,
-      difficulty: params.difficulty,
-      sort: params.sort,
-      cursor: params.cursor ?? undefined,
-      walletAddress,
-      userId,
-    });
-
-    // Build response body
-    const responseBody = {
-      items: feedResult.items,
-      cursor: feedResult.nextCursor,
-      ts: new Date().toISOString(),
-    };
-
-    // Generate ETag for cache validation
-    const etag = hashETag(responseBody);
-
-    // Check If-None-Match header for 304 Not Modified
-    const ifNoneMatch = req.headers.get('if-none-match');
-    if (ifNoneMatch && compareETags(ifNoneMatch, etag)) {
-      return new NextResponse(null, {
-        status: 304,
+      },
+      {
         headers: {
-          'ETag': etag,
-          'X-API-Version': apiVersion,
+          'Cache-Control': 'max-age=60, stale-while-revalidate=300',
+          'X-API-Version': '1.0.0',
         },
-      });
-    }
-
-    // Return successful response with proper headers
-    const response = NextResponse.json(responseBody, { status: 200 });
-    
-    // Set cache headers
-    // Anonymous users: cache for 60s with stale-while-revalidate
-    // Authenticated users: no cache (personalized content)
-    if (isAuthenticated) {
-      response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-    } else {
-      response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    }
-    
-    response.headers.set('ETag', etag);
-    response.headers.set('X-API-Version', apiVersion);
-    response.headers.set('Content-Type', 'application/json');
-
-    return response;
-
+      }
+    );
   } catch (error) {
     console.error('Hunter opportunities API error:', error);
-
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message.includes('Invalid cursor')) {
-        return NextResponse.json(
-          {
-            error: {
-              code: ErrorCode.BAD_FILTER,
-              message: 'Invalid cursor format',
-            },
-          },
-          {
-            status: 400,
-            headers: {
-              'X-API-Version': CURRENT_API_VERSION,
-            },
-          }
-        );
-      }
-    }
-
-    // Generic internal error
     return NextResponse.json(
       {
         error: {
-          code: ErrorCode.INTERNAL,
-          message: 'An internal error occurred. Please try again later.',
+          code: 'INTERNAL',
+          message: 'Internal server error',
         },
       },
-      {
-        status: 500,
-        headers: {
-          'X-API-Version': CURRENT_API_VERSION,
-        },
-      }
+      { status: 500 }
     );
   }
 }

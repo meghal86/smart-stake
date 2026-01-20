@@ -241,6 +241,24 @@ export function useHunterFeed(props: UseHunterFeedProps) {
 
   // Use demo mode or real API
   const useRealAPI = !props.isDemo;
+  
+  // Debug logging for manual testing
+  useEffect(() => {
+    console.log('🎯 Hunter Feed Mode:', {
+      isDemo: props.isDemo,
+      useRealAPI,
+      activeWallet,
+      filter: props.filter,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Log when mode changes
+    if (props.isDemo) {
+      console.log('🎭 DEMO MODE ACTIVE - Using mock data');
+    } else {
+      console.log('🔴 LIVE MODE ACTIVE - Will fetch from API');
+    }
+  }, [props.isDemo, useRealAPI, activeWallet, props.filter]);
 
   // Build query params for real API
   const queryParams: FeedQueryParams = {
@@ -254,7 +272,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
   };
 
   // Use infinite query for cursor-based pagination with ranking
-  // Include activeWallet in query key to trigger refetch on wallet change (Requirement 18.4)
+  // Include activeWallet AND isDemo in query key to trigger refetch on mode change
   const {
     data,
     isLoading,
@@ -264,12 +282,13 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     isFetchingNextPage,
     refetch: queryRefetch,
   } = useInfiniteQuery({
-    queryKey: hunterKeys.feed(activeWallet, activeNetwork),
+    queryKey: ['hunter', 'feed', activeWallet, activeNetwork, props.isDemo] as const,
     queryFn: async ({ pageParam }) => {
       const personalizationStartTime = performance.now();
       
       if (!useRealAPI) {
         // Demo mode - return mock data
+        console.log('📦 Demo Mode: Returning mock data (5 opportunities)');
         await new Promise(resolve => setTimeout(resolve, 1000));
         return {
           items: mockOpportunities,
@@ -278,13 +297,48 @@ export function useHunterFeed(props: UseHunterFeedProps) {
         };
       }
       
-      // Real API call with ranking from materialized view
-      // This uses the mv_opportunity_rank view which includes rank_score
-      // Pass wallet address in query params for personalized ranking
-      const result = await getFeedPage({
-        ...queryParams,
-        cursor: pageParam as string | undefined,
-        walletAddress: activeWallet ?? undefined,
+      // Live mode - call API route
+      console.log('🌐 Live Mode: Fetching from API', {
+        endpoint: '/api/hunter/opportunities',
+        params: {
+          filter: props.filter,
+          sort: props.sort || 'recommended',
+          cursor: pageParam,
+          walletAddress: activeWallet
+        }
+      });
+      
+      // Build query parameters
+      const params = new URLSearchParams({
+        filter: props.filter,
+        sort: props.sort || 'recommended',
+        limit: '12',
+      });
+      
+      if (pageParam) {
+        params.append('cursor', pageParam as string);
+      }
+      
+      if (activeWallet) {
+        params.append('walletAddress', activeWallet);
+      }
+      
+      // Call API route
+      const response = await fetch(`/api/hunter/opportunities?${params.toString()}`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || 'Failed to fetch opportunities');
+      }
+      
+      const result = await response.json();
+      
+      console.log('✅ API Response:', {
+        itemCount: result.items.length,
+        hasMore: !!result.cursor,
+        timestamp: result.ts
       });
       
       // Track feed personalization analytics when wallet is connected
@@ -294,7 +348,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
         // Import dynamically to avoid circular dependencies
         import('@/lib/analytics/tracker').then(({ trackFeedPersonalized }) => {
           // Check if wallet has history (has saved or completed opportunities)
-          const hasWalletHistory = result.items.some(item => 
+          const hasWalletHistory = result.items.some((item: NewOpportunity) => 
             item.eligibility_preview?.status === 'likely'
           );
           
@@ -313,8 +367,8 @@ export function useHunterFeed(props: UseHunterFeedProps) {
       
       return {
         items: result.items,
-        nextCursor: result.nextCursor,
-        snapshotTs: result.snapshotTs,
+        nextCursor: result.cursor,
+        snapshotTs: Date.now() / 1000,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
