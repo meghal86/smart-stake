@@ -67,13 +67,13 @@ This implementation plan transforms the Unified Portfolio System design into act
 
 ## Tasks
 
-- [ ] 1. Set up project structure and database schema [V1]
+- [x] 1. Set up project structure and database schema [V1]
   - Create database migration for unified portfolio tables
   - Set up TypeScript shared types and interfaces
   - Configure property-based testing framework (fast-check)
   - _Requirements: 1.1, 14.4, 14.5_
 
-- [ ] 1.1 Create database migration for portfolio tables (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 1.1 Create database migration for portfolio tables (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search existing migrations in supabase/migrations/ for portfolio_snapshots, approval_risks, intent_plans, execution_steps, simulation_receipts tables
   - **IF EXISTS**: Extend existing tables with ALTER TABLE statements instead of CREATE TABLE
   - **IF NOT EXISTS**: Update risk_score and confidence fields to NUMERIC(5,4) with bounds CHECK (0..1) (R15.8)
@@ -108,13 +108,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Create separate CREATE INDEX statements (PostgreSQL-compliant)
   - _Requirements: 1.1, 7.5, 7.6, 8.4, 11.4, 14.4_
 
-- [ ] 1.2 Write integration test for database schema constraints [V1]
+- [x] 1.2 Write integration test for database schema constraints [V1]
   - Test scope_key determinism via migrate → insert → assert fail/pass
   - Test database triggers and constraints enforcement
   - Test RLS policies and constraint violations
   - **Validates: Requirements 1.1**
 
-- [ ] 1.3 Set up shared TypeScript types (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 1.3 Set up shared TypeScript types (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/types/** for existing ScopeMode, WalletScope, ExecutionStep, IntentPlan, ApprovalRisk types
   - **IF EXISTS**: Extend existing types with additional properties instead of creating new ones
   - **IF NOT EXISTS**: Define ScopeMode and WalletScope types
@@ -123,15 +123,15 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Define FreshnessConfidence and PolicyEngineConfig interfaces
   - _Requirements: 1.1, 6.8_
 
-- [ ] 1.4 Write property test for shared type validation [V1]
+- [x] 1.4 Write property test for shared type validation [V1]
   - **Property S2: Type safety enforcement**
   - **Validates: Requirements 1.1**
 
-- [ ] 1.5 Integration test: snapshot upsert-current [V1]
+- [x] 1.5 Integration test: snapshot upsert-current [V1]
   - Insert snapshot for same (user_id, scope_mode, scope_key) twice -> row count stays 1, updated_at changes
   - **Validates: Requirements R15.9**
 
-- [ ] 1.6 Test: cleanup deletes expired receipts + retains last N snapshots [V1]
+- [x] 1.6 Test: cleanup deletes expired receipts + retains last N snapshots [V1]
   - **Validates: Requirements R8.6**
 
 - [ ] 2. Implement reuse audit gate and component discovery [V1]
