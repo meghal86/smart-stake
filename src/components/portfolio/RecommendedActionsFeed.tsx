@@ -8,7 +8,9 @@ import {
   ChevronDown, 
   ChevronUp,
   Filter,
-  Zap
+  Zap,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { RecommendedAction, FreshnessConfidence } from '@/types/portfolio';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,9 @@ interface RecommendedActionsFeedProps {
   currentFilter: string;
   onFilterChange: (filter: string) => void;
   showTopN?: number;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export function RecommendedActionsFeed({ 
@@ -28,7 +33,10 @@ export function RecommendedActionsFeed({
   freshness, 
   currentFilter, 
   onFilterChange,
-  showTopN = 5 
+  showTopN = 5,
+  isLoading = false,
+  error = null,
+  onRetry
 }: RecommendedActionsFeedProps) {
   const [showAll, setShowAll] = useState(false);
   const [expandedActions, setExpandedActions] = useState<Set<string>>(new Set());
@@ -87,6 +95,58 @@ export function RecommendedActionsFeed({
 
   const displayedActions = showAll ? filteredActions : filteredActions.slice(0, showTopN);
 
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {Array.from({ length: showTopN }).map((_, index) => (
+        <div key={index} className="p-4 rounded-lg border border-gray-700/50 bg-gray-800/30 animate-pulse">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1">
+              <div className="w-8 h-8 bg-gray-700 rounded-lg"></div>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 bg-gray-700 rounded w-32"></div>
+                  <div className="h-4 bg-gray-700 rounded w-16"></div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="h-3 bg-gray-700 rounded w-16"></div>
+                  <div className="h-3 bg-gray-700 rounded w-20"></div>
+                  <div className="h-3 bg-gray-700 rounded w-18"></div>
+                  <div className="h-3 bg-gray-700 rounded w-12"></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="h-3 bg-gray-700 rounded w-16"></div>
+              <div className="h-8 bg-gray-700 rounded w-20"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = () => (
+    <div className="text-center py-8">
+      <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
+      <h4 className="text-lg font-medium mb-2 text-white">Failed to Load Actions</h4>
+      <p className="text-gray-400 mb-4">
+        {error || 'Unable to fetch recommended actions. Please try again.'}
+      </p>
+      {onRetry && (
+        <Button
+          onClick={onRetry}
+          variant="outline"
+          className="text-gray-300 border-gray-600 hover:bg-gray-700"
+        >
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Retry
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/50">
       {/* Header */}
@@ -116,7 +176,11 @@ export function RecommendedActionsFeed({
 
       {/* Actions List */}
       <div className="space-y-4">
-        {displayedActions.length === 0 ? (
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : error ? (
+          <ErrorState />
+        ) : displayedActions.length === 0 ? (
           <div className="text-center py-8">
             <Shield className="w-12 h-12 mx-auto mb-4 text-gray-600" />
             <h4 className="text-lg font-medium mb-2 text-white">No Actions Required</h4>
@@ -238,7 +302,7 @@ export function RecommendedActionsFeed({
       </div>
 
       {/* Progressive Disclosure */}
-      {filteredActions.length > showTopN && (
+      {!isLoading && !error && filteredActions.length > showTopN && (
         <div className="mt-4 text-center">
           <Button
             variant="outline"

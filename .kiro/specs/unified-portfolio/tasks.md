@@ -209,13 +209,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 4: Design System Compliance**
   - **Validates: Requirements 3.1, 3.2**
 
-- [ ] 3. Implement portfolio snapshot API and caching [V1]
+- [x] 3. Implement portfolio snapshot API and caching [V1]
   - Create /api/v1/portfolio/snapshot endpoint
   - Implement risk-aware caching with severity-based TTL
   - Add freshness and confidence metadata
   - _Requirements: 1.6, 1.8, 10.5_
 
-- [ ] 3.1 Create portfolio snapshot API endpoint (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 3.1 Create portfolio snapshot API endpoint (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/app/api/portfolio/** and src/pages/api/portfolio/** for existing snapshot endpoints
   - **BEFORE CREATING**: Search src/services/** for existing portfolio aggregation services
   - **IF EXISTS**: Extend existing endpoint with scope parameter and freshness metadata
@@ -226,20 +226,20 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Handle degraded mode when confidence < threshold
   - _Requirements: 1.6, 1.8, 1.9, 15.3_
 
-- [ ] 3.2 Write property test for data aggregation [V1]
+- [x] 3.2 Write property test for data aggregation [V1]
   - **Property 1: Data Aggregation Completeness**
   - **Validates: Requirements 1.6**
 
-- [ ] 3.3 Write property test for metadata consistency [V1]
+- [x] 3.3 Write property test for metadata consistency [V1]
   - **Property 2: Metadata Attachment Consistency**
   - **Validates: Risk-aware metadata tracking policy**
 
-- [ ] 3.4 Test confidence aggregation rule [V1]
+- [x] 3.4 Test confidence aggregation rule [V1]
   - Assert approvals/actions/plans confidence == min(sourceConfidences)
   - Assert weighted avg allowed only for non-execution metrics
   - **Validates: Requirements R1.10**
 
-- [ ] 3.5 Implement risk-aware caching system (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 3.5 Implement risk-aware caching system (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/lib/** for existing caching systems, TTL calculators, or cache invalidation logic
   - **BEFORE CREATING**: Search src/services/** for existing cache warming or risk-based caching
   - **IF EXISTS**: Extend existing caching with severity-based TTL ranges
@@ -248,17 +248,17 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add cache warming for critical data
   - _Requirements: 10.5, 10.6_
 
-- [ ] 3.5 Write property test for cache TTL calculation
+- [x] 3.5 Write property test for cache TTL calculation
   - **Property 25: Risk-Aware Caching**
   - **Validates: Requirements 10.5**
 
-- [ ] 4. Implement recommended actions feed
+- [x] 4. Implement recommended actions feed
   - Create RecommendedActionsFeed component
   - Implement action scoring algorithm
   - Add progressive disclosure (top 5 with "View all")
   - _Requirements: 4.1, 4.2, 4.3, 10.1_
 
-- [ ] 4.1 Create RecommendedActionsFeed component (REUSE-FIRST CHECK REQUIRED)
+- [x] 4.1 Create RecommendedActionsFeed component (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing ActionsFeed, RecommendedActions, or similar components
   - **BEFORE CREATING**: Search src/components/** for existing card layouts with severity indicators
   - **IF EXISTS**: Extend existing component with mobile-first layout and action severity indicators
@@ -268,17 +268,17 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Add loading states and error handling
   - _Requirements: 4.1, 4.4, 10.1, 10.2_
 
-- [ ] 4.2 Write property test for action scoring [V1]
+- [x] 4.2 Write property test for action scoring [V1]
   - **Property 5: Action Score Calculation**
   - Verify severity weights: critical=1.0, high=0.75, medium=0.5, low=0.25
   - Verify tie-break: higher confidence wins, then lower friction
   - **Validates: Requirements 4.2, R4.3–R4.4**
 
-- [ ] 4.3 Write property test for action generation bounds
+- [x] 4.3 Write property test for action generation bounds
   - **Property 6: Action Generation Bounds**
   - **Validates: Requirements 4.1, 4.3**
 
-- [ ] 4.4 Implement GET /api/v1/portfolio/actions endpoint (REUSE-FIRST CHECK REQUIRED)
+- [x] 4.4 Implement GET /api/v1/portfolio/actions endpoint (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/app/api/portfolio/** and src/pages/api/portfolio/** for existing actions endpoints
   - **BEFORE CREATING**: Search src/services/** for existing action scoring or prioritization services
   - **IF EXISTS**: Extend existing endpoint with ActionScore prioritization and cursor pagination
@@ -288,7 +288,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Include { apiVersion: "v1" } in response
   - _Requirements: 4.1, 4.3, 15.3_
 
-- [ ] 4.5 Write property test for data structure completeness
+- [x] 4.5 Write property test for data structure completeness
   - **Property 7: Data Structure Completeness**
   - **Validates: Requirements 4.4, 4.5, 6.4**
 
