@@ -134,13 +134,13 @@ This implementation plan transforms the Unified Portfolio System design into act
 - [x] 1.6 Test: cleanup deletes expired receipts + retains last N snapshots [V1]
   - **Validates: Requirements R8.6**
 
-- [ ] 2. Implement reuse audit gate and component discovery [V1]
+- [x] 2. Implement reuse audit gate and component discovery [V1]
   - Search existing portfolio components and hooks
   - Document reuse decisions for each new component
   - Extend existing components where possible
   - _Requirements: 3.1, 3.2_
 
-- [ ] 2.1 Audit existing portfolio infrastructure (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 2.1 Audit existing portfolio infrastructure (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for reusable components
   - **BEFORE CREATING**: Search src/hooks/** for portfolio-related hooks
   - **BEFORE CREATING**: Search src/services/** for portfolio services
@@ -149,7 +149,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Document findings and reuse opportunities (≤3 bullets per search)
   - _Requirements: 3.1_
 
-- [ ] 2.2 Extend PortfolioHub component (or create if missing) (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 2.2 Extend PortfolioHub component (or create if missing) (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing PortfolioHub, Portfolio, or similar components
   - **BEFORE CREATING**: Search src/hooks/** for useUserAddresses, useWalletSwitching hooks
   - **IF EXISTS**: Extend existing PortfolioHub with wallet switching and freshness display
@@ -158,11 +158,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF EXISTS**: Integrate with existing useUserAddresses hook, **IF NOT EXISTS**: create new hook
   - _Requirements: 3.1, 3.2, 10.1_
 
-- [ ] 2.3 Write property test for wallet switching [V1]
+- [x] 2.3 Write property test for wallet switching [V1]
   - **Property S3: Wallet switch data isolation**
   - **Validates: Requirements 12.5**
 
-- [ ] 2.4 Create Portfolio Route Shell (or extend existing) (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 2.4 Create Portfolio Route Shell (or extend existing) (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/pages/** and src/app/** for existing /portfolio routes
   - **BEFORE CREATING**: Search src/components/** for existing route shells or layout components
   - **IF EXISTS**: Extend existing /portfolio route with 3-tab spine (Overview, Positions, Audit)
@@ -172,7 +172,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Ensure mobile-first responsive layout with single-column for <480px
   - _Requirements: 1.1, 1.2, 2.1, 2.2_
 
-- [ ] 2.5 Create Overview Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 2.5 Create Overview Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing NetWorthCard, ActionsFeed, RiskSummary components
   - **BEFORE CREATING**: Search src/components/** for existing activity timeline or summary components
   - **IF EXISTS**: Extend existing components with freshness + confidence display
@@ -182,7 +182,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add Recent Activity Timeline with AI tags
   - _Requirements: 1.1, 4.1, 10.1_
 
-- [ ] 2.6 Create Positions Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 2.6 Create Positions Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing AssetBreakdown, ChainDistribution, ProtocolExposure components
   - **BEFORE CREATING**: Search src/components/** for existing performance metrics or breakdown components
   - **IF EXISTS**: Extend existing components with progressive disclosure patterns
@@ -192,7 +192,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add Performance Metrics display
   - _Requirements: 12.1, 12.2, 12.3_
 
-- [ ] 2.7 Create Audit Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
+- [x] 2.7 Create Audit Tab component (REUSE-FIRST CHECK REQUIRED) [V1]
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing TransactionTimeline, ApprovalsList, GraphVisualizer components
   - **BEFORE CREATING**: Search src/components/** for existing audit, timeline, or transaction components
   - **IF EXISTS**: Extend existing components with AI tags and VAR + severity display
@@ -202,7 +202,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add Planned vs Executed Receipts section
   - _Requirements: 8.1, 8.4_
 
-- [ ] 2.8 Implement Design System Compliance enforcement [V1]
+- [x] 2.8 Implement Design System Compliance enforcement [V1]
   - Add ESLint rule to prevent custom CSS patterns that bypass shared component library
   - Add Playwright checks for design token compliance (CSS class allowlist)
   - Prevent inline styles and ensure only approved design tokens are used
