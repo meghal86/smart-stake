@@ -292,13 +292,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 7: Data Structure Completeness**
   - **Validates: Requirements 4.4, 4.5, 6.4**
 
-- [ ] 5. Implement approval risk system
+- [x] 5. Implement approval risk system
   - Create ApprovalRiskCard component
   - Implement approval risk scoring algorithm
   - Add GET /api/portfolio/approvals endpoint
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 5.1 Create ApprovalRiskCard component (REUSE-FIRST CHECK REQUIRED)
+- [x] 5.1 Create ApprovalRiskCard component (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing ApprovalRisk, RiskCard, or approval-related components
   - **BEFORE CREATING**: Search src/components/** for existing risk display or severity indicator components
   - **IF EXISTS**: Extend existing component with VAR display and Permit2 detection indicators
@@ -308,15 +308,15 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Implement progressive disclosure for risk details
   - _Requirements: 5.1, 5.6, 5.7, 5.9_
 
-- [ ] 5.2 Write property test for approval risk scoring
+- [x] 5.2 Write property test for approval risk scoring
   - **Property 8: Approval Risk Scoring Completeness**
   - **Validates: Requirements 5.1, 5.2**
 
-- [ ] 5.3 Write property test for risk classification
+- [x] 5.3 Write property test for risk classification
   - **Property 9: Risk Classification Consistency**
   - **Validates: Requirements 5.3, 5.5, 5.8**
 
-- [ ] 5.4 Implement approval risk scoring engine (REUSE-FIRST CHECK REQUIRED)
+- [x] 5.4 Implement approval risk scoring engine (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/lib/** for existing risk scoring, approval analysis, or security scoring engines
   - **BEFORE CREATING**: Search src/services/** for existing Guardian integration or risk calculation services
   - **IF EXISTS**: Extend existing engine with infinite approval rules and proxy contract detection
@@ -325,15 +325,15 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Generate risk reasons and contributing factors
   - _Requirements: 5.1, 5.2, 5.3, 5.5_
 
-- [ ] 5.5 Write property test for risk explainability
+- [x] 5.5 Write property test for risk explainability
   - **Property 10: Risk Explainability**
   - **Validates: Requirements 5.6, 5.7**
 
-- [ ] 5.6 Write property test for Permit2 detection
+- [x] 5.6 Write property test for Permit2 detection
   - **Property 11: Permit2 Detection and Scoring**
   - **Validates: Requirements 5.9**
 
-- [ ] 5.7 Create GET /api/v1/portfolio/approvals endpoint (REUSE-FIRST CHECK REQUIRED)
+- [x] 5.7 Create GET /api/v1/portfolio/approvals endpoint (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/app/api/portfolio/** and src/pages/api/portfolio/** for existing approvals endpoints
   - **BEFORE CREATING**: Search src/services/** for existing approval data aggregation services
   - **IF EXISTS**: Extend existing endpoint with ApprovalRisk objects and cursor pagination
@@ -345,7 +345,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Include freshness and confidence metadata
   - _Requirements: 5.1, 5.2, 5.3, 15.3_
 
-- [ ] 5.8 Create missing API endpoints for Requirement 15 compliance (REUSE-FIRST CHECK REQUIRED)
+- [x] 5.8 Create missing API endpoints for Requirement 15 compliance (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/app/api/portfolio/** for existing positions, audit, graph-lite, notification-prefs, plans endpoints
   - **IF NOT EXISTS**: Implement GET /api/v1/portfolio/positions?scope=...&wallet=...&cursor=...
   - **IF NOT EXISTS**: Implement GET /api/v1/portfolio/audit/events?scope=...&cursor=...
