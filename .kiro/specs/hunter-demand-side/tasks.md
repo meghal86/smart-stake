@@ -111,7 +111,7 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - **Property 6: Eligibility Preview Presence**
   - **Property 7: Ranking Object Presence**
   - **Property 20: Top 50 Eligibility Limit**
-  - **Validates: Requirements 1.1-1.7, 11.2**
+  - **Validates: Requirements 1.1-1.7, 11.2, 11.3**
 
 - [ ] 2. Checkpoint - Ensure shared foundations work
   - Ensure all tests pass, ask the user if questions arise.
