@@ -38,6 +38,7 @@ export interface DemoModeState {
 export class DemoModeManager {
   private static instance: DemoModeManager | null = null;
   private listeners: Set<(state: DemoModeState) => void> = new Set();
+  private userPreference: boolean | null = null; // Track user's manual preference
   private currentState: DemoModeState = {
     isDemo: true,
     reason: 'wallet_not_connected',
@@ -56,6 +57,15 @@ export class DemoModeManager {
 
   private constructor() {
     // Private constructor for singleton pattern
+    // Try to restore user preference from localStorage
+    try {
+      const saved = localStorage.getItem('aw_demo_mode_preference');
+      if (saved !== null) {
+        this.userPreference = saved === 'true';
+      }
+    } catch (error) {
+      console.debug('Failed to restore demo mode preference:', error);
+    }
   }
 
   /**
@@ -203,11 +213,20 @@ export class DemoModeManager {
 
   /**
    * Update demo mode state based on wallet connection and data sources
+   * Respects user's manual preference if set
    */
   public async updateDemoMode(isWalletConnected: boolean, forceDemo?: boolean): Promise<void> {
     let newState: DemoModeState;
 
-    if (forceDemo === true) {
+    // If user has manually set a preference, respect it
+    if (this.userPreference !== null && forceDemo === undefined) {
+      newState = {
+        isDemo: this.userPreference,
+        reason: 'user_preference', // Always user_preference when manually set
+        bannerVisible: this.userPreference,
+        dataSourceStatus: this.currentState.dataSourceStatus
+      };
+    } else if (forceDemo === true) {
       // User explicitly requested demo mode
       newState = {
         isDemo: true,
@@ -255,8 +274,17 @@ export class DemoModeManager {
 
   /**
    * Force demo mode (for testing or user preference)
+   * Saves user preference to localStorage
    */
   public setDemoMode(isDemo: boolean): void {
+    // Save user preference
+    this.userPreference = isDemo;
+    try {
+      localStorage.setItem('aw_demo_mode_preference', String(isDemo));
+    } catch (error) {
+      console.debug('Failed to save demo mode preference:', error);
+    }
+
     const newState: DemoModeState = {
       ...this.currentState,
       isDemo,
@@ -266,6 +294,18 @@ export class DemoModeManager {
 
     this.currentState = newState;
     this.notifyListeners();
+  }
+
+  /**
+   * Clear user preference (allows automatic mode switching)
+   */
+  public clearPreference(): void {
+    this.userPreference = null;
+    try {
+      localStorage.removeItem('aw_demo_mode_preference');
+    } catch (error) {
+      console.debug('Failed to clear demo mode preference:', error);
+    }
   }
 
   /**
@@ -317,6 +357,7 @@ export class DemoModeManager {
    * Reset to initial state (for testing)
    */
   public reset(): void {
+    this.userPreference = null;
     this.currentState = {
       isDemo: true,
       reason: 'wallet_not_connected',
@@ -368,6 +409,7 @@ export function useDemoMode() {
     bannerMessage: manager.getBannerMessage(),
     bannerCTA: manager.getBannerCTA(),
     setDemoMode: manager.setDemoMode.bind(manager),
+    clearPreference: manager.clearPreference.bind(manager),
     refreshDataSources: () => manager.updateDemoMode(isAuthenticated),
   };
 }
