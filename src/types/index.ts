@@ -15,6 +15,7 @@ export * from './harvestpro';
 export * from './hub2';
 export * from './hunter';
 export * from './market-intelligence';
+export * from './portfolio';
 export * from './premium';
 export * from './signal';
 export * from './subscription';
