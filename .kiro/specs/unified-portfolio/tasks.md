@@ -359,13 +359,13 @@ This implementation plan transforms the Unified Portfolio System design into act
 - [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Implement intent planning and execution system
+- [x] 7. Implement intent planning and execution system
   - Create IntentPlanExecutor component
   - Implement POST /api/portfolio/plan endpoint
   - Add simulation and policy checking
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 7.1 Create IntentPlanExecutor component (REUSE-FIRST CHECK REQUIRED)
+- [x] 7.1 Create IntentPlanExecutor component (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing IntentPlan, PlanExecutor, or execution-related components
   - **BEFORE CREATING**: Search src/components/** for existing step indicators, status displays, or execution UI components
   - **IF EXISTS**: Extend existing component with policy check results and simulation displays
@@ -375,15 +375,15 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Implement partial execution UI for mixed results
   - _Requirements: 6.1, 6.4, 6.5_
 
-- [ ] 7.2 Write property test for intent plan generation
+- [x] 7.2 Write property test for intent plan generation
   - **Property 12: Intent Plan Generation**
   - **Validates: Requirements 6.1, 6.2**
 
-- [ ] 7.3 Write property test for safety blocking
+- [x] 7.3 Write property test for safety blocking
   - **Property 13: Safety Blocking Rules**
   - **Validates: Requirements 6.3**
 
-- [ ] 7.4 Implement intent planning API endpoints (REUSE-FIRST CHECK REQUIRED)
+- [x] 7.4 Implement intent planning API endpoints (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/app/api/portfolio/** and src/pages/api/portfolio/** for existing plan, simulate, execute endpoints
   - **BEFORE CREATING**: Search src/services/** for existing intent planning, simulation, or execution services
   - **IF EXISTS**: Extend existing endpoints with idempotency key enforcement
@@ -394,11 +394,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Include { apiVersion: "v1" } in all responses
   - _Requirements: 6.1, 6.2, 7.5, 7.6, 15.3_
 
-- [ ] 7.5 Write property test for partial execution safety
+- [x] 7.5 Write property test for partial execution safety
   - **Property 14: Partial Execution Safety**
   - **Validates: Requirements 6.5**
 
-- [ ] 7.6 Write property test for payload verification
+- [x] 7.6 Write property test for payload verification
   - **Property 15: Payload Verification Integrity**
   - **Validates: Requirements 6.6, 6.7**
 
