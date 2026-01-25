@@ -402,13 +402,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 15: Payload Verification Integrity**
   - **Validates: Requirements 6.6, 6.7**
 
-- [ ] 8. Implement Policy Engine v0
+- [x] 8. Implement Policy Engine v0
   - Create PolicyEngineConfig interface
   - Implement policy checking logic
   - Add user-configurable policy settings
   - _Requirements: 6.8_
 
-- [ ] 8.1 Implement Policy Engine v0 core logic (REUSE-FIRST CHECK REQUIRED)
+- [x] 8.1 Implement Policy Engine v0 core logic (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/lib/** for existing policy engines, rule engines, or validation systems
   - **BEFORE CREATING**: Search src/services/** for existing policy checking or configuration services
   - **IF EXISTS**: Extend existing engine with portfolio-specific policies (max_gas_usd, block_new_contracts_days)
@@ -418,11 +418,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add confidence threshold enforcement
   - _Requirements: 6.8, 1.8, 1.9_
 
-- [ ] 8.2 Write property test for policy enforcement
+- [x] 8.2 Write property test for policy enforcement
   - **Property 16: Policy Engine Enforcement**
   - **Validates: Requirements 6.8**
 
-- [ ] 8.3 Write property test for confidence threshold
+- [x] 8.3 Write property test for confidence threshold
   - **Property 3: Confidence Threshold Enforcement**
   - **Validates: Requirements 1.8, 1.9**
 
