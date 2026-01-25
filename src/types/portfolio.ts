@@ -95,11 +95,14 @@ export interface ExecutionStep {
   stepId: string;
   kind: 'revoke' | 'approve' | 'swap' | 'transfer';
   chainId: number;
-  target: string;
+  target_address: string;
   status: 'pending' | 'simulated' | 'blocked' | 'ready' | 'signing' | 'submitted' | 'confirmed' | 'failed';
   payload?: string;
-  gasEstimate?: number;
-  error?: string;
+  gas_estimate?: number;
+  error_message?: string;
+  transaction_hash?: string;
+  block_number?: number;
+  step_idempotency_key?: string;
 }
 
 export interface IntentPlan {
@@ -121,6 +124,26 @@ export interface IntentPlan {
   };
   walletScope: WalletScope;
   idempotencyKey: string;
+  status?: 'pending' | 'executing' | 'completed' | 'failed' | 'cancelled';
+}
+
+export interface SimulationReceipt {
+  id: string;
+  assetDeltas?: Array<{
+    token: string;
+    amount: number;
+    valueUsd?: number;
+  }>;
+  permissionDeltas?: Array<{
+    type: 'approve' | 'revoke';
+    token: string;
+    spender: string;
+    amount: string;
+  }>;
+  gasEstimateUsd?: number;
+  timeEstimateSec?: number;
+  warnings?: string[];
+  confidence?: number;
 }
 
 export interface PolicyEngineConfig {

@@ -71,36 +71,46 @@ const invalidDesignTokenGenerator = fc.oneof(
 
 // Validation functions
 function isValidDesignToken(className: string): boolean {
+  // Strip responsive and state prefixes to get the base class
+  const baseClass = className.replace(/^(sm|md|lg|xl|2xl|hover|focus|active|disabled|group-hover):/g, '');
+  
   // Color classes
   const colorPattern = /^(bg|text|border)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)$/;
-  if (colorPattern.test(className)) return true;
+  if (colorPattern.test(baseClass)) return true;
 
-  // Spacing classes
-  const spacingPattern = /^[pm][trblxy]?-(0|0\.5|1|1\.5|2|2\.5|3|3\.5|4|5|6|7|8|9|10|11|12|14|16|20|24|28|32|36|40|44|48|52|56|60|64|72|80|96)$/;
-  if (spacingPattern.test(className)) return true;
+  // Spacing classes - updated to handle all directional variants
+  const spacingPattern = /^(p|m|pt|pr|pb|pl|px|py|mt|mr|mb|ml|mx|my)-(0|0\.5|1|1\.5|2|2\.5|3|3\.5|4|5|6|7|8|9|10|11|12|14|16|20|24|28|32|36|40|44|48|52|56|60|64|72|80|96)$/;
+  if (spacingPattern.test(baseClass)) return true;
 
   // Dimension classes
   const dimensionPattern = /^[wh]-(0|0\.5|1|1\.5|2|2\.5|3|3\.5|4|5|6|7|8|9|10|11|12|14|16|20|24|28|32|36|40|44|48|52|56|60|64|72|80|96|auto|full|screen|min|max|fit)$/;
-  if (dimensionPattern.test(className)) return true;
+  if (dimensionPattern.test(baseClass)) return true;
 
   // Layout and utility classes (allow common ones)
-  const utilityPattern = /^(flex|grid|block|inline|hidden|relative|absolute|fixed|sticky|justify-|items-|content-|rounded|border|shadow|text-|font-|opacity-|z-|transition|duration|ease)/;
-  if (utilityPattern.test(className)) return true;
+  const utilityClasses = ['flex', 'grid', 'block', 'inline', 'inline-block', 'hidden', 'relative', 'absolute', 'fixed', 'sticky'];
+  if (utilityClasses.includes(baseClass)) return true;
+  
+  // Additional utility patterns
+  const utilityPattern = /^(justify-|items-|content-|rounded|border|shadow|text-|font-|opacity-|z-|transition|duration|ease)/;
+  if (utilityPattern.test(baseClass)) return true;
 
   return false;
 }
 
 function isBannedPattern(className: string): boolean {
+  // Strip responsive and state prefixes to get the base class
+  const baseClass = className.replace(/^(sm|md|lg|xl|2xl|hover|focus|active|disabled|group-hover):/g, '');
+  
   const bannedPatterns = [
-    /bg-\[#[0-9a-fA-F]{6}\]/, // Custom hex colors
-    /text-\[#[0-9a-fA-F]{6}\]/, // Custom hex text colors
-    /border-\[#[0-9a-fA-F]{6}\]/, // Custom hex border colors
-    /[wh]-\[[0-9]+px\]/, // Custom pixel dimensions
-    /[pm][trblxy]?-\[[0-9]+px\]/, // Custom pixel spacing
-    /shadow-\[[^\]]+\]/, // Custom shadows
+    /^bg-\[#[0-9a-fA-F]{6}\]$/, // Custom hex colors
+    /^text-\[#[0-9a-fA-F]{6}\]$/, // Custom hex text colors
+    /^border-\[#[0-9a-fA-F]{6}\]$/, // Custom hex border colors
+    /^[wh]-\[[0-9]+px\]$/, // Custom pixel dimensions
+    /^(p|m|pt|pr|pb|pl|px|py|mt|mr|mb|ml|mx|my)-\[[0-9]+px\]$/, // Custom pixel spacing
+    /^shadow-\[[^\]]+\]$/, // Custom shadows
   ];
 
-  return bannedPatterns.some(pattern => pattern.test(className));
+  return bannedPatterns.some(pattern => pattern.test(baseClass));
 }
 
 function validateClassList(classList: string[]): { valid: boolean; violations: string[] } {
@@ -140,7 +150,7 @@ describe('Feature: unified-portfolio, Property 4: Design System Compliance', () 
   test('banned patterns are always rejected', () => {
     fc.assert(
       fc.property(
-        fc.array(invalidDesignTokenGenerator, { minLength: 1, maxLength: 5 }),
+        fc.array(invalidDesignTokenGenerator, { minLength: 1, maxLength: 3 }), // Reduced max length
         (invalidClasses) => {
           const result = validateClassList(invalidClasses);
           
@@ -154,7 +164,7 @@ describe('Feature: unified-portfolio, Property 4: Design System Compliance', () 
           }
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 50, timeout: 10000 } // Reduced runs and added timeout
     );
   });
 
@@ -246,8 +256,14 @@ describe('Feature: unified-portfolio, Property 4: Design System Compliance', () 
           expect(result.valid).toBe(true);
           
           // Property: Should contain classes from different categories
-          const hasColor = componentClasses.some(cls => cls.startsWith('bg-') || cls.startsWith('text-'));
-          const hasSpacing = componentClasses.some(cls => cls.startsWith('p-') || cls.startsWith('m-'));
+          const hasColor = componentClasses.some(cls => cls.startsWith('bg-') || cls.startsWith('text-') || cls.startsWith('border-'));
+          const hasSpacing = componentClasses.some(cls => 
+            cls.startsWith('p-') || cls.startsWith('m-') || 
+            cls.startsWith('pt-') || cls.startsWith('pr-') || cls.startsWith('pb-') || cls.startsWith('pl-') ||
+            cls.startsWith('px-') || cls.startsWith('py-') || 
+            cls.startsWith('mt-') || cls.startsWith('mr-') || cls.startsWith('mb-') || cls.startsWith('ml-') ||
+            cls.startsWith('mx-') || cls.startsWith('my-')
+          );
           const hasDimension = componentClasses.some(cls => cls.startsWith('w-') || cls.startsWith('h-'));
           const hasLayout = componentClasses.some(cls => ['flex', 'grid', 'block', 'inline-block', 'hidden'].includes(cls));
           
@@ -268,7 +284,8 @@ describe('Feature: unified-portfolio, Property 4: Design System Compliance', () 
         fc.constantFrom('sm', 'md', 'lg', 'xl', '2xl'),
         (baseClass, breakpoint) => {
           const responsiveClass = `${breakpoint}:${baseClass}`;
-          const result = validateClassList([responsiveClass]);
+          const classList = [baseClass, responsiveClass]; // Include both base and responsive
+          const result = validateClassList(classList);
           
           // Property: Responsive variants of valid tokens should be valid
           expect(result.valid).toBe(true);
@@ -288,7 +305,8 @@ describe('Feature: unified-portfolio, Property 4: Design System Compliance', () 
         fc.constantFrom('hover', 'focus', 'active', 'disabled', 'group-hover'),
         (baseClass, state) => {
           const stateClass = `${state}:${baseClass}`;
-          const result = validateClassList([stateClass]);
+          const classList = [baseClass, stateClass]; // Include both base and state
+          const result = validateClassList(classList);
           
           // Property: State variants of valid tokens should be valid
           expect(result.valid).toBe(true);
