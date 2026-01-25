@@ -25,13 +25,202 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
 
 ## Tasks
 
-- [ ] 1. Phase 0: Shared Foundations
+- [x] 0. CRITICAL: API Keys & Environment Configuration (COMPLETE v1.0)
+  - Set up phased API strategy for all 7 modules (Phase 1: $0, Phase 2: $0-100, Phase 3: $100-500/mo)
+  - Configure Phase 1 environment variables (DeFiLlama, Alchemy, Supabase)
+  - Create admin seed scripts for Airdrops, Quests, Points, RWA
+  - Validate API connectivity and test configuration
+  - Document complete API roadmap with costs and partnerships
+  - _Requirements: All modules depend on this_
+  - _Time: 45 minutes (one-time setup)_
+
+- [x] 0.1 Review complete third-party API inventory
+  - Review Phase 1 (MVP - $0): DeFiLlama, Alchemy, Supabase, Admin Seeds
+  - Review Phase 2 (Month 2-3 - $0-100): Layer3, Galxe, Zealy partnerships
+  - Review Phase 3 (Month 4+ - $100-500): Premium tiers for scale
+  - Understand cost structure and free tier limits
+  - _Requirements: Strategic planning for all 7 modules_
+
+- [x] 0.2 Get DeFiLlama API access (0 minutes - FREE)
+  - No API key needed (public endpoints)
+  - Free tier: 100 req/min, all endpoints
+  - Add to .env: DEFILLAMA_API_URL=https://yields.llama.fi
+  - Cost: $0 (free forever for sync jobs)
+  - _Requirements: Yield module (Module 1)_
+
+- [x] 0.3 Get Alchemy API keys (5 minutes - FREE tier)
+  - Go to https://dashboard.alchemy.com
+  - Create app: "Hunter Dev", Chain: Ethereum, Environment: Mainnet
+  - Copy API Key → ALCHEMY_TRANSFERS_API_KEY
+  - Construct RPC URLs using same key:
+    - ALCHEMY_ETH_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/{YOUR_KEY}
+    - ALCHEMY_BASE_RPC_URL=https://base-mainnet.g.alchemy.com/v2/{YOUR_KEY}
+    - ALCHEMY_ARB_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/{YOUR_KEY}
+  - Add to .env file
+  - Free tier: 30M compute units/month (~25 req/sec)
+  - Estimated usage: 3-5M CU/day = 2-3x headroom
+  - _Requirements: Wallet signals (age, tx count, balances)_
+
+- [x] 0.4 Get Supabase API keys (5 minutes - FREE tier)
+  - Go to https://supabase.com
+  - Create new project → Choose region (us-east-1 recommended)
+  - Wait for setup (~2 minutes)
+  - Go to Project Settings → API
+  - Copy Project URL → NEXT_PUBLIC_SUPABASE_URL
+  - Copy anon public key → NEXT_PUBLIC_SUPABASE_ANON_KEY
+  - Add to .env file
+  - Free tier: 500MB DB (you'll use ~50-100MB)
+  - _Requirements: Database for all 7 modules_
+
+- [x] 0.5 Generate CRON_SECRET (2 minutes)
+  - Run: `openssl rand -base64 32`
+  - Copy output → CRON_SECRET
+  - Add to .env file
+  - _Requirements: Secure sync job endpoints_
+
+- [x] 0.6 Update existing .env file (Phase 1 Complete)
+  - Open existing .env file in project root
+  - Add Hunter-specific Phase 1 environment variables:
+    ```bash
+    # ============================================
+    # PHASE 1: REQUIRED APIs (MVP - $0)
+    # ============================================
+    # Database
+    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+    
+    # Wallet Signals (Alchemy - FREE tier)
+    ALCHEMY_TRANSFERS_API_KEY=your_alchemy_key
+    ALCHEMY_ETH_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your_key
+    ALCHEMY_BASE_RPC_URL=https://base-mainnet.g.alchemy.com/v2/your_key
+    ALCHEMY_ARB_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/your_key
+    
+    # Yield Data (DeFiLlama - FREE, no key needed)
+    DEFILLAMA_API_URL=https://yields.llama.fi
+    
+    # Sync Jobs Security
+    CRON_SECRET=your-random-secret-min-32-chars
+    
+    # ============================================
+    # PHASE 2: OPTIONAL (Months 2-3)
+    # ============================================
+    # LAYER3_API_KEY=...
+    # GALXE_API_KEY=...
+    # ZEALY_API_KEY=...
+    # QUESTN_API_KEY=...
+    
+    # ============================================
+    # PHASE 3: OPTIONAL (Scale - Month 4+)
+    # ============================================
+    # DEBANK_API_KEY=...
+    # RWA_API_KEY=...
+    ```
+  - Never commit sensitive values to git (ensure .env is in .gitignore)
+  - _Requirements: All 7 modules_
+
+- [x] 0.7 Update .env.example file
+  - Open existing .env.example file in project root (or create if missing)
+  - Add Hunter-specific variables with placeholder values
+  - Include Phase 1, 2, and 3 sections with comments
+  - Ensure all sensitive values are replaced with placeholders
+  - Add setup instructions in comments
+  - Commit .env.example to git
+  - _Requirements: Developer onboarding_
+
+- [x] 0.8 Implement environment validation
+  - Create src/lib/env-validation.ts
+  - Validate Phase 1 required vars (SUPABASE_URL, SUPABASE_ANON_KEY, CRON_SECRET)
+  - Warn if Phase 1 optional vars missing (ALCHEMY keys - degraded wallet signals)
+  - Info log for Phase 2 APIs not configured (admin seed data used)
+  - Info log for Phase 3 APIs not configured (optional for scale)
+  - Return phase indicator (1, 2, or 3) and capability flags
+  - Call validation in src/app/layout.tsx (server-side only)
+  - _Requirements: Fail fast on misconfiguration_
+
+- [x] 0.9 Create admin seed scripts (15 minutes)
+  - Create scripts/seed-airdrops.ts (10-15 airdrop opportunities)
+  - Create scripts/seed-quests.ts (10-15 quest opportunities)
+  - Create scripts/seed-points.ts (10-15 points programs)
+  - Create scripts/seed-rwa.ts (10-15 RWA vaults)
+  - Each script inserts to opportunities table with source='admin'
+  - Include realistic eligibility requirements (chains, wallet_age, tx_count)
+  - Add npm script: "seed:all" to run all 4 scripts
+  - _Requirements: Modules 2, 3, 4, 5 (Airdrops, Quests, Points, RWA)_
+
+- [x] 0.10 Run seed scripts and verify data
+  - Run: `npm run seed:all`
+  - Verify output: "✅ Seeded 12 airdrops", "✅ Seeded 12 quests", etc.
+  - Query database: `SELECT type, COUNT(*) FROM opportunities GROUP BY type;`
+  - Expected: airdrop: 10-15, quest: 10-15, points: 10-15, rwa: 10-15
+  - Total: 40-60 admin-seeded opportunities
+  - _Requirements: Test data for all admin-seeded modules_
+
+- [x] 0.11 Configure Vercel environment variables
+  - Go to Vercel project → Settings → Environment Variables
+  - Add all Phase 1 variables from .env file
+  - Apply to Production, Preview, and Development environments
+  - _Requirements: Production deployment_
+
+- [x] 0.12 Configure Vercel cron jobs
+  - Create vercel.json in repo root
+  - Add 5 cron jobs:
+    - /api/sync/yield (every 2 hours: "0 */2 * * *")
+    - /api/sync/airdrops (every hour: "0 * * * *")
+    - /api/sync/quests (every hour: "0 * * * *")
+    - /api/sync/points (daily: "0 0 * * *")
+    - /api/sync/rwa (daily: "0 0 * * *")
+  - Commit vercel.json to git
+  - Deploy: `git push origin main`
+  - Verify in Vercel dashboard → Settings → Cron Jobs
+  - _Requirements: Scheduled sync jobs for all modules_
+
+- [x] 0.13 Document API costs and phased roadmap
+  - Create docs/API_COSTS.md
+  - Document Phase 1 costs: $0/month (DeFiLlama, Alchemy, Supabase free tiers)
+  - Document Phase 2 costs: $0-100/month (Layer3, Galxe, Zealy partnerships)
+  - Document Phase 3 costs: $1,200-1,800/year (Premium tiers for scale)
+  - Include compute unit estimates and usage projections
+  - Add cost optimization tips (caching, batching, preselection)
+  - Document partnership strategy (Layer3, Galxe, Zealy, RWA.xyz)
+  - Include timeline: Week 1-2 (Phase 1), Month 2-3 (Phase 2), Month 4+ (Phase 3)
+  - _Requirements: Cost control, transparency, and strategic planning_
+
+- [x] 0.14 Test Phase 1 configuration (all 7 modules)
+  - Verify env vars loaded: `echo $NEXT_PUBLIC_SUPABASE_URL`
+  - Start dev server: `npm run dev`
+  - Verify console: "✅ Environment validation passed"
+  - Test Supabase: `curl http://localhost:3000/api/health`
+  - Test seed data: Query opportunities table (should have 40-60 rows)
+  - Test DeFiLlama: `curl "http://localhost:3000/api/sync/yield" -H "x-cron-secret: $CRON_SECRET"`
+  - Verify DB: `supabase sql "SELECT type, COUNT(*) FROM opportunities GROUP BY type;"`
+  - All tests should return success
+  - _Requirements: Validate setup before Task 1.1_
+
+- [x] 0.15 Phase 1 Setup Checklist (Exit Criteria)
+  - [ ] DeFiLlama URL added to .env
+  - [ ] Alchemy account created + keys in .env
+  - [ ] Supabase project created + keys in .env
+  - [ ] CRON_SECRET generated and in .env
+  - [ ] .env.example updated and committed
+  - [ ] src/lib/env-validation.ts implemented
+  - [ ] 4 seed scripts created: scripts/seed-{airdrops,quests,points,rwa}.ts
+  - [ ] npm run seed:all runs without errors
+  - [ ] Database has 40-60 admin-seeded opportunities
+  - [ ] docs/API_COSTS.md created with complete roadmap
+  - [ ] vercel.json created + committed
+  - [ ] Vercel Cron Jobs visible in dashboard
+  - [ ] npm run dev starts without errors
+  - [ ] All 7 test commands pass
+  - **Time: ~45 minutes total**
+  - **Cost: $0/month for Phase 1**
+
+- [-] 1. Phase 0: Shared Foundations
   - Create shared database schema extensions
   - Implement core personalization services
   - Set up cost control mechanisms
   - _Requirements: 3.1-3.7, 4.1-4.6, 5.1-5.11, 6.1-6.10_
 
-- [ ] 1.1 Create shared database migration
+- [x] 1.1 Create shared database migration
   - Add source (text) column to opportunities table
   - Add source_ref (text) column to opportunities table
   - Add last_synced_at column to opportunities table
@@ -41,11 +230,11 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Create user_history view for relevance scoring
   - _Requirements: 3.1-3.7_
 
-- [ ] 1.2 Write property test for database schema
+- [x] 1.2 Write property test for database schema
   - **Property 21: Opportunity Serialization Round Trip**
   - **Validates: Requirements 12.5**
 
-- [ ] 1.3 Implement Wallet Signals Service
+- [x] 1.3 Implement Wallet Signals Service
   - Create src/lib/hunter/wallet-signals.ts
   - Implement address validation (0x + 40 hex chars)
   - Implement RPC calls to Alchemy for tx count and balance (if ALCHEMY_ETH_RPC_URL configured)
@@ -55,12 +244,12 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Implement in-memory LRU cache (5min TTL)
   - _Requirements: 4.1-4.8_
 
-- [ ] 1.4 Write property tests for Wallet Signals Service
+- [x] 1.4 Write property tests for Wallet Signals Service
   - **Property 10: Wallet Address Validation**
   - **Property 11: Wallet Signals Caching**
   - **Validates: Requirements 4.1, 4.4, 4.5**
 
-- [ ] 1.5 Implement Eligibility Engine
+- [x] 1.5 Implement Eligibility Engine
   - Create src/lib/hunter/eligibility-engine.ts
   - Implement requirements parsing from JSONB
   - Implement eligibility scoring logic
@@ -69,13 +258,13 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Implement database caching (24h TTL)
   - _Requirements: 5.1-5.11_
 
-- [ ] 1.6 Write property tests for Eligibility Engine
+- [x] 1.6 Write property tests for Eligibility Engine
   - **Property 12: Empty Requirements Default Eligibility**
   - **Property 13: Eligibility Score to Status Mapping**
   - **Property 14: Eligibility Reasons Count**
   - **Validates: Requirements 5.1, 5.7-5.10**
 
-- [ ] 1.7 Implement Ranking Engine
+- [x] 1.7 Implement Ranking Engine
   - Create src/lib/hunter/ranking-engine.ts
   - Implement relevance calculation (chain match, eligibility, tags, type)
   - Clamp relevance score between 0 and 1

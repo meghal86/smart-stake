@@ -21,7 +21,14 @@
     "db:reset": "supabase db reset",
     "db:seed": "supabase db seed",
     "db:migrate": "supabase db push",
-    "db:validate-hunter": "node scripts/validate-hunter-schema.js"
+    "db:validate-hunter": "node scripts/validate-hunter-schema.js",
+    "seed:airdrops": "tsx scripts/seed-airdrops.ts",
+    "seed:quests": "tsx scripts/seed-quests.ts",
+    "seed:points": "tsx scripts/seed-points.ts",
+    "seed:rwa": "tsx scripts/seed-rwa.ts",
+    "seed:all": "npm run seed:airdrops && npm run seed:quests && npm run seed:points && npm run seed:rwa",
+    "hunter:verify-env": "tsx scripts/verify-hunter-env.ts",
+    "hunter:setup": "npm run hunter:verify-env && npm run seed:all"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -116,6 +123,7 @@
     "@vitejs/plugin-react": "^4.0.3",
     "@vitest/coverage-v8": "^4.0.8",
     "autoprefixer": "^10.4.15",
+    "dotenv": "^17.2.3",
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
@@ -127,6 +135,7 @@
     "node-mocks-http": "^1.17.2",
     "postcss": "^8.4.27",
     "tailwindcss": "^3.3.5",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.2",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.1.9",

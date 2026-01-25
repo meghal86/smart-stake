@@ -155,8 +155,8 @@ export default function AddWalletWizard() {
   // Handle back navigation
   const handleBack = () => {
     if (currentStep === 'providers') {
-      // Go back to wallet settings instead of navigate(-1)
-      navigate('/settings/wallets');
+      // Go back to wallet settings with replace to avoid history loop
+      navigate('/settings/wallets', { replace: true });
     } else if (currentStep === 'connecting') {
       setCurrentStep('providers');
       if (connectionTimeout) {
@@ -164,8 +164,8 @@ export default function AddWalletWizard() {
         setConnectionTimeout(null);
       }
     } else if (currentStep === 'success') {
-      // After success, go to wallet settings
-      navigate('/settings/wallets');
+      // After success, go to wallet settings with replace to avoid history loop
+      navigate('/settings/wallets', { replace: true });
     }
   };
 
@@ -335,8 +335,8 @@ export default function AddWalletWizard() {
       setActiveWallet(connectedAddress);
       toast.success('Wallet switched successfully');
     }
-    // Navigate to wallet settings instead of using navigate(-1)
-    navigate('/settings/wallets');
+    // Navigate to wallet settings with replace to avoid history loop
+    navigate('/settings/wallets', { replace: true });
   };
 
   // Handle keeping current wallet
@@ -344,8 +344,8 @@ export default function AddWalletWizard() {
     if (connectedAddress) {
       toast.success('Wallet added to your collection');
     }
-    // Navigate to wallet settings instead of using navigate(-1)
-    navigate('/settings/wallets');
+    // Navigate to wallet settings with replace to avoid history loop
+    navigate('/settings/wallets', { replace: true });
   };
 
   // Auto-dismiss success screen after 20s if no action taken
