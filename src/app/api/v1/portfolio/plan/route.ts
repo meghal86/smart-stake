@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import type { IntentPlan, WalletScope, ExecutionStep } from '@/types/portfolio';
+import { createPolicyEngine, type PolicyContext } from '@/lib/portfolio/PolicyEngine';
+import { policyConfigService } from '@/services/policyConfigService';
 
 // Request validation schema
 const createPlanSchema = z.object({
@@ -80,11 +82,42 @@ const generateIntentPlan = async (
       });
   }
   
-  // Mock policy check (would be implemented in PolicyEngine)
-  const policyCheck = {
-    status: 'allowed' as const,
-    violations: [] as string[]
+  // Policy check using PolicyEngine
+  const userPolicyConfig = await policyConfigService.loadUserPolicyConfig(userId);
+  const policyEngine = createPolicyEngine(userPolicyConfig);
+  
+  // Check daily transaction limit
+  const dailyLimit = await policyConfigService.checkDailyTransactionLimit(userId);
+  if (dailyLimit.exceeded) {
+    return {
+      ...plan,
+      policy: {
+        status: 'blocked' as const,
+        violations: [`DAILY_LIMIT_EXCEEDED: ${dailyLimit.current}/${dailyLimit.limit} transactions today`]
+      }
+    };
+  }
+  
+  // Estimate gas cost (mock - would be calculated by actual gas estimation service)
+  const totalGasEstimateUsd = steps.length * 10; // $10 per step estimate
+  
+  // Mock contract ages (would be fetched from blockchain data service)
+  const contractAges: Record<string, number> = {};
+  for (const step of steps) {
+    contractAges[step.target_address] = Math.floor(Math.random() * 365); // Random age for demo
+  }
+  
+  const policyContext: PolicyContext = {
+    userId,
+    walletScope,
+    steps,
+    totalGasEstimateUsd,
+    totalValueUsd: params.valueUsd || 0,
+    confidence: 0.85, // Mock confidence - would come from data aggregation
+    contractAges
   };
+  
+  const policyCheck = await policyEngine.checkPolicy(policyContext);
   
   // Mock simulation (would be implemented in SimulationService)
   const simulation = {
