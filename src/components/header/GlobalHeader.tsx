@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useWallet } from '@/contexts/WalletContext'
 import { useDemoMode } from '@/lib/ux/DemoModeManager'
 import { WalletChip } from './WalletChip'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export interface GlobalHeaderProps {
   className?: string
@@ -80,6 +81,9 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
             {/* Profile Menu */}
             {user ? (
               <>
+                {/* Theme Toggle */}
+                <ThemeToggle />
+                
                 <button ref={buttonRef} onClick={() => setShowMenu(!showMenu)} className="w-9 h-9 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center hover:opacity-90 transition-opacity">
                   <User className="w-4 h-4 text-white dark:text-slate-900" />
                 </button>

@@ -198,14 +198,14 @@ export function RecommendedActionsFeed({
                 key={action.id} 
                 className={`p-4 rounded-lg border transition-colors hover:bg-gray-700/30 ${getSeverityColor(action.severity)}`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className={`p-2 rounded-lg ${getSeverityColor(action.severity)}`}>
+                <div className="flex flex-col sm:flex-row items-start gap-4">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className={`p-2 rounded-lg flex-shrink-0 ${getSeverityColor(action.severity)}`}>
                       <SeverityIcon className="w-4 h-4" />
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h4 className="font-medium text-white">{action.title}</h4>
                         <Badge variant="outline" className="text-xs">
                           Score: {action.actionScore.toFixed(1)}
@@ -216,7 +216,7 @@ export function RecommendedActionsFeed({
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3 text-sm">
                         {action.impactPreview.riskDelta !== 0 && (
                           <div className="flex items-center gap-1">
-                            <Shield className="w-3 h-3 text-gray-400" />
+                            <Shield className="w-3 h-3 text-gray-400 flex-shrink-0" />
                             <span className={action.impactPreview.riskDelta < 0 ? 'text-green-400' : 'text-red-400'}>
                               {action.impactPreview.riskDelta > 0 ? '+' : ''}{(action.impactPreview.riskDelta * 100).toFixed(1)}% risk
                             </span>
@@ -225,7 +225,7 @@ export function RecommendedActionsFeed({
                         
                         {action.impactPreview.preventedLossP50Usd > 0 && (
                           <div className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3 text-gray-400" />
+                            <DollarSign className="w-3 h-3 text-gray-400 flex-shrink-0" />
                             <span className="text-green-400">
                               {formatCurrency(action.impactPreview.preventedLossP50Usd)} saved
                             </span>
@@ -234,7 +234,7 @@ export function RecommendedActionsFeed({
                         
                         {action.impactPreview.expectedGainUsd > 0 && (
                           <div className="flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3 text-gray-400" />
+                            <TrendingUp className="w-3 h-3 text-gray-400 flex-shrink-0" />
                             <span className="text-green-400">
                               {formatCurrency(action.impactPreview.expectedGainUsd)} gain
                             </span>
@@ -242,7 +242,7 @@ export function RecommendedActionsFeed({
                         )}
                         
                         <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-gray-400" />
+                          <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
                           <span className="text-gray-300">
                             {formatTime(action.impactPreview.timeEstimateSec)}
                           </span>
@@ -266,7 +266,7 @@ export function RecommendedActionsFeed({
                     </div>
                   </div>
                   
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col sm:items-end gap-2 w-full sm:w-auto sm:flex-shrink-0">
                     <div className="text-sm text-gray-400">
                       {Math.round(action.impactPreview.confidence * 100)}% confidence
                     </div>
@@ -276,7 +276,7 @@ export function RecommendedActionsFeed({
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleActionExpansion(action.id)}
-                        className="h-6 w-6 p-0"
+                        className="h-8 w-8 p-0"
                       >
                         {isExpanded ? (
                           <ChevronUp className="w-4 h-4" />
@@ -288,7 +288,7 @@ export function RecommendedActionsFeed({
                       <Button
                         size="sm"
                         disabled={freshness.degraded && action.severity === 'critical'}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
                       >
                         {action.cta.label}
                       </Button>

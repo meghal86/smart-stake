@@ -229,8 +229,8 @@ const Cockpit: React.FC = () => {
   // Show loading state while checking authentication
   if (!sessionEstablished || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+        <div className="text-slate-900 dark:text-white">Loading...</div>
       </div>
     );
   }
@@ -244,7 +244,7 @@ const Cockpit: React.FC = () => {
   const data = summary;
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       <GlobalHeader />
       {/* Three-block layout as per requirements */}
       <div className="container mx-auto px-4 py-6 space-y-6">

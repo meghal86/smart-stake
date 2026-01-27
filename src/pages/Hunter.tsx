@@ -16,6 +16,7 @@ import { useDemoMode } from '@/lib/ux/DemoModeManager';
 import { TabType } from '@/components/hunter/HunterTabs';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface Opportunity {
   id: string;
@@ -37,7 +38,8 @@ export default function Hunter() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [realTimeEnabled, setRealTimeEnabled] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const { actualTheme } = useTheme();
+  const isDarkTheme = actualTheme === 'dark';
 
   // Wallet connection status
   const { connectedWallets, activeWallet } = useWallet();
@@ -124,28 +126,35 @@ export default function Hunter() {
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-all duration-700 ${
-      isDarkTheme 
-        ? 'bg-gradient-to-br from-[#0A0E1A] to-[#111827]' 
-        : 'bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]'
-    }`}>
+    <div className="min-h-screen relative overflow-hidden transition-all duration-700 bg-white dark:bg-gradient-to-br dark:from-[#0A0E1A] dark:to-[#111827] bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]">
       <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isRefreshing}
         pullDistance={pullDistance}
         threshold={threshold}
       />
-      {/* Serene Light Theme Background - Top Glow */}
+      {/* Background Animation - Theme Aware */}
       <motion.div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none dark:block hidden"
         animate={{
-          background: isDarkTheme ? [
+          background: [
             'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
             'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
             'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
             'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
             'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
-          ] : [
+          ]
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: [0.25, 1, 0.5, 1]
+        }}
+      />
+      <motion.div
+        className="absolute inset-0 pointer-events-none dark:hidden block"
+        animate={{
+          background: [
             'radial-gradient(ellipse at 50% 0%, rgba(224,242,254,0.4) 0%, transparent 70%)',
             'radial-gradient(ellipse at 30% 20%, rgba(251,191,36,0.08) 0%, transparent 60%)',
             'radial-gradient(ellipse at 70% 30%, rgba(20,184,166,0.06) 0%, transparent 65%)',
@@ -159,34 +168,32 @@ export default function Hunter() {
           ease: [0.25, 1, 0.5, 1]
         }}
       />
-      {/* Subtle Ambient Particles */}
-      {!isDarkTheme && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 rounded-full"
-              style={{
-                background: i % 2 === 0 ? 'rgba(251,191,36,0.15)' : 'rgba(20,184,166,0.12)',
-                left: `${15 + i * 12}%`,
-                top: `${10 + (i % 3) * 25}%`
-              }}
-              animate={{
-                y: [0, -80, 0],
-                x: [0, Math.sin(i) * 30, 0],
-                opacity: [0.2, 0.5, 0.2],
-                scale: [1, 1.3, 1]
-              }}
-              transition={{
-                duration: 12 + i * 2,
-                repeat: Infinity,
-                ease: [0.25, 1, 0.5, 1],
-                delay: i * 1.5
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {/* Subtle Ambient Particles - Light Mode Only */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden dark:hidden">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 rounded-full"
+            style={{
+              background: i % 2 === 0 ? 'rgba(251,191,36,0.15)' : 'rgba(20,184,166,0.12)',
+              left: `${15 + i * 12}%`,
+              top: `${10 + (i % 3) * 25}%`
+            }}
+            animate={{
+              y: [0, -80, 0],
+              x: [0, Math.sin(i) * 30, 0],
+              opacity: [0.2, 0.5, 0.2],
+              scale: [1, 1.3, 1]
+            }}
+            transition={{
+              duration: 12 + i * 2,
+              repeat: Infinity,
+              ease: [0.25, 1, 0.5, 1],
+              delay: i * 1.5
+            }}
+          />
+        ))}
+      </div>
       <GlobalHeader />
 
       {/* Demo Mode Banner */}
@@ -194,7 +201,7 @@ export default function Hunter() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed top-16 left-0 right-0 z-40 bg-blue-600 text-white py-2 px-4 text-center text-sm font-medium shadow-lg"
+          className="fixed top-16 left-0 right-0 z-40 bg-blue-600 dark:bg-blue-600 text-white py-2 px-4 text-center text-sm font-medium shadow-lg"
         >
           <div className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,12 +269,8 @@ export default function Hunter() {
                   animate={{ opacity: 1 }}
                   className="py-8 text-center"
                 >
-                  <div className={`inline-flex items-center gap-2 text-sm ${
-                    isDarkTheme ? 'text-gray-400' : 'text-[#475569]'
-                  }`}>
-                    <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${
-                      isDarkTheme ? 'border-[#00F5A0]' : 'border-[#14B8A6]'
-                    }`} />
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin border-[#14B8A6] dark:border-[#00F5A0]" />
                     Loading more opportunities...
                   </div>
                 </motion.div>
@@ -278,9 +281,7 @@ export default function Hunter() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className={`py-8 text-center text-sm ${
-                    isDarkTheme ? 'text-gray-500' : 'text-[#64748B]'
-                  }`}
+                  className="py-8 text-center text-sm text-gray-500 dark:text-gray-500"
                 >
                   You've reached the end of the feed
                 </motion.div>
@@ -293,11 +294,7 @@ export default function Hunter() {
                 className="py-8 flex justify-center"
               >
                 <motion.button
-                  className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-medium transition-all duration-300 ${
-                    isDarkTheme 
-                      ? 'bg-gradient-to-r from-[#00F5A0]/20 to-[#7B61FF]/20 border border-[#00F5A0]/30 text-white hover:from-[#00F5A0]/30 hover:to-[#7B61FF]/30' 
-                      : 'bg-gradient-to-r from-[#14B8A6]/20 to-[#7B61FF]/20 border border-[#14B8A6]/30 text-[#1E293B] hover:from-[#14B8A6]/30 hover:to-[#7B61FF]/30'
-                  }`}
+                  className="flex items-center gap-3 px-6 py-4 rounded-2xl font-medium transition-all duration-300 bg-gradient-to-r from-[#14B8A6]/20 to-[#7B61FF]/20 dark:from-[#00F5A0]/20 dark:to-[#7B61FF]/20 border border-[#14B8A6]/30 dark:border-[#00F5A0]/30 text-slate-900 dark:text-white hover:from-[#14B8A6]/30 hover:to-[#7B61FF]/30 dark:hover:from-[#00F5A0]/30 dark:hover:to-[#7B61FF]/30"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
@@ -312,9 +309,7 @@ export default function Hunter() {
                     <Sparkles className="w-5 h-5" />
                   </motion.div>
                   <span>AI Digestion</span>
-                  <div className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    isDarkTheme ? 'bg-[#00F5A0]/20 text-[#00F5A0]' : 'bg-[#14B8A6]/20 text-[#14B8A6]'
-                  }`}>
+                  <div className="px-2 py-1 rounded-full text-xs font-bold bg-[#14B8A6]/20 dark:bg-[#00F5A0]/20 text-[#14B8A6] dark:text-[#00F5A0]">
                     Beta
                   </div>
                 </motion.button>

@@ -54,10 +54,10 @@ export default function AlphaWhaleHome() {
         pullDistance={pullDistance}
         threshold={threshold}
       />
-      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0A0E1A] to-[#111827]">
-        {/* Animated Background Glow */}
+      <div className="min-h-screen relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-[#0A0E1A] dark:to-[#111827] bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]">
+        {/* Animated Background Glow - Theme Aware */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none dark:block hidden"
           animate={{
             background: [
               'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
@@ -65,6 +65,23 @@ export default function AlphaWhaleHome() {
               'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
               'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
               'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
+            ]
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: [0.25, 1, 0.5, 1]
+          }}
+        />
+        <motion.div
+          className="absolute inset-0 pointer-events-none dark:hidden block"
+          animate={{
+            background: [
+              'radial-gradient(circle at 30% 40%, rgba(20,184,166,0.06) 0%, transparent 50%)',
+              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.04) 0%, transparent 50%)',
+              'radial-gradient(circle at 50% 30%, rgba(20,184,166,0.03) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.06) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 40%, rgba(20,184,166,0.06) 0%, transparent 50%)'
             ]
           }}
           transition={{

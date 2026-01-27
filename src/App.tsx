@@ -47,6 +47,7 @@ import CopilotPage from "./pages/hub2/Copilot";
 import PortfolioEnhanced from "./pages/PortfolioEnhanced";
 import PortfolioIntelligence from "./pages/PortfolioIntelligence";
 import Portfolio from "./pages/Portfolio";
+import PortfolioUnified from "./pages/PortfolioUnified";
 import PortfolioOverview from "./pages/portfolio/index";
 import PortfolioRisk from "./pages/portfolio/risk";
 import PortfolioGuardian from "./pages/portfolio/guardian";
@@ -192,7 +193,7 @@ const App = () => {
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="/portfolio-enhanced" element={<PortfolioOverview />} />
                   <Route path="/portfolio-intelligence" element={<PortfolioIntelligence />} />
-                  <Route path="/portfolio" element={<PortfolioOverview />} />
+                  <Route path="/portfolio" element={<PortfolioUnified />} />
                   <Route path="/portfolio/risk" element={<PortfolioRisk />} />
                   <Route path="/portfolio/guardian" element={<PortfolioGuardian />} />
                   <Route path="/portfolio/stress" element={<PortfolioStress />} />

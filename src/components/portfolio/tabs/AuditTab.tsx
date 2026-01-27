@@ -4,6 +4,7 @@ import { TransactionTimeline } from '../TransactionTimeline';
 import { ApprovalsRiskList } from '../ApprovalsRiskList';
 import { GraphLiteVisualizer } from '../GraphLiteVisualizer';
 import { PlannedVsExecutedReceipts } from '../PlannedVsExecutedReceipts';
+import { StressTestPanel } from '../StressTestPanel';
 
 interface AuditTabProps {
   walletScope: WalletScope;
@@ -134,6 +135,15 @@ export function AuditTab({ walletScope, freshness }: AuditTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Stress Test Simulator - New comprehensive feature */}
+      <StressTestPanel
+        portfolioValue={2450000} // This should come from actual portfolio data
+        onRunTest={(scenarios) => {
+          console.log('Running stress test with scenarios:', scenarios);
+          // TODO: Integrate with backend stress test API
+        }}
+      />
+
       {/* Transaction Timeline - Extended existing component */}
       <TransactionTimeline
         transactions={mockTransactions}

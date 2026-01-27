@@ -36,7 +36,7 @@ function GuardianContent() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black dark:bg-black bg-white text-white dark:text-white text-slate-900">
       <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isRefreshing}

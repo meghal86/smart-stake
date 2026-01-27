@@ -154,7 +154,7 @@ export default function Portfolio() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 pb-20">
+      <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 pb-20">
       <div className="p-6 space-y-6">
         {/* Hunter-style Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

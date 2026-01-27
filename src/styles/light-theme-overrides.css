@@ -1,0 +1,388 @@
+/**
+ * Light Theme Overrides
+ * 
+ * This file contains all light theme specific styling overrides
+ * to ensure proper visibility and contrast across the entire application.
+ */
+
+/* ============================================
+   GLOBAL LIGHT THEME STYLES
+   ============================================ */
+
+/* Page backgrounds */
+.light .min-h-screen {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+/* Card backgrounds */
+.light .bg-black,
+.light .bg-slate-950,
+.light .bg-slate-900 {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0;
+}
+
+/* Glass morphism cards */
+.light .bg-white\/5,
+.light .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Text colors */
+.light .text-white {
+  color: #0f172a !important;
+}
+
+.light .text-gray-400,
+.light .text-gray-500 {
+  color: #64748b !important;
+}
+
+.light .text-gray-600 {
+  color: #475569 !important;
+}
+
+.light .text-gray-300 {
+  color: #94a3b8 !important;
+}
+
+/* Border colors */
+.light .border-gray-700,
+.light .border-gray-800,
+.light .border-white\/10 {
+  border-color: #e2e8f0 !important;
+}
+
+/* ============================================
+   HOME PAGE LIGHT THEME
+   ============================================ */
+
+.light .bg-gradient-to-br.from-slate-950 {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+}
+
+/* ============================================
+   GUARDIAN PAGE LIGHT THEME
+   ============================================ */
+
+/* Guardian header */
+.light .text-\[\#00C9A7\] {
+  color: #00A88E !important; /* Darker mint for better contrast */
+}
+
+.light .text-\[\#7B61FF\] {
+  color: #6B51E5 !important; /* Darker violet for better contrast */
+}
+
+/* Guardian buttons */
+.light .border-\[\#00C9A7\] {
+  border-color: #00A88E !important;
+}
+
+.light .hover\:bg-\[\#00C9A7\]\/10:hover {
+  background-color: rgba(0, 168, 142, 0.1) !important;
+}
+
+.light .bg-\[\#7B61FF\] {
+  background-color: #6B51E5 !important;
+}
+
+.light .hover\:bg-\[\#7B61FF\]\/80:hover {
+  background-color: rgba(107, 81, 229, 0.9) !important;
+}
+
+/* Guardian cards */
+.light .bg-gradient-to-r.from-\[\#00C9A7\].to-\[\#7B61FF\] {
+  background: linear-gradient(to right, #00A88E, #6B51E5) !important;
+}
+
+/* ============================================
+   HUNTER PAGE LIGHT THEME
+   ============================================ */
+
+.light .bg-ocean-dark {
+  background-color: #f8fafc !important;
+}
+
+.light .bg-ocean-darker {
+  background-color: #ffffff !important;
+}
+
+/* Hunter accent colors */
+.light .text-mint {
+  color: #00A88E !important;
+}
+
+.light .text-amber {
+  color: #ea580c !important; /* Darker amber for better contrast */
+}
+
+/* ============================================
+   HARVEST PAGE LIGHT THEME
+   ============================================ */
+
+.light .bg-harvest-primary {
+  background-color: #ea580c !important;
+}
+
+.light .text-harvest-primary {
+  color: #ea580c !important;
+}
+
+.light .border-harvest-primary {
+  border-color: #ea580c !important;
+}
+
+/* ============================================
+   PORTFOLIO PAGE LIGHT THEME
+   ============================================ */
+
+.light .bg-brand-main {
+  background-color: #2563eb !important; /* Darker blue for better contrast */
+}
+
+.light .text-brand-main {
+  color: #2563eb !important;
+}
+
+/* ============================================
+   COMPONENT OVERRIDES
+   ============================================ */
+
+/* Buttons */
+.light button.bg-white\/5 {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0;
+  color: #0f172a !important;
+}
+
+.light button.bg-white\/5:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1;
+}
+
+/* Input fields */
+.light input,
+.light textarea,
+.light select {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Dropdowns and modals */
+.light .bg-slate-800,
+.light .bg-slate-900 {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0;
+}
+
+/* Tooltips */
+.light [role="tooltip"] {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #1e293b;
+}
+
+/* ============================================
+   BADGE AND TAG OVERRIDES
+   ============================================ */
+
+.light .bg-green-500\/10 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+.light .text-green-400 {
+  color: #16a34a !important;
+}
+
+.light .bg-red-500\/10 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+.light .text-red-400 {
+  color: #dc2626 !important;
+}
+
+.light .bg-yellow-500\/10 {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+}
+
+.light .text-yellow-400 {
+  color: #ca8a04 !important;
+}
+
+.light .bg-blue-500\/10 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.light .text-blue-400 {
+  color: #2563eb !important;
+}
+
+/* ============================================
+   CHART AND GRAPH OVERRIDES
+   ============================================ */
+
+.light .recharts-text {
+  fill: #0f172a !important;
+}
+
+.light .recharts-cartesian-axis-line,
+.light .recharts-cartesian-axis-tick-line {
+  stroke: #e2e8f0 !important;
+}
+
+/* ============================================
+   TABLE OVERRIDES
+   ============================================ */
+
+.light table {
+  background-color: #ffffff !important;
+}
+
+.light thead {
+  background-color: #f8fafc !important;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.light tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.light tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* ============================================
+   SCROLLBAR OVERRIDES
+   ============================================ */
+
+.light ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   SKELETON LOADER OVERRIDES
+   ============================================ */
+
+.light .animate-pulse {
+  background-color: #f1f5f9 !important;
+}
+
+/* ============================================
+   FOOTER NAVIGATION OVERRIDES
+   ============================================ */
+
+.light footer {
+  background-color: #ffffff !important;
+  border-top: 1px solid #e2e8f0;
+}
+
+.light footer button {
+  color: #64748b !important;
+}
+
+.light footer button.active,
+.light footer button[aria-current="page"] {
+  color: #00A88E !important;
+}
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+/* Ensure focus indicators are visible in light mode */
+.light *:focus-visible {
+  outline: 2px solid #00A88E !important;
+  outline-offset: 2px !important;
+}
+
+/* Improve link visibility */
+.light a {
+  color: #2563eb !important;
+}
+
+.light a:hover {
+  color: #1d4ed8 !important;
+}
+
+/* ============================================
+   SPECIFIC COMPONENT FIXES
+   ============================================ */
+
+/* Feature cards on home page */
+.light .feature-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%) !important;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Wallet cards */
+.light .wallet-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0;
+}
+
+.light .wallet-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Risk score indicators */
+.light .risk-low {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #16a34a !important;
+}
+
+.light .risk-medium {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+  color: #ca8a04 !important;
+}
+
+.light .risk-high {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #dc2626 !important;
+}
+
+/* ============================================
+   GRADIENT OVERRIDES FOR LIGHT MODE
+   ============================================ */
+
+.light .gradient-text {
+  background: linear-gradient(135deg, #00A88E 0%, #6B51E5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   SHADOW IMPROVEMENTS
+   ============================================ */
+
+.light .shadow-glass {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .shadow-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+.light .shadow-card-dark {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
