@@ -123,11 +123,7 @@
     "@vitejs/plugin-react": "^4.0.3",
     "@vitest/coverage-v8": "^4.0.8",
     "autoprefixer": "^10.4.15",
-<<<<<<< Updated upstream
-    "dotenv": "^17.2.3",
-=======
-    "cross-env": "^10.1.0",
->>>>>>> Stashed changes
+
     "eslint": "^8.45.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
