@@ -305,13 +305,13 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
 - [ ] 2. Checkpoint - Ensure shared foundations work
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 3. Module 1: Yield/Staking (DeFiLlama - REAL Data)
+- [x] 3. Module 1: Yield/Staking (DeFiLlama - REAL Data)
   - Implement DeFiLlama sync job with real API integration
   - Create yield-specific database columns
   - Implement yield API endpoints
   - _Requirements: 2.1, 2.5-2.8, 10.1-10.8_
 
-- [ ] 3.1 Create DeFiLlama sync service
+- [x] 3.1 Create DeFiLlama sync service
   - Create src/lib/hunter/sync/defillama.ts
   - Implement fetchPools() from DeFiLlama API
   - Implement filterPools() (apy > 0, tvlUsd > 100k, supported chains)
@@ -320,33 +320,33 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Implement response caching (30min TTL)
   - _Requirements: 2.1, 2.5, 2.6, 10.4_
 
-- [ ] 3.2 Write property tests for DeFiLlama sync
+- [x] 3.2 Write property tests for DeFiLlama sync
   - **Property 8: Sync Job Idempotence**
   - **Property 18: DeFiLlama Response Caching**
   - **Validates: Requirements 2.5, 10.4**
 
-- [ ] 3.3 Create yield sync API route
+- [x] 3.3 Create yield sync API route
   - Create src/app/api/sync/yield/route.ts
   - Implement CRON_SECRET validation
   - Call syncYieldOpportunities()
   - Return SyncResult (count, source, duration_ms, errors)
   - _Requirements: 2.1, 2.7, 2.8_
 
-- [ ] 3.4 Write property test for sync authorization
+- [x] 3.4 Write property test for sync authorization
   - **Property 9: Sync Job Authorization**
   - **Validates: Requirements 2.8**
 
-- [ ] 3.5 Add yield-specific database columns
+- [x] 3.5 Add yield-specific database columns
   - Migration: Add apy, tvl_usd, underlying_assets, lockup_days to opportunities
   - Create user_yield_positions table (optional for v1)
   - _Requirements: 3.1-3.7_
 
-- [ ] 3.6 Create Vercel cron configuration
+- [x] 3.6 Create Vercel cron configuration
   - Add to vercel.json: POST /api/sync/yield every 2 hours
   - Include CRON_SECRET in cron job requests
   - _Requirements: 8.1-8.5_
 
-- [ ] 3.7 Write integration test for yield sync end-to-end
+- [x] 3.7 Write integration test for yield sync end-to-end
   - Test: Sync job fetches DeFiLlama data and upserts to database
   - Test: Running sync twice doesn't create duplicates
   - Test: Sync completes within 30 seconds for 100 protocols
