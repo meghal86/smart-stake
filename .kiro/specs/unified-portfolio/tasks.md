@@ -522,13 +522,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 22: Copilot Automation Promise Prevention**
   - **Validates: Requirements 9.3**
 
-- [ ] 13. Implement progressive disclosure UI patterns [V1]
+- [x] 13. Implement progressive disclosure UI patterns [V1]
   - Add "View all" functionality to all sections
   - Implement mobile-first responsive layouts
   - Add loading, empty, error, and degraded states
   - _Requirements: 10.1, 10.2_
 
-- [ ] 12.1 Implement progressive disclosure components (REUSE-FIRST CHECK REQUIRED)
+- [x] 12.1 Implement progressive disclosure components (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/components/ux/** for existing progressive disclosure, expandable, or "View all" components
   - **BEFORE CREATING**: Search src/components/** for existing skeleton loading states or error boundary components
   - **IF EXISTS**: Extend existing components with "View all" buttons and top 5 item display
@@ -538,11 +538,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Implement error boundaries with fallback UI
   - _Requirements: 10.1, 10.2_
 
-- [ ] 12.2 Write property test for progressive disclosure
+- [x] 12.2 Write property test for progressive disclosure
   - **Property 23: Progressive Disclosure Consistency**
   - **Validates: Requirements 10.1, 10.2**
 
-- [ ] 12.3 Optimize API performance (REUSE-FIRST CHECK REQUIRED)
+- [x] 12.3 Optimize API performance (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/lib/** for existing cursor pagination, database indexing, or cache prefetching utilities
   - **BEFORE CREATING**: Search existing database migrations for portfolio-related indexes
   - **IF EXISTS**: Extend existing pagination and caching systems for portfolio endpoints
@@ -551,7 +551,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Optimize cache hit rates with prefetching
   - _Requirements: 10.3, 10.4_
 
-- [ ] 12.4 Write property test for performance requirements
+- [x] 12.4 Write property test for performance requirements
   - **Property 24: Performance Requirements**
   - **Validates: Requirements 10.3, 10.4**
 
