@@ -274,13 +274,13 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Clamp overall score between 0 and 1
   - _Requirements: 6.1-6.13_
 
-- [ ] 1.8 Write property tests for Ranking Engine
+- [x] 1.8 Write property tests for Ranking Engine
   - **Property 15: Ranking Formula Correctness**
   - **Property 16: Relevance Calculation Correctness**
   - **Property 17: Freshness Calculation Correctness**
   - **Validates: Requirements 6.1-6.9**
 
-- [ ] 1.9 Enhance existing API route with personalization
+- [x] 1.9 Enhance existing API route with personalization
   - Modify src/app/api/hunter/opportunities/route.ts
   - Add walletAddress parameter handling
   - Integrate Wallet Signals Service
@@ -369,21 +369,29 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Include requirements (chains, min_wallet_age, min_tx_count)
   - _Requirements: 2.2_
 
-- [ ] 4.3 Create airdrop sync API route (stub)
-  - Create src/app/api/sync/airdrops/route.ts
-  - Return stub response: {count: 0, source: "stub", message: "Admin seeding required"}
-  - Implement CRON_SECRET validation
-  - _Requirements: 2.2, 2.8_
+- [ ] 4.3 Create airdrop sync with multiple sources (REAL DATA)
+  - Create `src/lib/hunter/sync/airdrops.ts` as orchestrator
+  - Implement `syncAllAirdrops()` that calls:
+    1. `syncGalxeOpportunities()` → filter for airdrops
+    2. `syncDefiLlamaAirdrops()` from DeFiLlama airdrops endpoint
+    3. `getAdminAirdrops()` from admin seeds
+  - Implement deduplication by `(protocol.name + chains[0])` to avoid duplicates across sources
+  - Create `src/app/api/sync/airdrops/route.ts` that calls `syncAllAirdrops()`
+  - Return: `{count, sources: ['galxe', 'defillama', 'admin'], breakdown: {galxe: N, defillama: M, admin: K}}`
+  - _Requirements: 2.2, 21.1-21.10, 23.1-23.6_
 
 - [ ] 4.4 Add airdrop-specific API endpoints
   - Create GET /api/hunter/airdrops?wallet= (filter type='airdrop')
   - Create GET /api/hunter/airdrops/history?wallet= (user_airdrop_status)
   - _Requirements: 1.1-1.7_
 
-- [ ] 4.5 Write unit tests for airdrop eligibility
-  - Test: Claim window logic (before/during/after)
-  - Test: Snapshot date eligibility
-  - _Requirements: 5.1-5.11_
+- [ ] 4.6 Implement snapshot-based historical eligibility
+  - Create `src/lib/hunter/historical-eligibility.ts`
+  - Implement `checkSnapshotEligibility(wallet, snapshotDate, chain)`
+  - Integrate into eligibility engine: IF `airdrop.snapshot_date` exists, call historical checker
+  - Add 7-day cache for historical results
+  - Handle graceful degradation if Alchemy Transfers API not configured
+  - _Requirements: 22.1-22.7_
 
 - [ ] 5. Module 3: Quests (Admin-Seeded)
   - Create quest-specific schema
@@ -402,11 +410,22 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Include multi-step quests with progress tracking
   - _Requirements: 2.3_
 
-- [ ] 5.3 Create quest sync API route (stub)
-  - Create src/app/api/sync/quests/route.ts
-  - Return stub response: {count: 0, source: "stub", message: "Admin seeding required"}
-  - Implement CRON_SECRET validation
-  - _Requirements: 2.3, 2.8_
+- [ ] 4.5 Write unit tests for airdrop eligibility
+  - Test: Claim window logic (before/during/after)
+  - Test: Snapshot date eligibility
+  - Test: Galxe campaign classification (airdrop vs quest)
+  - Test: DeFiLlama airdrop transformation
+  - Test: Multi-source deduplication logic
+  - _Requirements: 5.1-5.11, 21.5, 22.3-22.4, 23.2_
+
+- [ ] 5.3 Create quest sync with Galxe integration (REAL DATA)
+  - Create `src/lib/hunter/sync/quests.ts` as orchestrator
+  - Implement `syncAllQuests()` that calls:
+    1. `syncGalxeOpportunities()` → filter for quests
+    2. `getAdminQuests()` from admin seeds
+  - Create `src/app/api/sync/quests/route.ts` that calls `syncAllQuests()`
+  - Return: `{count, sources: ['galxe', 'admin'], breakdown: {galxe: N, admin: M}}`
+  - _Requirements: 2.3, 21.1-21.10_
 
 - [ ] 5.4 Add quest-specific API endpoints
   - Create GET /api/hunter/quests?wallet= (filter type='quest')
@@ -638,6 +657,302 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
 - [ ] 14. Final Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
+- [ ] 15. Monetization & Business Logic
+  - Track user actions that drive revenue
+  - Implement outcome-based fee calculation
+  - Add referral reward economics
+  - _Requirements: Business model validation_
+
+- [ ] 15.1 Track monetizable user actions
+  - Log when user completes opportunity (yield deposit, airdrop claim, quest finish)
+  - Capture transaction amounts and tokens
+  - Store outcome in user_opportunity_outcomes table
+  - Link to referrer if applicable
+  - _Requirements: Revenue attribution_
+
+- [ ] 15.2 Calculate platform fees
+  - Implement fee calculation per opportunity type:
+    - Yield: 0.5-1% performance fee on earnings
+    - Airdrops: 2-5% of claimed tokens (optional)
+    - Quests: Sponsored quest rev-share
+  - Store in opportunities.platform_fee_pct field
+  - Track in user_opportunity_outcomes.platform_fee_amount
+  - _Requirements: Revenue tracking per user/opportunity_
+
+- [ ] 15.3 Implement referral economics
+  - Define referral reward tiers (e.g., 10% of referee's earnings)
+  - Calculate and credit rewards when referred user earns
+  - Cap per referrer (anti-gaming)
+  - Dashboard showing referrer earnings
+  - _Requirements: Viral growth + revenue sharing_
+
+- [ ] 15.4 Add admin revenue dashboard
+  - Create /admin/revenue route
+  - Show daily/weekly/monthly GMV (Gross Merchandise Value)
+  - Show platform revenue by module (Yield, Airdrops, etc.)
+  - Show top earners and top referrers
+  - Export to CSV for accounting
+  - _Requirements: Business visibility_
+
+- [ ] 16. Mobile-First Responsive Design
+  - Ensure all 7 modules work perfectly on mobile
+  - Test wallet connect flow on mobile browsers
+  - Optimize for small screens
+  - _Requirements: Mobile-first experience_
+
+- [ ] 16.1 Mobile E2E tests (Playwright mobile viewports)
+  - Test: All tabs render correctly on iPhone SE (375px)
+  - Test: Wallet connect flow on mobile browser
+  - Test: Eligibility cards are touch-friendly
+  - Test: Filters work on small screens
+  - Test: Rankings and badges are readable
+  - _Requirements: Mobile UX_
+
+- [ ] 16.2 Test on real devices
+  - iPhone 12/13/14 (iOS Safari)
+  - Samsung Galaxy S21+ (Chrome Android)
+  - Test wallet connect with MetaMask mobile
+  - Test wallet connect with Coinbase Wallet mobile
+  - Verify no layout breaks, buttons accessible
+  - _Requirements: Real device validation_
+
+- [ ] 16.3 Optimize mobile performance
+  - Lazy load opportunity cards
+  - Reduce initial bundle size (code splitting)
+  - Optimize images (next/image)
+  - Target <3s initial load on 4G
+  - _Requirements: Fast mobile experience_
+
+- [ ] 17. Performance Monitoring & Benchmarks
+  - Set and enforce performance SLAs
+  - Monitor real user performance
+  - Alert on degradation
+  - _Requirements: Speed = retention_
+
+- [ ] 17.1 Define performance benchmarks
+  - Hunter feed load (no wallet): <1.5s
+  - Hunter feed load (with wallet): <3s
+  - Eligibility computation: <500ms per opportunity
+  - Ranking computation: <200ms for 100 opportunities
+  - Sync jobs: <30s per module
+  - _Requirements: Performance targets_
+
+- [ ] 17.2 Add performance logging
+  - Log API route durations (p50, p95, p99)
+  - Log wallet signals fetch time
+  - Log eligibility engine time
+  - Log ranking engine time
+  - Store in analytics (e.g., Vercel Analytics, Posthog)
+  - _Requirements: Observability_
+
+- [ ] 17.3 Implement performance alerts
+  - Alert if feed load >5s (Slack/email)
+  - Alert if sync job fails 3x in a row
+  - Alert if Alchemy CU usage >80% of free tier
+  - Dashboard showing performance trends
+  - _Requirements: Proactive monitoring_
+
+- [ ] 18. Error Tracking & Monitoring (Sentry)
+  - Integrate Sentry for error tracking
+  - Track API errors, wallet errors, sync errors
+  - _Requirements: Production reliability_
+
+- [ ] 18.1 Set up Sentry
+  - Create Sentry account (free tier: 5k events/mo)
+  - Add @sentry/nextjs to project
+  - Configure sentry.client.config.ts and sentry.server.config.ts
+  - Add NEXT_PUBLIC_SENTRY_DSN to .env
+  - Test error capture
+  - _Requirements: Error visibility_
+
+- [ ] 18.2 Instrument critical paths
+  - Wrap wallet signals fetch in try/catch + Sentry
+  - Wrap eligibility engine in try/catch + Sentry
+  - Wrap sync jobs in try/catch + Sentry
+  - Add breadcrumbs for user actions
+  - Tag errors by module (yield, airdrops, etc.)
+  - _Requirements: Debugging production issues_
+
+- [ ] 18.3 Set up error alerts
+  - Slack alerts for critical errors (sync failures)
+  - Daily digest of error trends
+  - Track error rate vs user count
+  - _Requirements: Stay informed_
+
+- [ ] 19. User Retention & Engagement Analytics
+  - Track key engagement metrics
+  - Identify drop-off points
+  - Measure module adoption
+  - _Requirements: Retention optimization_
+
+- [ ] 19.1 Define key metrics
+  - DAU/MAU ratio (daily active users / monthly active users)
+  - Wallet connection rate (% of visitors who connect)
+  - Module engagement (% who use Yield, Airdrops, etc.)
+  - Opportunity completion rate
+  - Referral conversion rate
+  - _Requirements: North star metrics_
+
+- [ ] 19.2 Implement analytics tracking
+  - Track page views per module
+  - Track wallet connect events
+  - Track opportunity clicks (CTA)
+  - Track opportunity saves
+  - Track opportunity completions
+  - Track referral invites sent
+  - Use Posthog, Mixpanel, or Amplitude
+  - _Requirements: Data for decisions_
+
+- [ ] 19.3 Build retention dashboard
+  - Create /admin/analytics route
+  - Show DAU/WAU/MAU trends
+  - Show cohort retention (Week 0, 1, 2, 4)
+  - Show funnel: Visit → Connect → Click → Complete
+  - Show module adoption over time
+  - _Requirements: Visibility into growth_
+
+- [ ] 20. Competitive Benchmarking
+  - Compare Hunter features vs competitors
+  - Identify differentiation gaps
+  - Plan feature parity roadmap
+  - _Requirements: Market positioning_
+
+- [ ] 20.1 Feature comparison matrix
+  - Create docs/COMPETITIVE_ANALYSIS.md
+  - Compare vs Nansen (wallet analytics)
+  - Compare vs DexCheck (DeFi opportunities)
+  - Compare vs DeBank (portfolio + opportunities)
+  - List features Hunter has that competitors don't (strategies, referrals, personalization)
+  - List features competitors have that Hunter needs (on-chain execution, advanced filters)
+  - _Requirements: Strategic planning_
+
+- [ ] 20.2 UX benchmarking
+  - Screenshot competitor flows
+  - Time: How fast can user find + act on opportunity?
+  - Hunter target: <30s from login to opportunity CTA
+  - Competitors: 1-2 min (multi-step navigation)
+  - Document UX advantages (eligibility preview, ranking)
+  - _Requirements: UX differentiation_
+
+- [ ] 20.3 Pricing comparison
+  - Nansen: $150-2000/mo subscriptions
+  - DexCheck: Freemium + premium tiers
+  - DeBank: Free + pro ($50/mo)
+  - Hunter: Outcome-based (0-5% of earnings) = more accessible
+  - Document pricing advantage in marketing
+  - _Requirements: Go-to-market strategy_
+
+- [ ] 21. User Onboarding & Education
+  - Guide new users through Hunter features
+  - Explain eligibility, ranking, modules
+  - _Requirements: Reduce time-to-value_
+
+- [ ] 21.1 Create onboarding tour
+  - Use react-joyride or similar
+  - Step 1: Welcome → explain Hunter purpose
+  - Step 2: Connect wallet → show why (personalization)
+  - Step 3: Explore tabs → highlight each module
+  - Step 4: Click opportunity → explain eligibility
+  - Step 5: Invite friends → referral benefits
+  - Mark user as onboarded in DB
+  - _Requirements: First-run experience_
+
+- [ ] 21.2 Add explainer tooltips
+  - Tooltip on eligibility badges (what "Likely" means)
+  - Tooltip on ranking score (how it's calculated)
+  - Tooltip on each module tab (what it does)
+  - Use Headless UI Tooltip or similar
+  - _Requirements: Self-service education_
+
+- [ ] 22. Experimentation & A/B Testing
+  - Test different ranking weights
+  - Test UI variations
+  - _Requirements: Data-driven optimization_
+
+- [ ] 22.1 Set up A/B testing infrastructure
+  - Use Vercel Edge Config or LaunchDarkly
+  - Define experiments:
+    - Ranking formula (60/25/15 vs 50/30/20)
+    - Eligibility threshold (Likely >= 0.8 vs 0.7)
+    - Card layout (compact vs detailed)
+  - Randomly assign users to variants
+  - Track conversion by variant
+  - _Requirements: Optimization loops_
+
+- [ ] 23. Security Review & Hardening
+  - Audit wallet connection security
+  - Review API key handling
+  - Test for common vulnerabilities
+  - _Requirements: User trust_
+
+- [ ] 23.1 Security checklist
+  - [ ] Wallet signatures never logged
+  - [ ] API keys never exposed to client
+  - [ ] CRON_SECRET validated on all sync routes
+  - [ ] RPC URLs use HTTPS only
+  - [ ] No SQL injection (use parameterized queries)
+  - [ ] Rate limit public endpoints (1000 req/hr per IP)
+  - [ ] CORS configured (only your domain)
+  - _Requirements: Security baseline_
+
+- [ ] 24. Production Launch Checklist
+  - All 23 tasks above completed
+  - Performance benchmarks met
+  - Error rate <1%
+  - Mobile works perfectly
+  - Revenue tracking live
+  - Analytics dashboard live
+  - Security audit passed
+  - _Requirements: Go-live readiness_
+
+- [ ] 25. Comprehensive Testing Scenarios
+  - Test Galxe integration edge cases
+  - Test airdrop eligibility scenarios
+  - Test multi-source deduplication
+  - _Requirements: 24.1-24.6_
+
+- [ ] 25.1 Galxe Integration Tests
+  - **Scenario 1: Pagination Works Correctly**
+    - GIVEN Galxe has 150 active campaigns
+    - WHEN sync runs with maxPages=5
+    - THEN System fetches exactly 5 pages (250 campaigns)
+    - AND stores correct source_ref for each
+    - AND no duplicates exist
+  - **Scenario 2: Airdrop vs Quest Classification**
+    - GIVEN campaign named "Join the Airdrop Event"
+    - WHEN classifying campaign
+    - THEN type='airdrop'
+    - GIVEN campaign named "Complete Social Milestone"
+    - WHEN classifying campaign
+    - THEN type='quest'
+  - **Scenario 3: Galxe API Timeout**
+    - GIVEN Galxe API times out after 5 seconds
+    - WHEN sync runs
+    - THEN System retries once
+    - AND returns partial results if retry also fails
+    - AND logs error with campaign count fetched before timeout
+  - _Requirements: 21.3-21.4, 21.8_
+
+- [ ] 25.2 Airdrop Eligibility Tests
+  - **Scenario 4: Snapshot Eligibility - Active Before**
+    - GIVEN airdrop with snapshot_date='2025-09-15'
+    - AND wallet first tx on '2025-06-01' on required chain
+    - WHEN evaluating eligibility
+    - THEN status='likely'
+    - AND reasons includes "✓ Active before snapshot"
+  - **Scenario 5: Snapshot Eligibility - Created After**
+    - GIVEN airdrop with snapshot_date='2025-09-15'
+    - AND wallet first tx on '2025-10-01'
+    - WHEN evaluating eligibility
+    - THEN status='unlikely'
+    - AND reasons includes "No activity before snapshot (2025-09-15)"
+  - **Scenario 6: Multiple Data Sources Deduplication**
+    - GIVEN same airdrop exists in Galxe, DeFiLlama, and admin seeds
+    - WHEN sync runs for all sources
+    - THEN only one opportunity exists in database
+    - AND trust_score reflects highest-trust source (DeFiLlama > Galxe > admin)
+  - _Requirements: 22.3-22.4, 23.3_
+
 ## Notes
 
 - Tasks marked with `*` are optional property-based tests and can be skipped for faster MVP
@@ -658,6 +973,44 @@ For each of the 7 modules:
 - ✅ Has "My …" state (even if empty)
 - ✅ Logs analytics events (view/click/save/cta)
 - ✅ Has E2E test for the tab + 1 card action
+- ✅ **NEW: Revenue tracking** (completion events logged)
+- ✅ **NEW: Mobile responsive** (works on iPhone SE 375px)
+- ✅ **NEW: Performance targets met** (<3s load with wallet)
+- ✅ **NEW: Error monitoring** (Sentry instrumented)
+
+## Business Success Metrics (Added)
+
+**Revenue Tracking:**
+- Track every opportunity completion → revenue attribution
+- Platform fees: 0.5-1% yield, 2-5% airdrops, quest sponsorships
+- Referral economics: 10% of referee earnings to referrer
+- Admin dashboard: GMV, revenue by module, top earners
+
+**Mobile-First:**
+- All 7 modules work perfectly on mobile browsers
+- Wallet connect flow tested on iOS Safari + Chrome Android
+- Touch-friendly eligibility cards and filters
+- <3s initial load on 4G networks
+
+**Performance SLAs:**
+- Hunter feed (no wallet): <1.5s
+- Hunter feed (with wallet): <3s  
+- Eligibility computation: <500ms per opportunity
+- Ranking computation: <200ms for 100 opportunities
+- Sync jobs: <30s per module
+
+**Retention Optimization:**
+- DAU/MAU ratio tracking
+- Wallet connection rate (% of visitors)
+- Module engagement rates
+- Opportunity completion funnel
+- Cohort retention analysis
+
+**Competitive Advantage:**
+- <30s from login to opportunity CTA (vs 1-2min competitors)
+- Outcome-based pricing (0-5% earnings vs $150-2000/mo subscriptions)
+- Personalized eligibility preview (unique differentiator)
+- Referral-driven viral growth
 
 ## Fastest Path (Recommended Order)
 

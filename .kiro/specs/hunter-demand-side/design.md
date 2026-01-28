@@ -258,6 +258,227 @@ async function evaluateEligibility(
 - Cache results for 24 hours (enforced via query: `created_at > NOW() - INTERVAL '24 hours'`)
 - Skip computation if wallet signals are null
 
+### 2.1. Galxe Sync Service (NEW)
+
+**Location:** `src/lib/hunter/sync/galxe.ts`
+
+**Purpose:** Fetch quests and airdrops from Galxe GraphQL API with pagination.
+
+**Interface:**
+```typescript
+interface GalxeCampaign {
+  id: string;
+  name: string;
+  description: string;
+  startTime: number; // Unix timestamp
+  endTime: number | null;
+  status: 'Active' | 'Expired';
+  chain: string;
+}
+
+interface GalxeSyncResult {
+  quests: Opportunity[];
+  airdrops: Opportunity[];
+  total_fetched: number;
+  pages_fetched: number;
+}
+
+async function syncGalxeOpportunities(maxPages?: number): Promise<GalxeSyncResult>
+```
+
+**Implementation Strategy:**
+
+1. **Pagination Loop:**
+   - Start with cursor = null
+   - Make POST request to Galxe GraphQL endpoint
+   - Extract pageInfo.endCursor and pageInfo.hasNextPage
+   - Continue until hasNextPage === false OR maxPages reached
+   - Add 100ms delay between requests to avoid rate limiting
+
+2. **Classification Logic:**
+   ```typescript
+   function isAirdropCampaign(campaign: GalxeCampaign): boolean {
+     const text = (campaign.name + ' ' + campaign.description).toLowerCase();
+     
+     const airdropKeywords = ['airdrop', 'claim', 'snapshot', 'distribution'];
+     const questKeywords = ['milestone', 'complete', 'join', 'follow'];
+     
+     const hasAirdrop = airdropKeywords.some(kw => text.includes(kw));
+     const hasQuest = questKeywords.some(kw => text.includes(kw));
+     
+     return hasAirdrop && !hasQuest;
+   }
+   ```
+
+3. **Error Recovery:**
+   - Catch GraphQL errors → log + return partial results
+   - Network timeout (10s) → retry once with backoff
+   - Invalid campaign data → skip campaign, log warning
+
+4. **Cost Control:**
+   - Max 10 pages per sync (500 campaigns)
+   - 10-minute response cache
+   - Only sync 'Active' campaigns
+
+#### Deduplication Strategy
+
+When same airdrop exists in multiple sources (Galxe, DeFiLlama, admin):
+
+**Priority Order (Highest Trust First):**
+1. Admin (trust_score = 95 for curated)
+2. DeFiLlama (trust_score = 90)
+3. Galxe (trust_score = 85)
+
+**Deduplication Algorithm:**
+```typescript
+function deduplicateAirdrops(
+  galxe: Opportunity[],
+  defillama: Opportunity[],
+  admin: Opportunity[]
+): Opportunity[] {
+  const map = new Map<string, Opportunity>();
+  
+  // Process in reverse priority order
+  for (const opp of galxe) {
+    const key = `${opp.protocol.name}-${opp.chains[0]}`;
+    map.set(key, opp);
+  }
+  
+  // DeFiLlama overrides Galxe
+  for (const opp of defillama) {
+    const key = `${opp.protocol.name}-${opp.chains[0]}`;
+    if (!map.has(key) || map.get(key)!.source === 'galxe') {
+      map.set(key, opp);
+    }
+  }
+  
+  // Admin overrides both (highest trust)
+  for (const opp of admin) {
+    const key = `${opp.protocol.name}-${opp.chains[0]}`;
+    map.set(key, opp); // Always use admin if exists
+  }
+  
+  return Array.from(map.values());
+}
+```
+
+**Example:**
+- Galxe has "Arbitrum Airdrop" (trust=85)
+- DeFiLlama has "Arbitrum Airdrop" (trust=90)
+- Admin has "Arbitrum Airdrop" (trust=95)
+- **Result:** Keep admin version only
+
+### 2.2. Historical Eligibility Checker (NEW)
+
+**Location:** `src/lib/hunter/historical-eligibility.ts`
+
+**Purpose:** Check if wallet was active before airdrop snapshot date.
+
+**Interface:**
+```typescript
+async function checkSnapshotEligibility(
+  walletAddress: string,
+  snapshotDate: string, // ISO8601
+  requiredChain: string
+): Promise<{
+  was_active: boolean;
+  first_tx_date: string | null;
+  reason: string;
+}>
+```
+
+**Implementation:**
+1. Convert snapshot date to block number
+2. Call Alchemy Transfers API with block range
+3. Filter transfers by chain
+4. Return earliest transaction date
+5. Cache result for 7 days
+
+### 2.3. Galxe Quest Parser (NEW)
+
+**Location:** `src/lib/action-center/adapters/galxe-quest-parser.ts`
+
+**Purpose:** Parse Galxe campaign description into executable widget steps.
+
+**Implementation:**
+
+Galxe descriptions contain numbered task lists in markdown. Parse them into steps:
+
+**Example Galxe Description:**
+```
+Join our community!
+1. Follow @Protocol on Twitter
+2. Join Discord: https://discord.gg/protocol
+3. Share campaign on Twitter
+```
+
+**Parser Logic:**
+```typescript
+export function parseGalxeQuestSteps(description: string): WidgetStep[] {
+  const steps: WidgetStep[] = [];
+  
+  // Regex to find numbered lists (1. Task, 2. Task, etc.)
+  const taskPattern = /^\s*(\d+)[.)]\s*(.+)$/gm;
+  let match;
+  
+  while ((match = taskPattern.exec(description)) !== null) {
+    const stepNumber = parseInt(match[1]);
+    const taskText = match[2].trim();
+    
+    // Extract URLs from task text
+    const urlMatch = taskText.match(/(https?:\/\/[^\s]+)/);
+    const url = urlMatch ? urlMatch[0] : null;
+    
+    // Classify step type
+    let evidenceType: 'checkbox' | 'url' | 'txhash';
+    if (taskText.toLowerCase().includes('share') || 
+        taskText.toLowerCase().includes('tweet')) {
+      evidenceType = 'url'; // User must paste tweet URL
+    } else {
+      evidenceType = 'checkbox'; // Simple "Done" confirmation
+    }
+    
+    steps.push({
+      step_id: `step-${stepNumber}`,
+      type: 'widget',
+      title: taskText,
+      description: url ? `Click to open: ${url}` : 'Complete this task',
+      metadata: {
+        url,
+        evidence_required: evidenceType,
+      },
+    });
+  }
+  
+  // Add final verification step
+  steps.push({
+    step_id: `step-verify`,
+    type: 'verification',
+    title: 'Verify completion on Galxe',
+    description: 'We\'ll check if you completed all tasks',
+    metadata: {
+      galxe_campaign_id: campaign.id,
+    },
+  });
+  
+  return steps;
+}
+```
+
+**Fallback for Unstructured Descriptions:**
+If no numbered list found:
+- Create single widget step with full description
+- Add verification step
+- Let user manually confirm
+
+**Testing:**
+- **Test Case 1: Numbered List**
+  - Input: "1. Follow Twitter\n2. Join Discord"
+  - Output: 2 widget steps + 1 verification step
+- **Test Case 2: No Structure**
+  - Input: "Complete tasks to earn rewards"
+  - Output: 1 generic widget step + 1 verification step
+
 ### 3. Ranking Engine (NEW)
 
 **Location:** `src/lib/hunter/ranking-engine.ts`

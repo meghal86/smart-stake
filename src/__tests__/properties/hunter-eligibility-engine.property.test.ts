@@ -14,7 +14,7 @@ import type { WalletSignals } from '@/lib/hunter/wallet-signals';
 import type { Opportunity } from '@/lib/hunter/types';
 
 // Helper to generate valid dates (avoids invalid date errors)
-const validDateGenerator = () => fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') });
+const validDateGenerator = () => fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime()));
 
 describe('Hunter Demand-Side: Eligibility Engine', () => {
   beforeEach(async () => {

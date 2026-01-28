@@ -15,6 +15,7 @@ import type { EligibilityResult } from './eligibility-engine';
 export interface RankingScores {
   overall: number; // 0-1
   relevance: number; // 0-1
+  trust: number; // 0-1
   freshness: number; // 0-1
 }
 
@@ -117,21 +118,35 @@ function calculateFreshness(opportunity: Opportunity): number {
 
   // Requirement 6.8: Calculate urgency boost for opportunities with end_date
   if (opportunity.end_date) {
-    const endDate = new Date(opportunity.end_date);
-    const hoursToEnd = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
-    // urgency = max(0, 1 - hours_to_end / 168)
-    // 168 hours = 7 days
-    urgency = Math.max(0, 1 - hoursToEnd / 168);
+    try {
+      const endDate = new Date(opportunity.end_date);
+      if (!isNaN(endDate.getTime())) {
+        const hoursToEnd = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        
+        // urgency = max(0, 1 - hours_to_end / 168)
+        // 168 hours = 7 days
+        urgency = Math.max(0, 1 - hoursToEnd / 168);
+      }
+    } catch (error) {
+      console.warn('Invalid end_date format:', opportunity.end_date);
+    }
   }
 
   // Requirement 6.9: Calculate recency for all opportunities
-  const createdAt = new Date(opportunity.created_at);
-  const daysSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-  
-  // recency = max(0, 1 - days_since_created / 30)
-  // 30 days window
-  recency = Math.max(0, 1 - daysSinceCreated / 30);
+  try {
+    const createdAt = new Date(opportunity.created_at);
+    if (!isNaN(createdAt.getTime())) {
+      const daysSinceCreated = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      
+      // recency = max(0, 1 - days_since_created / 30)
+      // 30 days window
+      recency = Math.max(0, 1 - daysSinceCreated / 30);
+    } else {
+      console.warn('Invalid created_at format:', opportunity.created_at);
+    }
+  } catch (error) {
+    console.warn('Error parsing created_at:', opportunity.created_at, error);
+  }
 
   // Requirement 6.10: Freshness is max of urgency and recency
   const freshness = Math.max(urgency, recency);
@@ -159,12 +174,43 @@ export function calculateRanking(
   walletSignals: WalletSignals,
   userHistory: UserHistory = {}
 ): RankingScores {
+  // Validate inputs
+  if (!opportunity || !eligibility || !walletSignals) {
+    throw new Error('Missing required parameters for ranking calculation');
+  }
+
   // Calculate component scores
   const relevance = calculateRelevance(opportunity, eligibility, walletSignals, userHistory);
   const freshness = calculateFreshness(opportunity);
   
-  // Normalize trust score to [0, 1]
-  const trust = opportunity.trust_score / 100;
+  // Normalize trust score to [0, 1] with fallback
+  const trustScore = opportunity.trust_score ?? 0;
+  const trust = clamp(trustScore / 100);
+
+  // Validate calculated scores
+  if (isNaN(relevance) || isNaN(freshness) || isNaN(trust)) {
+    console.warn('Invalid scores calculated:', { 
+      relevance, 
+      freshness, 
+      trust, 
+      trustScore,
+      opportunity_id: opportunity.id 
+    });
+    
+    // Provide fallback values for invalid scores
+    const safeRelevance = isNaN(relevance) ? 0 : relevance;
+    const safeFreshness = isNaN(freshness) ? 0 : freshness;
+    const safeTrust = isNaN(trust) ? 0 : trust;
+    
+    const safeOverall = 0.60 * safeRelevance + 0.25 * safeTrust + 0.15 * safeFreshness;
+    
+    return {
+      overall: clamp(safeOverall),
+      relevance: safeRelevance,
+      trust: safeTrust,
+      freshness: safeFreshness,
+    };
+  }
 
   // Requirement 6.1: Calculate overall score with weights
   // 0.60 × relevance + 0.25 × trust + 0.15 × freshness
@@ -177,6 +223,7 @@ export function calculateRanking(
   return {
     overall: clampedOverall,
     relevance,
+    trust,
     freshness,
   };
 }

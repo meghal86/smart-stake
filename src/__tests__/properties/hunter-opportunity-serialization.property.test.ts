@@ -100,8 +100,8 @@ const opportunityGenerator = fc.record({
   chains: fc.array(fc.constantFrom('ethereum', 'base', 'arbitrum', 'optimism', 'polygon'), { minLength: 1, maxLength: 5 }),
   
   // Rewards
-  reward_min: fc.option(fc.float({ min: 0, max: 100000 })),
-  reward_max: fc.option(fc.float({ min: 0, max: 100000 })),
+  reward_min: fc.option(fc.float({ min: 0, max: 100000 }).filter(n => !isNaN(n))),
+  reward_max: fc.option(fc.float({ min: 0, max: 100000 }).filter(n => !isNaN(n))),
   reward_currency: fc.constantFrom('USD', 'ETH', 'POINTS'),
   reward_confidence: fc.constantFrom('confirmed', 'estimated', 'speculative'),
   
@@ -115,8 +115,8 @@ const opportunityGenerator = fc.record({
   audited: fc.boolean(),
   
   // Timeline
-  start_date: fc.date().map(d => d.toISOString()),
-  end_date: fc.option(fc.date().map(d => d.toISOString())),
+  start_date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
+  end_date: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString())),
   urgency: fc.constantFrom('high', 'medium', 'low'),
   
   // Requirements
@@ -140,9 +140,9 @@ const opportunityGenerator = fc.record({
   
   // Live stats
   participants: fc.option(fc.integer({ min: 0, max: 1000000 })),
-  apr: fc.option(fc.float({ min: 0, max: 100 })),
-  apy: fc.option(fc.float({ min: 0, max: 100 })),
-  tvl_usd: fc.option(fc.float({ min: 0, max: 1000000000 })),
+  apr: fc.option(fc.float({ min: 0, max: 100 }).filter(n => !isNaN(n))),
+  apy: fc.option(fc.float({ min: 0, max: 100 }).filter(n => !isNaN(n))),
+  tvl_usd: fc.option(fc.float({ min: 0, max: 1000000000 }).filter(n => !isNaN(n))),
   
   // Media
   thumbnail: fc.option(fc.webUrl()),
@@ -153,14 +153,14 @@ const opportunityGenerator = fc.record({
   source: fc.option(fc.constantFrom('defillama', 'layer3', 'galxe', 'admin')),
   source_ref: fc.option(fc.string({ minLength: 5, maxLength: 50 })),
   protocol_address: fc.option(fc.constant('0x' + 'a'.repeat(40))),
-  last_synced_at: fc.option(fc.date().map(d => d.toISOString())),
+  last_synced_at: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString())),
   
   // Module-specific fields
   underlying_assets: fc.option(fc.array(fc.string(), { maxLength: 5 })),
   lockup_days: fc.option(fc.integer({ min: 0, max: 365 })),
-  snapshot_date: fc.option(fc.date().map(d => d.toISOString())),
-  claim_start: fc.option(fc.date().map(d => d.toISOString())),
-  claim_end: fc.option(fc.date().map(d => d.toISOString())),
+  snapshot_date: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString())),
+  claim_start: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString())),
+  claim_end: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString())),
   airdrop_category: fc.option(fc.string()),
   quest_steps: fc.option(fc.jsonValue()),
   quest_difficulty: fc.option(fc.constantFrom('easy', 'medium', 'hard')),
@@ -172,12 +172,12 @@ const opportunityGenerator = fc.record({
   issuer_name: fc.option(fc.string()),
   jurisdiction: fc.option(fc.string()),
   kyc_required: fc.option(fc.boolean()),
-  min_investment: fc.option(fc.float({ min: 0, max: 1000000 })),
+  min_investment: fc.option(fc.float({ min: 0, max: 1000000 }).filter(n => !isNaN(n))),
   liquidity_term_days: fc.option(fc.integer({ min: 0, max: 365 })),
   rwa_type: fc.option(fc.string()),
   
-  created_at: fc.date().map(d => d.toISOString()),
-  updated_at: fc.date().map(d => d.toISOString())
+  created_at: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString()),
+  updated_at: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') }).filter(d => !isNaN(d.getTime())).map(d => d.toISOString())
 });
 
 /**
@@ -210,6 +210,12 @@ function opportunitiesEqual(opp1: Opportunity, opp2: Opportunity): boolean {
     if (val1 === undefined && val2 === undefined) continue;
     if (val1 === null || val2 === null) return false;
     if (val1 === undefined || val2 === undefined) return false;
+    
+    // Handle NaN values (JSON.stringify converts NaN to null)
+    if (typeof val1 === 'number' && typeof val2 === 'number') {
+      if (isNaN(val1) && isNaN(val2)) continue;
+      if (isNaN(val1) || isNaN(val2)) return false;
+    }
     
     // Handle arrays
     if (Array.isArray(val1) && Array.isArray(val2)) {
