@@ -345,3 +345,184 @@ This spec defines the **complete implementation** for all 7 modules without rege
 5. FOR EACH module, THE System SHALL provide "My [Module]" state tracking (even if empty)
 6. FOR EACH module, THE System SHALL log analytics events (view, click, save, CTA)
 7. FOR EACH module, THE System SHALL have at least one E2E test covering tab load and card interaction
+
+### Requirement 21: Galxe API Integration (FREE Public GraphQL)
+
+**User Story:** As a user, I want quests and airdrops from Galxe automatically synced, so that I see real opportunities without manual seeding.
+
+#### Acceptance Criteria
+
+1. WHEN the Galxe sync job runs, THE System SHALL fetch campaigns from `https://graphigo.prd.galaxy.eco/query` using GraphQL POST request
+2. THE System SHALL NOT require API key for Galxe GraphQL endpoint (public access)
+3. WHEN fetching campaigns, THE System SHALL use pagination with `first: 50` and `after: cursor` pattern
+4. WHEN fetching campaigns, THE System SHALL continue pagination until `pageInfo.hasNextPage === false` OR maximum 10 pages reached
+5. WHEN processing campaigns, THE System SHALL classify each as 'airdrop' OR 'quest' based on keyword heuristics:
+   - Airdrop keywords: 'airdrop', 'claim', 'snapshot', 'distribution', 'token drop', 'retroactive'
+   - Quest keywords: 'milestone', 'complete tasks', 'join', 'follow', 'social', 'quest'
+   - Default to 'quest' if both or neither keyword present
+6. WHEN transforming Galxe campaigns, THE System SHALL map:
+   - `id` → `source_ref`
+   - `name` → `title`
+   - `description` → `description`
+   - `startTime` (unix timestamp) → `starts_at` (ISO8601)
+   - `endTime` (unix timestamp or null) → `ends_at` (ISO8601 or null)
+   - `status` ('Active' | 'Expired') → `status` ('published' | 'expired')
+   - `chain` → `chains` array (mapped to lowercase)
+7. WHEN sync completes, THE System SHALL upsert by `(source='galxe', source_ref=campaign.id)`
+8. THE System SHALL complete Galxe sync within 10 seconds for 5 pages (~250 campaigns)
+9. THE System SHALL cache Galxe GraphQL responses for 10 minutes
+10. THE System SHALL provide GET `/api/sync/galxe` route with CRON_SECRET validation
+
+#### Chain Mapping
+- `MATIC` → `polygon`
+- `BSC` → `bsc`
+- `BASE` → `base`
+- `ETHEREUM` → `ethereum`
+- `GRAVITY_ALPHA` → `gravity`
+- `ARBITRUM` → `arbitrum`
+- `OPTIMISM` → `optimism`
+- `SONEIUM` → `soneium`
+
+#### GraphQL Query Contract
+```graphql
+query GetCampaigns($after: String) {
+  campaigns(input: {first: 50, after: $after}) {
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+    list {
+      id
+      name
+      description
+      startTime
+      endTime
+      status
+      chain
+    }
+  }
+}
+```
+
+#### Error Handling
+- IF Galxe API returns 429 (rate limit) → exponential backoff (1s, 2s, 4s)
+- IF Galxe API timeout → log error, return partial results
+- IF campaign missing required fields → skip that campaign, continue processing others
+
+### Requirement 22: Airdrop Historical Eligibility (Snapshot-Based)
+
+**User Story:** As a user, I want airdrops with snapshot dates to check if I was active BEFORE the snapshot, so that I don't see airdrops I'm not eligible for.
+
+#### Acceptance Criteria
+
+1. WHEN an airdrop has `snapshot_date` field populated, THE System SHALL check if wallet had activity BEFORE that date
+2. WHEN checking historical eligibility, THE System SHALL use Alchemy Transfers API with date range filter:
+   - `fromBlock: '0x0'`
+   - `toBlock: <block_number_at_snapshot_date>`
+   - `category: ['external', 'token', 'internal']`
+3. WHEN wallet has NO transactions before snapshot, THE System SHALL set eligibility status to 'unlikely' with reason "No activity before snapshot (YYYY-MM-DD)"
+4. WHEN wallet HAS transactions before snapshot on required chain, THE System SHALL add +0.3 to eligibility score with reason "✓ Active before snapshot"
+5. WHEN snapshot_date is NULL or missing, THE System SHALL use current wallet signals (no historical check)
+6. THE System SHALL cache historical eligibility results for 7 days (snapshots don't change)
+7. WHEN Alchemy Transfers API is not configured, THE System SHALL skip historical check and return 'maybe' status with reason "Cannot verify snapshot activity"
+
+#### Snapshot Date to Block Conversion
+- Use Alchemy or Etherscan API: `getBlockByTimestamp(snapshot_date)`
+- Cache block conversions indefinitely (immutable mapping)
+
+### Requirement 23: DeFiLlama Airdrops Data Source
+
+**User Story:** As a user, I want airdrops from DeFiLlama automatically synced, so that I see verified airdrop opportunities.
+
+#### Acceptance Criteria
+
+1. THE System SHALL fetch airdrops from `https://api.llama.fi/airdrops` (no authentication required)
+2. WHEN transforming DeFiLlama airdrops, THE System SHALL map:
+   - `id` → `source_ref`
+   - `name` + `symbol` → `title` (format: "{name} ({symbol}) Airdrop")
+   - `description` → `description`
+   - `chain` → `chains` array
+   - `claimStart` (unix) → `claim_start`
+   - `claimEnd` (unix) → `claim_end`
+   - `claimUrl` → `url`
+3. THE System SHALL set `trust_score = 80` for all DeFiLlama airdrops (trusted source)
+4. THE System SHALL upsert by `(source='defillama', source_ref=airdrop.id)`
+5. THE System SHALL provide GET `/api/sync/defillama-airdrops` route with CRON_SECRET validation
+6. THE System SHALL cache DeFiLlama airdrops response for 1 hour
+
+### Requirement 24: Comprehensive Testing Scenarios
+
+#### Galxe Integration Tests
+
+**Scenario 1: Pagination Works Correctly**
+- GIVEN Galxe has 150 active campaigns
+- WHEN sync runs with maxPages=5
+- THEN System fetches exactly 5 pages (250 campaigns)
+- AND stores correct source_ref for each
+- AND no duplicates exist
+
+**Scenario 2: Airdrop vs Quest Classification**
+- GIVEN campaign named "Join the Airdrop Event"
+- WHEN classifying campaign
+- THEN type='airdrop'
+- GIVEN campaign named "Complete Social Milestone"
+- WHEN classifying campaign
+- THEN type='quest'
+
+**Scenario 3: Galxe API Timeout**
+- GIVEN Galxe API times out after 5 seconds
+- WHEN sync runs
+- THEN System retries once
+- AND returns partial results if retry also fails
+- AND logs error with campaign count fetched before timeout
+
+#### Airdrop Eligibility Tests
+
+**Scenario 4: Snapshot Eligibility - Active Before**
+- GIVEN airdrop with snapshot_date='2025-09-15'
+- AND wallet first tx on '2025-06-01' on required chain
+- WHEN evaluating eligibility
+- THEN status='likely'
+- AND reasons includes "✓ Active before snapshot"
+
+**Scenario 5: Snapshot Eligibility - Created After**
+- GIVEN airdrop with snapshot_date='2025-09-15'
+- AND wallet first tx on '2025-10-01'
+- WHEN evaluating eligibility
+- THEN status='unlikely'
+- AND reasons includes "No activity before snapshot (2025-09-15)"
+
+**Scenario 6: Multiple Data Sources Deduplication**
+- GIVEN same airdrop exists in Galxe, DeFiLlama, and admin seeds
+- WHEN sync runs for all sources
+- THEN only one opportunity exists in database
+- AND trust_score reflects highest-trust source (DeFiLlama > Galxe > admin)
+
+### Requirement 25: Hunter → Action Center Integration (Handoff Contract)
+
+**User Story:** As a user, I want to execute opportunities from Hunter, so that Action Center can safely execute the steps.
+
+#### Acceptance Criteria
+
+1. WHEN a user clicks "Start Quest" or "Claim Airdrop" on Hunter card, THE System SHALL invoke Action Center with opportunity context
+2. THE Hunter SHALL pass these fields to Action Center:
+   - `opportunity_id` (UUID from Hunter opportunities table)
+   - `opportunity_type` ('airdrop' | 'quest' | 'yield' | 'staking' | 'nft_mint')
+   - `opportunity_data` (full opportunity object)
+   - `wallet_address` (connected wallet)
+   - `eligibility_status` ('likely' | 'maybe' | 'unlikely' from Hunter)
+3. THE Action Center SHALL be responsible for:
+   - Building execution plan (see Action Center requirements.md)
+   - Running safety checks (Guardian, simulation)
+   - Executing steps (native_tx, widget, verification)
+   - Tracking completion state
+4. WHEN Action Center session completes with status='completed', THE System SHALL update Hunter's `user_opportunity_state.status='completed'`
+5. THE Hunter feed SHALL reflect completion status via badge or "Completed" indicator
+
+#### Integration Boundary
+
+**Hunter owns:** Discovery, ranking, eligibility preview  
+**Action Center owns:** Execution, safety, transaction management  
+**Contract:** Hunter passes opportunity → Action Center executes → Hunter shows completion
+
+**Full execution details:** See `action-center-requirements.md` for adapter specifications (QuestPointsAdapter, AirdropClaimAdapter, etc.)

@@ -5,7 +5,7 @@
  * Requirements: 5.1-5.11
  */
 
-import { createClient } from '@/integrations/supabase/server';
+import { createServiceClient } from '@/integrations/supabase/service';
 import type { WalletSignals } from './wallet-signals';
 import type { Opportunity } from './types';
 
@@ -245,7 +245,7 @@ async function checkCache(
   opportunityId: string
 ): Promise<EligibilityResult | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // Query cache with TTL check (24 hours)
     const { data, error } = await supabase
@@ -297,7 +297,7 @@ async function storeInCache(
   result: EligibilityResult
 ): Promise<void> {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // Upsert into cache
     const { error } = await supabase
@@ -406,7 +406,7 @@ export async function batchEvaluateEligibility(
  */
 export async function clearEligibilityCache(walletAddress: string): Promise<void> {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     await supabase
       .from('eligibility_cache')
