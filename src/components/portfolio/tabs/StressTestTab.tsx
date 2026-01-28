@@ -220,11 +220,18 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
   }, []);
 
   const handleRunStressTest = async () => {
-    console.log('🧪 Starting stress test...');
-    console.log('📊 Portfolio Value:', formatCurrency(portfolioValue));
-    console.log('📊 Current scenarios:', scenarios);
+    console.log('🧪 [StressTestTab] Starting stress test...');
+    console.log('📊 [StressTestTab] Portfolio Value:', formatCurrency(portfolioValue));
+    console.log('📊 [StressTestTab] Current scenarios:', scenarios);
+    console.log('📊 [StressTestTab] isRunning before:', isRunning);
+    
+    if (isRunning) {
+      console.warn('⚠️ [StressTestTab] Test already running, ignoring click');
+      return;
+    }
     
     setIsRunning(true);
+    console.log('📊 [StressTestTab] isRunning set to true');
     
     try {
       // Simulate stress test calculation with realistic delay
@@ -255,14 +262,38 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
         var95: var95.toFixed(2)
       });
       
-      // Calculate monetary impacts
-      const worstCaseImpact = portfolioValue * (worstCase / 100);
-      const expectedLossImpact = portfolioValue * (avgLoss / 100);
-      const var95Impact = portfolioValue * (var95 / 100);
+      // Calculate resulting portfolio values (not just impacts)
+      // This shows what the portfolio will be worth after the scenario
+      const worstCaseValue = portfolioValue * (1 + worstCase / 100);
+      const expectedLossValue = portfolioValue * (1 + avgLoss / 100);
+      const var95Value = portfolioValue * (1 + var95 / 100);
+      const bestCaseValue = portfolioValue * (1 + bestCase / 100);
       
       // Calculate recovery time based on historical market recovery rates
-      // Assuming 5% monthly recovery rate for moderate losses
-      const recoveryMonths = Math.abs(Math.ceil(avgLoss / 5));
+      // More realistic recovery rates based on loss severity
+      const getRecoveryMonths = (lossPercent: number) => {
+        const absLoss = Math.abs(lossPercent);
+        
+        // Based on historical crypto market recovery patterns
+        if (absLoss < 10) {
+          // Minor correction: 3-4% monthly recovery
+          return Math.ceil(absLoss / 3.5);
+        } else if (absLoss < 25) {
+          // Moderate correction: 2-3% monthly recovery
+          return Math.ceil(absLoss / 2.5);
+        } else if (absLoss < 40) {
+          // Significant correction: 1.5-2% monthly recovery
+          return Math.ceil(absLoss / 1.75);
+        } else if (absLoss < 60) {
+          // Severe correction: 1-1.5% monthly recovery
+          return Math.ceil(absLoss / 1.25);
+        } else {
+          // Catastrophic: 0.5-1% monthly recovery
+          return Math.ceil(absLoss / 0.75);
+        }
+      };
+      
+      const recoveryMonths = getRecoveryMonths(avgLoss);
       
       // Generate dynamic recommendations based on scenario severity
       const recommendations: string[] = [];
@@ -306,10 +337,10 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
       }
       
       const newResults = {
-        worstCase: worstCaseImpact,
-        expectedLoss: expectedLossImpact,
-        var95: var95Impact,
-        bestCase: portfolioValue * (bestCase / 100),
+        worstCase: worstCaseValue,
+        expectedLoss: expectedLossValue,
+        var95: var95Value,
+        bestCase: bestCaseValue,
         recoveryMonths,
         riskLevel: avgLoss < -40 ? 'CRITICAL' : avgLoss < -25 ? 'HIGH' : avgLoss < -10 ? 'MODERATE' : avgLoss < 0 ? 'LOW' : 'POSITIVE',
         volatility: stdDev,
@@ -317,23 +348,34 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
       };
       
       console.log('✅ Results calculated:', {
-        worstCase: formatCurrency(newResults.worstCase),
-        expectedLoss: formatCurrency(newResults.expectedLoss),
-        var95: formatCurrency(newResults.var95),
+        portfolioValue: formatCurrency(portfolioValue),
+        worstCaseValue: formatCurrency(newResults.worstCase),
+        worstCaseLoss: formatCurrency(portfolioValue - newResults.worstCase),
+        expectedLossValue: formatCurrency(newResults.expectedLoss),
+        expectedLoss: formatCurrency(portfolioValue - newResults.expectedLoss),
+        var95Value: formatCurrency(newResults.var95),
+        var95Loss: formatCurrency(portfolioValue - newResults.var95),
+        bestCaseValue: formatCurrency(newResults.bestCase),
+        bestCaseGain: formatCurrency(newResults.bestCase - portfolioValue),
         recoveryMonths: newResults.recoveryMonths,
-        riskLevel: newResults.riskLevel
+        riskLevel: newResults.riskLevel,
+        volatility: `${newResults.volatility.toFixed(2)}%`
       });
       
       setResults(newResults);
       setView('results');
       
-      console.log('✅ Stress test completed successfully');
+      console.log('✅ [StressTestTab] Stress test completed successfully');
+      console.log('📊 [StressTestTab] Results:', newResults);
+      console.log('📊 [StressTestTab] View changed to: results');
     } catch (error) {
-      console.error('❌ Error running stress test:', error);
+      console.error('❌ [StressTestTab] Error running stress test:', error);
+      console.error('❌ [StressTestTab] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       // Show error to user
-      alert('Failed to run stress test. Please try again.');
+      alert(`Failed to run stress test: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     } finally {
       setIsRunning(false);
+      console.log('📊 [StressTestTab] isRunning set to false');
     }
   };
 
@@ -492,11 +534,19 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
 
           {/* Run Button */}
           <motion.button
-            onClick={handleRunStressTest}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🎯 Button clicked - event triggered');
+              handleRunStressTest();
+            }}
             disabled={isRunning}
-            className="w-full bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-[0_10px_30px_rgba(0,245,160,0.35)] hover:shadow-[0_15px_40px_rgba(0,245,160,0.45)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="run-stress-test-button"
+            className="w-full bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-[0_10px_30px_rgba(0,245,160,0.35)] hover:shadow-[0_15px_40px_rgba(0,245,160,0.45)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative z-10 pointer-events-auto"
             whileHover={{ scale: isRunning ? 1 : 1.02, y: isRunning ? 0 : -2 }}
             whileTap={{ scale: isRunning ? 1 : 0.98 }}
+            type="button"
+            aria-label="Run stress test simulation"
           >
             {isRunning ? (
               <span className="flex items-center justify-center gap-2">
@@ -565,15 +615,15 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
                 <p className="text-[10px] sm:text-xs text-gray-300 uppercase tracking-wide font-medium">Worst Case</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-red-400">{formatCurrency(results.worstCase)}</p>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-2">Maximum potential loss</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-2">Portfolio value in worst scenario</p>
             </div>
             <div className="bg-yellow-500/10 border border-yellow-500/30 backdrop-blur-md rounded-3xl p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
-                <p className="text-[10px] sm:text-xs text-gray-300 uppercase tracking-wide font-medium">Expected Loss</p>
+                <p className="text-[10px] sm:text-xs text-gray-300 uppercase tracking-wide font-medium">Expected Value</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-yellow-400">{formatCurrency(results.expectedLoss)}</p>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-2">Average scenario impact</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-2">Average scenario outcome</p>
             </div>
             {results.var95 && (
               <div className="bg-orange-500/10 border border-orange-500/30 backdrop-blur-md rounded-3xl p-4 sm:p-6">
@@ -582,7 +632,7 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
                   <p className="text-[10px] sm:text-xs text-gray-300 uppercase tracking-wide font-medium">VaR (95%)</p>
                 </div>
                 <p className="text-2xl sm:text-3xl font-bold text-orange-400">{formatCurrency(results.var95)}</p>
-                <p className="text-[10px] sm:text-xs text-gray-400 mt-2">Value at Risk (95% confidence)</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-2">Portfolio value at 95% confidence</p>
               </div>
             )}
             <div className="bg-[#00F5A0]/10 border border-[#00F5A0]/30 backdrop-blur-md rounded-3xl p-4 sm:p-6">

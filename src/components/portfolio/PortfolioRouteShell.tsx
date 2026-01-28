@@ -14,6 +14,7 @@ import { useWalletSwitching } from '@/hooks/useWalletSwitching';
 import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
+import { useTheme } from '@/contexts/ThemeContext';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -28,6 +29,8 @@ import {
 } from 'lucide-react';
 
 export function PortfolioRouteShell() {
+  const { actualTheme } = useTheme();
+  const isDark = actualTheme === 'dark';
   const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'audit' | 'stress'>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [walletScope, setWalletScope] = useState<WalletScope>({ mode: 'all_wallets' });
@@ -122,7 +125,14 @@ export function PortfolioRouteShell() {
   const CurrentTabComponent = tabs.find(tab => tab.id === activeTab)?.component || OverviewTab;
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0A0E1A] dark:to-[#111827]">
+    <div 
+      className="min-h-screen relative overflow-hidden"
+      style={{ 
+        background: isDark 
+          ? 'linear-gradient(135deg, #0A0F1F 0%, #0D1B3A 100%)' 
+          : 'linear-gradient(135deg, #F0F6FF 0%, #E0EFFF 100%)'
+      }}
+    >
       <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isRefreshing}
@@ -130,22 +140,27 @@ export function PortfolioRouteShell() {
         threshold={threshold}
       />
 
-      {/* Background Effects - Same as Hunter/Harvest */}
+      {/* Background Effects - Same as Hunter */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         animate={{
-          background: [
-            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
-            'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
-            'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
-            'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
-            'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
+          background: isDark ? [
+            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.05) 50%, transparent 70%)',
+            'linear-gradient(45deg, transparent 20%, rgba(28, 169, 255, 0.08) 50%, transparent 80%)',
+            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.05) 50%, transparent 70%)'
+          ] : [
+            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.03) 50%, transparent 70%)',
+            'linear-gradient(45deg, transparent 20%, rgba(28, 169, 255, 0.05) 50%, transparent 80%)',
+            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.03) 50%, transparent 70%)'
           ]
         }}
+        style={{
+          backgroundSize: '200% 200%'
+        }}
         transition={{
-          duration: 15,
+          duration: 8,
           repeat: Infinity,
-          ease: [0.25, 1, 0.5, 1]
+          ease: 'easeInOut'
         }}
         aria-hidden="true"
       />
@@ -157,9 +172,10 @@ export function PortfolioRouteShell() {
             key={i}
             className="absolute w-1 h-1 rounded-full"
             style={{
-              background: i % 2 === 0 ? 'rgba(0,245,160,0.15)' : 'rgba(123,97,255,0.12)',
+              background: isDark ? 'rgba(28, 169, 255, 0.3)' : 'rgba(28, 169, 255, 0.4)',
               left: `${15 + i * 12}%`,
-              top: `${10 + (i % 3) * 25}%`
+              top: `${10 + (i % 3) * 25}%`,
+              boxShadow: isDark ? '0 0 20px rgba(28, 169, 255, 0.3)' : '0 0 20px rgba(28, 169, 255, 0.4)'
             }}
             animate={{
               y: [0, -80, 0],
@@ -195,7 +211,9 @@ export function PortfolioRouteShell() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed top-16 left-0 right-0 z-40 bg-yellow-600 text-white py-2 px-4 text-center text-sm font-medium shadow-lg"
+          className={`fixed top-16 left-0 right-0 z-40 py-2 px-4 text-center text-sm font-medium shadow-lg ${
+            isDark ? 'bg-yellow-600 text-white' : 'bg-yellow-500 text-gray-900'
+          }`}
         >
           <div className="flex items-center justify-center gap-2">
             <AlertTriangle className="w-4 h-4" />
@@ -221,29 +239,39 @@ export function PortfolioRouteShell() {
             className="relative"
             whileHover={{ scale: 1.02 }}
           >
-            <div className="flex items-center gap-3 bg-white/80 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300">
-              <Wallet className="w-5 h-5 text-[#00F5A0]" />
+            <div className={`flex items-center gap-3 backdrop-blur-md border rounded-2xl px-4 py-3 transition-all duration-300 ${
+              isDark 
+                ? 'bg-white/10 border-[rgba(28,169,255,0.2)] hover:bg-white/15' 
+                : 'bg-white/60 border-[rgba(28,169,255,0.3)] hover:bg-white/80'
+            }`}>
+              <Wallet className="w-5 h-5 text-[#1CA9FF]" />
               <select
                 value={activeWallet || ''}
                 onChange={(e) => handleWalletSwitch(e.target.value)}
                 disabled={addressesLoading || walletSwitchLoading}
-                className="bg-transparent border-none text-slate-900 dark:text-white text-sm font-medium focus:outline-none cursor-pointer min-w-[140px]"
+                className={`bg-transparent border-none text-sm font-medium focus:outline-none cursor-pointer min-w-[140px] ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}
               >
-                <option value="" className="bg-white dark:bg-[#1a1f2e] text-slate-900 dark:text-white">All Wallets</option>
+                <option value="" className={isDark ? 'bg-[#060D1F] text-white' : 'bg-white text-gray-900'}>All Wallets</option>
                 {addresses.map((addr) => (
-                  <option key={addr.id} value={addr.id} className="bg-white dark:bg-[#1a1f2e] text-slate-900 dark:text-white">
+                  <option key={addr.id} value={addr.id} className={isDark ? 'bg-[#060D1F] text-white' : 'bg-white text-gray-900'}>
                     {addr.label || `${addr.address.slice(0, 6)}...${addr.address.slice(-4)}`}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-600 dark:text-gray-400" />
+              <ChevronDown className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
             </div>
           </motion.div>
 
           {/* AI Hub Button - Optimized */}
           <motion.button
             onClick={() => setIsCopilotOpen(true)}
-            className="flex items-center gap-3 bg-gradient-to-r from-[#00F5A0]/20 to-[#7B61FF]/20 border border-[#00F5A0]/30 text-slate-900 dark:text-white px-6 py-3 rounded-2xl font-medium hover:from-[#00F5A0]/30 hover:to-[#7B61FF]/30 transition-colors duration-200 will-change-transform"
+            className={`flex items-center gap-3 bg-gradient-to-r border px-6 py-3 rounded-2xl font-medium transition-colors duration-200 will-change-transform ${
+              isDark 
+                ? 'from-[#1CA9FF]/20 to-[#7B61FF]/20 border-[#1CA9FF]/30 text-white hover:from-[#1CA9FF]/30 hover:to-[#7B61FF]/30' 
+                : 'from-[#1CA9FF]/30 to-[#7B61FF]/30 border-[#1CA9FF]/40 text-gray-900 hover:from-[#1CA9FF]/40 hover:to-[#7B61FF]/40'
+            }`}
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -257,15 +285,20 @@ export function PortfolioRouteShell() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/90 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-8 mb-6"
+          className={`backdrop-blur-md border rounded-3xl p-8 mb-6 ${
+            isDark 
+              ? 'bg-white/10 border-[rgba(28,169,255,0.2)] shadow-[0_8px_32px_rgba(0,0,0,0.3)]' 
+              : 'bg-white/60 border-[rgba(28,169,255,0.3)] shadow-[0_8px_32px_rgba(28,169,255,0.1)]'
+          }`}
           whileHover={{ scale: 1.01 }}
           transition={{ duration: 0.2 }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
             <div className="flex-1">
-              <p className="text-gray-300 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Net Worth</p>
+              <p className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Net Worth</p>
               <motion.h2 
-                className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight"
+                className={`text-3xl sm:text-4xl md:text-5xl font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
+                style={{ textShadow: isDark ? '0 0 30px rgba(240, 246, 255, 0.5)' : '0 0 30px rgba(28, 169, 255, 0.3)' }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
               >
@@ -275,8 +308,12 @@ export function PortfolioRouteShell() {
             <motion.div
               className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl self-start sm:self-auto ${
                 mockData.delta24h >= 0 
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  ? isDark 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                    : 'bg-green-500/30 text-green-700 border border-green-500/40'
+                  : isDark 
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                    : 'bg-red-500/30 text-red-700 border border-red-500/40'
               }`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -293,49 +330,57 @@ export function PortfolioRouteShell() {
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Freshness */}
-            <div className="bg-white/80 dark:bg-white/5 rounded-xl p-3 sm:p-4">
+            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
-                <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 dark:text-gray-300" />
-                <span className="text-[10px] sm:text-xs text-slate-600 dark:text-gray-300 uppercase tracking-wide font-medium">Freshness</span>
+                <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Freshness</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{mockData.freshness.freshnessSec}s</p>
-              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-gray-400 mt-1">
+              <p className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{mockData.freshness.freshnessSec}s</p>
+              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {Math.round(mockData.freshness.confidence * 100)}% confidence
               </p>
             </div>
 
             {/* Trust Score */}
-            <div className="bg-white/80 dark:bg-white/5 rounded-xl p-3 sm:p-4">
+            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00F5A0]" />
-                <span className="text-[10px] sm:text-xs text-slate-600 dark:text-gray-300 uppercase tracking-wide font-medium">Trust</span>
+                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CA9FF]" />
+                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Trust</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-[#00F5A0]">{mockData.trustRiskSummary.trustScore}</p>
-              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-gray-400 mt-1">Guardian verified</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#1CA9FF]">{mockData.trustRiskSummary.trustScore}</p>
+              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Guardian verified</p>
             </div>
 
             {/* Risk Score */}
-            <div className="bg-white/80 dark:bg-white/5 rounded-xl p-3 sm:p-4">
+            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-600 dark:text-yellow-400" />
-                <span className="text-[10px] sm:text-xs text-slate-600 dark:text-gray-300 uppercase tracking-wide font-medium">Risk</span>
+                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
+                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Risk</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              <p className="text-xl sm:text-2xl font-bold text-yellow-400">
                 {Math.round(mockData.trustRiskSummary.riskScore * 100)}%
               </p>
-              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-gray-400 mt-1">
+              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {mockData.trustRiskSummary.highRiskApprovals} high-risk approvals
               </p>
             </div>
 
             {/* Alerts */}
-            <div className="bg-white/80 dark:bg-white/5 rounded-xl p-3 sm:p-4">
+            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
-                <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600 dark:text-red-400" />
-                <span className="text-[10px] sm:text-xs text-slate-600 dark:text-gray-300 uppercase tracking-wide font-medium">Alerts</span>
+                <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Alerts</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">{mockData.alertsCount}</p>
-              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-gray-400 mt-1">Requires attention</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-400">{mockData.alertsCount}</p>
+              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Requires attention</p>
             </div>
           </div>
         </motion.div>
@@ -352,8 +397,12 @@ export function PortfolioRouteShell() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-medium whitespace-nowrap transition-all duration-300 text-sm sm:text-base ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-[#00F5A0]/20 to-[#7B61FF]/20 border border-[#00F5A0]/30 text-slate-900 dark:text-white shadow-lg'
-                      : 'bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/90 dark:hover:bg-white/10'
+                      ? isDark 
+                        ? 'bg-gradient-to-r from-[#1CA9FF]/30 to-[#7B61FF]/30 border border-[#1CA9FF]/50 text-white shadow-lg shadow-[#1CA9FF]/20'
+                        : 'bg-gradient-to-r from-[#1CA9FF]/40 to-[#7B61FF]/40 border border-[#1CA9FF]/60 text-gray-900 shadow-lg shadow-[#1CA9FF]/30'
+                      : isDark 
+                        ? 'bg-white/10 border border-[rgba(28,169,255,0.2)] text-gray-300 hover:text-white hover:bg-white/15'
+                        : 'bg-white/40 border border-[rgba(28,169,255,0.3)] text-gray-700 hover:text-gray-900 hover:bg-white/60'
                   }`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

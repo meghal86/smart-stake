@@ -160,7 +160,10 @@ export function StressTestPanel({ portfolioValue, onRunTest }: StressTestPanelPr
   const [results, setResults] = useState<{
     worstCase: number;
     expectedLoss: number;
+    var95?: number;
     recoveryMonths: number;
+    riskLevel?: string;
+    volatility?: number;
     recommendations: string[];
   } | null>(null);
 
@@ -191,31 +194,105 @@ export function StressTestPanel({ portfolioValue, onRunTest }: StressTestPanelPr
   };
 
   const handleRunStressTest = async () => {
-    setIsRunning(true);
+    console.log('🧪 [StressTestPanel] Starting stress test...');
+    console.log('📊 [StressTestPanel] Portfolio Value:', portfolioValue);
+    console.log('📊 [StressTestPanel] Scenarios:', scenarios);
     
-    // Simulate stress test calculation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const avgLoss = Object.values(scenarios).reduce((sum, val) => sum + val, 0) / Object.values(scenarios).length;
-    const worstCase = Math.min(...Object.values(scenarios));
-    
-    setResults({
-      worstCase: portfolioValue * (worstCase / 100),
-      expectedLoss: portfolioValue * (avgLoss / 100),
-      recoveryMonths: Math.abs(Math.floor(avgLoss / 5)),
-      recommendations: [
-        'Diversify across uncorrelated assets',
-        'Increase stablecoin allocation',
-        'Consider hedging strategies',
-        'Review liquidity positions'
-      ]
-    });
-    
-    setView('results');
-    setIsRunning(false);
-    
-    if (onRunTest) {
-      onRunTest(scenarios);
+    try {
+      setIsRunning(true);
+      
+      // Simulate stress test calculation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const scenarioValues = Object.values(scenarios);
+      const avgLoss = scenarioValues.reduce((sum, val) => sum + val, 0) / scenarioValues.length;
+      const worstCase = Math.min(...scenarioValues);
+      const bestCase = Math.max(...scenarioValues);
+      
+      // Calculate standard deviation
+      const variance = scenarioValues.reduce((sum, val) => sum + Math.pow(val - avgLoss, 2), 0) / scenarioValues.length;
+      const stdDev = Math.sqrt(variance);
+      
+      // Calculate VaR (95% confidence)
+      const var95 = avgLoss - (1.645 * stdDev);
+      
+      // Calculate monetary impacts
+      const worstCaseImpact = portfolioValue * (worstCase / 100);
+      const expectedLossImpact = portfolioValue * (avgLoss / 100);
+      const var95Impact = portfolioValue * (var95 / 100);
+      
+      // Calculate recovery time
+      const recoveryMonths = Math.abs(Math.ceil(avgLoss / 5));
+      
+      // Determine risk level
+      let riskLevel;
+      if (avgLoss < -40) {
+        riskLevel = 'CRITICAL';
+      } else if (avgLoss < -25) {
+        riskLevel = 'HIGH';
+      } else if (avgLoss < -10) {
+        riskLevel = 'MODERATE';
+      } else if (avgLoss < 0) {
+        riskLevel = 'LOW';
+      } else {
+        riskLevel = 'POSITIVE';
+      }
+      
+      // Generate recommendations
+      const recommendations = [];
+      
+      if (avgLoss < -40) {
+        recommendations.push('🚨 CRITICAL: Consider immediate portfolio rebalancing');
+        recommendations.push('Increase stablecoin allocation to 30-40% of portfolio');
+        recommendations.push('Implement stop-loss orders on high-risk positions');
+        recommendations.push('Consider hedging with inverse ETFs or options');
+      } else if (avgLoss < -25) {
+        recommendations.push('⚠️ HIGH RISK: Diversify across uncorrelated assets');
+        recommendations.push('Increase stablecoin allocation to 20-30%');
+        recommendations.push('Review and reduce leverage positions');
+        recommendations.push('Consider dollar-cost averaging strategy');
+      } else if (avgLoss < -10) {
+        recommendations.push('📊 MODERATE RISK: Monitor positions closely');
+        recommendations.push('Maintain 15-20% stablecoin buffer');
+        recommendations.push('Review liquidity positions');
+        recommendations.push('Consider rebalancing to target allocation');
+      } else if (avgLoss < 0) {
+        recommendations.push('✅ LOW RISK: Portfolio appears resilient');
+        recommendations.push('Maintain current diversification strategy');
+        recommendations.push('Monitor for opportunities to increase positions');
+        recommendations.push('Keep 10-15% in stablecoins for flexibility');
+      } else {
+        recommendations.push('🚀 POSITIVE OUTLOOK: Portfolio positioned for growth');
+        recommendations.push('Consider taking profits on overperforming assets');
+        recommendations.push('Maintain disciplined risk management');
+        recommendations.push('Keep emergency reserves in stablecoins');
+      }
+      
+      const newResults = {
+        worstCase: worstCaseImpact,
+        expectedLoss: expectedLossImpact,
+        var95: var95Impact,
+        recoveryMonths,
+        riskLevel,
+        volatility: stdDev,
+        recommendations: recommendations.slice(0, 6)
+      };
+      
+      console.log('✅ [StressTestPanel] Calculations complete:', newResults);
+      
+      setResults(newResults);
+      setView('results');
+      
+      if (onRunTest) {
+        onRunTest(scenarios);
+      }
+      
+      console.log('✅ [StressTestPanel] Stress test completed successfully');
+    } catch (error) {
+      console.error('❌ [StressTestPanel] Error running stress test:', error);
+      alert('Failed to run stress test. Please check the console for details.');
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -341,11 +418,17 @@ export function StressTestPanel({ portfolioValue, onRunTest }: StressTestPanelPr
 
           {/* Run Button */}
           <motion.button
-            onClick={handleRunStressTest}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔘 Button clicked!');
+              handleRunStressTest();
+            }}
             disabled={isRunning}
-            className="w-full bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-[0_10px_30px_rgba(0,245,160,0.35)] hover:shadow-[0_15px_40px_rgba(0,245,160,0.45)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative w-full bg-gradient-to-r from-[#00F5A0] to-[#7B61FF] text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-[0_10px_30px_rgba(0,245,160,0.35)] hover:shadow-[0_15px_40px_rgba(0,245,160,0.45)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed z-10"
             whileHover={{ scale: isRunning ? 1 : 1.02, y: isRunning ? 0 : -2 }}
             whileTap={{ scale: isRunning ? 1 : 0.98 }}
+            style={{ pointerEvents: isRunning ? 'none' : 'auto' }}
           >
             {isRunning ? (
               <span className="flex items-center justify-center gap-2">
@@ -404,7 +487,7 @@ export function StressTestPanel({ portfolioValue, onRunTest }: StressTestPanelPr
           className="space-y-6"
         >
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-red-500/10 border border-red-500/30 backdrop-blur-md rounded-3xl p-6">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingDown className="w-5 h-5 text-red-400" />
@@ -421,6 +504,16 @@ export function StressTestPanel({ portfolioValue, onRunTest }: StressTestPanelPr
               <p className="text-3xl font-bold text-yellow-400">{formatCurrency(results.expectedLoss)}</p>
               <p className="text-xs text-gray-500 mt-2">Average scenario impact</p>
             </div>
+            {results.var95 && (
+              <div className="bg-orange-500/10 border border-orange-500/30 backdrop-blur-md rounded-3xl p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-5 h-5 text-orange-400" />
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">VaR (95%)</p>
+                </div>
+                <p className="text-3xl font-bold text-orange-400">{formatCurrency(results.var95)}</p>
+                <p className="text-xs text-gray-500 mt-2">Value at Risk (95% confidence)</p>
+              </div>
+            )}
             <div className="bg-[#00F5A0]/10 border border-[#00F5A0]/30 backdrop-blur-md rounded-3xl p-6">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="w-5 h-5 text-[#00F5A0]" />
@@ -430,6 +523,42 @@ export function StressTestPanel({ portfolioValue, onRunTest }: StressTestPanelPr
               <p className="text-xs text-gray-500 mt-2">Estimated recovery period</p>
             </div>
           </div>
+
+          {/* Risk Level Banner */}
+          {results.riskLevel && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`rounded-2xl p-6 border ${
+                results.riskLevel === 'CRITICAL' ? 'bg-red-500/20 border-red-500/50' :
+                results.riskLevel === 'HIGH' ? 'bg-orange-500/20 border-orange-500/50' :
+                results.riskLevel === 'MODERATE' ? 'bg-yellow-500/20 border-yellow-500/50' :
+                results.riskLevel === 'LOW' ? 'bg-blue-500/20 border-blue-500/50' :
+                'bg-[#00F5A0]/20 border-[#00F5A0]/50'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-300 mb-1">Overall Risk Assessment</p>
+                  <p className={`text-2xl font-bold ${
+                    results.riskLevel === 'CRITICAL' ? 'text-red-400' :
+                    results.riskLevel === 'HIGH' ? 'text-orange-400' :
+                    results.riskLevel === 'MODERATE' ? 'text-yellow-400' :
+                    results.riskLevel === 'LOW' ? 'text-blue-400' :
+                    'text-[#00F5A0]'
+                  }`}>
+                    {results.riskLevel}
+                  </p>
+                </div>
+                {results.volatility && (
+                  <div className="text-right">
+                    <p className="text-sm text-gray-300 mb-1">Portfolio Volatility</p>
+                    <p className="text-2xl font-bold text-white">{results.volatility.toFixed(1)}%</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           {/* Scenario Breakdown */}
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6">
