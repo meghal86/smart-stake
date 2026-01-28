@@ -2,10 +2,11 @@
  * Eligibility Engine
  * 
  * Evaluates whether a wallet qualifies for an opportunity.
- * Requirements: 5.1-5.11
+ * Requirements: 5.1-5.11, 22.1-22.7
  */
 
 import { createServiceClient } from '@/integrations/supabase/service';
+import { checkSnapshotEligibility } from './historical-eligibility';
 import type { WalletSignals } from './wallet-signals';
 import type { Opportunity } from './types';
 
@@ -66,17 +67,19 @@ function parseRequirements(opportunity: Opportunity): OpportunityRequirements {
 
 /**
  * Calculate eligibility score based on wallet signals and requirements
- * Requirements: 5.2-5.6
+ * Requirements: 5.2-5.6, 22.1-22.7
  * 
  * Scoring logic:
  * - Start with score = 1.0
  * - Deduct points for each unmet requirement
+ * - Check snapshot eligibility for airdrops
  * - Return score clamped to [0, 1]
  */
-function calculateEligibilityScore(
+async function calculateEligibilityScore(
   walletSignals: WalletSignals,
-  requirements: OpportunityRequirements
-): { score: number; reasons: string[] } {
+  requirements: OpportunityRequirements,
+  opportunity: Opportunity
+): Promise<{ score: number; reasons: string[] }> {
   const reasons: string[] = [];
   let score = 1.0;
 
@@ -183,6 +186,32 @@ function calculateEligibilityScore(
       reasons.push(`Insufficient ${requirements.minBalance.token} balance`);
     } else {
       reasons.push(`Meets ${requirements.minBalance.token} balance requirement`);
+    }
+  }
+
+  // Check snapshot eligibility for airdrops (Requirements: 22.1-22.7)
+  if (opportunity.type === 'airdrop' && opportunity.snapshot_date) {
+    try {
+      const requiredChain = requirements.chains?.[0] || 'ethereum';
+      const snapshotResult = await checkSnapshotEligibility(
+        walletSignals.address,
+        opportunity.snapshot_date,
+        requiredChain
+      );
+
+      if (!snapshotResult.was_active) {
+        // Wallet was not active before snapshot
+        score -= 0.3;
+        reasons.push(snapshotResult.reason);
+      } else {
+        // Wallet was active before snapshot
+        score += 0.3;
+        reasons.push(snapshotResult.reason);
+      }
+    } catch (error) {
+      console.error('Error checking snapshot eligibility:', error);
+      // Don't penalize on error, just add neutral reason
+      reasons.push('Snapshot eligibility check unavailable');
     }
   }
 
@@ -348,8 +377,8 @@ export async function evaluateEligibility(
     // Parse requirements
     const requirements = parseRequirements(opportunity);
 
-    // Calculate eligibility score and reasons
-    const { score, reasons } = calculateEligibilityScore(walletSignals, requirements);
+    // Calculate eligibility score and reasons (now async)
+    const { score, reasons } = await calculateEligibilityScore(walletSignals, requirements, opportunity);
 
     // Map score to status
     const status = mapScoreToStatus(score);

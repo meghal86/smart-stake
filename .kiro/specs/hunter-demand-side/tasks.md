@@ -352,24 +352,24 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Test: Sync completes within 30 seconds for 100 protocols
   - _Requirements: 2.1, 2.5, 2.6_
 
-- [ ] 4. Module 2: Airdrops (Admin-Seeded)
+- [x] 4. Module 2: Airdrops (Admin-Seeded)
   - Create airdrop-specific schema
   - Implement admin seeding mechanism
   - Create airdrop sync stub
   - _Requirements: 2.2_
 
-- [ ] 4.1 Create airdrop database schema
+- [x] 4.1 Create airdrop database schema
   - Migration: Add snapshot_date, claim_start, claim_end, airdrop_category to opportunities
   - Create user_airdrop_status table (eligible/maybe/unlikely/claimed/missed/expired)
   - _Requirements: 3.1-3.7_
 
-- [ ] 4.2 Create admin seed script
+- [x] 4.2 Create admin seed script
   - Create scripts/seed-airdrops.ts
   - Seed 10+ airdrop opportunities with realistic data
   - Include requirements (chains, min_wallet_age, min_tx_count)
   - _Requirements: 2.2_
 
-- [ ] 4.3 Create airdrop sync with multiple sources (REAL DATA)
+- [x] 4.3 Create airdrop sync with multiple sources (REAL DATA)
   - Create `src/lib/hunter/sync/airdrops.ts` as orchestrator
   - Implement `syncAllAirdrops()` that calls:
     1. `syncGalxeOpportunities()` → filter for airdrops
@@ -380,12 +380,12 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Return: `{count, sources: ['galxe', 'defillama', 'admin'], breakdown: {galxe: N, defillama: M, admin: K}}`
   - _Requirements: 2.2, 21.1-21.10, 23.1-23.6_
 
-- [ ] 4.4 Add airdrop-specific API endpoints
+- [x] 4.4 Add airdrop-specific API endpoints
   - Create GET /api/hunter/airdrops?wallet= (filter type='airdrop')
   - Create GET /api/hunter/airdrops/history?wallet= (user_airdrop_status)
   - _Requirements: 1.1-1.7_
 
-- [ ] 4.6 Implement snapshot-based historical eligibility
+- [x] 4.6 Implement snapshot-based historical eligibility
   - Create `src/lib/hunter/historical-eligibility.ts`
   - Implement `checkSnapshotEligibility(wallet, snapshotDate, chain)`
   - Integrate into eligibility engine: IF `airdrop.snapshot_date` exists, call historical checker
@@ -410,7 +410,7 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Include multi-step quests with progress tracking
   - _Requirements: 2.3_
 
-- [ ] 4.5 Write unit tests for airdrop eligibility
+- [x] 4.5 Write unit tests for airdrop eligibility
   - Test: Claim window logic (before/during/after)
   - Test: Snapshot date eligibility
   - Test: Galxe campaign classification (airdrop vs quest)
@@ -418,7 +418,7 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Test: Multi-source deduplication logic
   - _Requirements: 5.1-5.11, 21.5, 22.3-22.4, 23.2_
 
-- [ ] 5.3 Create quest sync with Galxe integration (REAL DATA)
+- [x] 5.3 Create quest sync with Galxe integration (REAL DATA)
   - Create `src/lib/hunter/sync/quests.ts` as orchestrator
   - Implement `syncAllQuests()` that calls:
     1. `syncGalxeOpportunities()` → filter for quests
