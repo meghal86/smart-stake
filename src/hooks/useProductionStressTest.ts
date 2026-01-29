@@ -110,24 +110,28 @@ export function useProductionStressTest(portfolioData: ProductionPortfolioData |
     // Calculate new risk score based on the scenario impact
     let newRiskScore = portfolioData.riskScore;
     
-    // Increase risk for negative scenarios
-    if (changePercent < -20) {
-      newRiskScore = Math.max(1, newRiskScore - 2);
+    // Increase risk for negative scenarios (higher score = higher risk)
+    if (changePercent < -30) {
+      newRiskScore = Math.min(10, newRiskScore + 2.5);
+    } else if (changePercent < -20) {
+      newRiskScore = Math.min(10, newRiskScore + 2);
     } else if (changePercent < -10) {
-      newRiskScore = Math.max(1, newRiskScore - 1);
-    } else if (changePercent > 20) {
+      newRiskScore = Math.min(10, newRiskScore + 1);
+    } else if (changePercent > 30) {
       // High gains also increase risk (bubble territory)
-      newRiskScore = Math.max(1, newRiskScore - 0.5);
+      newRiskScore = Math.min(10, newRiskScore + 1.5);
+    } else if (changePercent > 20) {
+      newRiskScore = Math.min(10, newRiskScore + 0.5);
     }
 
     // Correlation break increases risk
     if (scenario.correlationBreak) {
-      newRiskScore = Math.max(1, newRiskScore - 1);
+      newRiskScore = Math.min(10, newRiskScore + 1);
     }
 
     // Stablecoin depeg significantly increases risk
     if (scenario.stablecoinDepeg) {
-      newRiskScore = Math.max(1, newRiskScore - 1.5);
+      newRiskScore = Math.min(10, newRiskScore + 1.5);
     }
 
     const result: SimulationResult = {

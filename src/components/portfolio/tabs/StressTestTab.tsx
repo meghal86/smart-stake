@@ -560,6 +560,158 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
               </span>
             )}
           </motion.button>
+
+          {/* Market Impact Scenarios */}
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-4 sm:p-6">
+            <h4 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
+              Market Impact Scenarios
+            </h4>
+            <p className="text-xs sm:text-sm text-gray-400 mb-4">
+              Adjust sliders to simulate different market conditions and see their impact on your portfolio
+            </p>
+            <div className="space-y-4">
+              {scenarioSummaries.map((scenario) => {
+                const Icon = scenario.icon;
+                const impactValue = portfolioValue * (scenario.value / 100);
+                return (
+                  <div key={scenario.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Icon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm text-white font-medium truncate">
+                          {scenario.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className={`text-xs sm:text-sm font-bold ${severityColor(scenario.value)}`}>
+                          {formatPercent(scenario.value)}
+                        </span>
+                        <span className={`text-xs sm:text-sm font-semibold ${impactValue < 0 ? 'text-red-400' : 'text-[#00F5A0]'}`}>
+                          {impactValue < 0 ? '-' : '+'}{formatCurrency(Math.abs(impactValue))}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        min={-80}
+                        max={30}
+                        step={1}
+                        value={[scenario.value]}
+                        onValueChange={(value) => handleScenarioUpdate(scenario.key, value[0])}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Projected Impact */}
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-4 sm:p-6">
+            <h4 className="text-base sm:text-lg font-semibold text-white mb-4">
+              Projected Impact
+            </h4>
+            <div className="space-y-4">
+              {/* Summary Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {/* Current Portfolio Value */}
+                <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
+                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Current Value</p>
+                  <p className="text-lg sm:text-xl font-bold text-white">
+                    {formatCurrency(portfolioValue)}
+                  </p>
+                </div>
+
+                {/* Projected Value */}
+                <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
+                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Projected Value</p>
+                  <p className={`text-lg sm:text-xl font-bold ${
+                    totalImpact < 0 ? 'text-red-400' : 'text-[#00F5A0]'
+                  }`}>
+                    {formatCurrency(portfolioValue + totalImpact)}
+                  </p>
+                </div>
+
+                {/* Total Impact */}
+                <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
+                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Total Impact</p>
+                  <p className={`text-lg sm:text-xl font-bold ${
+                    totalImpact < 0 ? 'text-red-400' : 'text-[#00F5A0]'
+                  }`}>
+                    {totalImpact < 0 ? '-' : '+'}{formatCurrency(Math.abs(totalImpact))}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
+                    {formatPercent((totalImpact / portfolioValue) * 100)}
+                  </p>
+                </div>
+
+                {/* Risk Level */}
+                <div className={`rounded-xl p-3 sm:p-4 border ${
+                  totalImpact / portfolioValue < -0.4 ? 'bg-red-500/10 border-red-500/30' :
+                  totalImpact / portfolioValue < -0.25 ? 'bg-orange-500/10 border-orange-500/30' :
+                  totalImpact / portfolioValue < -0.1 ? 'bg-yellow-500/10 border-yellow-500/30' :
+                  totalImpact / portfolioValue < 0 ? 'bg-blue-500/10 border-blue-500/30' :
+                  'bg-[#00F5A0]/10 border-[#00F5A0]/30'
+                }`}>
+                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Risk Level</p>
+                  <p className={`text-lg sm:text-xl font-bold ${
+                    totalImpact / portfolioValue < -0.4 ? 'text-red-400' :
+                    totalImpact / portfolioValue < -0.25 ? 'text-orange-400' :
+                    totalImpact / portfolioValue < -0.1 ? 'text-yellow-400' :
+                    totalImpact / portfolioValue < 0 ? 'text-blue-400' :
+                    'text-[#00F5A0]'
+                  }`}>
+                    {totalImpact / portfolioValue < -0.4 ? 'CRITICAL' :
+                     totalImpact / portfolioValue < -0.25 ? 'HIGH' :
+                     totalImpact / portfolioValue < -0.1 ? 'MODERATE' :
+                     totalImpact / portfolioValue < 0 ? 'LOW' :
+                     'POSITIVE'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Range Visualization */}
+              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs sm:text-sm text-gray-400">Outcome Range</p>
+                  <p className="text-xs text-gray-500">
+                    Best to Worst Case
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {/* Best Case */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">Best Case</span>
+                    <span className="text-sm font-semibold text-[#00F5A0]">
+                      {formatCurrency(portfolioValue * (1 + Math.max(...Object.values(scenarios)) / 100))}
+                    </span>
+                  </div>
+                  {/* Visual Bar */}
+                  <div className="relative h-8 bg-gradient-to-r from-red-500/20 via-yellow-500/20 to-[#00F5A0]/20 rounded-lg overflow-hidden border border-white/10">
+                    <div className="absolute inset-0 flex items-center justify-between px-3">
+                      <span className="text-[10px] text-red-400 font-medium">
+                        {formatPercent(Math.min(...Object.values(scenarios)))}
+                      </span>
+                      <span className="text-[10px] text-white font-medium">
+                        Current
+                      </span>
+                      <span className="text-[10px] text-[#00F5A0] font-medium">
+                        {formatPercent(Math.max(...Object.values(scenarios)))}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Worst Case */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">Worst Case</span>
+                    <span className="text-sm font-semibold text-red-400">
+                      {formatCurrency(portfolioValue * (1 + Math.min(...Object.values(scenarios)) / 100))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
 

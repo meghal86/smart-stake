@@ -9,8 +9,6 @@ import { StressTestTab } from './tabs/StressTestTab';
 import { CopilotChatDrawer } from './CopilotChatDrawer';
 import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { FooterNav } from '@/components/layout/FooterNav';
-import { useUserAddresses } from '@/hooks/useUserAddresses';
-import { useWalletSwitching } from '@/hooks/useWalletSwitching';
 import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
@@ -21,8 +19,6 @@ import {
   Shield, 
   Bell, 
   Sparkles,
-  ChevronDown,
-  Wallet,
   RefreshCw,
   AlertTriangle,
   Activity
@@ -34,15 +30,6 @@ export function PortfolioRouteShell() {
   const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'audit' | 'stress'>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [walletScope, setWalletScope] = useState<WalletScope>({ mode: 'all_wallets' });
-
-  // Use existing hooks
-  const { addresses, loading: addressesLoading } = useUserAddresses();
-  const { 
-    activeWallet, 
-    switchWallet, 
-    getCurrentWalletScope,
-    isLoading: walletSwitchLoading 
-  } = useWalletSwitching();
 
   // Pull-to-refresh
   const handleRefresh = async () => {
@@ -78,12 +65,6 @@ export function PortfolioRouteShell() {
   const handleWalletScopeChange = useCallback((scope: WalletScope) => {
     setWalletScope(scope);
   }, []);
-
-  const handleWalletSwitch = useCallback((walletId: string) => {
-    switchWallet(walletId);
-    const newScope = getCurrentWalletScope();
-    setWalletScope(newScope);
-  }, [switchWallet, getCurrentWalletScope]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -232,38 +213,8 @@ export function PortfolioRouteShell() {
         {/* Page Title for Screen Readers */}
         <h1 className="sr-only">Portfolio - Unified Wealth Management</h1>
 
-        {/* Wallet Selector & AI Hub Row */}
-        <div className="flex items-center justify-between mb-6">
-          {/* Wallet Switching */}
-          <motion.div 
-            className="relative"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className={`flex items-center gap-3 backdrop-blur-md border rounded-2xl px-4 py-3 transition-all duration-300 ${
-              isDark 
-                ? 'bg-white/10 border-[rgba(28,169,255,0.2)] hover:bg-white/15' 
-                : 'bg-white/60 border-[rgba(28,169,255,0.3)] hover:bg-white/80'
-            }`}>
-              <Wallet className="w-5 h-5 text-[#1CA9FF]" />
-              <select
-                value={activeWallet || ''}
-                onChange={(e) => handleWalletSwitch(e.target.value)}
-                disabled={addressesLoading || walletSwitchLoading}
-                className={`bg-transparent border-none text-sm font-medium focus:outline-none cursor-pointer min-w-[140px] ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}
-              >
-                <option value="" className={isDark ? 'bg-[#060D1F] text-white' : 'bg-white text-gray-900'}>All Wallets</option>
-                {addresses.map((addr) => (
-                  <option key={addr.id} value={addr.id} className={isDark ? 'bg-[#060D1F] text-white' : 'bg-white text-gray-900'}>
-                    {addr.label || `${addr.address.slice(0, 6)}...${addr.address.slice(-4)}`}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-            </div>
-          </motion.div>
-
+        {/* AI Hub Button Row */}
+        <div className="flex items-center justify-end mb-6 relative z-10">
           {/* AI Hub Button - Optimized */}
           <motion.button
             onClick={() => setIsCopilotOpen(true)}

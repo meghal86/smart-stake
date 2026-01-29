@@ -555,13 +555,13 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 24: Performance Requirements**
   - **Validates: Requirements 10.3, 10.4**
 
-- [ ] 14. Implement multi-wallet aggregation [V1]
+- [x] 14. Implement multi-wallet aggregation [V1]
   - Add cross-wallet net worth calculation
   - Implement unified risk scoring
   - Create exposure breakdown views
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-- [ ] 14.1 Create multi-wallet aggregation engine (REUSE-FIRST CHECK REQUIRED)
+- [x] 14.1 Create multi-wallet aggregation engine (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/lib/** for existing multi-wallet, aggregation, or cross-wallet calculation engines
   - **BEFORE CREATING**: Search src/services/** for existing wallet aggregation or unified scoring services
   - **IF EXISTS**: Extend existing engine with unified risk scoring and exposure distribution tracking
@@ -571,7 +571,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Identify top movers across portfolios
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-- [ ] 14.2 Write property test for multi-wallet aggregation
+- [x] 14.2 Write property test for multi-wallet aggregation
   - **Property 28: Multi-Wallet Aggregation**
   - **Validates: Requirements 12.1, 12.2, 12.3, 12.4**
 

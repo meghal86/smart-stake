@@ -4,8 +4,6 @@ import { TransactionTimeline } from '../TransactionTimeline';
 import { ApprovalsRiskList } from '../ApprovalsRiskList';
 import { GraphLiteVisualizer } from '../GraphLiteVisualizer';
 import { PlannedVsExecutedReceipts } from '../PlannedVsExecutedReceipts';
-import { StressTestPanel } from '../StressTestPanel';
-import { usePortfolioSummary } from '@/hooks/portfolio/usePortfolioSummary';
 
 interface AuditTabProps {
   walletScope: WalletScope;
@@ -14,8 +12,6 @@ interface AuditTabProps {
 }
 
 export function AuditTab({ walletScope, freshness }: AuditTabProps) {
-  // Get real portfolio data
-  const { data: portfolioData, isLoading: portfolioLoading } = usePortfolioSummary();
   // Mock data - will be replaced with real API integration
   const [mockTransactions] = useState([
     {
@@ -138,15 +134,6 @@ export function AuditTab({ walletScope, freshness }: AuditTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stress Test Simulator - New comprehensive feature */}
-      <StressTestPanel
-        portfolioValue={portfolioData?.totalValue || 2450000}
-        onRunTest={(scenarios) => {
-          console.log('✅ Stress test completed with scenarios:', scenarios);
-          console.log('📊 Portfolio Value:', portfolioData?.totalValue || 2450000);
-        }}
-      />
-
       {/* Transaction Timeline - Extended existing component */}
       <TransactionTimeline
         transactions={mockTransactions}
