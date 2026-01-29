@@ -24,7 +24,6 @@ const airdrops = [
     title: 'LayerZero Airdrop',
     protocol: 'LayerZero',
     protocol_name: 'LayerZero',
-    protocol_name: 'LayerZero',
     type: 'airdrop',
     chains: ['ethereum', 'arbitrum', 'optimism', 'base'],
     reward_min: 100,
