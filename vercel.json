@@ -24,23 +24,23 @@
   "crons": [
     {
       "path": "/api/sync/yield",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/sync/airdrops",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/sync/quests",
-      "schedule": "0 * * * *"
+      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/sync/points",
-      "schedule": "0 0 * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/sync/rwa",
-      "schedule": "0 0 * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
