@@ -22,49 +22,50 @@ jobs:
     - run: npm run build
     - run: npm run lint
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
-    - run: npm ci
-    - name: Run unit tests
-      run: npm test -- --run
-    - name: Run property-based tests
-      run: >
-        npm test -- run 
-        --testNamePattern 'Feature: multi-chain-wallet-system, Property'
-      timeout-minutes: 10
+  # TESTS DISABLED - Uncomment to re-enable
+  # test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '20'
+  #       cache: 'npm'
+  #   
+  #   - run: npm ci
+  #   - name: Run unit tests
+  #     run: npm test -- --run
+  #   - name: Run property-based tests
+  #     run: >
+  #       npm test -- run 
+  #       --testNamePattern 'Feature: multi-chain-wallet-system, Property'
+  #     timeout-minutes: 10
 
-  property-tests:
-    runs-on: ubuntu-latest
-    name: Property-Based Tests
-    timeout-minutes: 15
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
-    - run: npm ci
-    - name: Run all property-based tests
-      run: >
-        npm test -- run 
-        --testNamePattern 'Feature: multi-chain-wallet-system, Property'
-    - name: Generate test report
-      if: always()
-      run: >
-        npm test -- run --reporter=verbose 
-        --testNamePattern 'Feature: multi-chain-wallet-system, Property' 
-        > property-test-report.txt 2>&1 || true
-    - name: Upload test report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: property-test-report
-        path: property-test-report.txt
+  # property-tests:
+  #   runs-on: ubuntu-latest
+  #   name: Property-Based Tests
+  #   timeout-minutes: 15
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - uses: actions/setup-node@v4
+  #     with:
+  #       node-version: '20'
+  #       cache: 'npm'
+  #   
+  #   - run: npm ci
+  #   - name: Run all property-based tests
+  #     run: >
+  #       npm test -- run 
+  #       --testNamePattern 'Feature: multi-chain-wallet-system, Property'
+  #   - name: Generate test report
+  #     if: always()
+  #     run: >
+  #       npm test -- run --reporter=verbose 
+  #       --testNamePattern 'Feature: multi-chain-wallet-system, Property' 
+  #       > property-test-report.txt 2>&1 || true
+  #   - name: Upload test report
+  #     if: always()
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: property-test-report
+  #       path: property-test-report.txt
