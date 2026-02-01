@@ -59,10 +59,10 @@ export function ApprovalRiskCard({
     return 'text-green-400';
   };
 
-  const getVARSeverity = (var: number) => {
-    if (var >= 10000) return 'critical';
-    if (var >= 1000) return 'high';
-    if (var >= 100) return 'medium';
+  const getVARSeverity = (varValue: number) => {
+    if (varValue >= 10000) return 'critical';
+    if (varValue >= 1000) return 'high';
+    if (varValue >= 100) return 'medium';
     return 'low';
   };
 

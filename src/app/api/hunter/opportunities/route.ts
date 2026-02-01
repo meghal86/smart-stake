@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     // If no walletAddress provided, return non-personalized results (backward compatibility)
     if (!walletAddress) {
       // Apply sorting for non-personalized results
-      let sortedOpportunities = [...opportunities];
+      const sortedOpportunities = [...opportunities];
       
       switch (sort) {
         case 'ends_soon':
@@ -216,7 +216,7 @@ export async function GET(req: NextRequest) {
       console.error('Personalization error, falling back to non-personalized results:', personalizationError);
       
       // Apply non-personalized sorting
-      let sortedOpportunities = [...opportunities];
+      const sortedOpportunities = [...opportunities];
       sortedOpportunities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
       // Apply final limit

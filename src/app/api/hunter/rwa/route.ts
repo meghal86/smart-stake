@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Build query
-    let query = supabase
+    const query = supabase
       .from('opportunities')
       .select('*')
       .eq('type', 'rwa')

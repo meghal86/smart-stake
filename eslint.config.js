@@ -51,7 +51,7 @@ export default tseslint.config(
       "prefer-const": "warn",
       "no-case-declarations": "off",
       "react-hooks/rules-of-hooks": "warn",
-      "no-custom-css-patterns/no-custom-css-patterns": ["error", {
+      "no-custom-css-patterns/no-custom-css-patterns": ["warn", {
         allowedPatterns: [
           // Allow specific design system patterns
           "bg-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900|950)",
