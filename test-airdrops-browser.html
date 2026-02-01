@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunter Airdrops Module - Complete Browser Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0A0F1F;
+      color: #E2E8F0;
+    }
+    h1 {
+      color: #00D9FF;
+      border-bottom: 2px solid #00D9FF;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #00D9FF;
+      margin-top: 30px;
+    }
+    .test-section {
+      background: #1A1F2E;
+      border: 1px solid #2D3748;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border-left: 4px solid;
+    }
+    .test-result.pass {
+      background: #1A3A2A;
+      border-color: #10B981;
+    }
+    .test-result.fail {
+      background: #3A1A1A;
+      border-color: #EF4444;
+    }
+    .test-result.info {
+      background: #1A2A3A;
+      border-color: #3B82F6;
+    }
+    .test-result.warning {
+      background: #3A2A1A;
+      border-color: #F59E0B;
+    }
+    button {
+      background: #00D9FF;
+      color: #0A0F1F;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px 10px 10px 0;
+    }
+    button:hover {
+      background: #00B8D4;
+    }
+    button:disabled {
+      background: #4A5568;
+      cursor: not-allowed;
+    }
+    pre {
+      background: #0F1419;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .stat {
+      background: #1A1F2E;
+      padding: 15px;
+      border-radius: 8px;
+      flex: 1;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #00D9FF;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #94A3B8;
+      margin-top: 5px;
+    }
+    .phase-header {
+      background: linear-gradient(135deg, #1A1F2E 0%, #2D3748 100%);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #00D9FF;
+    }
+    .phase-header h3 {
+      margin: 0;
+      color: #00D9FF;
+    }
+    .phase-header p {
+      margin: 5px 0 0 0;
+      color: #94A3B8;
+    }
+    .test-group {
+      margin-left: 20px;
+      border-left: 2px solid #2D3748;
+      padding-left: 20px;
+    }
+    input[type="text"] {
+      background: #1A1F2E;
+      border: 1px solid #2D3748;
+      color: #E2E8F0;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 400px;
+      margin-right: 10px;
+    }
+    .wallet-input-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #1A1F2E;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Hunter Airdrops Module - Complete Browser Test Suite</h1>
+  
+  <div class="test-section">
+    <h2>Test Configuration</h2>
+    <p><strong>Module:</strong> Task 4 - Airdrops Module</p>
+    <p><strong>Status:</strong> Phase 3 Complete - All API Endpoints Tested</p>
+    <p><strong>Coverage:</strong> Non-personalized feed, Personalized feed, History endpoint</p>
+    
+    <button id="runAllTests">Run All Tests</button>
+    <button id="runPhase1">Phase 1: Non-Personalized</button>
+    <button id="runPhase2">Phase 2: Personalized</button>
+    <button id="runPhase3">Phase 3: History</button>
+    <button id="clearResults">Clear Results</button>
+  </div>
+
+  <div class="wallet-input-section">
+    <h3>Wallet Address for Personalized Tests</h3>
+    <input type="text" id="walletAddress" placeholder="0x... (optional for personalized tests)" />
+    <button id="setWallet">Set Wallet</button>
+    <p style="font-size: 12px; color: #94A3B8; margin-top: 10px;">
+      Leave empty to test non-personalized endpoints only. Enter a wallet address to test personalized features.
+    </p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="totalTests">0</div>
+      <div class="stat-label">Total Tests</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="passedTests">0</div>
+      <div class="stat-label">Passed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="failedTests">0</div>
+      <div class="stat-label">Failed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="warningTests">0</div>
+      <div class="stat-label">Warnings</div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    // Use the correct port for your dev server
+    // If running on different port, update this URL
+    const API_BASE = 'http://localhost:8081';
+    let testWallet = null;
+    
+    let totalTests = 0;
+    let passedTests = 0;
+    let failedTests = 0;
+    let warningTests = 0;
+
+    function updateStats() {
+      document.getElementById('totalTests').textContent = totalTests;
+      document.getElementById('passedTests').textContent = passedTests;
+      document.getElementById('failedTests').textContent = failedTests;
+      document.getElementById('warningTests').textContent = warningTests;
+    }
+
+    function addResult(title, status, message, data = null) {
+      const resultsDiv = document.getElementById('results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `test-result ${status}`;
+      
+      let html = `<strong>${title}</strong><br>${message}`;
+      if (data) {
+        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+      
+      resultDiv.innerHTML = html;
+      resultsDiv.appendChild(resultDiv);
+      
+      totalTests++;
+      if (status === 'pass') passedTests++;
+      if (status === 'fail') failedTests++;
+      if (status === 'warning') warningTests++;
+      updateStats();
+    }
+
+    function addPhaseHeader(phase, title, description) {
+      const resultsDiv = document.getElementById('results');
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'phase-header';
+      headerDiv.innerHTML = `<h3>${phase}: ${title}</h3><p>${description}</p>`;
+      resultsDiv.appendChild(headerDiv);
+    }
+
+    // ============================================
+    // PHASE 1: NON-PERSONALIZED FEED TESTS
+    // ============================================
+    
+    async function testNonPersonalizedEndpoint() {
+      const endpoint = `${API_BASE}/api/hunter/airdrops`;
+      
+      try {
+        const response = await fetch(endpoint);
+        
+        if (response.status === 200) {
+          addResult('✅ Non-Personalized Endpoint', 'pass', 'Returns 200 OK');
+        } else {
+          addResult('❌ Non-Personalized Endpoint', 'fail', `Expected 200, got ${response.status}`);
+          return null;
+        }
+        
+        const data = await response.json();
+        
+        // Check response structure
+        if (data.items && Array.isArray(data.items) && 'cursor' in data && 'ts' in data) {
+          addResult('✅ Response Structure', 'pass', `Valid structure with ${data.items.length} items`);
+        } else {
+          addResult('❌ Response Structure', 'fail', 'Missing required fields: items, cursor, ts');
+        }
+        
+        // Check all items are airdrops
+        if (data.items.length > 0) {
+          const nonAirdrops = data.items.filter(item => item.type !== 'airdrop');
+          if (nonAirdrops.length === 0) {
+            addResult('✅ Type Filtering', 'pass', 'All items are type=airdrop');
+          } else {
+            addResult('❌ Type Filtering', 'fail', `Found ${nonAirdrops.length} non-airdrop items`);
+          }
+        } else {
+          addResult('⚠️ Type Filtering', 'warning', 'No airdrops in database to test');
+        }
+        
+        // Check NO eligibility_preview or ranking
+        const hasEligibility = data.items.some(item => 'eligibility_preview' in item);
+        const hasRanking = data.items.some(item => 'ranking' in item);
+        
+        if (!hasEligibility && !hasRanking) {
+          addResult('✅ Non-Personalized Fields', 'pass', 'No eligibility_preview or ranking (as expected)');
+        } else {
+          addResult('❌ Non-Personalized Fields', 'fail', 'Found personalization fields without wallet parameter');
+        }
+        
+        return data;
+      } catch (error) {
+        addResult('❌ Non-Personalized Endpoint', 'fail', `Request failed: ${error.message}`);
+        return null;
+      }
+    }
+
+    // ============================================
+    // PHASE 2: PERSONALIZED FEED TESTS
+    // ============================================
+    
+    async function testPersonalizedEndpoint() {
+      if (!testWallet) {
+        addResult('⚠️ Personalized Tests Skipped', 'warning', 'No wallet address provided. Enter a wallet to test personalized features.');
+        return;
+      }
+      
+      const endpoint = `${API_BASE}/api/hunter/airdrops?wallet=${testWallet}`;
+      
+      try {
+        const response = await fetch(endpoint);
+        
+        if (response.status === 200) {
+          addResult('✅ Personalized Endpoint', 'pass', 'Returns 200 OK with wallet parameter');
+        } else {
+          addResult('❌ Personalized Endpoint', 'fail', `Expected 200, got ${response.status}`);
+          return null;
+        }
+        
+        const data = await response.json();
+        
+        // Check response structure
+        if (data.items && Array.isArray(data.items)) {
+          addResult('✅ Personalized Response', 'pass', `Valid structure with ${data.items.length} items`);
+        } else {
+          addResult('❌ Personalized Response', 'fail', 'Invalid response structure');
+          return null;
+        }
+        
+        // Check eligibility_preview exists
+        if (data.items.length > 0) {
+          const hasEligibility = data.items.every(item => 'eligibility_preview' in item);
+          if (hasEligibility) {
+            addResult('✅ Eligibility Preview', 'pass', 'All items have eligibility_preview');
+            
+            // Check eligibility structure
+            const firstItem = data.items[0];
+            if (firstItem.eligibility_preview.status && 
+                typeof firstItem.eligibility_preview.score === 'number' &&
+                Array.isArray(firstItem.eligibility_preview.reasons)) {
+              addResult('✅ Eligibility Structure', 'pass', 'Valid eligibility_preview structure');
+            } else {
+              addResult('❌ Eligibility Structure', 'fail', 'Invalid eligibility_preview structure');
+            }
+          } else {
+            addResult('❌ Eligibility Preview', 'fail', 'Some items missing eligibility_preview');
+          }
+          
+          // Check ranking exists
+          const hasRanking = data.items.every(item => 'ranking' in item);
+          if (hasRanking) {
+            addResult('✅ Ranking', 'pass', 'All items have ranking');
+            
+            // Check ranking structure
+            const firstItem = data.items[0];
+            if (typeof firstItem.ranking.overall === 'number' &&
+                typeof firstItem.ranking.relevance === 'number' &&
+                typeof firstItem.ranking.freshness === 'number') {
+              addResult('✅ Ranking Structure', 'pass', 'Valid ranking structure');
+            } else {
+              addResult('❌ Ranking Structure', 'fail', 'Invalid ranking structure');
+            }
+          } else {
+            addResult('❌ Ranking', 'fail', 'Some items missing ranking');
+          }
+        }
+        
+        return data;
+      } catch (error) {
+        addResult('❌ Personalized Endpoint', 'fail', `Request failed: ${error.message}`);
+        return null;
+      }
+    }
+
+    // ============================================
+    // PHASE 3: HISTORY ENDPOINT TESTS
+    // ============================================
+    
+    async function testHistoryEndpoint() {
+      if (!testWallet) {
+        addResult('⚠️ History Tests Skipped', 'warning', 'No wallet address provided. Enter a wallet to test history endpoint.');
+        return;
+      }
+      
+      const endpoint = `${API_BASE}/api/hunter/airdrops/history?wallet=${testWallet}`;
+      
+      try {
+        const response = await fetch(endpoint);
+        
+        if (response.status === 200) {
+          addResult('✅ History Endpoint', 'pass', 'Returns 200 OK');
+        } else {
+          addResult('❌ History Endpoint', 'fail', `Expected 200, got ${response.status}`);
+          return null;
+        }
+        
+        const data = await response.json();
+        
+        // Check response structure
+        if (data.items && Array.isArray(data.items)) {
+          addResult('✅ History Response', 'pass', `Valid structure with ${data.items.length} history items`);
+        } else {
+          addResult('❌ History Response', 'fail', 'Invalid response structure');
+          return null;
+        }
+        
+        // Check status categories
+        if (data.items.length > 0) {
+          const validStatuses = ['eligible', 'maybe', 'unlikely', 'claimed', 'missed', 'expired'];
+          const invalidStatuses = data.items.filter(item => !validStatuses.includes(item.status));
+          
+          if (invalidStatuses.length === 0) {
+            addResult('✅ Status Categories', 'pass', 'All items have valid status');
+          } else {
+            addResult('❌ Status Categories', 'fail', `Found ${invalidStatuses.length} items with invalid status`);
+          }
+          
+          // Check nested opportunity data
+          const hasOpportunity = data.items.every(item => item.opportunity && typeof item.opportunity === 'object');
+          if (hasOpportunity) {
+            addResult('✅ Nested Opportunity', 'pass', 'All items have nested opportunity data');
+          } else {
+            addResult('❌ Nested Opportunity', 'fail', 'Some items missing nested opportunity data');
+          }
+          
+          // Check sorting by updated_at
+          if (data.items.length > 1) {
+            let isSorted = true;
+            for (let i = 1; i < data.items.length; i++) {
+              const prevDate = new Date(data.items[i - 1].updated_at);
+              const currDate = new Date(data.items[i].updated_at);
+              if (prevDate < currDate) {
+                isSorted = false;
+                break;
+              }
+            }
+            
+            if (isSorted) {
+              addResult('✅ History Sorting', 'pass', 'Items sorted by updated_at descending');
+            } else {
+              addResult('❌ History Sorting', 'fail', 'Items not properly sorted');
+            }
+          }
+        } else {
+          addResult('ℹ️ History Empty', 'info', 'No history items for this wallet (expected for new wallets)');
+        }
+        
+        return data;
+      } catch (error) {
+        addResult('❌ History Endpoint', 'fail', `Request failed: ${error.message}`);
+        return null;
+      }
+    }
+
+    // ============================================
+    // ADDITIONAL TESTS
+    // ============================================
+    
+    async function testAirdropSpecificFields() {
+      const endpoint = `${API_BASE}/api/hunter/airdrops`;
+      
+      try {
+        const response = await fetch(endpoint);
+        const data = await response.json();
+        
+        if (data.items.length === 0) {
+          addResult('⚠️ Airdrop Fields', 'warning', 'No airdrops to test fields');
+          return;
+        }
+        
+        const opportunity = data.items[0];
+        
+        // Check airdrop-specific fields
+        const airdropFields = ['snapshot_date', 'claim_start', 'claim_end', 'airdrop_category'];
+        const presentFields = airdropFields.filter(field => field in opportunity);
+        
+        if (presentFields.length > 0) {
+          addResult('✅ Airdrop-Specific Fields', 'pass', `Found fields: ${presentFields.join(', ')}`);
+        } else {
+          addResult('ℹ️ Airdrop-Specific Fields', 'info', 'No airdrop-specific fields (may be null for some airdrops)');
+        }
+        
+        // Check source fields
+        if ('source' in opportunity && 'source_ref' in opportunity) {
+          addResult('✅ Source Fields', 'pass', `Source: ${opportunity.source || 'null'}, Ref: ${opportunity.source_ref || 'null'}`);
+        }
+        
+        // Show sample
+        addResult('ℹ️ Sample Airdrop', 'info', 'First airdrop structure', opportunity);
+        
+      } catch (error) {
+        addResult('❌ Airdrop Fields Test', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+    
+    async function testPerformance() {
+      const endpoints = [
+        { name: 'Non-Personalized', url: `${API_BASE}/api/hunter/airdrops`, maxTime: 2000 },
+        { name: 'Personalized', url: `${API_BASE}/api/hunter/airdrops?wallet=${testWallet || '0x0000000000000000000000000000000000000000'}`, maxTime: 5000 },
+        { name: 'History', url: `${API_BASE}/api/hunter/airdrops/history?wallet=${testWallet || '0x0000000000000000000000000000000000000000'}`, maxTime: 2000 }
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const start = Date.now();
+          const response = await fetch(endpoint.url);
+          const duration = Date.now() - start;
+          
+          if (duration < endpoint.maxTime) {
+            addResult(`✅ ${endpoint.name} Performance`, 'pass', `Responded in ${duration}ms (< ${endpoint.maxTime}ms)`);
+          } else {
+            addResult(`⚠️ ${endpoint.name} Performance`, 'warning', `Responded in ${duration}ms (target: < ${endpoint.maxTime}ms)`);
+          }
+        } catch (error) {
+          addResult(`❌ ${endpoint.name} Performance`, 'fail', `Test failed: ${error.message}`);
+        }
+      }
+    }
+
+    // ============================================
+    // TEST RUNNERS
+    // ============================================
+    
+    async function runPhase1Tests() {
+      addPhaseHeader('Phase 1', 'Non-Personalized Feed', 'Testing GET /api/hunter/airdrops without wallet parameter');
+      await testNonPersonalizedEndpoint();
+      await testAirdropSpecificFields();
+    }
+    
+    async function runPhase2Tests() {
+      addPhaseHeader('Phase 2', 'Personalized Feed', 'Testing GET /api/hunter/airdrops?wallet=...');
+      await testPersonalizedEndpoint();
+    }
+    
+    async function runPhase3Tests() {
+      addPhaseHeader('Phase 3', 'History Endpoint', 'Testing GET /api/hunter/airdrops/history?wallet=...');
+      await testHistoryEndpoint();
+    }
+    
+    async function runAllTests() {
+      const button = document.getElementById('runAllTests');
+      button.disabled = true;
+      button.textContent = 'Running Tests...';
+      
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      warningTests = 0;
+      updateStats();
+      
+      try {
+        addResult('🚀 Test Suite Started', 'info', `Testing Hunter Airdrops Module (Task 4)`);
+        
+        await runPhase1Tests();
+        await runPhase2Tests();
+        await runPhase3Tests();
+        
+        addPhaseHeader('Additional Tests', 'Performance & Validation', 'Testing response times and data quality');
+        await testPerformance();
+        
+        const summary = `Completed ${totalTests} tests: ${passedTests} passed, ${failedTests} failed, ${warningTests} warnings`;
+        addResult('✅ Test Suite Complete', 'info', summary);
+        
+      } catch (error) {
+        addResult('❌ Test Suite Error', 'fail', `Fatal error: ${error.message}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Run All Tests';
+      }
+    }
+    
+    function clearResults() {
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      warningTests = 0;
+      updateStats();
+    }
+    
+    function setWallet() {
+      const input = document.getElementById('walletAddress');
+      testWallet = input.value.trim() || null;
+      
+      if (testWallet) {
+        addResult('✅ Wallet Set', 'info', `Using wallet: ${testWallet}`);
+      } else {
+        addResult('ℹ️ Wallet Cleared', 'info', 'Wallet address cleared. Personalized tests will be skipped.');
+      }
+    }
+
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    
+    document.getElementById('runAllTests').addEventListener('click', runAllTests);
+    document.getElementById('runPhase1').addEventListener('click', async () => {
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      warningTests = 0;
+      updateStats();
+      await runPhase1Tests();
+    });
+    document.getElementById('runPhase2').addEventListener('click', async () => {
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      warningTests = 0;
+      updateStats();
+      await runPhase2Tests();
+    });
+    document.getElementById('runPhase3').addEventListener('click', async () => {
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      warningTests = 0;
+      updateStats();
+      await runPhase3Tests();
+    });
+    document.getElementById('clearResults').addEventListener('click', clearResults);
+    document.getElementById('setWallet').addEventListener('click', setWallet);
+    
+    // Auto-run Phase 1 on load
+    window.addEventListener('load', () => {
+      setTimeout(async () => {
+        addResult('ℹ️ Auto-Running Phase 1', 'info', 'Running non-personalized tests automatically. Use buttons above to run other phases.');
+        await runPhase1Tests();
+      }, 500);
+    });
+  </script>
+</body>
+</html>

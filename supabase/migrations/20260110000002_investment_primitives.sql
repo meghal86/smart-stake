@@ -139,7 +139,10 @@ CREATE OR REPLACE FUNCTION public.get_user_relevance_items(
   kind TEXT,
   ref_id TEXT,
   payload JSONB
-) AS $
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $fn$
 BEGIN
   RETURN QUERY
   SELECT 
@@ -150,20 +153,24 @@ BEGIN
   WHERE ui.user_id = p_user_id
     AND ui.kind IN ('save', 'wallet_role'); -- Only items that affect relevance
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$fn$;
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION public.get_user_relevance_items(UUID) TO authenticated;
 
 -- Function to get user's active alert rules
 -- Returns enabled alert rules for processing
+-- Function to get user's active alert rules
 CREATE OR REPLACE FUNCTION public.get_active_alert_rules(
   p_user_id UUID
 ) RETURNS TABLE(
   id BIGINT,
   rule JSONB,
   created_at TIMESTAMPTZ
-) AS $
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $fn$
 BEGIN
   RETURN QUERY
   SELECT 
@@ -175,7 +182,8 @@ BEGIN
     AND car.is_enabled = true
   ORDER BY car.created_at DESC;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$fn$;
+
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION public.get_active_alert_rules(UUID) TO authenticated;

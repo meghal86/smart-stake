@@ -109,18 +109,21 @@ GRANT EXECUTE ON FUNCTION public.get_notification_counts(UUID, INTEGER) TO servi
 
 -- Function to log a sent notification
 CREATE OR REPLACE FUNCTION public.log_notification(
-  p_user_id UUID,
-  p_category TEXT,
-  p_title TEXT,
-  p_body TEXT,
-  p_endpoint TEXT,
-  p_success BOOLEAN DEFAULT true,
-  p_error_message TEXT DEFAULT NULL,
-  p_payload JSONB DEFAULT NULL,
-  p_user_timezone TEXT DEFAULT NULL
-) RETURNS BIGINT AS $
+  p_user_id uuid,
+  p_category text,
+  p_title text,
+  p_body text,
+  p_endpoint text,
+  p_success boolean DEFAULT true,
+  p_error_message text DEFAULT NULL,
+  p_payload jsonb DEFAULT NULL,
+  p_user_timezone text DEFAULT NULL
+) RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
-  log_id BIGINT;
+  log_id bigint;
 BEGIN
   INSERT INTO public.notification_logs (
     user_id, category, title, body, endpoint, success, 
@@ -132,7 +135,7 @@ BEGIN
   
   RETURN log_id;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Grant execute permission to service role (for Edge Functions)
 GRANT EXECUTE ON FUNCTION public.log_notification(UUID, TEXT, TEXT, TEXT, TEXT, BOOLEAN, TEXT, JSONB, TEXT) TO service_role;
@@ -140,18 +143,21 @@ GRANT EXECUTE ON FUNCTION public.log_notification(UUID, TEXT, TEXT, TEXT, TEXT, 
 -- Function to cleanup old notification logs (for data retention)
 -- Keeps logs for 30 days by default
 CREATE OR REPLACE FUNCTION public.cleanup_old_notification_logs(
-  p_days_to_keep INTEGER DEFAULT 30
-) RETURNS INTEGER AS $
+  p_days_to_keep integer DEFAULT 30
+) RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
-  deleted_count INTEGER;
+  deleted_count integer;
 BEGIN
   DELETE FROM public.notification_logs
   WHERE sent_at < now() - (p_days_to_keep || ' days')::interval;
-  
+
   GET DIAGNOSTICS deleted_count = ROW_COUNT;
   RETURN deleted_count;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Grant execute permission to service role only (for scheduled cleanup jobs)
 GRANT EXECUTE ON FUNCTION public.cleanup_old_notification_logs(INTEGER) TO service_role;
@@ -167,5 +173,51 @@ GRANT SELECT ON public.notification_logs TO authenticated;
 -- Grant table access to service role (for notification sending and cleanup)
 GRANT ALL ON public.notification_logs TO service_role;
 
+-- Drop the existing function with its exact signature
+DROP FUNCTION IF EXISTS public.log_notification(
+  uuid, text, text, text, text, boolean, text, jsonb, text
+);
+
+-- Recreate with the correct return type (uuid) and hardened settings
+CREATE OR REPLACE FUNCTION public.log_notification(
+  p_user_id uuid,
+  p_category text,
+  p_title text,
+  p_body text,
+  p_endpoint text,
+  p_success boolean DEFAULT true,
+  p_error_message text DEFAULT NULL,
+  p_payload jsonb DEFAULT NULL,
+  p_user_timezone text DEFAULT NULL
+) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  log_id uuid;
+BEGIN
+  INSERT INTO public.notification_logs (
+    user_id, category, title, body, endpoint, success,
+    error_message, payload, user_timezone
+  ) VALUES (
+    p_user_id, p_category, p_title, p_body, p_endpoint, p_success,
+    p_error_message, p_payload, p_user_timezone
+  )
+  RETURNING id INTO log_id;
+
+  RETURN log_id;
+END;
+$$;
+
+-- Harden search path
+ALTER FUNCTION public.log_notification(uuid, text, text, text, text, boolean, text, jsonb, text)
+SET search_path = public, pg_temp;
+
+-- Optional: restrict execute permissions
+REVOKE ALL ON FUNCTION public.log_notification(uuid, text, text, text, text, boolean, text, jsonb, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.log_notification(uuid, text, text, text, text, boolean, text, jsonb, text) TO authenticated;
+
 -- Grant sequence access for BIGSERIAL primary key
+
+
 GRANT USAGE, SELECT ON SEQUENCE public.notification_logs_id_seq TO service_role;

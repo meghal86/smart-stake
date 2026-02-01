@@ -328,24 +328,25 @@ async function storeInCache(
   try {
     const supabase = createServiceClient();
 
-    // Upsert into cache
+    // First, try to delete existing entry
+    await supabase
+      .from('eligibility_cache')
+      .delete()
+      .eq('wallet_address', walletAddress.toLowerCase())
+      .eq('opportunity_id', opportunityId);
+
+    // Then insert new entry
     const { error } = await supabase
       .from('eligibility_cache')
-      .upsert(
-        {
-          wallet_address: walletAddress.toLowerCase(),
-          opportunity_id: opportunityId,
-          eligibility_status: result.status,
-          eligibility_score: result.score,
-          reasons: result.reasons,
-          is_eligible: result.status === 'likely', // Legacy field
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'wallet_address,opportunity_id',
-        }
-      );
+      .insert({
+        wallet_address: walletAddress.toLowerCase(),
+        opportunity_id: opportunityId,
+        eligibility_status: result.status,
+        eligibility_score: result.score,
+        reasons: result.reasons,
+        is_eligible: result.status === 'likely', // Legacy field
+        created_at: new Date().toISOString(),
+      });
 
     if (error) {
       console.error('Error storing eligibility in cache:', error);
