@@ -13,7 +13,7 @@ import { FooterNav } from '@/components/layout/FooterNav';
 import { useHunterFeed } from '@/hooks/useHunterFeed';
 import { useWallet } from '@/contexts/WalletContext';
 import { useDemoMode } from '@/lib/ux/DemoModeManager';
-import { TabType } from '@/components/hunter/HunterTabs';
+import { HunterTabs, TabType } from '@/components/hunter/HunterTabs';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
@@ -28,7 +28,7 @@ interface Opportunity {
   guardianScore: number;
   riskLevel: 'Low' | 'Medium' | 'High';
   chain?: string;
-  protocol?: string;
+  protocol?: string | { name: string; logo?: string };
   estimatedAPY?: number;
 }
 
@@ -85,21 +85,26 @@ export default function Hunter() {
     sort: 'recommended',
   });
 
-  const filteredOpportunities = opportunities.filter((opp: Opportunity) => {
-    if (activeFilter === 'All') return true;
-    
-    // Map plural filter names to singular opportunity types
-    const filterMap: Record<string, string> = {
-      'Airdrops': 'Airdrop',
-      'Quests': 'Quest',
-      'Staking': 'Staking',
-      'NFT': 'NFT',
-      'Points': 'Points'
-    };
-    
-    const mappedFilter = filterMap[activeFilter] || activeFilter;
-    return opp.type === mappedFilter;
-  });
+  // Debug logging for filtering
+  useEffect(() => {
+    console.log('🔍 Hunter Filtering:', {
+      totalOpportunities: opportunities.length,
+      activeFilter,
+      opportunityTypes: opportunities.map(o => o.type),
+      firstOpportunity: opportunities[0]
+    });
+  }, [opportunities.length, activeFilter]);
+
+  // Debug logging for render state
+  useEffect(() => {
+    console.log('🎨 Hunter Render State:', {
+      isLoading,
+      opportunityCount: opportunities.length,
+      willShowEmptyState: !isLoading && opportunities.length === 0,
+      willShowCards: !isLoading && opportunities.length > 0,
+      willShowLoading: isLoading
+    });
+  }, [isLoading, opportunities.length]);
 
   // Infinite scroll handler
   useEffect(() => {
@@ -209,6 +214,15 @@ export default function Hunter() {
       <div className="flex flex-1 w-full max-w-7xl mx-auto gap-6 px-4 md:px-6 pt-32 pb-28">
         {/* Main Feed - Center Column */}
         <main className="flex-1 min-w-0">
+          {/* Filter Tabs */}
+          <div className="mb-6">
+            <HunterTabs
+              activeTab={activeFilter}
+              onTabChange={setActiveFilter}
+              isDarkTheme={isDarkTheme}
+            />
+          </div>
+
           {/* Content */}
           <AnimatePresence mode="wait">
           {isLoading ? (
@@ -223,7 +237,7 @@ export default function Hunter() {
                 isDarkTheme={isDarkTheme}
               />
             </motion.div>
-          ) : filteredOpportunities.length === 0 ? (
+          ) : opportunities.length === 0 ? (
             <EmptyState filter={activeFilter} />
           ) : (
             <motion.div
@@ -233,7 +247,7 @@ export default function Hunter() {
               exit={{ opacity: 0 }}
               className="grid gap-6"
             >
-              {filteredOpportunities.map((opportunity: Opportunity, index: number) => (
+              {opportunities.map((opportunity: Opportunity, index: number) => (
                 <motion.div
                   key={opportunity.id}
                   initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -274,7 +288,7 @@ export default function Hunter() {
               )}
               
               {/* End of results indicator */}
-              {!hasNextPage && filteredOpportunities.length > 0 && (
+              {!hasNextPage && opportunities.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

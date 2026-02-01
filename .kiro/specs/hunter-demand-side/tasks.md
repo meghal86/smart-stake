@@ -568,7 +568,7 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Ensure all tests pass, ask the user if questions arise.
   - _Requirements: Modules 1-4 validation_
 
-- [-] 8. Module 5: RWA Vaults (Admin-Seeded)
+- [x] 8. Module 5: RWA Vaults (Admin-Seeded)
   - Create RWA-specific schema
   - Implement admin seeding mechanism
   - Create RWA sync stub
@@ -579,35 +579,35 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - Create user_rwa_positions table
   - _Requirements: 3.1-3.7_
 
-- [ ] 8.2 Create admin seed script
+- [x] 8.2 Create admin seed script
   - Create scripts/seed-rwa.ts
   - Seed 10+ RWA vault opportunities with realistic data
   - Include KYC requirements and jurisdiction info
   - _Requirements: 2.4_
 
-- [ ] 8.3 Create RWA sync API route (stub)
+- [x] 8.3 Create RWA sync API route (stub)
   - Create src/app/api/sync/rwa/route.ts
   - Return stub response: {count: 0, source: "stub", message: "Admin seeding required"}
   - Implement CRON_SECRET validation
   - _Requirements: 2.4, 2.8_
 
-- [ ] 8.4 Add RWA-specific API endpoints
+- [x] 8.4 Add RWA-specific API endpoints
   - Create GET /api/hunter/rwa?wallet= (filter type='rwa')
   - _Requirements: 1.1-1.7_
 
-- [ ] 8.5 Write unit tests for RWA eligibility
+- [x] 8.5 Write unit tests for RWA eligibility
   - Test: KYC requirement checking
   - Test: Minimum investment eligibility
   - Test: Jurisdiction restrictions
   - _Requirements: 5.1-5.11_
 
-- [ ] 9. Module 6: Strategies (Creator Plays)
+- [x] 9. Module 6: Strategies (Creator Plays)
   - Create strategies schema
   - Implement strategy creation and subscription
   - Link strategies to opportunities
   - _Requirements: 1.1-1.7_
 
-- [ ] 9.1 Create strategies database schema
+- [x] 9.1 Create strategies database schema
   - Create strategies table (id, title, description, creator_id, steps, trust_score_cached, steps_trust_breakdown)
   - Create strategy_subscriptions table (user_id, strategy_id, subscribed_at)
   - strategies.steps references opportunity IDs (JSONB array)
@@ -615,7 +615,7 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - strategies.steps_trust_breakdown stores per-step trust scores (JSONB array)
   - _Requirements: 3.1-3.7, 18.1-18.4_
 
-- [ ] 9.2 Add strategy API endpoints
+- [x] 9.2 Add strategy API endpoints
   - Create GET /api/hunter/strategies (list all strategies)
   - Return both trust_score_cached and steps_trust_breakdown for each strategy
   - Create POST /api/hunter/strategies/subscribe (subscribe to strategy)
@@ -624,13 +624,13 @@ Complete implementation of all 7 Hunter opportunity modules with wallet-aware pe
   - On strategy create/update: store steps_trust_breakdown as JSONB array
   - _Requirements: 1.1-1.7, 18.1-18.10_
 
-- [ ] 9.3 Create admin seed script
+- [x] 9.3 Create admin seed script
   - Create scripts/seed-strategies.ts
   - Seed 5+ strategies linking to existing opportunities
   - Include multi-step strategies (e.g., "Airdrop Farming 101")
   - _Requirements: 2.4_
 
-- [ ] 9.4 Write unit tests for strategy logic
+- [x] 9.4 Write unit tests for strategy logic
   - Test: Strategy step ordering
   - Test: Subscription tracking
   - Test: Trust score computation (aggregation across steps)

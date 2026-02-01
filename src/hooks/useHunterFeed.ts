@@ -138,6 +138,8 @@ function transformToLegacyOpportunity(opp: NewOpportunity): LegacyOpportunity {
     'points': 'Quest',
     'loyalty': 'Quest',
     'testnet': 'Quest',
+    'rwa': 'Staking',      // RWA opportunities are yield-like
+    'strategy': 'Quest',   // Strategies are quest-like
   };
 
   const riskMap: Record<string, 'Low' | 'Medium' | 'High'> = {
@@ -272,7 +274,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
   };
 
   // Use infinite query for cursor-based pagination with ranking
-  // Include activeWallet AND isDemo in query key to trigger refetch on mode change
+  // Include activeWallet, activeNetwork, isDemo, AND filter in query key to trigger refetch on changes
   const {
     data,
     isLoading,
@@ -282,7 +284,7 @@ export function useHunterFeed(props: UseHunterFeedProps) {
     isFetchingNextPage,
     refetch: queryRefetch,
   } = useInfiniteQuery({
-    queryKey: ['hunter', 'feed', activeWallet, activeNetwork, props.isDemo] as const,
+    queryKey: ['hunter', 'feed', activeWallet, activeNetwork, props.isDemo, props.filter] as const,
     queryFn: async ({ pageParam }) => {
       const personalizationStartTime = performance.now();
       
@@ -297,48 +299,85 @@ export function useHunterFeed(props: UseHunterFeedProps) {
         };
       }
       
-      // Live mode - call API route
-      console.log('🌐 Live Mode: Fetching from API', {
-        endpoint: '/api/hunter/opportunities',
-        params: {
-          filter: props.filter,
-          sort: props.sort || 'recommended',
-          cursor: pageParam,
-          walletAddress: activeWallet
-        }
-      });
-      
-      // Build query parameters
-      const params = new URLSearchParams({
+      // Live mode - fetch directly from Supabase (Vite doesn't serve Next.js API routes)
+      console.log('🌐 Live Mode: Fetching from Supabase', {
         filter: props.filter,
         sort: props.sort || 'recommended',
-        limit: '12',
+        cursor: pageParam,
+        walletAddress: activeWallet
       });
       
-      if (pageParam) {
-        params.append('cursor', pageParam as string);
+      // Import Supabase client
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL!,
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY!
+      );
+      
+      // Build query
+      let query = supabase
+        .from('opportunities')
+        .select('*')
+        .eq('status', 'published');
+      
+      // Apply type filter
+      if (props.filter !== 'All') {
+        const typeMap: Record<string, string[]> = {
+          'Airdrops': ['airdrop'],
+          'Quests': ['quest', 'testnet'],
+          'Yield': ['staking', 'yield'],
+          'Points': ['points', 'loyalty'],
+          'Staking': ['staking', 'yield', 'rwa'],
+          'NFT': ['quest'], // NFT opportunities are typically quest-like
+          'RWA': ['rwa'],
+          'Strategies': ['strategy'],
+        };
+        
+        const types = typeMap[props.filter];
+        if (types && types.length > 0) {
+          query = query.in('type', types);
+        }
       }
       
-      if (activeWallet) {
-        params.append('walletAddress', activeWallet);
+      // Apply sorting
+      switch (props.sort) {
+        case 'ends_soon':
+          query = query.order('end_date', { ascending: true, nullsFirst: false });
+          break;
+        case 'highest_reward':
+          query = query.order('reward_max', { ascending: false, nullsFirst: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'trust':
+          query = query.order('trust_score', { ascending: false });
+          break;
+        case 'recommended':
+        default:
+          // For recommended, sort by trust_score to get diverse, high-quality opportunities
+          // This provides better variety than created_at which groups by seed order
+          query = query.order('trust_score', { ascending: false });
+          break;
       }
       
-      // Call API route
-      const response = await fetch(`/api/hunter/opportunities?${params.toString()}`, {
-        credentials: 'include',
-      });
+      // Apply cursor-based pagination using offset
+      const offset = pageParam || 0;
+      query = query.range(offset, offset + 11); // 12 items (0-11 inclusive)
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || 'Failed to fetch opportunities');
+      // Execute query
+      const { data: result, error: fetchError } = await query;
+      
+      if (fetchError) {
+        console.error('❌ Supabase error:', fetchError);
+        throw new Error(fetchError.message || 'Failed to fetch opportunities');
       }
       
-      const result = await response.json();
-      
-      console.log('✅ API Response:', {
-        itemCount: result.items.length,
-        hasMore: !!result.cursor,
-        timestamp: result.ts
+      console.log('✅ Supabase Response:', {
+        itemCount: result?.length || 0,
+        offset,
+        firstItem: result?.[0],
+        timestamp: new Date().toISOString()
       });
       
       // Track feed personalization analytics when wallet is connected
@@ -348,9 +387,9 @@ export function useHunterFeed(props: UseHunterFeedProps) {
         // Import dynamically to avoid circular dependencies
         import('@/lib/analytics/tracker').then(({ trackFeedPersonalized }) => {
           // Check if wallet has history (has saved or completed opportunities)
-          const hasWalletHistory = result.items.some((item: NewOpportunity) => 
+          const hasWalletHistory = result?.some((item: NewOpportunity) => 
             item.eligibility_preview?.status === 'likely'
-          );
+          ) || false;
           
           trackFeedPersonalized({
             walletAddress: activeWallet,
@@ -365,14 +404,18 @@ export function useHunterFeed(props: UseHunterFeedProps) {
         });
       }
       
+      // Calculate next cursor (offset for next page)
+      const hasMore = result && result.length === 12;
+      const nextCursor = hasMore ? offset + 12 : null;
+      
       return {
-        items: result.items,
-        nextCursor: result.cursor,
+        items: result || [],
+        nextCursor,
         snapshotTs: Date.now() / 1000,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: undefined,
+    initialPageParam: 0, // Start at offset 0
     refetchInterval: props.realTimeEnabled ? 60000 : false, // Reduced from 30s to 60s
     staleTime: 60000, // 1 minute
     gcTime: 300000, // 5 minutes (formerly cacheTime)
@@ -384,6 +427,20 @@ export function useHunterFeed(props: UseHunterFeedProps) {
   const opportunities = useRealAPI
     ? (data?.pages.flatMap(page => page.items.map(transformToLegacyOpportunity)) ?? [])
     : (data?.pages[0]?.items ?? []);
+
+  // Debug logging for transformation
+  useEffect(() => {
+    if (data?.pages) {
+      console.log('📊 Opportunities Transformation:', {
+        useRealAPI,
+        pagesCount: data.pages.length,
+        itemsPerPage: data.pages.map(p => p.items.length),
+        totalItems: data.pages.reduce((sum, p) => sum + p.items.length, 0),
+        transformedCount: opportunities.length,
+        firstTransformed: opportunities[0]
+      });
+    }
+  }, [data, opportunities.length, useRealAPI]);
 
   const refetch = useCallback(async () => {
     setLastUpdated(new Date());

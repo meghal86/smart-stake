@@ -26,7 +26,8 @@
     "seed:quests": "tsx scripts/seed-quests.ts",
     "seed:points": "tsx scripts/seed-points.ts",
     "seed:rwa": "tsx scripts/seed-rwa.ts",
-    "seed:all": "npm run seed:airdrops && npm run seed:quests && npm run seed:points && npm run seed:rwa",
+    "seed:strategies": "tsx scripts/seed-strategies.ts",
+    "seed:all": "npm run seed:airdrops && npm run seed:quests && npm run seed:points && npm run seed:rwa && npm run seed:strategies",
     "hunter:verify-env": "tsx scripts/verify-hunter-env.ts",
     "hunter:setup": "npm run hunter:verify-env && npm run seed:all"
   },
