@@ -23,6 +23,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
+          'web3-vendor': ['wagmi', 'viem', '@rainbow-me/rainbowkit', 'ethers'],
+          'query-vendor': ['@tanstack/react-query'],
+        },
+      },
+    },
   },
   esbuild: {
     // Use esbuild for all TS processing, bypass tsc completely

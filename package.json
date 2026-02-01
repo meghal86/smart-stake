@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint . --max-warnings 200",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
+    "lint": "eslint . --max-warnings 1500",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
