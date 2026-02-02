@@ -424,40 +424,40 @@ export default function PortfolioEnhanced() {
           )}
 
           {/* AI Copilot - Prominent Position */}
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-xl">
-                <MessageSquare className="h-6 w-6 text-primary" />
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4 sm:p-6 space-y-4 max-w-full overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-primary/20 rounded-xl flex-shrink-0">
+                <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
-              <div>
-                <h3 className="text-lg font-semibold">AI Portfolio Copilot</h3>
-                <p className="text-sm text-muted-foreground">Ask questions about your portfolio, risk, and investment strategy</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base sm:text-lg font-semibold">AI Portfolio Copilot</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground break-words">Ask questions about your portfolio, risk, and investment strategy</p>
               </div>
             </div>
             
             <div className="space-y-4">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   placeholder="Ask about your portfolio..."
                   value={copilotQuery}
                   onChange={(e) => setCopilotQuery(e.target.value)}
-                  className="flex-1 px-4 py-3 text-sm border border-primary/20 rounded-lg bg-background/50 focus:bg-background focus:border-primary/40 transition-colors"
+                  className="flex-1 px-4 py-3 text-sm border border-primary/20 rounded-lg bg-background/50 focus:bg-background focus:border-primary/40 transition-colors min-w-0"
                   onKeyPress={(e) => e.key === 'Enter' && handleCopilotQuery()}
                 />
-                <Button onClick={handleCopilotQuery} className="bg-primary hover:bg-primary/90 px-6">
+                <Button onClick={handleCopilotQuery} className="bg-primary hover:bg-primary/90 px-6 whitespace-nowrap">
                   <Zap className="h-4 w-4 mr-2" />
                   Ask AI
                 </Button>
               </div>
               
               {copilotResponse && (
-                <div className="p-4 bg-background/80 border border-primary/20 rounded-lg">
+                <div className="p-4 bg-background/80 border border-primary/20 rounded-lg max-w-full overflow-hidden">
                   <div className="flex items-start gap-3">
-                    <div className="p-1 bg-primary/20 rounded">
+                    <div className="p-1 bg-primary/20 rounded flex-shrink-0">
                       <MessageSquare className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1 text-sm leading-relaxed">
+                    <div className="flex-1 text-sm leading-relaxed break-words min-w-0">
                       {copilotResponse}
                     </div>
                   </div>
@@ -465,7 +465,7 @@ export default function PortfolioEnhanced() {
               )}
               
               <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-muted-foreground mr-2">Try asking:</span>
+                <span className="text-xs text-muted-foreground mr-2 whitespace-nowrap">Try asking:</span>
                 {['Is my portfolio clean?', 'What is my risk?', 'Should I diversify?'].map((query) => (
                   <button
                     key={query}
@@ -473,7 +473,7 @@ export default function PortfolioEnhanced() {
                       setCopilotQuery(query);
                       setTimeout(handleCopilotQuery, 100);
                     }}
-                    className="px-3 py-1 text-xs bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-full transition-colors"
+                    className="px-3 py-1 text-xs bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-full transition-colors whitespace-nowrap"
                   >
                     {query}
                   </button>

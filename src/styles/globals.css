@@ -7,9 +7,57 @@
 @import './theme.css';
 @import './tokens.css';
 @import './button-fixes.css';
+@import './light-theme-overrides.css';
+@import './theme-utilities.css';
 
 :root {
-  /* Tailwind CSS Variables for shadcn/ui components */
+  /* Light Mode - Default Theme Variables */
+  --background: 210 40% 98%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 160 84% 39%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214.3 31.8% 85%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 160 84% 39%;
+  --radius: 0.5rem;
+  
+  /* Light Mode Glass UI Design Tokens */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-hover: rgba(0, 0, 0, 0.05);
+  --glass-active: rgba(0, 0, 0, 0.08);
+  
+  /* Light Mode Gradients */
+  --gradient-primary: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
+  --gradient-background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+  
+  /* Light Mode Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --accent-mint: #00C9A7;
+  --accent-violet: #7B61FF;
+  
+  /* Light Mode Shadows */
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  /* Dark Mode Theme Variables */
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
@@ -45,6 +93,30 @@
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
+  --gradient-background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.6) 100%);
+  
+  /* Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent-mint: #00F5A0;
+  --accent-violet: #7B61FF;
+  
+  /* Shadows */
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  /* Trinity Glass UI Design Tokens - Dark Mode */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-hover: rgba(255, 255, 255, 0.10);
+  --glass-active: rgba(255, 255, 255, 0.15);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
   --gradient-background: linear-gradient(135deg, #0A0E1A 0%, #141A28 100%);
   --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
   
@@ -58,6 +130,7 @@
   /* Shadows */
   --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.4);
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
   
   /* AlphaWhale UX Component Standards */
   --aw-primary: hsl(var(--primary));
@@ -100,6 +173,7 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--safe-area-inset-bottom);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Prevent body scroll when modal is open */
@@ -121,6 +195,31 @@ body.modal-open {
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  
+  /* Light theme specific utilities */
+  .light-card {
+    @apply bg-white border border-gray-200 shadow-sm;
+  }
+  
+  .light-card-hover {
+    @apply hover:bg-gray-50 hover:border-gray-300 hover:shadow-md;
+  }
+  
+  .light-glass {
+    @apply bg-white/80 backdrop-blur-md border border-gray-200/50;
+  }
+  
+  .light-text-primary {
+    @apply text-slate-900;
+  }
+  
+  .light-text-secondary {
+    @apply text-slate-600;
+  }
+  
+  .light-text-muted {
+    @apply text-slate-500;
+  }
 }
 
 
@@ -131,15 +230,28 @@ body.modal-open {
 }
 
 ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark ::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 

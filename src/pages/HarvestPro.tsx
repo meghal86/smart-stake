@@ -564,22 +564,39 @@ export default function HarvestPro() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0A0E1A] to-[#111827]">
+    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-[#0A0E1A] dark:to-[#111827] bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]">
       <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isPullRefreshing}
         pullDistance={pullDistance}
         threshold={threshold}
       />
-      {/* Background Effects */}
+      {/* Background Effects - Theme Aware */}
       <motion.div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none dark:block hidden"
         animate={{
           background: [
             'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(237,143,45,0.12) 0%, transparent 70%)',
             'radial-gradient(ellipse 60% 40% at 20% 80%, rgba(20,184,166,0.08) 0%, transparent 70%)',
             'radial-gradient(ellipse 70% 45% at 50% 50%, rgba(237,143,45,0.10) 0%, transparent 70%)',
             'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(237,143,45,0.12) 0%, transparent 70%)',
+          ],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: [0.25, 1, 0.5, 1],
+        }}
+        aria-hidden="true"
+      />
+      <motion.div
+        className="absolute inset-0 pointer-events-none dark:hidden block"
+        animate={{
+          background: [
+            'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(251,191,36,0.08) 0%, transparent 70%)',
+            'radial-gradient(ellipse 60% 40% at 20% 80%, rgba(20,184,166,0.05) 0%, transparent 70%)',
+            'radial-gradient(ellipse 70% 45% at 50% 50%, rgba(251,191,36,0.06) 0%, transparent 70%)',
+            'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(251,191,36,0.08) 0%, transparent 70%)',
           ],
         }}
         transition={{

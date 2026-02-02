@@ -1,140 +1,331 @@
-import { useState, useEffect } from 'react';
-import { X, MessageCircle, Send } from 'lucide-react';
-import { WalletScope } from '@/types/portfolio';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Send, Bot, AlertCircle, CheckCircle, Clock, Zap } from 'lucide-react';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCopilotSSE, type WalletScope, type ActionCard, type IntentPlan } from '@/hooks/useCopilotSSE';
+import { cn } from '@/lib/utils';
 
-interface CopilotChatDrawerProps {
+export interface CopilotChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   walletScope: WalletScope;
+  onActionCardClick?: (actionCard: ActionCard) => void;
+  onIntentPlanClick?: (intentPlan: IntentPlan) => void;
 }
 
-export function CopilotChatDrawer({ isOpen, onClose, walletScope }: CopilotChatDrawerProps) {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Array<{
-    id: string;
-    type: 'user' | 'assistant';
-    content: string;
-    timestamp: Date;
-  }>>([]);
+export function CopilotChatDrawer({
+  isOpen,
+  onClose,
+  walletScope,
+  onActionCardClick,
+  onIntentPlanClick,
+}: CopilotChatDrawerProps) {
+  const [inputMessage, setInputMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Reset messages when wallet scope changes to prevent data leakage
+  const {
+    isConnected,
+    isConnecting,
+    error,
+    messages,
+    actionCards,
+    intentPlans,
+    capabilityNotices,
+    sendMessage,
+    clearHistory,
+  } = useCopilotSSE({
+    walletScope,
+    enabled: isOpen, // Only connect when drawer is open
+    onError: (err) => {
+      console.error('Copilot SSE error:', err);
+    },
+  });
+
+  // Auto-scroll to bottom when new messages arrive - debounced
   useEffect(() => {
-    setMessages([]);
-  }, [walletScope]);
+    if (!isOpen) return;
+    
+    const timeoutId = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [messages.length, actionCards.length, intentPlans.length, capabilityNotices.length, isOpen]);
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
+  const handleSendMessage = useCallback(() => {
+    if (!inputMessage.trim() || !isConnected) return;
+    
+    sendMessage(inputMessage.trim());
+    setInputMessage('');
+  }, [inputMessage, isConnected, sendMessage]);
 
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content: message,
-      timestamp: new Date()
-    };
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }, [handleSendMessage]);
 
-    setMessages(prev => [...prev, userMessage]);
-    setMessage('');
+  const getSeverityColor = useCallback((severity: 'critical' | 'high' | 'medium' | 'low') => {
+    switch (severity) {
+      case 'critical':
+        return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'high':
+        return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+      case 'medium':
+        return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'low':
+        return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+      default:
+        return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    }
+  }, []);
 
-    // Mock AI response
-    setTimeout(() => {
-      const aiResponse = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant' as const,
-        content: `I understand you're asking about "${message}". This is a placeholder response. The full Copilot integration with SSE streaming and wallet scope validation will be implemented here.`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
-  };
+  const getStatusIcon = useCallback((status: string) => {
+    switch (status) {
+      case 'allowed':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'blocked':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'pass':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'warn':
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+      case 'block':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  }, []);
 
-  if (!isOpen) return null;
+  const hasContent = useMemo(() => 
+    messages.length > 0 || actionCards.length > 0 || intentPlans.length > 0,
+    [messages.length, actionCards.length, intentPlans.length]
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className="relative ml-auto w-full max-w-md bg-gray-900 border-l border-gray-700 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+    <Drawer open={isOpen} onOpenChange={onClose}>
+      <DrawerContent className="h-[80vh] flex flex-col">
+        <DrawerHeader className="flex-shrink-0">
           <div className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-blue-400" />
-            <h2 className="text-lg font-semibold text-white">AI Copilot</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Wallet Scope Indicator */}
-        <div className="px-4 py-2 bg-gray-800/50 border-b border-gray-700">
-          <p className="text-sm text-gray-400">
-            Context: {walletScope.mode === 'all_wallets' ? 'All Wallets' : `Wallet ${walletScope.address?.slice(0, 6)}...${walletScope.address?.slice(-4)}`}
-          </p>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center text-gray-400 py-8">
-              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-              <p>Start a conversation with your AI assistant</p>
-              <p className="text-sm mt-2">Ask about your portfolio, risks, or opportunities</p>
+            <Bot className="w-5 h-5 text-cyan-500" />
+            <DrawerTitle>Portfolio Copilot</DrawerTitle>
+            <div className="flex items-center gap-2 ml-auto">
+              {isConnecting && (
+                <Badge variant="outline" className="text-yellow-500">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Connecting...
+                </Badge>
+              )}
+              {isConnected && (
+                <Badge variant="outline" className="text-green-500">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Connected
+                </Badge>
+              )}
+              {error && (
+                <Badge variant="outline" className="text-red-500">
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                  Error
+                </Badge>
+              )}
             </div>
-          ) : (
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    msg.type === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-100'
-                  }`}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {msg.timestamp.toLocaleTimeString()}
-                  </p>
+          </div>
+          <DrawerDescription>
+            AI assistant for portfolio analysis and recommendations
+            {walletScope.mode === 'active_wallet' && (
+              <span className="block text-xs text-muted-foreground mt-1">
+                Active wallet: {walletScope.address.slice(0, 6)}...{walletScope.address.slice(-4)}
+              </span>
+            )}
+          </DrawerDescription>
+        </DrawerHeader>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {error && (
+            <Card className="border-red-500/20 bg-red-500/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-red-500">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Connection error. Retrying...</span>
                 </div>
-              </div>
-            ))
+              </CardContent>
+            </Card>
           )}
+
+          {/* Text Messages */}
+          {messages.map((message, index) => (
+            <div key={`message-${index}`} className="flex gap-3">
+              <Bot className="w-6 h-6 text-cyan-500 flex-shrink-0 mt-1" />
+              <div className="flex-1 bg-muted/50 rounded-lg p-3">
+                <p className="text-sm whitespace-pre-wrap">{message}</p>
+              </div>
+            </div>
+          ))}
+
+          {/* Action Cards */}
+          {actionCards.map((actionCard, index) => (
+            <Card 
+              key={`action-${index}`} 
+              className={cn(
+                "cursor-pointer transition-colors hover:bg-muted/50",
+                getSeverityColor(actionCard.severity)
+              )}
+              onClick={() => onActionCardClick?.(actionCard)}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium">
+                    {actionCard.title}
+                  </CardTitle>
+                  <Badge variant="outline" className={getSeverityColor(actionCard.severity)}>
+                    {actionCard.severity}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {actionCard.why.map((reason, reasonIndex) => (
+                    <p key={reasonIndex} className="text-xs text-muted-foreground">
+                      • {reason}
+                    </p>
+                  ))}
+                  
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-4">
+                      <span>Risk Δ: {actionCard.impactPreview.riskDelta > 0 ? '+' : ''}{actionCard.impactPreview.riskDelta}</span>
+                      <span>Gas: ${actionCard.impactPreview.gasEstimateUsd}</span>
+                      <span>Time: {actionCard.impactPreview.timeEstimateSec}s</span>
+                    </div>
+                    <span className="text-muted-foreground">
+                      Confidence: {Math.round(actionCard.impactPreview.confidence * 100)}%
+                    </span>
+                  </div>
+                  
+                  <Button size="sm" className="w-full mt-2">
+                    <Zap className="w-3 h-3 mr-1" />
+                    {actionCard.cta.label}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Intent Plans */}
+          {intentPlans.map((intentPlan, index) => (
+            <Card 
+              key={`plan-${index}`} 
+              className="cursor-pointer transition-colors hover:bg-muted/50"
+              onClick={() => onIntentPlanClick?.(intentPlan)}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium">
+                    Intent Plan: {intentPlan.intent}
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(intentPlan.policy.status)}
+                    {getStatusIcon(intentPlan.simulation.status)}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground">
+                    {intentPlan.steps.length} step{intentPlan.steps.length !== 1 ? 's' : ''}
+                  </div>
+                  
+                  {intentPlan.policy.violations.length > 0 && (
+                    <div className="text-xs text-red-500">
+                      Policy violations: {intentPlan.policy.violations.join(', ')}
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-4">
+                      <span>Risk Δ: {intentPlan.impactPreview.riskDelta > 0 ? '+' : ''}{intentPlan.impactPreview.riskDelta}</span>
+                      <span>Gas: ${intentPlan.impactPreview.gasEstimateUsd}</span>
+                      <span>Time: {intentPlan.impactPreview.timeEstimateSec}s</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-2"
+                    disabled={intentPlan.policy.status === 'blocked'}
+                  >
+                    <Zap className="w-3 h-3 mr-1" />
+                    {intentPlan.policy.status === 'blocked' ? 'Blocked by Policy' : 'Execute Plan'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {/* Capability Notices */}
+          {capabilityNotices.map((notice, index) => (
+            <Card key={`notice-${index}`} className="border-blue-500/20 bg-blue-500/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-500">System Notice</p>
+                    <p className="text-xs text-muted-foreground mt-1">{notice.message}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t border-gray-700">
+        {/* Input Area */}
+        <div className="flex-shrink-0 p-4 border-t">
           <div className="flex gap-2">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Ask about your portfolio..."
-              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={
+                isConnected 
+                  ? "Ask about your portfolio..." 
+                  : "Connecting to Copilot..."
+              }
+              disabled={!isConnected || isConnecting}
+              className="flex-1"
             />
-            <button
+            <Button
               onClick={handleSendMessage}
-              disabled={!message.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white p-2 rounded-lg transition-colors"
+              disabled={!inputMessage.trim() || !isConnected || isConnecting}
+              size="icon"
             >
               <Send className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Copilot responses are constrained to valid taxonomy objects
-          </p>
+          
+          {hasContent && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearHistory}
+              className="mt-2 text-xs"
+            >
+              Clear History
+            </Button>
+          )}
         </div>
-      </div>
-    </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

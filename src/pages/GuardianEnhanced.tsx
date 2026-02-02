@@ -52,11 +52,10 @@ export function GuardianEnhanced() {
   const { address, isConnected, chain } = useAccount();
   const { mode, setMode, isBeginner, isExpert } = useUserModeContext();
   const notifications = useNotificationContext();
-  const { actualTheme } = useTheme();
-  
-  const [activeView, setActiveView] = useState<'dashboard' | 'timeline' | 'achievements'>('dashboard');
+  const { actualTheme, setTheme } = useTheme();
+  const isDarkTheme = actualTheme === 'dark';
+  const setIsDarkTheme = (dark: boolean) => setTheme(dark ? 'dark' : 'light');
   const [activeTab, setActiveTab] = useState('Scan');
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
   const [demoAddress, setDemoAddress] = useState<string | null>(null);
   const [showLearnMore, setShowLearnMore] = useState(false);
@@ -219,27 +218,34 @@ export function GuardianEnhanced() {
   // Welcome screen (not connected)
   if (!isActive && !demoMode) {
     return (
-      <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
-        isDarkTheme 
-          ? 'bg-gradient-to-b from-[#0A0E1A] to-[#111827]' 
-          : 'bg-gradient-to-b from-[#FFFFFF] to-[#F9FAFB] text-[#1B1F29]'
-      }`}>
-        {/* Whale Pulse Background Animation */}
+      <div className="min-h-screen relative overflow-hidden transition-colors duration-500 bg-white dark:bg-gradient-to-b dark:from-[#0A0E1A] dark:to-[#111827] bg-gradient-to-b from-[#FFFFFF] to-[#F9FAFB] text-slate-900 dark:text-[#1B1F29]">
+        {/* Whale Pulse Background Animation - Theme Aware */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none dark:block hidden"
           animate={{
-            background: isDarkTheme ? [
+            background: [
               'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
               'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
               'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
               'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
               'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
-            ] : [
-              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)',
-              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.02) 0%, transparent 50%)',
-              'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.02) 0%, transparent 50%)',
-              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.03) 0%, transparent 50%)',
-              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.03) 0%, transparent 50%)'
+            ]
+          }}
+          transition={{
+            duration: 9,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute inset-0 pointer-events-none dark:hidden block"
+          animate={{
+            background: [
+              'radial-gradient(circle at 30% 40%, rgba(20,184,166,0.05) 0%, transparent 50%)',
+              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.03) 0%, transparent 50%)',
+              'radial-gradient(circle at 50% 30%, rgba(20,184,166,0.03) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.05) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 40%, rgba(20,184,166,0.05) 0%, transparent 50%)'
             ]
           }}
           transition={{
@@ -251,15 +257,9 @@ export function GuardianEnhanced() {
         
         {/* Header */}
         <motion.header
-          className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 ${
-            isDarkTheme 
-              ? 'bg-[rgba(16,18,30,0.75)] border-[rgba(255,255,255,0.08)]' 
-              : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.08)]'
-          }`}
+          className="sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-300 bg-white/85 dark:bg-[rgba(16,18,30,0.75)] border-gray-200 dark:border-[rgba(255,255,255,0.08)]"
           style={{
-            boxShadow: isDarkTheme 
-              ? 'none'
-              : '0 2px 8px rgba(0,0,0,0.04)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
           }}
           initial={{ y: -100 }}
           animate={{ y: 0 }}
@@ -271,12 +271,10 @@ export function GuardianEnhanced() {
                 <img src="/header.png" alt="Logo" className="w-8 h-8" />
                 <Shield className="w-6 h-6 text-[#00C9A7]" />
                 <div>
-                  <h1 className={`text-xl font-semibold tracking-tight transition-colors duration-300 ${
-                    isDarkTheme ? 'text-white' : 'text-[#1B1F29]'
-                  }`}>
+                  <h1 className="text-xl font-semibold tracking-tight transition-colors duration-300 text-slate-900 dark:text-white">
                     Guardian
                   </h1>
-                  <p className="text-xs text-[#7C8896] dark:text-gray-400 leading-snug">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">
                     Your AI-powered safety layer for DeFi.
                   </p>
                 </div>
@@ -285,11 +283,7 @@ export function GuardianEnhanced() {
               <div className="flex items-center gap-3">
                 <DisabledTooltipButton
                   onClick={() => setIsDarkTheme(!isDarkTheme)}
-                  className={`p-2 rounded-lg transition-all duration-200 ${
-                    isDarkTheme 
-                      ? 'bg-white/10 hover:bg-white/15' 
-                      : 'bg-gray-100/80 hover:bg-gray-200/80'
-                  }`}
+                  className="p-2 rounded-lg transition-all duration-200 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15"
                   variant="ghost"
                   size="sm"
                   aria-label={`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`}
@@ -303,15 +297,9 @@ export function GuardianEnhanced() {
 
         <main className="px-4 pt-32 pb-28 max-w-2xl mx-auto relative z-10">
           <motion.div
-            className={`backdrop-blur-xl rounded-2xl p-6 border transition-colors duration-300 ${
-              isDarkTheme 
-                ? 'bg-[rgba(255,255,255,0.05)] border-white/10' 
-                : 'bg-[rgba(255,255,255,0.85)] border-[rgba(0,0,0,0.06)]'
-            }`}
+            className="backdrop-blur-xl rounded-2xl p-6 border transition-colors duration-300 bg-white/90 dark:bg-[rgba(255,255,255,0.05)] border-gray-200 dark:border-white/10"
             style={{
-              boxShadow: isDarkTheme 
-                ? '0 4px 30px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.1)'
-                : '0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9)'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9)'
             }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -320,14 +308,10 @@ export function GuardianEnhanced() {
             <div className="flex items-center gap-3 mb-4">
               <Shield className="w-8 h-8 text-[#00F5A0]" />
               <div>
-                <h2 className={`text-2xl font-bold transition-colors duration-300 ${
-                  isDarkTheme ? 'text-[#E4E8F3]' : 'text-[#1B1F29]'
-                }`}>
+                <h2 className="text-2xl font-bold transition-colors duration-300 text-slate-900 dark:text-[#E4E8F3]">
                   Welcome to Guardian
                 </h2>
-                <p className={`text-sm transition-colors duration-300 ${
-                  isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
-                }`}>
+                <p className="text-sm transition-colors duration-300 text-gray-600 dark:text-gray-400">
                   Let's make sure your wallet stays in perfect health with a quick 30-second security scan
                 </p>
               </div>

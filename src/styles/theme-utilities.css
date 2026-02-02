@@ -1,0 +1,105 @@
+/**
+ * Theme Utilities
+ * 
+ * Utility classes that automatically adapt to light/dark themes
+ */
+
+@layer utilities {
+  /* Adaptive backgrounds */
+  .bg-adaptive-base {
+    @apply bg-slate-950 dark:bg-slate-950;
+    @apply light:bg-white;
+  }
+  
+  .bg-adaptive-surface {
+    @apply bg-slate-900 dark:bg-slate-900;
+    @apply light:bg-gray-50;
+  }
+  
+  .bg-adaptive-card {
+    @apply bg-white/5 dark:bg-white/5;
+    @apply light:bg-white light:border light:border-gray-200;
+  }
+  
+  /* Adaptive text colors */
+  .text-adaptive-primary {
+    @apply text-white dark:text-white;
+    @apply light:text-slate-900;
+  }
+  
+  .text-adaptive-secondary {
+    @apply text-gray-400 dark:text-gray-400;
+    @apply light:text-slate-600;
+  }
+  
+  .text-adaptive-muted {
+    @apply text-gray-500 dark:text-gray-500;
+    @apply light:text-slate-500;
+  }
+  
+  /* Adaptive borders */
+  .border-adaptive {
+    @apply border-gray-700 dark:border-gray-700;
+    @apply light:border-gray-200;
+  }
+  
+  .border-adaptive-hover {
+    @apply hover:border-gray-600 dark:hover:border-gray-600;
+    @apply light:hover:border-gray-300;
+  }
+  
+  /* Adaptive shadows */
+  .shadow-adaptive {
+    @apply shadow-none dark:shadow-none;
+    @apply light:shadow-md;
+  }
+  
+  /* Adaptive glass effect */
+  .glass-adaptive {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    @apply light:bg-white/95 light:border-gray-200 light:shadow-lg;
+  }
+}
+
+/* Component-specific theme classes */
+@layer components {
+  /* Adaptive button */
+  .btn-adaptive {
+    @apply bg-white/5 text-white border border-gray-700;
+    @apply light:bg-white light:text-slate-900 light:border-gray-300;
+    @apply hover:bg-white/10 dark:hover:bg-white/10;
+    @apply light:hover:bg-gray-50;
+  }
+  
+  /* Adaptive card */
+  .card-adaptive {
+    @apply bg-white/5 border border-gray-700/50 rounded-xl;
+    @apply light:bg-white light:border-gray-200 light:shadow-md;
+  }
+  
+  /* Adaptive input */
+  .input-adaptive {
+    @apply bg-slate-800 text-white border border-gray-700;
+    @apply light:bg-white light:text-slate-900 light:border-gray-300;
+    @apply placeholder:text-gray-500;
+    @apply light:placeholder:text-gray-400;
+  }
+  
+  /* Adaptive modal overlay */
+  .modal-overlay-adaptive {
+    @apply bg-black/50;
+    @apply light:bg-black/30;
+  }
+  
+  /* Adaptive dropdown */
+  .dropdown-adaptive {
+    @apply bg-slate-900 border border-slate-700;
+    @apply light:bg-white light:border-gray-200 light:shadow-xl;
+  }
+  
+  /* Adaptive tooltip */
+  .tooltip-adaptive {
+    @apply bg-slate-800 text-white border border-slate-700;
+    @apply light:bg-slate-900 light:text-white light:border-slate-800;
+  }
+}

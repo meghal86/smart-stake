@@ -27,6 +27,25 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-192.png" />
     <link rel="manifest" href="/manifest.json" />
     
+    <!-- Theme initialization script - prevents flash of wrong theme -->
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem('theme') || 'system';
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          const actualTheme = theme === 'system' ? systemTheme : theme;
+          
+          if (actualTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          console.error('Theme initialization error:', e);
+        }
+      })();
+    </script>
+    
     <!-- Suppress extension errors -->
     <script src="/suppress-extensions.js"></script>
   </head>

@@ -108,33 +108,41 @@ export function OverviewTab({ walletScope, freshness }: OverviewTabProps) {
   const [whaleFilter, setWhaleFilter] = useState('all');
 
   return (
-    <div className="space-y-6">
-      {/* Net Worth Card - Extended existing component */}
-      <NetWorthCard
-        netWorth={mockNetWorth}
-        freshness={freshness}
-        walletScope={walletScope}
-      />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Recommended Actions Feed - Top Priority per Requirements */}
+      <div className="bg-white/90 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6">
+        <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+          <span className="text-[#00F5A0]">⚡</span>
+          <span>Recommended Actions</span>
+        </h3>
+        <RecommendedActionsFeed
+          actions={mockActions}
+          freshness={freshness}
+          currentFilter={actionsFilter}
+          onFilterChange={setActionsFilter}
+          showTopN={5}
+        />
+      </div>
 
-      {/* Recommended Actions Feed - New component with progressive disclosure */}
-      <RecommendedActionsFeed
-        actions={mockActions}
-        freshness={freshness}
-        currentFilter={actionsFilter}
-        onFilterChange={setActionsFilter}
-        showTopN={5}
-      />
+      {/* Risk Summary Card */}
+      <div className="bg-white/90 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6">
+        <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+          <span className="text-yellow-600 dark:text-yellow-400">⚠️</span>
+          <span>Risk Summary</span>
+        </h3>
+        <RiskSummaryCard
+          riskSummary={mockRiskSummary}
+          freshness={freshness}
+          walletScope={walletScope}
+        />
+      </div>
 
-      {/* Risk Summary Card - Extended existing component */}
-      <RiskSummaryCard
-        riskSummary={mockRiskSummary}
-        freshness={freshness}
-        walletScope={walletScope}
-      />
-
-      {/* Recent Activity Timeline - Reuse existing WhaleInteractionLog */}
-      <div className="bg-gray-800/50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Activity Timeline</h3>
+      {/* Recent Activity Timeline */}
+      <div className="bg-white/90 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-3xl p-4 sm:p-6">
+        <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+          <span className="text-blue-600 dark:text-blue-400">📊</span>
+          <span>Recent Activity Timeline</span>
+        </h3>
         <WhaleInteractionLog
           interactions={mockWhaleInteractions}
           currentFilter={whaleFilter}

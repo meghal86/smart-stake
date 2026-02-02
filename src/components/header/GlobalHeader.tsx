@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useWallet } from '@/contexts/WalletContext'
 import { useDemoMode } from '@/lib/ux/DemoModeManager'
 import { WalletChip } from './WalletChip'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export interface GlobalHeaderProps {
   className?: string
@@ -50,7 +51,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
       <>
         <div className="fixed inset-0 z-[9998]" onClick={() => setShowMenu(false)} />
         <div 
-          className="fixed w-56 rounded-lg bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-[9999]"
+          className="fixed w-56 rounded-lg bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-[10000]"
           style={{ top: `${menuPosition.top}px`, right: `${menuPosition.right}px` }}
         >
           {content}
@@ -62,13 +63,13 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
 
   return (
     <header className={cn('h-16 sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50', className)}>
-      <div className="mx-auto h-full max-w-7xl px-6 relative z-50">
+      <div className="mx-auto h-full max-w-7xl px-6">
         <div className="flex h-full items-center justify-between">
           <button onClick={() => navigate(user ? '/cockpit' : '/')} className="text-xl font-bold text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
             AlphaWhale
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative z-[60]">
             {/* Wallet Chip - Show if user has connected wallets OR in demo mode */}
             {user && !walletsLoading && (connectedWallets.length > 0 || isDemo) && (
               <WalletChip 
@@ -80,6 +81,9 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
             {/* Profile Menu */}
             {user ? (
               <>
+                {/* Theme Toggle */}
+                <ThemeToggle />
+                
                 <button ref={buttonRef} onClick={() => setShowMenu(!showMenu)} className="w-9 h-9 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center hover:opacity-90 transition-opacity">
                   <User className="w-4 h-4 text-white dark:text-slate-900" />
                 </button>

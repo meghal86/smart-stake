@@ -34,8 +34,8 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
 
   if (activeSection !== "portfolio") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 pb-20">
-        <div className="p-6 text-center text-gray-400">
+      <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 pb-20">
+        <div className="p-6 text-center text-slate-600 dark:text-gray-400">
           {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} section
         </div>
         <BottomNav 
@@ -47,7 +47,7 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
       <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isRefreshing}
@@ -55,7 +55,7 @@ export function PortfolioContainer({ initialMode = "pro" }: PortfolioContainerPr
         threshold={threshold}
       />
       {/* Portfolio Tabs */}
-      <div className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-xl border-b border-gray-700/50">
+      <div className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-slate-200 dark:border-gray-700/50">
         <div className="flex overflow-x-auto p-2">
           {[
             { id: "overview", label: "Overview" },

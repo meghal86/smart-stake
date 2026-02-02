@@ -87,9 +87,9 @@ export function AssetBreakdown({
     <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/50">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <Eye className="w-5 h-5 text-blue-400" />
-          <h3 className="text-lg font-semibold text-white">Asset Breakdown</h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Eye className="w-5 h-5 text-blue-400 flex-shrink-0" />
+          <h3 className="text-lg font-semibold text-white whitespace-nowrap">Asset Breakdown</h3>
           <Badge variant="outline" className="text-xs">
             {filteredAssets.length} assets
           </Badge>
@@ -149,58 +149,58 @@ export function AssetBreakdown({
               key={asset.id} 
               className="p-4 rounded-lg border border-gray-600/30 bg-gray-700/20 hover:bg-gray-700/40 transition-colors"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  {/* Asset Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-white">{asset.symbol}</span>
-                      <Badge className={`text-xs ${getCategoryColor(asset.category)}`}>
-                        {asset.category.toUpperCase()}
-                      </Badge>
-                      <span className={`text-xs font-medium ${getRiskColor(asset.riskScore)}`}>
-                        Risk: {Math.round(asset.riskScore * 100)}%
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400">{asset.name}</p>
+              <div className="flex flex-col gap-4">
+                {/* Asset Info Row */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="font-medium text-white text-lg">{asset.symbol}</span>
+                    <Badge className={`text-xs ${getCategoryColor(asset.category)}`}>
+                      {asset.category.toUpperCase()}
+                    </Badge>
+                    <span className={`text-xs font-medium ${getRiskColor(asset.riskScore)} whitespace-nowrap`}>
+                      Risk: {Math.round(asset.riskScore * 100)}%
+                    </span>
                   </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm text-gray-400 mb-1">Allocation</p>
+                    <p className="text-lg font-bold text-white">{asset.allocation.toFixed(1)}%</p>
+                  </div>
+                </div>
 
-                  {/* Metrics */}
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div className="text-center">
-                      <p className="text-gray-400">Amount</p>
-                      <p className="font-medium text-white">{formatAmount(asset.amount)}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-gray-400">Value</p>
-                      <p className="font-medium text-white">{formatCurrency(asset.valueUsd)}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-gray-400">24h Change</p>
-                      <div className={`flex items-center justify-center gap-1 font-medium ${
-                        asset.priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {asset.priceChange24h >= 0 ? (
-                          <TrendingUp className="w-3 h-3" />
-                        ) : (
-                          <TrendingDown className="w-3 h-3" />
-                        )}
-                        {Math.abs(asset.priceChange24h).toFixed(2)}%
-                      </div>
+                {/* Asset Name */}
+                <p className="text-sm text-gray-400 -mt-2">{asset.name}</p>
+
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-400 mb-1 text-xs">Amount</p>
+                    <p className="font-medium text-white">{formatAmount(asset.amount)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 mb-1 text-xs">Value</p>
+                    <p className="font-medium text-white">{formatCurrency(asset.valueUsd)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 mb-1 text-xs">24h Change</p>
+                    <div className={`flex items-center gap-1 font-medium ${
+                      asset.priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {asset.priceChange24h >= 0 ? (
+                        <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3 flex-shrink-0" />
+                      )}
+                      <span>{Math.abs(asset.priceChange24h).toFixed(2)}%</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Allocation */}
-                <div className="text-right ml-4">
-                  <p className="text-sm text-gray-400">Allocation</p>
-                  <p className="text-lg font-bold text-white">{asset.allocation.toFixed(1)}%</p>
-                  <div className="w-16 h-2 bg-gray-600 rounded-full mt-1">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${Math.min(asset.allocation, 100)}%` }}
-                    />
-                  </div>
+                {/* Allocation Bar */}
+                <div className="w-full h-2 bg-gray-600 rounded-full">
+                  <div 
+                    className="h-full bg-blue-500 rounded-full transition-all"
+                    style={{ width: `${Math.min(asset.allocation, 100)}%` }}
+                  />
                 </div>
               </div>
             </div>
