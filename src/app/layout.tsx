@@ -9,12 +9,13 @@ import '@/styles/globals.css'
 // Hunter Demand-Side: Environment validation (server-side only)
 if (typeof window === 'undefined') {
   // Only run on server
-  try {
-    const { logEnvValidation } = require('@/lib/hunter/env-validation');
-    logEnvValidation();
-  } catch (error) {
-    console.error('Failed to validate Hunter environment:', error);
-  }
+  import('@/lib/hunter/env-validation')
+    .then(({ logEnvValidation }) => {
+      logEnvValidation();
+    })
+    .catch((error) => {
+      console.error('Failed to validate Hunter environment:', error);
+    });
 }
 
 export default function RootLayout({

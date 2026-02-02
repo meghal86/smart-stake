@@ -89,7 +89,7 @@ export const ManualWalletInput: React.FC<ManualWalletInputProps> = ({
     setIsAdding(true);
     try {
       // If it's not a direct address, we'll need to resolve it
-      let resolvedAddress = address;
+      const resolvedAddress = address;
       
       if (!address.startsWith('0x')) {
         // For ENS/Lens resolution, we'd normally use a resolver here

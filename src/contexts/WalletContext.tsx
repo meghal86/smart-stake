@@ -767,9 +767,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         console.debug('Failed to load analytics tracker:', err);
       });
 
-    } catch (error) {
-      // Don't log to console - let calling component handle user feedback
-      throw error;
     } finally {
       setIsLoading(false);
     }

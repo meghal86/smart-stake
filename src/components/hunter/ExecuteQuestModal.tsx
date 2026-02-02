@@ -22,7 +22,7 @@ interface Opportunity {
   guardianScore: number;
   riskLevel: 'Low' | 'Medium' | 'High';
   chain?: string;
-  protocol?: string;
+  protocol?: string | { name: string; logo?: string };
   estimatedAPY?: number;
 }
 

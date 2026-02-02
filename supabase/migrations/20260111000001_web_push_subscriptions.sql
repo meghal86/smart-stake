@@ -27,7 +27,11 @@ CREATE TABLE IF NOT EXISTS public.web_push_subscriptions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (user_id, endpoint)
 );
-
+ALTER TABLE public.notification_logs
+  ADD COLUMN IF NOT EXISTS category text,
+  ADD COLUMN IF NOT EXISTS endpoint text,
+  ADD COLUMN IF NOT EXISTS success boolean,
+  ADD COLUMN IF NOT EXISTS payload jsonb;
 -- Add comment for documentation
 COMMENT ON TABLE public.web_push_subscriptions IS 'Browser push notification registrations for cockpit notifications';
 COMMENT ON COLUMN public.web_push_subscriptions.endpoint IS 'Push service endpoint URL';

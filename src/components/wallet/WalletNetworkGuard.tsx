@@ -54,6 +54,17 @@ export function WalletNetworkGuard({
   const { isAvailable, activeWallet, activeNetwork, networkName, isMissing } =
     useWalletNetworkAvailability();
 
+  // Handle add network action (must be before any returns)
+  const handleAddNetwork = useCallback(() => {
+    if (onAddNetwork) {
+      onAddNetwork();
+    } else {
+      // Default behavior: navigate to wallet settings
+      // This can be overridden by passing onAddNetwork prop
+      window.location.href = '/settings?tab=wallets&action=add';
+    }
+  }, [onAddNetwork]);
+
   // Determine if we should show the guard
   const shouldShow = isMissing && activeWallet;
   
@@ -71,17 +82,6 @@ export function WalletNetworkGuard({
   if (!activeWallet) {
     return null;
   }
-
-  // Handle add network action
-  const handleAddNetwork = useCallback(() => {
-    if (onAddNetwork) {
-      onAddNetwork();
-    } else {
-      // Default behavior: navigate to wallet settings
-      // This can be overridden by passing onAddNetwork prop
-      window.location.href = '/settings?tab=wallets&action=add';
-    }
-  }, [onAddNetwork]);
 
   return (
     <NotAddedOnNetwork

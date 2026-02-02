@@ -206,11 +206,11 @@ export const HelpSupport = ({ isOpen, onClose }: HelpSupportProps) => {
                   <h4 className="font-medium mb-1">Live Chat</h4>
                   <p className="text-xs text-muted-foreground mb-3">Chat with our team</p>
                   <Button size="sm" variant="outline" className="w-full" onClick={() => {
-                    // @ts-ignore
+                    // @ts-expect-error - Tawk_API is loaded dynamically
                     if (window.Tawk_API) {
-                      // @ts-ignore
+                      // @ts-expect-error - Tawk_API is loaded dynamically
                       window.Tawk_API.showWidget();
-                      // @ts-ignore
+                      // @ts-expect-error - Tawk_API is loaded dynamically
                       window.Tawk_API.maximize();
                     } else {
                       alert('Live chat will be available soon!');

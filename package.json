@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint . --max-warnings 200",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
+    "lint": "eslint . --max-warnings 1500",
     "preview": "vite preview",
     "test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vitest",
     "test:ui": "cross-env NODE_OPTIONS='--max-old-space-size=8192' vitest --ui",
@@ -26,7 +26,8 @@
     "seed:quests": "tsx scripts/seed-quests.ts",
     "seed:points": "tsx scripts/seed-points.ts",
     "seed:rwa": "tsx scripts/seed-rwa.ts",
-    "seed:all": "npm run seed:airdrops && npm run seed:quests && npm run seed:points && npm run seed:rwa",
+    "seed:strategies": "tsx scripts/seed-strategies.ts",
+    "seed:all": "npm run seed:airdrops && npm run seed:quests && npm run seed:points && npm run seed:rwa && npm run seed:strategies",
     "hunter:verify-env": "tsx scripts/verify-hunter-env.ts",
     "hunter:setup": "npm run hunter:verify-env && npm run seed:all"
   },

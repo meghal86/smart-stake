@@ -101,7 +101,7 @@ interface CacheEntry {
 }
 
 let responseCache: CacheEntry | null = null;
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour (3600000ms)
 
 /**
  * Fetch pools from DeFiLlama API
