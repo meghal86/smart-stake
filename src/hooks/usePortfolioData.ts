@@ -22,7 +22,10 @@ export function usePortfolioData(addresses: string[]) {
   const addressesStr = JSON.stringify(addresses);
 
   const fetchPortfolioData = async () => {
-    if (addresses.length === 0) return;
+    if (addresses.length === 0) {
+      setData({});
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -50,11 +53,12 @@ export function usePortfolioData(addresses: string[]) {
     }
   };
 
+  // Fetch fresh data whenever addresses change (wallet switching)
   useEffect(() => {
+    // Clear previous data immediately to prevent stale data display
+    setData({});
     fetchPortfolioData();
   }, [addressesStr]);
-
-
 
   return { data, loading, error, refetch: fetchPortfolioData };
 }

@@ -126,6 +126,96 @@ class MetricsService {
     });
   }
 
+  // Portfolio-specific metrics (Requirements: 16.1, 16.2 - minimal V1)
+  async trackPortfolioSnapshotLoaded(
+    cacheHit: boolean,
+    latencyMs: number,
+    walletScope: 'active_wallet' | 'all_wallets',
+    correlationId?: string
+  ) {
+    await this.track('portfolio_snapshot_loaded', {
+      cache_hit: cacheHit,
+      latency_ms: latencyMs,
+      wallet_scope: walletScope,
+      correlation_id: correlationId || this.sessionId
+    });
+  }
+
+  async trackPlanCreated(
+    planId: string,
+    intent: string,
+    walletScope: 'active_wallet' | 'all_wallets',
+    correlationId?: string
+  ) {
+    await this.track('plan_created', {
+      plan_id: planId,
+      intent,
+      wallet_scope: walletScope,
+      correlation_id: correlationId || this.sessionId
+    });
+  }
+
+  async trackPlanSimulated(
+    planId: string,
+    receiptId: string,
+    status: 'pass' | 'warn' | 'block',
+    latencyMs: number,
+    correlationId?: string
+  ) {
+    await this.track('plan_simulated', {
+      plan_id: planId,
+      receipt_id: receiptId,
+      status,
+      latency_ms: latencyMs,
+      correlation_id: correlationId || this.sessionId
+    });
+  }
+
+  async trackStepConfirmed(
+    planId: string,
+    stepId: string,
+    chainId: number,
+    txHash?: string,
+    correlationId?: string
+  ) {
+    await this.track('step_confirmed', {
+      plan_id: planId,
+      step_id: stepId,
+      chain_id: chainId,
+      tx_hash: txHash,
+      correlation_id: correlationId || this.sessionId
+    });
+  }
+
+  async trackStepFailed(
+    planId: string,
+    stepId: string,
+    chainId: number,
+    errorReason: string,
+    correlationId?: string
+  ) {
+    await this.track('step_failed', {
+      plan_id: planId,
+      step_id: stepId,
+      chain_id: chainId,
+      error_reason: errorReason,
+      correlation_id: correlationId || this.sessionId
+    });
+  }
+
+  // SSE connection stability tracking
+  async trackSSEReconnect(
+    reason: string,
+    reconnectCount: number,
+    correlationId?: string
+  ) {
+    await this.track('sse_reconnect', {
+      reason,
+      reconnect_count: reconnectCount,
+      correlation_id: correlationId || this.sessionId
+    });
+  }
+
   // Private methods
   private async track(eventType: string, eventData?: Record<string, unknown>) {
     try {

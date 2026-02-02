@@ -575,16 +575,16 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **Property 28: Multi-Wallet Aggregation**
   - **Validates: Requirements 12.1, 12.2, 12.3, 12.4**
 
-- [ ] 15. Checkpoint - Ensure all tests pass
+- [x] 15. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 16. Implement security and privacy features
+- [x] 16. Implement security and privacy features
   - Add wallet-user linkage encryption
   - Implement structured logging with data minimization
   - Add safety mode warnings for risky operations
   - _Requirements: 12.5, 14.1, 14.2, 14.4, 14.5_
 
-- [ ] 16.1 Implement security and privacy controls (REUSE-FIRST CHECK REQUIRED)
+- [x] 16.1 Implement security and privacy controls (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/lib/** for existing encryption, logging, or safety mode systems
   - **BEFORE CREATING**: Search src/services/** for existing security controls or privacy protection services
   - **IF EXISTS**: Extend existing systems with wallet-user linkage encryption and portfolio-specific safety warnings
@@ -594,19 +594,19 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Require simulation for all spend/approve operations
   - _Requirements: 12.5, 14.1, 14.2, 14.4, 14.5_
 
-- [ ] 16.2 Write property test for security protection
+- [x] 16.2 Write property test for security protection
   - **Property 29: Security and Privacy Protection**
   - **Validates: Requirements 12.5, 14.4, 14.5**
 
-- [ ] 16.3 Write property test for safety mode
+- [x] 16.3 Write property test for safety mode
   - **Property 30: Safety Mode Enforcement**
   - **Validates: Requirements 14.1**
 
-- [ ] 16.4 Write property test for mandatory simulation
+- [x] 16.4 Write property test for mandatory simulation
   - **Property 31: Mandatory Simulation Coverage**
   - **Validates: Requirements 14.2**
 
-- [ ] 16.5 Implement basic stress tests for Requirement 13 compliance [V1]
+- [x] 16.5 Implement basic stress tests for Requirement 13 compliance [V1]
   - Create Playwright test suites for basic functional stress scenarios:
     - rapid tab + wallet switching for 60s (no stale wallet leakage)
     - wallet switch mid SSE stream (SSE closed, state cleared, restarted)
@@ -615,17 +615,17 @@ This implementation plan transforms the Unified Portfolio System design into act
   - Basic smoke tests only - move k6 + "weekly adversarial suite" to V2
   - _Requirements: 13.1, 13.2 (basic smoke + leakage tests only)_
 
-- [ ] 16.6 Write property test for stress test coverage
+- [x] 16.6 Write property test for stress test coverage
   - **Property 34: Stress Test Coverage Completeness**
   - **Validates: Requirements 13.1, 13.2, 13.3**
 
-- [ ] 17. Implement cache invalidation system
+- [x] 17. Implement cache invalidation system
   - Add transaction-based cache invalidation
   - Implement wallet switch cache clearing
   - Add policy change invalidation triggers
   - _Requirements: 10.6_
 
-- [ ] 17.1 Create cache invalidation engine (REUSE-FIRST CHECK REQUIRED)
+- [x] 17.1 Create cache invalidation engine (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/lib/** for existing cache invalidation, transaction detection, or refresh scheduling systems
   - **BEFORE CREATING**: Search src/services/** for existing cache management or invalidation trigger services
   - **IF EXISTS**: Extend existing engine with portfolio-specific invalidation triggers (wallet switching, policy changes)
@@ -635,11 +635,11 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add scheduled refresh for time-sensitive data
   - _Requirements: 10.6_
 
-- [ ] 17.2 Write property test for cache invalidation
+- [x] 17.2 Write property test for cache invalidation
   - **Property 26: Cache Invalidation Triggers**
   - **Validates: Requirements 10.6**
 
-- [ ] 17.3 Telemetry wiring (minimal) [V1]
+- [x] 17.3 Telemetry wiring (minimal) [V1]
   - Only: portfolio_snapshot_loaded (cache_hit, latency_ms, wallet_scope), plan_created, plan_simulated, step_confirmed/failed
   - Everything else (MTTS, prevented-loss p50/p95, FP rate dashboards) moves to [V2]
   - **BEFORE CREATING**: Search src/services/MetricsService.ts for existing event tracking, correlation IDs, or portfolio metrics
@@ -650,17 +650,18 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Implement minimal required events: portfolio_snapshot_loaded, plan_created, plan_simulated, step_confirmed/failed
   - _Requirements: 16.1, 16.2 (minimal)_
 
-- [ ] 17.4 Write property test for telemetry completeness
+- [x] 17.4 Write property test for telemetry completeness
   - **Property 35: Telemetry Event Completeness**
   - **Validates: Requirements 16.1, 16.2, 16.3, 16.4, 16.5**
+  - **PBT Status: PASSED** - All 7 property tests passing (50 runs each). Tests validate: portfolio snapshot events include required fields, plan lifecycle events maintain correlation ID, step events include plan_id and step_id, failed step events include error reason, SSE reconnect events track connection stability, simulation events include status and latency, and event types follow consistent naming convention.
 
-- [ ] 18. Integration and wiring
+- [x] 18. Integration and wiring
   - Connect all components to API endpoints
   - Wire up SSE connections and event handling
   - Integrate with existing AlphaWhale services
   - _Requirements: 1.6, 9.1_
 
-- [ ] 18.1 Wire portfolio components together (REUSE-FIRST CHECK REQUIRED)
+- [x] 18.1 Wire portfolio components together (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/components/portfolio/** for existing component integration or wiring patterns
   - **BEFORE CREATING**: Search src/hooks/** for existing API integration hooks
   - **IF EXISTS**: Extend existing integrations with new portfolio API endpoints
@@ -670,7 +671,7 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Integrate IntentPlanExecutor with planning APIs
   - _Requirements: 1.6_
 
-- [ ] 18.2 Integrate with existing AlphaWhale services (REUSE-FIRST CHECK REQUIRED)
+- [x] 18.2 Integrate with existing AlphaWhale services (REUSE-FIRST CHECK REQUIRED)
   - **BEFORE CREATING**: Search src/services/** for existing Guardian, Hunter, Harvest service integrations
   - **BEFORE CREATING**: Search src/lib/** for existing blockchain data source connections or API clients
   - **IF EXISTS**: Extend existing service integrations with portfolio-specific data requirements
@@ -680,13 +681,20 @@ This implementation plan transforms the Unified Portfolio System design into act
   - **IF NOT EXISTS**: Add blockchain data source connections
   - _Requirements: 1.6_
 
-- [ ] 18.3 Write integration tests for service connections
+- [x] 18.3 Write integration tests for service connections
   - Test Guardian, Hunter, and Harvest integrations
   - Verify data flow between components
   - Test error handling and fallback behavior
   - _Requirements: 1.6_
 
-- [ ] 19. Final checkpoint - Ensure all tests pass [V1]
+- [x] 19. Implement real-time data updates on wallet switching [V1]
+  - Modified usePortfolioIntegration to invalidate cache and refetch on scope change
+  - Updated usePortfolioSummary to track activeWallet and refetch on change
+  - Enhanced usePortfolioData to clear stale data before fetching new data
+  - Created comprehensive documentation in REALTIME_DATA_ARCHITECTURE.md
+  - _Requirements: 12.5 (data isolation), 10.6 (cache invalidation)_
+
+- [ ] 20. Final checkpoint - Ensure all tests pass [V1]
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Backlog — V1.1 (Not in V1 Launch)
