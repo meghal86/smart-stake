@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useUserAddresses } from '@/hooks/useUserAddresses';
 import { useWalletSwitching } from '@/hooks/useWalletSwitching';
+import { usePortfolioIntegration } from '@/hooks/portfolio/usePortfolioIntegration';
 import { BottomNav } from './shared/BottomNav';
 import { PortfolioOverview } from './PortfolioOverview';
 import { RiskAnalysis } from './RiskAnalysis';
@@ -17,13 +18,12 @@ interface PortfolioHubProps {
 
 export function PortfolioHub({ 
   initialMode = 'pro',
-  walletScope,
+  walletScope: externalWalletScope,
   onWalletScopeChange
 }: PortfolioHubProps) {
   const [activeSection, setActiveSection] = useState('portfolio');
   const [activeTab, setActiveTab] = useState('overview');
   const [mode, setMode] = useState(initialMode);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Use existing hooks
   const { addresses, loading: addressesLoading } = useUserAddresses();
@@ -34,18 +34,50 @@ export function PortfolioHub({
     isLoading: walletSwitchLoading 
   } = useWalletSwitching();
 
-  // Mock freshness data - will be replaced with real API integration
-  const [freshness] = useState<FreshnessConfidence>({
-    freshnessSec: 45,
-    confidence: 0.85,
-    confidenceThreshold: 0.70,
-    degraded: false
+  // Determine current wallet scope
+  const walletScope = useMemo<WalletScope>(() => {
+    if (externalWalletScope) return externalWalletScope;
+    
+    if (activeWallet) {
+      const wallet = addresses.find(addr => addr.id === activeWallet);
+      if (wallet) {
+        return { mode: 'active_wallet', address: wallet.address as `0x${string}` };
+      }
+    }
+    
+    return { mode: 'all_wallets' };
+  }, [externalWalletScope, activeWallet, addresses]);
+
+  // Integrate with portfolio APIs
+  const {
+    snapshot,
+    actions,
+    approvals,
+    isLoading: portfolioLoading,
+    invalidateAll
+  } = usePortfolioIntegration({
+    scope: walletScope,
+    enableSnapshot: true,
+    enableActions: true,
+    enableApprovals: true,
   });
 
+  // Extract freshness from snapshot or use defaults
+  const freshness: FreshnessConfidence = useMemo(() => {
+    if (snapshot?.freshness) {
+      return snapshot.freshness;
+    }
+    return {
+      freshnessSec: 0,
+      confidence: 0.70,
+      confidenceThreshold: 0.70,
+      degraded: false
+    };
+  }, [snapshot]);
+
   const handlePullRefresh = useCallback(async () => {
-    setRefreshKey(prev => prev + 1);
-    // Trigger data refresh for all components
-  }, []);
+    await invalidateAll();
+  }, [invalidateAll]);
 
   const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
     onRefresh: handlePullRefresh,
@@ -184,7 +216,11 @@ export function PortfolioHub({
           mode={mode} 
           walletScope={walletScope}
           freshness={freshness}
-          key={`${refreshKey}-${activeTab}-${activeWallet}`} 
+          snapshot={snapshot}
+          actions={actions}
+          approvals={approvals}
+          isLoading={portfolioLoading}
+          key={`${activeTab}-${activeWallet}`} 
         />
       </div>
       

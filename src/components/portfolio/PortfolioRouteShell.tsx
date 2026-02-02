@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OverviewTab } from './tabs/OverviewTab';
 import { PositionsTab } from './tabs/PositionsTab';
@@ -13,6 +13,9 @@ import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useWalletSwitching } from '@/hooks/useWalletSwitching';
+import { usePortfolioIntegration } from '@/hooks/portfolio/usePortfolioIntegration';
+import { useUserAddresses } from '@/hooks/useUserAddresses';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -21,7 +24,8 @@ import {
   Sparkles,
   RefreshCw,
   AlertTriangle,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 
 export function PortfolioRouteShell() {
@@ -29,13 +33,66 @@ export function PortfolioRouteShell() {
   const isDark = actualTheme === 'dark';
   const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'audit' | 'stress'>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
-  const [walletScope, setWalletScope] = useState<WalletScope>({ mode: 'all_wallets' });
 
-  // Pull-to-refresh
-  const handleRefresh = async () => {
-    // Refetch portfolio data
-    console.log('Refreshing portfolio data...');
-  };
+  // Wallet management
+  const { addresses, loading: addressesLoading } = useUserAddresses();
+  const { 
+    activeWallet, 
+    switchWallet, 
+    isLoading: walletSwitchLoading 
+  } = useWalletSwitching();
+
+  // Determine current wallet scope
+  const walletScope = useMemo<WalletScope>(() => {
+    if (activeWallet) {
+      const wallet = addresses.find(addr => addr.id === activeWallet);
+      if (wallet) {
+        return { mode: 'active_wallet', address: wallet.address as `0x${string}` };
+      }
+    }
+    return { mode: 'all_wallets' };
+  }, [activeWallet, addresses]);
+
+  // Integrate with portfolio APIs - THIS IS THE KEY CHANGE
+  const {
+    snapshot,
+    actions,
+    approvals,
+    isLoading: portfolioLoading,
+    invalidateAll,
+    isDemo
+  } = usePortfolioIntegration({
+    scope: walletScope,
+    enableSnapshot: true,
+    enableActions: true,
+    enableApprovals: true,
+  });
+
+  // Extract data from snapshot or use defaults
+  const portfolioData = useMemo(() => {
+    return {
+      netWorth: snapshot?.netWorth || 0,
+      delta24h: snapshot?.delta24h || 0,
+      freshness: snapshot?.freshness || {
+        freshnessSec: 0,
+        confidence: 0.70,
+        confidenceThreshold: 0.70,
+        degraded: false
+      } as FreshnessConfidence,
+      trustRiskSummary: {
+        trustScore: snapshot?.trustScore || 0,
+        riskScore: snapshot?.riskScore || 0,
+        criticalIssues: snapshot?.criticalIssues || 0,
+        highRiskApprovals: approvals.filter(a => a.severity === 'high' || a.severity === 'critical').length
+      },
+      alertsCount: actions.filter(a => a.severity === 'critical' || a.severity === 'high').length
+    };
+  }, [snapshot, actions, approvals]);
+
+  // Pull-to-refresh with real data invalidation
+  const handleRefresh = useCallback(async () => {
+    await invalidateAll();
+  }, [invalidateAll]);
 
   const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
     onRefresh: handleRefresh,
@@ -43,28 +100,19 @@ export function PortfolioRouteShell() {
     disabled: isCopilotOpen,
   });
 
-  // Mock data - will be replaced with real API integration
-  const [mockData] = useState({
-    netWorth: 2450000,
-    delta24h: 125000,
-    freshness: {
-      freshnessSec: 45,
-      confidence: 0.85,
-      confidenceThreshold: 0.70,
-      degraded: false
-    } as FreshnessConfidence,
-    trustRiskSummary: {
-      trustScore: 89,
-      riskScore: 0.23,
-      criticalIssues: 0,
-      highRiskApprovals: 2
-    },
-    alertsCount: 3
-  });
-
   const handleWalletScopeChange = useCallback((scope: WalletScope) => {
-    setWalletScope(scope);
-  }, []);
+    // When scope changes, find the wallet and switch to it
+    if (scope.mode === 'active_wallet') {
+      const wallet = addresses.find(addr => addr.address.toLowerCase() === scope.address.toLowerCase());
+      if (wallet) {
+        switchWallet(wallet.id);
+      }
+    }
+  }, [addresses, switchWallet]);
+
+  const handleWalletSwitch = useCallback((walletId: string) => {
+    switchWallet(walletId);
+  }, [switchWallet]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -187,12 +235,68 @@ export function PortfolioRouteShell() {
         <GlobalHeader />
       </header>
 
-      {/* Degraded Mode Banner */}
-      {mockData.freshness.degraded && (
+      {/* Demo Mode Banner */}
+      {isDemo && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`fixed top-16 left-0 right-0 z-40 py-2 px-4 text-center text-sm font-medium shadow-lg ${
+          className={`fixed ${addresses.length > 0 ? 'top-36' : 'top-20'} left-0 right-0 z-40 py-2 px-4 text-center text-sm font-medium shadow-lg ${
+            isDark ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            <span>Demo Mode — Data is simulated for demonstration purposes</span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Wallet Switcher - Added for real-time updates */}
+      {addresses.length > 0 && (
+        <div className={`fixed top-20 left-4 right-4 z-40 backdrop-blur-md border rounded-2xl p-4 ${
+          isDark ? 'bg-white/10 border-[rgba(28,169,255,0.2)]' : 'bg-white/60 border-[rgba(28,169,255,0.3)]'
+        }`}>
+          <div className="flex items-center gap-3">
+            <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              Active Wallet:
+            </label>
+            <select
+              value={activeWallet || ''}
+              onChange={(e) => handleWalletSwitch(e.target.value)}
+              disabled={addressesLoading || walletSwitchLoading || portfolioLoading || isDemo}
+              className={`flex-1 px-4 py-2 rounded-xl font-medium transition-colors ${
+                isDark 
+                  ? 'bg-gray-800 border border-gray-600 text-white' 
+                  : 'bg-white border border-gray-300 text-gray-900'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <option value="">All Wallets</option>
+              {addresses.map((addr) => (
+                <option key={addr.id} value={addr.id}>
+                  {addr.label || `${addr.address.slice(0, 6)}...${addr.address.slice(-4)}`}
+                </option>
+              ))}
+            </select>
+            {(walletSwitchLoading || portfolioLoading) && !isDemo && (
+              <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+            )}
+            {isDemo && (
+              <span className={`text-xs px-2 py-1 rounded-lg ${
+                isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-500/30 text-blue-700'
+              }`}>
+                Demo
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Degraded Mode Banner */}
+      {portfolioData.freshness.degraded && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`fixed ${addresses.length > 0 ? 'top-36' : 'top-20'} left-0 right-0 z-40 py-2 px-4 text-center text-sm font-medium shadow-lg ${
             isDark ? 'bg-yellow-600 text-white' : 'bg-yellow-500 text-gray-900'
           }`}
         >
@@ -232,7 +336,7 @@ export function PortfolioRouteShell() {
           </motion.button>
         </div>
 
-        {/* Net Worth Hero Card */}
+        {/* Net Worth Hero Card - Now with real-time data */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -243,97 +347,122 @@ export function PortfolioRouteShell() {
           }`}
           whileHover={{ scale: 1.01 }}
           transition={{ duration: 0.2 }}
+          key={`hero-${activeWallet}-${isDemo}`}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-            <div className="flex-1">
-              <p className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Net Worth</p>
-              <motion.h2 
-                className={`text-3xl sm:text-4xl md:text-5xl font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
-                style={{ textShadow: isDark ? '0 0 30px rgba(240, 246, 255, 0.5)' : '0 0 30px rgba(28, 169, 255, 0.3)' }}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                {formatCurrency(mockData.netWorth)}
-              </motion.h2>
-            </div>
-            <motion.div
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl self-start sm:self-auto ${
-                mockData.delta24h >= 0 
-                  ? isDark 
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                    : 'bg-green-500/30 text-green-700 border border-green-500/40'
-                  : isDark 
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                    : 'bg-red-500/30 text-red-700 border border-red-500/40'
-              }`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-base sm:text-lg font-semibold">
-                {formatCurrency(mockData.delta24h)}
+          {portfolioLoading && !isDemo ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <span className={`ml-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                Loading portfolio data...
               </span>
-              <span className="text-xs sm:text-sm font-medium">24h</span>
-            </motion.div>
-          </div>
-
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {/* Freshness */}
-            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
-                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Freshness</span>
-              </div>
-              <p className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{mockData.freshness.freshnessSec}s</p>
-              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                {Math.round(mockData.freshness.confidence * 100)}% confidence
-              </p>
             </div>
-
-            {/* Trust Score */}
-            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CA9FF]" />
-                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Trust</span>
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                    <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Total Net Worth
+                    </p>
+                    {isDemo && (
+                      <span className={`text-xs px-2 py-0.5 rounded-md ${
+                        isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-500/30 text-blue-700'
+                      }`}>
+                        Demo Data
+                      </span>
+                    )}
+                  </div>
+                  <motion.h2 
+                    className={`text-3xl sm:text-4xl md:text-5xl font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    style={{ textShadow: isDark ? '0 0 30px rgba(240, 246, 255, 0.5)' : '0 0 30px rgba(28, 169, 255, 0.3)' }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    key={`networth-${portfolioData.netWorth}`}
+                  >
+                    {formatCurrency(portfolioData.netWorth)}
+                  </motion.h2>
+                </div>
+                <motion.div
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl self-start sm:self-auto ${
+                    portfolioData.delta24h >= 0 
+                      ? isDark 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                        : 'bg-green-500/30 text-green-700 border border-green-500/40'
+                      : isDark 
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                        : 'bg-red-500/30 text-red-700 border border-red-500/40'
+                  }`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  key={`delta-${portfolioData.delta24h}`}
+                >
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-base sm:text-lg font-semibold">
+                    {formatCurrency(portfolioData.delta24h)}
+                  </span>
+                  <span className="text-xs sm:text-sm font-medium">24h</span>
+                </motion.div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-[#1CA9FF]">{mockData.trustRiskSummary.trustScore}</p>
-              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Guardian verified</p>
-            </div>
 
-            {/* Risk Score */}
-            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
-                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Risk</span>
-              </div>
-              <p className="text-xl sm:text-2xl font-bold text-yellow-400">
-                {Math.round(mockData.trustRiskSummary.riskScore * 100)}%
-              </p>
-              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                {mockData.trustRiskSummary.highRiskApprovals} high-risk approvals
-              </p>
-            </div>
+              {/* Quick Stats Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* Freshness */}
+                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Freshness</span>
+                  </div>
+                  <p className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{portfolioData.freshness.freshnessSec}s</p>
+                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {Math.round(portfolioData.freshness.confidence * 100)}% confidence
+                  </p>
+                </div>
 
-            {/* Alerts */}
-            <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-              isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
-                <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Alerts</span>
+                {/* Trust Score */}
+                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CA9FF]" />
+                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Trust</span>
+                  </div>
+                  <p className="text-xl sm:text-2xl font-bold text-[#1CA9FF]">{portfolioData.trustRiskSummary.trustScore}</p>
+                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Guardian verified</p>
+                </div>
+
+                {/* Risk Score */}
+                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
+                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Risk</span>
+                  </div>
+                  <p className="text-xl sm:text-2xl font-bold text-yellow-400">
+                    {Math.round(portfolioData.trustRiskSummary.riskScore * 100)}%
+                  </p>
+                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {portfolioData.trustRiskSummary.highRiskApprovals} high-risk approvals
+                  </p>
+                </div>
+
+                {/* Alerts */}
+                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
+                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Alerts</span>
+                  </div>
+                  <p className="text-xl sm:text-2xl font-bold text-red-400">{portfolioData.alertsCount}</p>
+                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Requires attention</p>
+                </div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-red-400">{mockData.alertsCount}</p>
-              <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Requires attention</p>
-            </div>
-          </div>
+            </>
+          )}
         </motion.div>
 
         {/* Tab Navigation */}
@@ -382,8 +511,12 @@ export function PortfolioRouteShell() {
             >
               <CurrentTabComponent 
                 walletScope={walletScope}
-                freshness={mockData.freshness}
+                freshness={portfolioData.freshness}
                 onWalletScopeChange={handleWalletScopeChange}
+                snapshot={snapshot}
+                actions={actions}
+                approvals={approvals}
+                isLoading={portfolioLoading}
               />
             </motion.div>
           </AnimatePresence>

@@ -8,7 +8,10 @@ import {
 } from '@/types/portfolio';
 import { portfolioValuationService } from './PortfolioValuationService';
 import { requestGuardianScan } from './guardianService';
+import { requestHunterScan } from './hunterService';
+import { requestHarvestScan } from './harvestService';
 import { riskAwareCache, calculateCacheTTL } from '@/lib/cache/RiskAwareCacheService';
+import { cacheInvalidationEngine } from '@/lib/cache/CacheInvalidationEngine';
 
 /**
  * Portfolio Snapshot Service
@@ -163,11 +166,18 @@ class PortfolioSnapshotService {
    * Get Hunter opportunities data
    */
   private async getHunterData(addresses: string[]) {
-    // TODO: Implement Hunter API integration
-    // Placeholder for Hunter opportunities
+    if (addresses.length === 0) {
+      return { opportunities: [], positions: [] };
+    }
+
+    const hunterResult = await requestHunterScan({
+      walletAddresses: addresses
+    });
+
     return {
-      opportunities: [],
-      positions: []
+      opportunities: hunterResult.opportunities,
+      positions: hunterResult.positions,
+      confidence: hunterResult.confidence
     };
   }
 
@@ -175,11 +185,18 @@ class PortfolioSnapshotService {
    * Get Harvest tax optimization data
    */
   private async getHarvestData(addresses: string[]) {
-    // TODO: Implement Harvest API integration
-    // Placeholder for Harvest recommendations
+    if (addresses.length === 0) {
+      return { recommendations: [], taxSavings: 0 };
+    }
+
+    const harvestResult = await requestHarvestScan({
+      walletAddresses: addresses
+    });
+
     return {
-      recommendations: [],
-      taxSavings: 0
+      recommendations: harvestResult.recommendations,
+      taxSavings: harvestResult.totalTaxSavings,
+      confidence: harvestResult.confidence
     };
   }
 
@@ -240,7 +257,22 @@ class PortfolioSnapshotService {
       positions.push(...portfolio.positions);
     }
     
-    // TODO: Add Hunter positions
+    // Add Hunter positions
+    if (hunter?.positions) {
+      hunter.positions.forEach((hunterPos: any) => {
+        positions.push({
+          id: hunterPos.id,
+          token: hunterPos.token,
+          symbol: hunterPos.token,
+          amount: hunterPos.amount,
+          valueUsd: hunterPos.valueUsd,
+          chainId: hunterPos.chainId,
+          category: 'defi' as const,
+          protocol: hunterPos.protocol,
+          apy: hunterPos.apy
+        });
+      });
+    }
     
     return positions;
   }
@@ -258,9 +290,120 @@ class PortfolioSnapshotService {
   private aggregateActions(guardian: any, hunter: any, harvest: any): RecommendedAction[] {
     const actions: RecommendedAction[] = [];
     
-    // TODO: Implement action aggregation from all sources
+    // Add Guardian-based actions (approval hygiene, de-risk)
+    if (guardian?.flags) {
+      guardian.flags.forEach((flag: any, index: number) => {
+        if (flag.severity === 'critical' || flag.severity === 'high') {
+          actions.push({
+            id: `guardian_action_${index}`,
+            title: flag.type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase()),
+            severity: flag.severity,
+            why: [flag.description, flag.recommendation || 'Take action to reduce risk'],
+            impactPreview: {
+              riskDelta: -0.3,
+              preventedLossP50Usd: 1000,
+              expectedGainUsd: 0,
+              gasEstimateUsd: 5,
+              timeEstimateSec: 30,
+              confidence: 0.85
+            },
+            actionScore: this.calculateActionScore(flag.severity, 1000, 0.85, 5, 30),
+            cta: {
+              label: 'Review & Fix',
+              intent: 'revoke_approval',
+              params: { flagType: flag.type }
+            },
+            walletScope: { mode: 'active_wallet', address: '0x0' as `0x${string}` }
+          });
+        }
+      });
+    }
+    
+    // Add Hunter-based actions (claim rewards, opportunities)
+    if (hunter?.opportunities) {
+      hunter.opportunities.slice(0, 3).forEach((opp: any) => {
+        actions.push({
+          id: opp.id,
+          title: opp.title,
+          severity: 'medium',
+          why: [opp.description, `Estimated value: $${opp.estimatedValue.toFixed(2)}`],
+          impactPreview: {
+            riskDelta: 0,
+            preventedLossP50Usd: 0,
+            expectedGainUsd: opp.estimatedValue,
+            gasEstimateUsd: 10,
+            timeEstimateSec: 60,
+            confidence: opp.confidence
+          },
+          actionScore: this.calculateActionScore('medium', opp.estimatedValue, opp.confidence, 10, 60),
+          cta: {
+            label: 'Explore Opportunity',
+            intent: 'route_opportunity',
+            params: { opportunityId: opp.id }
+          },
+          walletScope: { mode: 'active_wallet', address: '0x0' as `0x${string}` }
+        });
+      });
+    }
+    
+    // Add Harvest-based actions (tax optimization)
+    if (harvest?.recommendations) {
+      harvest.recommendations.slice(0, 2).forEach((rec: any) => {
+        if (rec.type === 'tax_loss_harvest' && rec.estimatedTaxSavings > 100) {
+          actions.push({
+            id: rec.id,
+            title: rec.title,
+            severity: 'low',
+            why: [rec.description, `Estimated tax savings: $${rec.estimatedTaxSavings.toFixed(2)}`],
+            impactPreview: {
+              riskDelta: 0,
+              preventedLossP50Usd: 0,
+              expectedGainUsd: rec.estimatedTaxSavings,
+              gasEstimateUsd: 15,
+              timeEstimateSec: 120,
+              confidence: rec.confidence
+            },
+            actionScore: this.calculateActionScore('low', rec.estimatedTaxSavings, rec.confidence, 15, 120),
+            cta: {
+              label: 'Review Tax Strategy',
+              intent: 'harvest_rewards',
+              params: { recommendationId: rec.id }
+            },
+            walletScope: { mode: 'active_wallet', address: '0x0' as `0x${string}` }
+          });
+        }
+      });
+    }
+    
+    // Sort by action score (descending)
+    actions.sort((a, b) => b.actionScore - a.actionScore);
     
     return actions;
+  }
+  
+  /**
+   * Calculate action score for prioritization
+   * Requirements: R4.3-R4.4 - ActionScore weights and tie-break rules
+   */
+  private calculateActionScore(
+    severity: 'critical' | 'high' | 'medium' | 'low',
+    exposureUsd: number,
+    confidence: number,
+    gasUsd: number,
+    timeSec: number
+  ): number {
+    const severityWeights = {
+      critical: 1.0,
+      high: 0.75,
+      medium: 0.5,
+      low: 0.25
+    };
+    
+    const severityWeight = severityWeights[severity];
+    const timeDecay = 1.0; // No time decay for now
+    const friction = gasUsd + (timeSec / 60); // Convert time to minutes
+    
+    return (severityWeight * exposureUsd * confidence * timeDecay) - friction;
   }
 
   /**
@@ -286,10 +429,22 @@ class PortfolioSnapshotService {
     
     // Count Guardian critical flags
     if (guardian?.flags) {
-      count += guardian.flags.filter((flag: any) => flag.severity === 'high').length;
+      count += guardian.flags.filter((flag: any) => flag.severity === 'critical').length;
     }
     
-    // TODO: Add Hunter and Harvest critical issue counting
+    // Count Hunter high-value opportunities as potential issues if missed
+    if (hunter?.opportunities) {
+      count += hunter.opportunities.filter((opp: any) => 
+        opp.estimatedValue > 1000 && opp.confidence > 0.8
+      ).length;
+    }
+    
+    // Count Harvest high-value tax loss opportunities
+    if (harvest?.recommendations) {
+      count += harvest.recommendations.filter((rec: any) => 
+        rec.type === 'tax_loss_harvest' && rec.estimatedTaxSavings > 500
+      ).length;
+    }
     
     return count;
   }
@@ -382,8 +537,30 @@ class PortfolioSnapshotService {
    * 
    * Requirements: 10.6 - Cache invalidation on new transactions
    */
-  invalidateCacheForWallet(walletAddress: string): void {
-    riskAwareCache.invalidateCritical(walletAddress, 'New transaction detected');
+  invalidateCacheForWallet(walletAddress: string, userId: string): void {
+    cacheInvalidationEngine.invalidateOnNewTransaction(walletAddress, userId);
+  }
+
+  /**
+   * Invalidate cache on wallet switch
+   * 
+   * Requirements: 10.6 - Clear user-specific caches on wallet switching
+   */
+  invalidateCacheOnWalletSwitch(
+    userId: string,
+    previousWallet: string | null,
+    newWallet: string
+  ): void {
+    cacheInvalidationEngine.invalidateOnWalletSwitch(userId, previousWallet, newWallet);
+  }
+
+  /**
+   * Invalidate cache on policy change
+   * 
+   * Requirements: 10.6 - Invalidate simulation results on policy changes
+   */
+  invalidateCacheOnPolicyChange(userId: string, changedPolicies: string[]): void {
+    cacheInvalidationEngine.invalidateOnPolicyChange(userId, changedPolicies);
   }
 
   /**
