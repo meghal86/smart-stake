@@ -154,9 +154,11 @@ export function AssetBreakdown({
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <span className="font-medium text-white text-lg">{asset.symbol}</span>
-                    <Badge className={`text-xs ${getCategoryColor(asset.category)}`}>
-                      {asset.category.toUpperCase()}
-                    </Badge>
+                    {asset.category && (
+                      <Badge className={`text-xs ${getCategoryColor(asset.category)}`}>
+                        {asset.category.toUpperCase()}
+                      </Badge>
+                    )}
                     <span className={`text-xs font-medium ${getRiskColor(asset.riskScore)} whitespace-nowrap`}>
                       Risk: {Math.round(asset.riskScore * 100)}%
                     </span>

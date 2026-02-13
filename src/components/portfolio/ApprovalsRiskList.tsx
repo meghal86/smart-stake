@@ -245,16 +245,18 @@ export function ApprovalsRiskList({ approvals, freshness, walletScope }: Approva
                       </div>
                       
                       {/* Risk Reasons */}
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-400 mb-1">Risk Factors:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {approval.riskReasons.map((reason, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {reason.replace(/_/g, ' ').toLowerCase()}
-                            </Badge>
-                          ))}
+                      {approval.riskReasons && approval.riskReasons.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-400 mb-1">Risk Factors:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {approval.riskReasons.map((reason, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {reason.replace(/_/g, ' ').toLowerCase()}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                   

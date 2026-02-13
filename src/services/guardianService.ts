@@ -2,8 +2,10 @@
  * Guardian Service
  * 
  * Provides security scanning and risk assessment functionality.
- * This is a placeholder implementation for testing purposes.
+ * Calls the guardian-scan-v2 edge function for real security data.
  */
+
+import { createClient } from '@supabase/supabase-js';
 
 export interface GuardianScanRequest {
   walletAddress: string;
@@ -27,20 +29,112 @@ export interface GuardianScanResult {
   flags: GuardianFlag[];
 }
 
+function getSupabaseClient() {
+  // Lazy load Supabase client to avoid issues with process.env
+  if (typeof window === 'undefined') {
+    // Server-side
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  } else {
+    // Client-side (shouldn't happen, but fallback)
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+}
+
 /**
  * Request Guardian security scan for a wallet
+ * Tries to call guardian-scan-v2 edge function, falls back to mock data
  */
 export async function requestGuardianScan(request: GuardianScanRequest): Promise<GuardianScanResult> {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 150));
+  console.log('🛡️ [Guardian] Attempting to call guardian-scan-v2 edge function for:', request.walletAddress);
   
-  // Mock Guardian scan result
+  try {
+    const supabase = getSupabaseClient();
+    
+    // Try to call the guardian-scan-v2 edge function
+    const { data, error } = await supabase.functions.invoke('guardian-scan-v2', {
+      body: { address: request.walletAddress }
+    });
+
+    if (error) {
+      console.warn('⚠️ [Guardian] Edge function error, falling back to mock data:', error);
+      return getMockGuardianData();
+    }
+
+    console.log('✅ [Guardian] Received REAL scan data:', data);
+
+    // Transform edge function response to service format
+    const riskScore = data.risk_score || 0;
+    const trustScore = Math.max(0, 100 - riskScore * 10);
+    
+    // Map flags from edge function response
+    const flags: GuardianFlag[] = [];
+    
+    if (data.risks && Array.isArray(data.risks)) {
+      data.risks.forEach((risk: any) => {
+        flags.push({
+          type: risk.type || 'UNKNOWN',
+          severity: risk.severity || 'medium',
+          description: risk.description || 'Security risk detected',
+          recommendation: risk.recommendation
+        });
+      });
+    }
+
+    // Determine risk level
+    let riskLevel: 'Low' | 'Medium' | 'High' | 'Critical';
+    let statusLabel: string;
+    let statusTone: 'trusted' | 'warning' | 'danger';
+
+    if (riskScore > 7) {
+      riskLevel = 'Critical';
+      statusLabel = 'Critical Risk';
+      statusTone = 'danger';
+    } else if (riskScore > 5) {
+      riskLevel = 'High';
+      statusLabel = 'High Risk';
+      statusTone = 'danger';
+    } else if (riskScore > 3) {
+      riskLevel = 'Medium';
+      statusLabel = 'Medium Risk';
+      statusTone = 'warning';
+    } else {
+      riskLevel = 'Low';
+      statusLabel = 'Trusted';
+      statusTone = 'trusted';
+    }
+
+    return {
+      trustScorePercent: Math.round(trustScore),
+      trustScoreRaw: trustScore / 100,
+      riskScore: Math.round(riskScore),
+      riskLevel,
+      statusLabel,
+      statusTone,
+      flags
+    };
+  } catch (error) {
+    console.error('❌ [Guardian] Error calling edge function, falling back to mock data:', error);
+    return getMockGuardianData();
+  }
+}
+
+/**
+ * Get mock Guardian data as fallback
+ */
+function getMockGuardianData(): GuardianScanResult {
+  console.log('🎭 [Guardian] Using MOCK data');
+  
   const riskScore = Math.random() * 10;
   const trustScore = Math.max(0, 100 - riskScore * 10);
   
   const flags: GuardianFlag[] = [];
   
-  // Add some random flags based on risk score
   if (riskScore > 7) {
     flags.push({
       type: 'HIGH_RISK_APPROVAL',

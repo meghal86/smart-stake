@@ -80,10 +80,10 @@ export function PortfolioRouteShell() {
         degraded: false
       } as FreshnessConfidence,
       trustRiskSummary: {
-        trustScore: snapshot?.trustScore || 0,
-        riskScore: snapshot?.riskScore || 0,
-        criticalIssues: snapshot?.criticalIssues || 0,
-        highRiskApprovals: approvals.filter(a => a.severity === 'high' || a.severity === 'critical').length
+        trustScore: snapshot?.riskSummary ? Math.max(0, 100 - (snapshot.riskSummary.overallScore * 100)) : 0,
+        riskScore: snapshot?.riskSummary?.overallScore || 0,
+        criticalIssues: snapshot?.riskSummary?.criticalIssues || 0,
+        highRiskApprovals: snapshot?.riskSummary?.highRiskApprovals || 0
       },
       alertsCount: actions.filter(a => a.severity === 'critical' || a.severity === 'high').length
     };
@@ -91,7 +91,7 @@ export function PortfolioRouteShell() {
 
   // Pull-to-refresh with real data invalidation
   const handleRefresh = useCallback(async () => {
-    await invalidateAll();
+    invalidateAll();
   }, [invalidateAll]);
 
   const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
@@ -251,9 +251,9 @@ export function PortfolioRouteShell() {
         </motion.div>
       )}
 
-      {/* Wallet Switcher - Added for real-time updates */}
+      {/* Wallet Switcher - Hidden on mobile (use GlobalHeader instead), visible on desktop */}
       {addresses.length > 0 && (
-        <div className={`fixed top-20 left-4 right-4 z-40 backdrop-blur-md border rounded-2xl p-4 ${
+        <div className={`hidden md:block fixed top-20 left-4 right-4 z-40 backdrop-blur-md border rounded-2xl p-4 ${
           isDark ? 'bg-white/10 border-[rgba(28,169,255,0.2)]' : 'bg-white/60 border-[rgba(28,169,255,0.3)]'
         }`}>
           <div className="flex items-center gap-3">

@@ -49,7 +49,8 @@ export const DEFAULT_POLICY_CONFIG: PolicyEngineConfig = {
   requireSimulationForValueOverUsd: 250,
   confidenceThreshold: 0.70,
   allowedSlippagePercent: 2.0,
-  maxDailyTransactionCount: 20
+  maxDailyTransactionCount: 20,
+  mevProtectedMode: 'auto' // V1.1: MEV protection enabled by default on supported chains
 };
 
 /**
@@ -123,7 +124,14 @@ export class PolicyEngine {
       }
     }
 
-    // 6. Check daily transaction count (would require database lookup in real implementation)
+    // 6. Check MEV protection mode (V1.1 feature)
+    if (this.config.mevProtectedMode !== 'off') {
+      appliedPolicies.push('mev_protected_mode');
+      // MEV protection validation is handled by checkMevProtectionRequirements
+      // This just records that the policy was considered
+    }
+
+    // 7. Check daily transaction count (would require database lookup in real implementation)
     appliedPolicies.push('max_daily_transaction_count');
     // TODO: Implement daily transaction count check with database lookup
 
@@ -134,6 +142,81 @@ export class PolicyEngine {
       violations,
       appliedPolicies
     };
+  }
+
+  /**
+   * Check MEV protection requirements for a transaction
+   * V1.1 Feature: Requirement 14.3
+   */
+  checkMevProtectionRequirements(
+    chainId: number,
+    provider?: string
+  ): {
+    required: boolean;
+    supported: boolean;
+    mode: string;
+    provider?: string;
+    reason?: string;
+  } {
+    const mode = this.config.mevProtectedMode;
+    
+    // MEV supported chains: Ethereum Mainnet (1), Goerli (5), Sepolia (11155111)
+    const mevSupportedChains = [1, 5, 11155111];
+    const chainSupported = mevSupportedChains.includes(chainId);
+    
+    // MEV supported providers
+    const mevSupportedProviders = ['flashbots', 'eden', 'bloxroute'];
+    const providerSupported = !provider || mevSupportedProviders.some(p => 
+      provider.toLowerCase().includes(p)
+    );
+    
+    const supported = chainSupported && providerSupported;
+    
+    switch (mode) {
+      case 'off':
+        return {
+          required: false,
+          supported,
+          mode,
+          reason: 'MEV protection disabled by user'
+        };
+      
+      case 'force':
+        if (!supported) {
+          return {
+            required: true,
+            supported: false,
+            mode,
+            reason: `MEV protection forced but not supported on chain ${chainId}`
+          };
+        }
+        return {
+          required: true,
+          supported: true,
+          mode,
+          provider: provider || 'flashbots',
+          reason: 'MEV protection forced by user'
+        };
+      
+      case 'auto':
+        return {
+          required: supported,
+          supported,
+          mode,
+          provider: supported ? (provider || 'flashbots') : undefined,
+          reason: supported 
+            ? 'MEV protection enabled automatically'
+            : `MEV protection not available on chain ${chainId}`
+        };
+      
+      default:
+        return {
+          required: false,
+          supported,
+          mode,
+          reason: 'Invalid MEV protection mode'
+        };
+    }
   }
 
   /**
@@ -216,6 +299,13 @@ export class PolicyEngine {
 
     if (config.maxDailyTransactionCount !== undefined && config.maxDailyTransactionCount < 0) {
       errors.push('maxDailyTransactionCount must be non-negative');
+    }
+
+    if (config.mevProtectedMode !== undefined) {
+      const validModes = ['off', 'auto', 'force'];
+      if (!validModes.includes(config.mevProtectedMode)) {
+        errors.push('mevProtectedMode must be one of: off, auto, force');
+      }
     }
 
     return {

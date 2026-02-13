@@ -106,98 +106,262 @@ class PortfolioSnapshotService {
    */
   private async resolveAddresses(userId: string, walletScope: WalletScope): Promise<string[]> {
     if (walletScope.mode === 'active_wallet') {
+      console.log('🎯 [PortfolioSnapshot] Resolving addresses for ACTIVE_WALLET mode:', walletScope.address);
       return [walletScope.address];
     }
     
-    // TODO: Implement user wallet lookup for all_wallets mode
-    // For now, return empty array as placeholder
-    return [];
+    // Fetch all user wallets from database
+    console.log('🎯 [PortfolioSnapshot] Resolving addresses for ALL_WALLETS mode, userId:', userId);
+    
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      
+      const { data, error } = await supabase
+        .from('user_portfolio_addresses')
+        .select('address')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('❌ [PortfolioSnapshot] Error fetching user wallets:', error);
+        throw error;
+      }
+      
+      const addresses = data.map(row => row.address);
+      console.log(`✅ [PortfolioSnapshot] Found ${addresses.length} wallets for user:`, addresses);
+      
+      return addresses;
+    } catch (error) {
+      console.error('❌ [PortfolioSnapshot] Failed to resolve addresses:', error);
+      return [];
+    }
   }
 
   /**
    * Get portfolio valuation data
+   * Aggregates data across multiple addresses if provided
    */
   private async getPortfolioData(addresses: string[]) {
+    console.log(`📊 [PortfolioSnapshot] Fetching portfolio data for ${addresses.length} address(es)`);
+    
     if (addresses.length === 0) {
+      console.log('⚠️ [PortfolioSnapshot] No addresses provided, returning empty portfolio');
       return { netWorth: 0, delta24h: 0, positions: [] };
     }
 
-    const valuation = await portfolioValuationService.valuatePortfolio(addresses);
-    
-    return {
-      netWorth: valuation.kpis.total_value,
-      delta24h: valuation.kpis.pnl_24h,
-      positions: valuation.holdings.map(holding => ({
-        id: `${holding.token}-${holding.source}`,
-        token: holding.token,
-        symbol: holding.token,
-        amount: holding.qty.toString(),
-        valueUsd: holding.value,
-        chainId: 1, // Default to Ethereum mainnet
-        category: 'token' as const
-      }))
-    };
+    try {
+      // For multiple addresses, aggregate valuations
+      if (addresses.length > 1) {
+        console.log('🔄 [PortfolioSnapshot] Aggregating portfolio data across multiple wallets');
+        
+        const valuations = await Promise.allSettled(
+          addresses.map(addr => portfolioValuationService.valuatePortfolio([addr]))
+        );
+        
+        let totalNetWorth = 0;
+        let totalDelta24h = 0;
+        const allPositions: any[] = [];
+        
+        valuations.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            const valuation = result.value;
+            totalNetWorth += valuation.kpis.total_value;
+            totalDelta24h += valuation.kpis.pnl_24h;
+            
+            // Add positions with wallet identifier
+            valuation.holdings.forEach(holding => {
+              allPositions.push({
+                id: `${addresses[index]}-${holding.token}-${holding.source}`,
+                token: holding.token,
+                symbol: holding.token,
+                amount: holding.qty.toString(),
+                valueUsd: holding.value,
+                chainId: 1, // Default to Ethereum mainnet
+                category: 'token' as const,
+                walletAddress: addresses[index]
+              });
+            });
+          } else {
+            console.error(`❌ [PortfolioSnapshot] Failed to fetch portfolio for wallet ${addresses[index]}:`, result.reason);
+          }
+        });
+        
+        console.log(`✅ [PortfolioSnapshot] Aggregated portfolio: $${totalNetWorth.toFixed(2)}, ${allPositions.length} positions`);
+        
+        return {
+          netWorth: totalNetWorth,
+          delta24h: totalDelta24h,
+          positions: allPositions
+        };
+      }
+      
+      // Single address - direct call
+      console.log('🔄 [PortfolioSnapshot] Fetching portfolio data for single wallet');
+      const valuation = await portfolioValuationService.valuatePortfolio(addresses);
+      
+      console.log(`✅ [PortfolioSnapshot] Portfolio data: $${valuation.kpis.total_value.toFixed(2)}`);
+      
+      return {
+        netWorth: valuation.kpis.total_value,
+        delta24h: valuation.kpis.pnl_24h,
+        positions: valuation.holdings.map(holding => ({
+          id: `${holding.token}-${holding.source}`,
+          token: holding.token,
+          symbol: holding.token,
+          amount: holding.qty.toString(),
+          valueUsd: holding.value,
+          chainId: 1, // Default to Ethereum mainnet
+          category: 'token' as const
+        }))
+      };
+    } catch (error) {
+      console.error('❌ [PortfolioSnapshot] Error fetching portfolio data:', error);
+      throw error;
+    }
   }
 
   /**
    * Get Guardian security data
+   * Aggregates security data across multiple addresses
    */
   private async getGuardianData(addresses: string[]) {
+    console.log(`🛡️ [PortfolioSnapshot] Fetching Guardian data for ${addresses.length} address(es)`);
+    
     if (addresses.length === 0) {
+      console.log('⚠️ [PortfolioSnapshot] No addresses provided, returning empty Guardian data');
       return { approvals: [], riskScore: 0, flags: [] };
     }
 
-    // For now, scan the first address
-    // TODO: Implement multi-address Guardian scanning
-    const address = addresses[0];
-    const scanResult = await requestGuardianScan({
-      walletAddress: address,
-      network: 'ethereum'
-    });
+    try {
+      // For multiple addresses, aggregate Guardian scans
+      if (addresses.length > 1) {
+        console.log('🔄 [PortfolioSnapshot] Aggregating Guardian data across multiple wallets');
+        
+        const scans = await Promise.allSettled(
+          addresses.map(addr => requestGuardianScan({
+            walletAddress: addr,
+            network: 'ethereum'
+          }))
+        );
+        
+        const allApprovals: any[] = [];
+        const allFlags: any[] = [];
+        let maxRiskScore = 0;
+        
+        scans.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            const scanResult = result.value;
+            maxRiskScore = Math.max(maxRiskScore, scanResult.riskScore);
+            
+            // Add approvals with wallet identifier
+            const approvals = this.mapGuardianApprovals(scanResult, addresses[index]);
+            allApprovals.push(...approvals);
+            
+            // Add flags
+            if (scanResult.flags) {
+              allFlags.push(...scanResult.flags.map((flag: any) => ({
+                ...flag,
+                walletAddress: addresses[index]
+              })));
+            }
+          } else {
+            console.error(`❌ [PortfolioSnapshot] Failed to fetch Guardian data for wallet ${addresses[index]}:`, result.reason);
+          }
+        });
+        
+        console.log(`✅ [PortfolioSnapshot] Aggregated Guardian: ${allApprovals.length} approvals, risk score ${maxRiskScore}`);
+        
+        return {
+          approvals: allApprovals,
+          riskScore: maxRiskScore,
+          flags: allFlags
+        };
+      }
+      
+      // Single address - direct call
+      console.log('🔄 [PortfolioSnapshot] Fetching Guardian data for single wallet');
+      const address = addresses[0];
+      const scanResult = await requestGuardianScan({
+        walletAddress: address,
+        network: 'ethereum'
+      });
 
-    return {
-      approvals: this.mapGuardianApprovals(scanResult, address),
-      riskScore: scanResult.riskScore,
-      flags: scanResult.flags
-    };
+      console.log(`✅ [PortfolioSnapshot] Guardian data: risk score ${scanResult.riskScore}`);
+
+      return {
+        approvals: this.mapGuardianApprovals(scanResult, address),
+        riskScore: scanResult.riskScore,
+        flags: scanResult.flags
+      };
+    } catch (error) {
+      console.error('❌ [PortfolioSnapshot] Error fetching Guardian data:', error);
+      throw error;
+    }
   }
 
   /**
    * Get Hunter opportunities data
+   * Aggregates opportunities across multiple addresses
    */
   private async getHunterData(addresses: string[]) {
+    console.log(`🎯 [PortfolioSnapshot] Fetching Hunter data for ${addresses.length} address(es)`);
+    
     if (addresses.length === 0) {
+      console.log('⚠️ [PortfolioSnapshot] No addresses provided, returning empty Hunter data');
       return { opportunities: [], positions: [] };
     }
 
-    const hunterResult = await requestHunterScan({
-      walletAddresses: addresses
-    });
+    try {
+      console.log('🔄 [PortfolioSnapshot] Fetching Hunter opportunities');
+      const hunterResult = await requestHunterScan({
+        walletAddresses: addresses
+      });
 
-    return {
-      opportunities: hunterResult.opportunities,
-      positions: hunterResult.positions,
-      confidence: hunterResult.confidence
-    };
+      console.log(`✅ [PortfolioSnapshot] Hunter data: ${hunterResult.opportunities.length} opportunities`);
+
+      return {
+        opportunities: hunterResult.opportunities,
+        positions: hunterResult.positions,
+        confidence: hunterResult.confidence
+      };
+    } catch (error) {
+      console.error('❌ [PortfolioSnapshot] Error fetching Hunter data:', error);
+      throw error;
+    }
   }
 
   /**
    * Get Harvest tax optimization data
+   * Aggregates tax recommendations across multiple addresses
    */
   private async getHarvestData(addresses: string[]) {
+    console.log(`💰 [PortfolioSnapshot] Fetching Harvest data for ${addresses.length} address(es)`);
+    
     if (addresses.length === 0) {
+      console.log('⚠️ [PortfolioSnapshot] No addresses provided, returning empty Harvest data');
       return { recommendations: [], taxSavings: 0 };
     }
 
-    const harvestResult = await requestHarvestScan({
-      walletAddresses: addresses
-    });
+    try {
+      console.log('🔄 [PortfolioSnapshot] Fetching Harvest recommendations');
+      const harvestResult = await requestHarvestScan({
+        walletAddresses: addresses
+      });
 
-    return {
-      recommendations: harvestResult.recommendations,
-      taxSavings: harvestResult.totalTaxSavings,
-      confidence: harvestResult.confidence
-    };
+      console.log(`✅ [PortfolioSnapshot] Harvest data: ${harvestResult.recommendations.length} recommendations, $${harvestResult.totalTaxSavings.toFixed(2)} potential savings`);
+
+      return {
+        recommendations: harvestResult.recommendations,
+        taxSavings: harvestResult.totalTaxSavings,
+        confidence: harvestResult.confidence
+      };
+    } catch (error) {
+      console.error('❌ [PortfolioSnapshot] Error fetching Harvest data:', error);
+      throw error;
+    }
   }
 
   /**

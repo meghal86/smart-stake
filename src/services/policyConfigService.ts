@@ -50,7 +50,8 @@ export class PolicyConfigService {
         requireSimulationForValueOverUsd: data.require_simulation_for_value_over_usd,
         confidenceThreshold: data.confidence_threshold,
         allowedSlippagePercent: data.allowed_slippage_percent,
-        maxDailyTransactionCount: data.max_daily_transaction_count
+        maxDailyTransactionCount: data.max_daily_transaction_count,
+        mevProtectedMode: data.mev_protected_mode || DEFAULT_POLICY_CONFIG.mevProtectedMode
       };
     } catch (error) {
       console.error('Error loading user policy config:', error);

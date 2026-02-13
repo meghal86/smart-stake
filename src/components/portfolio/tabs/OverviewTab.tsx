@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
+import { WalletScope, FreshnessConfidence, PortfolioSnapshot, RecommendedAction, ApprovalRisk } from '@/types/portfolio';
 import { NetWorthCard } from '../NetWorthCard';
 import { RecommendedActionsFeed } from '../RecommendedActionsFeed';
 import { RiskSummaryCard } from '../RiskSummaryCard';
@@ -9,103 +9,82 @@ interface OverviewTabProps {
   walletScope: WalletScope;
   freshness: FreshnessConfidence;
   onWalletScopeChange?: (scope: WalletScope) => void;
+  snapshot?: PortfolioSnapshot;
+  actions: RecommendedAction[];
+  approvals: ApprovalRisk[];
+  isLoading: boolean;
 }
 
-export function OverviewTab({ walletScope, freshness }: OverviewTabProps) {
-  // Mock data - will be replaced with real API integration
-  const [mockNetWorth] = useState({
-    totalValue: 2450000,
-    delta24h: 125000,
-    deltaPercent: 5.38,
-    breakdown: [
-      { chain: 'Ethereum', value: 1470000, percentage: 60 },
-      { chain: 'Bitcoin', value: 490000, percentage: 20 },
-      { chain: 'Solana', value: 294000, percentage: 12 },
-      { chain: 'Polygon', value: 196000, percentage: 8 }
-    ]
+export function OverviewTab({ 
+  walletScope, 
+  freshness, 
+  snapshot, 
+  actions, 
+  approvals,
+  isLoading 
+}: OverviewTabProps) {
+  console.log('📊 OverviewTab rendering with real data:', {
+    hasSnapshot: !!snapshot,
+    actionsCount: actions.length,
+    approvalsCount: approvals.length,
+    isLoading
   });
 
-  const [mockActions] = useState([
-    {
-      id: 'action-1',
-      title: 'Revoke risky USDC approval',
-      severity: 'critical' as const,
-      why: ['Unlimited approval to unknown spender', 'Contract upgraded recently', 'High value at risk'],
-      impactPreview: {
-        riskDelta: -0.45,
-        preventedLossP50Usd: 25000,
-        expectedGainUsd: 0,
-        gasEstimateUsd: 12,
-        timeEstimateSec: 30,
-        confidence: 0.89
-      },
-      actionScore: 95.2,
-      cta: { label: 'Review & Revoke', intent: 'revoke_approval', params: {} },
-      walletScope
+  // Use real data from props (passed from PortfolioRouteShell)
+  const realActions = actions.map(action => ({
+    id: action.id,
+    title: action.title,
+    severity: action.severity,
+    why: action.why || [],
+    impactPreview: action.impactPreview || {
+      riskDelta: 0,
+      preventedLossP50Usd: 0,
+      expectedGainUsd: 0,
+      gasEstimateUsd: 0,
+      timeEstimateSec: 0,
+      confidence: 0
     },
-    {
-      id: 'action-2', 
-      title: 'Claim pending rewards',
-      severity: 'medium' as const,
-      why: ['$2,400 in unclaimed rewards', 'Rewards accumulating daily', 'Low gas cost to claim'],
-      impactPreview: {
-        riskDelta: 0,
-        preventedLossP50Usd: 0,
-        expectedGainUsd: 2400,
-        gasEstimateUsd: 8,
-        timeEstimateSec: 45,
-        confidence: 0.92
-      },
-      actionScore: 78.5,
-      cta: { label: 'Claim Rewards', intent: 'claim_rewards', params: {} },
-      walletScope
-    }
-  ]);
+    actionScore: action.actionScore || 0,
+    cta: action.cta || { label: 'View Details', intent: 'view_details', params: {} },
+    walletScope
+  }));
 
-  const [mockRiskSummary] = useState({
-    overallScore: 0.23,
-    criticalIssues: 1,
-    highRiskApprovals: 3,
-    mediumRiskApprovals: 7,
-    lowRiskApprovals: 12,
+  // Calculate real risk summary from approvals
+  const realRiskSummary = {
+    overallScore: snapshot?.riskScore || 0,
+    criticalIssues: approvals.filter(a => a.severity === 'critical').length,
+    highRiskApprovals: approvals.filter(a => a.severity === 'high').length,
+    mediumRiskApprovals: approvals.filter(a => a.severity === 'medium').length,
+    lowRiskApprovals: approvals.filter(a => a.severity === 'low').length,
     riskFactors: [
-      { name: 'Unlimited Approvals', score: 0.8, trend: 'stable' },
-      { name: 'Contract Age Risk', score: 0.4, trend: 'improving' },
-      { name: 'Concentration Risk', score: 0.15, trend: 'worsening' }
+      { 
+        name: 'Unlimited Approvals', 
+        score: approvals.filter(a => a.riskReasons?.includes('UNLIMITED_ALLOWANCE')).length / Math.max(approvals.length, 1), 
+        trend: 'stable' as const
+      },
+      { 
+        name: 'High Value Exposure', 
+        score: approvals.filter(a => a.valueAtRisk > 10000).length / Math.max(approvals.length, 1), 
+        trend: 'improving' as const
+      },
+      { 
+        name: 'Contract Risk', 
+        score: approvals.filter(a => a.riskScore > 0.5).length / Math.max(approvals.length, 1), 
+        trend: 'worsening' as const
+      }
     ]
-  });
+  };
 
-  const [mockWhaleInteractions] = useState([
-    {
-      id: 'whale-1',
-      timestamp: new Date(Date.now() - 1800000), // 30 min ago
-      type: 'CEX_OUTFLOW' as const,
-      token: 'ETH',
-      amount: 15000,
-      value: 45000000,
-      whaleAddress: '0x8ba1f109551bD432803012645Hac136c22C501e',
-      impact: 'high' as const,
-      portfolioEffect: 2.3,
-      description: 'Large ETH withdrawal from Binance by known whale',
-      txHash: '0x123...'
-    },
-    {
-      id: 'whale-2',
-      timestamp: new Date(Date.now() - 7200000), // 2 hours ago
-      type: 'DEX_SWAP' as const,
-      token: 'USDC',
-      amount: 5000000,
-      value: 5000000,
-      whaleAddress: '0x742d35Cc6634C0532925a3b8D4C0532925a3b8D4',
-      impact: 'medium' as const,
-      portfolioEffect: -0.8,
-      description: 'Large USDC to ETH swap on Uniswap',
-      txHash: '0x456...'
-    }
-  ]);
+  // Whale interactions from snapshot (real data when available)
+  const whaleInteractions = snapshot?.whaleInteractions || [];
 
   const [actionsFilter, setActionsFilter] = useState('all');
   const [whaleFilter, setWhaleFilter] = useState('all');
+
+  console.log('🐋 Whale interactions:', {
+    hasSnapshot: !!snapshot,
+    whaleInteractionsCount: whaleInteractions.length
+  });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -114,14 +93,30 @@ export function OverviewTab({ walletScope, freshness }: OverviewTabProps) {
         <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
           <span className="text-[#00F5A0]">⚡</span>
           <span>Recommended Actions</span>
+          {isLoading && (
+            <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin ml-2" />
+          )}
         </h3>
-        <RecommendedActionsFeed
-          actions={mockActions}
-          freshness={freshness}
-          currentFilter={actionsFilter}
-          onFilterChange={setActionsFilter}
-          showTopN={5}
-        />
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-24 bg-white/5 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : realActions.length > 0 ? (
+          <RecommendedActionsFeed
+            actions={realActions}
+            freshness={freshness}
+            currentFilter={actionsFilter}
+            onFilterChange={setActionsFilter}
+            showTopN={5}
+          />
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <p>No recommended actions at this time</p>
+            <p className="text-sm mt-2">Your portfolio looks good!</p>
+          </div>
+        )}
       </div>
 
       {/* Risk Summary Card */}
@@ -129,12 +124,21 @@ export function OverviewTab({ walletScope, freshness }: OverviewTabProps) {
         <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
           <span className="text-yellow-600 dark:text-yellow-400">⚠️</span>
           <span>Risk Summary</span>
+          {isLoading && (
+            <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin ml-2" />
+          )}
         </h3>
-        <RiskSummaryCard
-          riskSummary={mockRiskSummary}
-          freshness={freshness}
-          walletScope={walletScope}
-        />
+        {isLoading ? (
+          <div className="space-y-3">
+            <div className="h-32 bg-white/5 rounded-xl animate-pulse" />
+          </div>
+        ) : (
+          <RiskSummaryCard
+            riskSummary={realRiskSummary}
+            freshness={freshness}
+            walletScope={walletScope}
+          />
+        )}
       </div>
 
       {/* Recent Activity Timeline */}
@@ -142,12 +146,28 @@ export function OverviewTab({ walletScope, freshness }: OverviewTabProps) {
         <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
           <span className="text-blue-600 dark:text-blue-400">📊</span>
           <span>Recent Activity Timeline</span>
+          {isLoading && (
+            <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin ml-2" />
+          )}
         </h3>
-        <WhaleInteractionLog
-          interactions={mockWhaleInteractions}
-          currentFilter={whaleFilter}
-          onFilterChange={setWhaleFilter}
-        />
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : whaleInteractions.length > 0 ? (
+          <WhaleInteractionLog
+            interactions={whaleInteractions}
+            currentFilter={whaleFilter}
+            onFilterChange={setWhaleFilter}
+          />
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <p>No whale interactions detected</p>
+            <p className="text-sm mt-2">Your wallet hasn't interacted with any whale addresses recently</p>
+          </div>
+        )}
       </div>
     </div>
   );

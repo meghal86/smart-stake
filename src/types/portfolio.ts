@@ -146,6 +146,8 @@ export interface SimulationReceipt {
   confidence?: number;
 }
 
+export type MevProtectedMode = 'off' | 'auto' | 'force';
+
 export interface PolicyEngineConfig {
   maxGasUsd: number; // user configurable, default 50
   blockNewContractsDays: number; // default 7
@@ -154,6 +156,7 @@ export interface PolicyEngineConfig {
   confidenceThreshold: number; // default 0.70, min 0.50
   allowedSlippagePercent: number; // default 2.0
   maxDailyTransactionCount: number; // default 20
+  mevProtectedMode: MevProtectedMode; // default 'auto', V1.1 feature
 }
 
 // API Response Types
