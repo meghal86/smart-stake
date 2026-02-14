@@ -240,7 +240,7 @@ interface FreshnessConfidence {
 
 #### Copilot SSE Contract
 ```typescript
-// GET /api/portfolio/copilot/stream?wallet=0x...
+// GET /api/v1/portfolio/copilot/stream?wallet=0x...
 // SSE events: message, action_card, intent_plan, capability_notice, done
 type CopilotStreamEvent =
   | { type: 'message'; text: string }
@@ -283,21 +283,21 @@ type ListResponse<T> = {
 };
 
 // Portfolio snapshot
-GET /api/portfolio/snapshot?scope=active_wallet|all_wallets&wallet=0x...
+GET /api/v1/portfolio/snapshot?scope=active_wallet|all_wallets&wallet=0x...
 -> PortfolioSnapshot
 
 // Approvals
-GET /api/portfolio/approvals?scope=...&wallet=...&cursor=...
+GET /api/v1/portfolio/approvals?scope=...&wallet=...&cursor=...
 -> ListResponse<ApprovalRisk>
 
 // Actions
-GET /api/portfolio/actions?scope=...&wallet=...
+GET /api/v1/portfolio/actions?scope=...&wallet=...
 -> { items: RecommendedAction[]; freshness: FreshnessConfidence }
 
 // Plan management
-POST /api/portfolio/plan -> IntentPlan
-POST /api/portfolio/plan/:id/simulate -> SimulationReceipt + PreFlightCard
-POST /api/portfolio/plan/:id/execute
+POST /api/v1/portfolio/plan -> IntentPlan
+POST /api/v1/portfolio/plan/:id/simulate -> SimulationReceipt + PreFlightCard
+POST /api/v1/portfolio/plan/:id/execute
 Headers: Idempotency-Key -> { stepStates: ExecutionStep[] }
 ```
 

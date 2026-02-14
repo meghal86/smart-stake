@@ -1,150 +1,251 @@
-# Portfolio Realtime Data - QUICK REFERENCE
+# Portfolio Real-Time Data - Quick Reference
 
 ## 🚀 Quick Start
 
-### Test the Implementation
-
-1. **Open test page:**
-   ```bash
-   # Open in browser
-   test-portfolio-realtime.html
-   ```
-
-2. **Or test manually:**
-   ```bash
-   # Start dev server
-   npm run dev
-   
-   # Open portfolio
-   http://localhost:3000/portfolio
-   ```
-
-### What to Check
-
-✅ **Demo Mode:** No wallet → Shows demo data  
-✅ **Live Mode:** Wallet connected → Shows real data  
-✅ **Wallet Switch:** Switch wallets → Data updates  
-✅ **Audit Tab:** Open in demo mode → No errors  
-✅ **Console:** Check for "✅ REAL data" or "🎭 MOCK data"
-
-## 🔍 Console Logs Cheat Sheet
-
-### Demo Mode (Expected)
-```
-🎭 [PortfolioValuation] Using MOCK data
-🎭 [Guardian] Using MOCK data
-🎭 [Hunter] Using MOCK data
-```
-
-### Live Mode - Success (Expected)
-```
-✅ [PortfolioValuation] Received REAL data
-✅ [Guardian] Received REAL scan data
-✅ [Hunter] Received REAL opportunities
-```
-
-### Live Mode - Fallback (Expected if edge functions not deployed)
-```
-⚠️ [PortfolioValuation] Edge function error, falling back to mock data
-🎭 [PortfolioValuation] Using MOCK data
-```
-
-### Errors (NOT Expected - Something is wrong)
-```
-❌ TypeError: Cannot read property 'filter' of undefined
-❌ ReferenceError: process is not defined
-❌ Error: Supabase client initialization failed
-```
-
-## 🛠️ Quick Fixes
-
-### Problem: White Screen
-
-**Solution:**
-```typescript
-// Check services use lazy-loaded clients
-private getSupabaseClient() {
-  return createClient(...);  // ✅ Good
-}
-
-// NOT this:
-const supabase = createClient(...);  // ❌ Bad
-```
-
-### Problem: Audit Tab Error
-
-**Solution:**
-```typescript
-// Check components have defaults
-export function AuditTab({ approvals = [] }: Props) {  // ✅ Good
-  const safe = Array.isArray(approvals) ? approvals : [];  // ✅ Good
-  const filtered = safe.filter(...);  // ✅ Good
-}
-```
-
-### Problem: Mock Data in Live Mode
-
-**Solution:**
 ```bash
-# Deploy edge functions
-supabase functions deploy portfolio-tracker-live
-supabase functions deploy guardian-scan-v2
-supabase functions deploy hunter-opportunities
+# Windows
+scripts\setup-portfolio-realtime.bat
 
-# Check they're running
-supabase functions list
+# Linux/Mac
+chmod +x scripts/setup-portfolio-realtime.sh
+./scripts/setup-portfolio-realtime.sh
 ```
 
-## 📊 Data Flow
+## 📁 Key Files
 
+| File | Purpose |
+|------|---------|
+| `src/lib/auth/serverAuth.ts` | Authentication utilities |
+| `src/services/priceOracleService.ts` | Real-time price fetching |
+| `src/services/guardianService.ts` | Security scanning |
+| `src/services/hunterService.ts` | Opportunity discovery |
+| `src/services/harvestService.ts` | Tax optimization |
+| `src/services/PortfolioSnapshotService.ts` | Data aggregation |
+| `src/app/api/v1/portfolio/snapshot/route.ts` | API endpoint |
+
+## 🔑 Environment Variables
+
+```bash
+# Required
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Optional (for real-time prices)
+COINGECKO_API_KEY=your_coingecko_key
+COINMARKETCAP_API_KEY=your_coinmarketcap_key
 ```
-User → PortfolioRouteShell → usePortfolioIntegration → Services → Edge Functions → Real Data → Tabs
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm test -- src/services/__tests__/
+
+# Integration tests
+npm test -- tests/integration/service-connections.test.ts
+
+# Manual test
+npm run dev
+# Navigate to http://localhost:3000/portfolio
 ```
 
-## 🎯 Key Files
+## 🔍 Debugging
 
-### Services (Call Edge Functions)
-- `src/services/PortfolioValuationService.ts`
-- `src/services/guardianService.ts`
-- `src/services/hunterService.ts`
+### Check Logs
 
-### Components (Display Data)
-- `src/components/portfolio/PortfolioRouteShell.tsx`
-- `src/components/portfolio/tabs/AuditTab.tsx`
-- `src/components/portfolio/ApprovalsRiskList.tsx`
+```bash
+# Look for these prefixes:
+✅  # Success (real data)
+⚠️  # Warning (fallback used)
+❌  # Error
+🎭  # Mock data used
+💰  # Price oracle
+🛡️  # Guardian
+🎯  # Hunter
+💰  # Harvest
+📊  # Portfolio valuation
+```
 
-### Hooks (Fetch Data)
-- `src/hooks/portfolio/usePortfolioIntegration.ts`
+### Common Issues
 
-## 🔧 Edge Functions Required
+**"Unauthorized" error**
+```bash
+# Check authentication
+- Verify SUPABASE_SERVICE_ROLE_KEY is set
+- Check user is logged in
+- Verify authorization header format
+```
 
-1. **portfolio-tracker-live** - Portfolio valuation
-2. **guardian-scan-v2** - Security scanning
-3. **hunter-opportunities** - Opportunity discovery
+**Prices not updating**
+```bash
+# Check price oracle
+- Set COINGECKO_API_KEY and COINMARKETCAP_API_KEY
+- Verify API keys are valid
+- Check API rate limits
+```
 
-## ✅ Success Checklist
+**Mock data showing**
+```bash
+# Check edge functions
+- Deploy edge functions: supabase functions deploy <name>
+- Check edge function logs
+- Verify edge function environment variables
+```
 
-- [ ] Demo mode works (no wallet)
-- [ ] Live mode works (wallet connected)
-- [ ] Wallet switching works
-- [ ] Audit tab works in demo mode
-- [ ] Console shows correct logs
-- [ ] No white screen errors
-- [ ] No JavaScript errors
+## 📊 API Usage
 
-## 📚 Full Documentation
+### Get Portfolio Snapshot
 
-- **Complete Guide:** `PORTFOLIO_REALTIME_COMPLETE_SOLUTION.md`
-- **Status Report:** `PORTFOLIO_INTEGRATION_STATUS.md`
-- **Test Page:** `test-portfolio-realtime.html`
+```typescript
+// Single wallet
+GET /api/v1/portfolio/snapshot?scope=active_wallet&wallet=0x...
 
-## 🆘 Need Help?
+// All wallets
+GET /api/v1/portfolio/snapshot?scope=all_wallets
 
-1. Check console logs (F12)
-2. Check Network tab for API calls
-3. Review documentation files
-4. Test with demo mode first
+// Response
+{
+  data: {
+    userId: string,
+    netWorth: number,
+    delta24h: number,
+    freshness: {
+      freshnessSec: number,
+      confidence: number,
+      degraded: boolean
+    },
+    positions: Position[],
+    approvals: ApprovalRisk[],
+    recommendedActions: RecommendedAction[],
+    riskSummary: {...}
+  },
+  apiVersion: "v1",
+  ts: "2024-02-15T..."
+}
+```
+
+## 🔧 Service Usage
+
+### Authentication
+
+```typescript
+import { getAuthenticatedUserId } from '@/lib/auth/serverAuth';
+
+const userId = await getAuthenticatedUserId(request);
+```
+
+### Price Oracle
+
+```typescript
+import { priceOracleService } from '@/services/priceOracleService';
+
+// Single price
+const price = await priceOracleService.getTokenPrice('ETH');
+
+// Batch prices
+const prices = await priceOracleService.getTokenPrices([
+  { symbol: 'ETH' },
+  { symbol: 'BTC' }
+]);
+```
+
+### Guardian
+
+```typescript
+import { requestGuardianScan } from '@/services/guardianService';
+
+const result = await requestGuardianScan({
+  walletAddress: '0x...',
+  network: 'ethereum'
+});
+```
+
+### Hunter
+
+```typescript
+import { requestHunterScan } from '@/services/hunterService';
+
+const result = await requestHunterScan({
+  walletAddresses: ['0x...', '0x...']
+});
+```
+
+### Harvest
+
+```typescript
+import { requestHarvestScan } from '@/services/harvestService';
+
+const result = await requestHarvestScan({
+  walletAddresses: ['0x...'],
+  taxRate: 0.24
+});
+```
+
+## 🗄️ Database
+
+### Add Wallet Address
+
+```sql
+INSERT INTO user_portfolio_addresses (user_id, address, label)
+VALUES ('user-id', '0x...', 'My Wallet');
+```
+
+### Query User Wallets
+
+```sql
+SELECT * FROM user_portfolio_addresses 
+WHERE user_id = 'user-id';
+```
+
+### Update Wallet Label
+
+```sql
+UPDATE user_portfolio_addresses 
+SET label = 'New Label'
+WHERE user_id = 'user-id' AND address = '0x...';
+```
+
+## 📈 Performance
+
+### Caching
+
+| Layer | TTL | Strategy |
+|-------|-----|----------|
+| React Query | 60s | Stale-while-revalidate |
+| Server Cache | 10s-5m | Risk-based TTL |
+| Price Oracle | 60s | In-memory cache |
+
+### Optimization Tips
+
+- Use batch price fetching for multiple tokens
+- Enable React Query devtools for debugging
+- Monitor cache hit rates
+- Use `scope=active_wallet` for single wallet (faster)
+
+## 🚨 Error Handling
+
+All services implement graceful degradation:
+
+1. Try real API/Edge Function
+2. On error, try fallback source (prices only)
+3. On complete failure, return mock data
+4. Log errors for monitoring
+
+## 📚 Documentation
+
+- **Full Guide**: `docs/PORTFOLIO_REALTIME_DATA.md`
+- **Implementation Summary**: `PORTFOLIO_REALTIME_IMPLEMENTATION_SUMMARY.md`
+- **This Reference**: `PORTFOLIO_QUICK_REFERENCE.md`
+
+## 🆘 Support
+
+1. Check logs for error messages
+2. Review documentation
+3. Test with demo mode first
+4. Verify environment variables
+5. Contact development team
 
 ---
 
-**TL;DR:** Open `test-portfolio-realtime.html` and follow the tests. Check console for "✅ REAL data" or "🎭 MOCK data". If you see errors, check the troubleshooting section.
+**Last Updated**: February 15, 2024

@@ -160,7 +160,7 @@ export default async function handler(req: Request) {
 
 ### Unified Portfolio API
 ```typescript
-// API Route: /api/portfolio/balances
+// API Route: /api/v1/portfolio/balances
 export async function GET(request: NextRequest) {
   const userId = await getUserId(request);
   

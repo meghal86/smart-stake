@@ -35,8 +35,8 @@ Use address: `0x742d35Cc6634C0532925a3b8D4C9db4C532925a3`
 ### **Connect Live Data APIs**
 ```typescript
 // Replace mock data with real APIs
-const portfolioData = await fetch(`/api/portfolio/${address}`);
-const riskData = await fetch(`/api/risk-analysis/${address}`);
+const portfolioData = await fetch(`/api/v1/portfolio/${address}`);
+const riskData = await fetch(`/api/v1/risk-analysis/${address}`);
 ```
 
 ## 🎉 **You're Ready!**

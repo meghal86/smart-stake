@@ -12,6 +12,11 @@ import { requestHunterScan } from './hunterService';
 import { requestHarvestScan } from './harvestService';
 import { riskAwareCache, calculateCacheTTL } from '@/lib/cache/RiskAwareCacheService';
 import { cacheInvalidationEngine } from '@/lib/cache/CacheInvalidationEngine';
+import { 
+  aggregateConfidence, 
+  sourceConfidenceFromResult, 
+  isSafetyCriticalSource 
+} from '@/lib/portfolio/confidenceAggregation';
 
 /**
  * Portfolio Snapshot Service
@@ -368,14 +373,21 @@ class PortfolioSnapshotService {
    * Calculate freshness and confidence metadata
    */
   private calculateFreshness(results: PromiseSettledResult<any>[]): FreshnessConfidence {
-    const now = Date.now();
-    const successCount = results.filter(r => r.status === 'fulfilled').length;
-    const totalCount = results.length;
+    const sources = ['Portfolio', 'Guardian', 'Hunter', 'Harvest'];
     
-    // Calculate confidence based on successful data sources
+    // Create source confidences with safety-critical flags
+    const sourceConfidences = results.map((result, index) => 
+      sourceConfidenceFromResult(
+        sources[index],
+        result,
+        isSafetyCriticalSource(sources[index])
+      )
+    );
+
+    // Aggregate confidence using min rule for safety-critical sources
     // Requirements: R1.10 - confidence = min(sourceConfidences) for safety-critical aggregates
-    const baseConfidence = successCount / totalCount;
-    const confidence = Math.max(this.MIN_CONFIDENCE_THRESHOLD, baseConfidence);
+    const aggregated = aggregateConfidence(sourceConfidences, this.MIN_CONFIDENCE_THRESHOLD);
+    const confidence = aggregated.confidence;
     
     // Determine if system is in degraded mode
     const degraded = confidence < this.DEFAULT_CONFIDENCE_THRESHOLD;
@@ -385,7 +397,6 @@ class PortfolioSnapshotService {
       const failedSources = [];
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
-          const sources = ['Portfolio', 'Guardian', 'Hunter', 'Harvest'];
           failedSources.push(sources[index]);
         }
       });
@@ -405,9 +416,70 @@ class PortfolioSnapshotService {
    * Map Guardian flags to approval risks
    */
   private mapGuardianApprovals(scanResult: any, address: string): ApprovalRisk[] {
-    // TODO: Implement proper Guardian approval mapping
-    // This is a placeholder implementation
-    return [];
+    // If Guardian scan includes approvals, map them directly
+    if (scanResult.approvals && Array.isArray(scanResult.approvals)) {
+      return scanResult.approvals.map((approval: any) => ({
+        id: approval.id,
+        walletAddress: address,
+        spender: approval.spender,
+        spenderName: approval.spenderName,
+        token: approval.token,
+        tokenAddress: approval.tokenAddress,
+        amount: approval.amount,
+        isUnlimited: approval.isUnlimited,
+        approvedAt: approval.approvedAt,
+        lastUsedAt: approval.lastUsedAt,
+        riskLevel: approval.riskLevel,
+        chainId: approval.chainId,
+        estimatedValue: 0, // TODO: Calculate from token price
+        recommendation: this.getApprovalRecommendation(approval.riskLevel)
+      }));
+    }
+
+    // Fallback: Create approval risks from flags
+    const approvalRisks: ApprovalRisk[] = [];
+    
+    if (scanResult.flags && Array.isArray(scanResult.flags)) {
+      scanResult.flags.forEach((flag: any, index: number) => {
+        // Only create approval risks for approval-related flags
+        if (flag.type.includes('APPROVAL') || flag.type.includes('ALLOWANCE')) {
+          approvalRisks.push({
+            id: `${address}_approval_${index}`,
+            walletAddress: address,
+            spender: 'Unknown',
+            token: 'Unknown',
+            tokenAddress: '0x0',
+            amount: 'unlimited',
+            isUnlimited: true,
+            approvedAt: new Date().toISOString(),
+            riskLevel: flag.severity,
+            chainId: 1,
+            estimatedValue: 0,
+            recommendation: flag.recommendation || this.getApprovalRecommendation(flag.severity)
+          });
+        }
+      });
+    }
+
+    return approvalRisks;
+  }
+
+  /**
+   * Get recommendation text based on risk level
+   */
+  private getApprovalRecommendation(riskLevel: string): string {
+    switch (riskLevel) {
+      case 'critical':
+        return 'Revoke this approval immediately to prevent potential loss of funds';
+      case 'high':
+        return 'Review and consider revoking this high-risk approval';
+      case 'medium':
+        return 'Monitor this approval and revoke if no longer needed';
+      case 'low':
+        return 'This approval appears safe but review periodically';
+      default:
+        return 'Review this approval';
+    }
   }
 
   /**

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { portfolioSnapshotService } from '@/services/PortfolioSnapshotService';
+import { getAuthenticatedUserId } from '@/lib/auth/serverAuth';
 import { z } from 'zod';
 
 // Request validation schema
@@ -22,6 +23,21 @@ const snapshotRequestSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
+    // 1. AUTHENTICATION - Get authenticated user ID
+    const userId = await getAuthenticatedUserId(request);
+    
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     
     // Validate query parameters
@@ -57,10 +73,6 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // TODO: Add authentication and get user ID
-    // For now, using a placeholder user ID
-    const userId = 'placeholder-user-id';
 
     // Build wallet scope
     const walletScope = scope === 'active_wallet' 

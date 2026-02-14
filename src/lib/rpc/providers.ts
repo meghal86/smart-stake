@@ -1,29 +1,42 @@
 import { createPublicClient, http, fallback, PublicClient } from 'viem';
 import { mainnet, polygon, arbitrum, optimism, base } from 'viem/chains';
 
+// Determine if we should use API proxy or direct RPC
+const useProxy = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+
+// Get RPC URL based on environment
+const getRpcUrl = (chain: string, directUrls: string[]) => {
+  if (useProxy) {
+    // Production: use API proxy to avoid CORS and protect API keys
+    return [`/api/rpc/${chain}`];
+  }
+  // Local development: use public RPC endpoints (no API key needed)
+  return directUrls;
+};
+
 // AlphaWhale RPC Configuration
 const RPC_ENDPOINTS = {
-  ethereum: [
-    process.env.NEXT_PUBLIC_ALCHEMY_ETH_URL || 'https://eth-mainnet.g.alchemy.com/v2/demo',
-    process.env.NEXT_PUBLIC_QUICKNODE_ETH_URL || 'https://ethereum-mainnet.core.chainstack.com/demo',
+  ethereum: getRpcUrl('ethereum', [
     'https://ethereum.publicnode.com',
-  ],
-  polygon: [
-    process.env.NEXT_PUBLIC_ALCHEMY_POLYGON_URL || 'https://polygon-mainnet.g.alchemy.com/v2/demo',
+    'https://rpc.ankr.com/eth',
+    'https://eth.llamarpc.com',
+  ]),
+  polygon: getRpcUrl('polygon', [
     'https://polygon.publicnode.com',
-  ],
-  arbitrum: [
-    process.env.NEXT_PUBLIC_ALCHEMY_ARB_URL || 'https://arb-mainnet.g.alchemy.com/v2/demo',
+    'https://polygon-rpc.com',
+  ]),
+  arbitrum: getRpcUrl('arbitrum', [
     'https://arbitrum.publicnode.com',
-  ],
-  optimism: [
-    process.env.NEXT_PUBLIC_ALCHEMY_OP_URL || 'https://opt-mainnet.g.alchemy.com/v2/demo',
+    'https://arb1.arbitrum.io/rpc',
+  ]),
+  optimism: getRpcUrl('optimism', [
     'https://optimism.publicnode.com',
-  ],
-  base: [
-    process.env.NEXT_PUBLIC_ALCHEMY_BASE_URL || 'https://base-mainnet.g.alchemy.com/v2/demo',
+    'https://mainnet.optimism.io',
+  ]),
+  base: getRpcUrl('base', [
     'https://base.publicnode.com',
-  ],
+    'https://mainnet.base.org',
+  ]),
 };
 
 // Create public clients with fallback providers

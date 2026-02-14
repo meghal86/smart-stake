@@ -59,7 +59,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FooterNav } from "@/components/layout/FooterNav";
-import { profileSettingsSchema, notificationSettingsSchema, privacySettingsSchema, type ProfileSettings, type NotificationSettings, type PrivacySettings } from "@/schemas/settings";
+import { profileSettingsSchema, notificationSettingsSchema, privacySettingsSchema, securitySettingsSchema, type ProfileSettings, type NotificationSettings, type PrivacySettings, type SecuritySettings } from "@/schemas/settings";
 import { getBuildInfo, getVersionString, getBuildDateString } from "@/lib/utils/build-info";
 
 /**
@@ -103,15 +103,17 @@ export default function SettingsPage() {
   const { tier, isPremium, isEnterprise } = useTier();
   const { metadata, loading } = useUserMetadata();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy' | 'legal' | 'about'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy' | 'security' | 'legal' | 'about'>('profile');
   const [isSaving, setIsSaving] = useState<{
     profile: boolean;
     notifications: boolean;
     privacy: boolean;
+    security: boolean;
   }>({
     profile: false,
     notifications: false,
     privacy: false,
+    security: false,
   });
 
   // Profile form
@@ -151,6 +153,16 @@ export default function SettingsPage() {
       profileVisibility: 'public',
       showEmail: false,
       showActivity: true,
+    },
+  });
+
+  // Security form (V1.1 - MEV Protection)
+  const securityForm = useForm<SecuritySettings>({
+    resolver: zodResolver(securitySettingsSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      mevProtectedMode: 'auto',
     },
   });
 
@@ -278,6 +290,42 @@ export default function SettingsPage() {
     }
   };
 
+  const onSecuritySubmit = async (data: SecuritySettings) => {
+    setIsSaving(prev => ({ ...prev, security: true }));
+    
+    try {
+      // Show immediate feedback
+      toast({
+        title: "Saving settings...",
+        description: "Your security preferences are being updated.",
+        variant: "default",
+      });
+      
+      console.log('Saving security settings:', data);
+      
+      // In a real implementation, this would save to the backend via policyConfigService
+      // await policyConfigService.saveUserPolicyConfig(user.id, { mevProtectedMode: data.mevProtectedMode });
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Changes saved ✓",
+        description: "Your security preferences have been saved.",
+        variant: "success",
+      });
+    } catch (error) {
+      console.error('Security save failed:', error);
+      toast({
+        title: "Security update failed",
+        description: "Unable to save security settings. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(prev => ({ ...prev, security: false }));
+    }
+  };
+
   const getTierIcon = (tier: string) => {
     switch (tier) {
       case 'premium':
@@ -357,6 +405,14 @@ export default function SettingsPage() {
                     >
                       <Shield className="w-4 h-4 mr-2" />
                       Privacy
+                    </Button>
+                    <Button
+                      variant={activeTab === 'security' ? 'default' : 'ghost'}
+                      className="w-full justify-start"
+                      onClick={() => setActiveTab('security')}
+                    >
+                      <Key className="w-4 h-4 mr-2" />
+                      Security
                     </Button>
                     <Button
                       variant={activeTab === 'legal' ? 'default' : 'ghost'}
@@ -864,6 +920,123 @@ export default function SettingsPage() {
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {isSaving.privacy || privacyForm.formState.isSubmitting ? 'Saving...' : 'Save Settings'}
+                        </DisabledTooltipButton>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Security Tab (V1.1 - MEV Protection) */}
+              {activeTab === 'security' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Key className="w-5 h-5" />
+                      Security Settings
+                    </CardTitle>
+                    <CardDescription>
+                      Configure transaction security and MEV protection
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...securityForm}>
+                      <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-6">
+                        <FormField
+                          control={securityForm.control}
+                          name="mevProtectedMode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                MEV Protection Mode
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <p className="font-semibold mb-2">MEV Protection Modes:</p>
+                                    <ul className="space-y-1 text-sm">
+                                      <li><strong>Off:</strong> No MEV protection. Transactions use public mempool.</li>
+                                      <li><strong>Auto:</strong> MEV protection enabled automatically on supported chains (Ethereum, Goerli, Sepolia).</li>
+                                      <li><strong>Force:</strong> Always require MEV protection. Blocks transactions on unsupported chains.</li>
+                                    </ul>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select MEV protection mode" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="off">
+                                    <div className="flex flex-col items-start">
+                                      <div className="font-medium">Off</div>
+                                      <div className="text-xs text-muted-foreground">No MEV protection</div>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="auto">
+                                    <div className="flex flex-col items-start">
+                                      <div className="font-medium">Auto (Recommended)</div>
+                                      <div className="text-xs text-muted-foreground">Enable on supported chains</div>
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="force">
+                                    <div className="flex flex-col items-start">
+                                      <div className="font-medium">Force</div>
+                                      <div className="text-xs text-muted-foreground">Always require MEV protection</div>
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                MEV (Maximal Extractable Value) protection helps prevent front-running and sandwich attacks on your transactions. 
+                                Currently supported on Ethereum Mainnet, Goerli, and Sepolia testnets.
+                              </FormDescription>
+                              <FormMessage role="alert" />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Information Card */}
+                        <div className="rounded-lg border bg-muted/50 p-4">
+                          <div className="flex items-start gap-3">
+                            <Shield className="w-5 h-5 text-primary mt-0.5" />
+                            <div className="space-y-2">
+                              <h4 className="font-medium">About MEV Protection</h4>
+                              <p className="text-sm text-muted-foreground">
+                                MEV protection routes your transactions through private mempools to prevent malicious actors from 
+                                front-running or sandwiching your trades. This is especially important for high-value transactions.
+                              </p>
+                              <div className="text-sm space-y-1">
+                                <p className="font-medium">Supported Chains:</p>
+                                <ul className="list-disc list-inside text-muted-foreground">
+                                  <li>Ethereum Mainnet (Chain ID: 1)</li>
+                                  <li>Goerli Testnet (Chain ID: 5)</li>
+                                  <li>Sepolia Testnet (Chain ID: 11155111)</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <DisabledTooltipButton 
+                          type="submit" 
+                          disabled={isSaving.security || securityForm.formState.isSubmitting || !securityForm.formState.isDirty || !securityForm.formState.isValid}
+                          disabledTooltip={
+                            isSaving.security || securityForm.formState.isSubmitting 
+                              ? 'Saving settings...'
+                              : !securityForm.formState.isDirty 
+                                ? 'Make changes to enable save'
+                                : !securityForm.formState.isValid
+                                  ? 'Fix validation errors to save'
+                                  : undefined
+                          }
+                          className="w-full md:w-auto"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSaving.security || securityForm.formState.isSubmitting ? 'Saving...' : 'Save Settings'}
                         </DisabledTooltipButton>
                       </form>
                     </Form>

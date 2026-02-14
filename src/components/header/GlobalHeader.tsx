@@ -21,8 +21,20 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 })
   
-  const { connectedWallets, isLoading: walletsLoading } = useWallet()
+  const { connectedWallets, activeWallet, isLoading: walletsLoading } = useWallet()
   const { isDemo, setDemoMode } = useDemoMode()
+  
+  // Debug logging for wallet state
+  useEffect(() => {
+    console.log('🔍 GlobalHeader - Wallet State:', {
+      user: !!user,
+      walletsLoading,
+      connectedWalletsCount: connectedWallets.length,
+      activeWallet,
+      isDemo,
+      shouldShowWalletChip: user && !walletsLoading && (connectedWallets.length > 0 || isDemo)
+    })
+  }, [user, walletsLoading, connectedWallets.length, activeWallet, isDemo])
 
   useEffect(() => {
     if (showMenu && buttonRef.current) {
@@ -70,8 +82,14 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
           </button>
 
           <div className="flex items-center gap-3 relative z-[60]">
-            {/* Wallet Chip - Show if user has connected wallets OR in demo mode */}
-            {user && !walletsLoading && (connectedWallets.length > 0 || isDemo) && (
+            {/* Wallet Chip - Show if:
+                1. User is authenticated AND
+                2. Either:
+                   - Has connected wallets OR
+                   - Is in demo mode OR
+                   - Has activeWallet set (even if still loading)
+            */}
+            {user && (connectedWallets.length > 0 || isDemo || activeWallet) && (
               <WalletChip 
                 onClick={handleWalletChipClick}
                 className="mr-2"

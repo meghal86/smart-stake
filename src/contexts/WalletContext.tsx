@@ -230,6 +230,31 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   }, [wagmiAddress, wagmiChainId, userId, addToRegistry, connectedWallets, activeWallet, addingWallets, failedWallets]);
 
   // ============================================================================
+  // Immediate localStorage Restoration (Fix for active wallet display)
+  // ============================================================================
+  
+  useEffect(() => {
+    // Immediately restore from localStorage on mount (before server hydration)
+    // This ensures the active wallet shows immediately on page load
+    try {
+      const savedAddress = localStorage.getItem('aw_active_address');
+      const savedNetwork = localStorage.getItem('aw_active_network');
+      
+      if (savedAddress) {
+        console.log('🔄 Immediately restoring active wallet from localStorage:', savedAddress);
+        setActiveWalletState(savedAddress);
+      }
+      
+      if (savedNetwork && getSupportedNetworks().includes(savedNetwork)) {
+        console.log('🔄 Immediately restoring active network from localStorage:', savedNetwork);
+        setActiveNetworkState(savedNetwork);
+      }
+    } catch (error) {
+      console.warn('Failed to restore from localStorage:', error);
+    }
+  }, []); // Run once on mount
+
+  // ============================================================================
   // Active Selection Restoration (Task 10)
   // ============================================================================
 
@@ -385,6 +410,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       console.log('💾 Wallets loaded from registry, restoring active selection:', {
         walletsCount: connectedWallets.length,
         registryWalletsCount: registryWallets.length,
+        currentActiveWallet: activeWallet,
         wallets: connectedWallets.map(w => ({ address: w.address, label: w.label }))
       });
       
@@ -401,9 +427,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           isNewBrowser: !localStorage.getItem('aw_active_address')
         });
         
-        if (restoredAddress) {
+        // Only set activeWallet if it's different from current (avoid unnecessary re-renders)
+        if (restoredAddress && restoredAddress !== activeWallet) {
           setActiveWalletState(restoredAddress);
           console.log('✅ Set active wallet:', restoredAddress);
+        } else if (restoredAddress) {
+          console.log('✅ Active wallet already set correctly:', restoredAddress);
         }
         
         if (restoredNetwork && getSupportedNetworks().includes(restoredNetwork)) {
@@ -425,7 +454,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         
       } else {
         console.log('⚠️ No wallets found in registry, user needs to connect');
-        setActiveWalletState(null);
+        // Only clear activeWallet if it's currently set (avoid unnecessary re-renders)
+        if (activeWallet !== null) {
+          setActiveWalletState(null);
+        }
       }
       
     } catch (error) {
