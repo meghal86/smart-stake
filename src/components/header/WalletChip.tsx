@@ -35,7 +35,26 @@ export const WalletChip: React.FC<WalletChipProps> = ({ onClick, className }) =>
   // In demo mode, use demo wallet data instead of real wallet
   const activeWalletData = isDemo 
     ? DEMO_WALLET 
-    : connectedWallets.find(w => w.address === activeWallet);
+    : connectedWallets.find(w => w.address === activeWallet)
+      // Fallback: if activeWallet is set but not in connectedWallets yet (loading state)
+      || (activeWallet ? { 
+          address: activeWallet, 
+          label: 'Loading...', 
+          provider: 'Wallet' 
+        } : null);
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🔍 WalletChip - State:', {
+      isDemo,
+      activeWallet,
+      connectedWalletsCount: connectedWallets.length,
+      activeWalletData: activeWalletData ? {
+        address: activeWalletData.address,
+        label: activeWalletData.label
+      } : null
+    });
+  }, [isDemo, activeWallet, connectedWallets.length, activeWalletData]);
   
   // Get wallet label (prioritize user label, fallback to provider + truncated address)
   const getWalletLabel = () => {

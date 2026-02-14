@@ -19,6 +19,20 @@ export interface GuardianFlag {
   recommendation?: string;
 }
 
+export interface GuardianApproval {
+  id: string;
+  spender: string;
+  spenderName?: string;
+  token: string;
+  tokenAddress: string;
+  amount: string;
+  isUnlimited: boolean;
+  approvedAt: string;
+  lastUsedAt?: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  chainId: number;
+}
+
 export interface GuardianScanResult {
   trustScorePercent: number;
   trustScoreRaw: number;
@@ -27,6 +41,7 @@ export interface GuardianScanResult {
   statusLabel: string;
   statusTone: 'trusted' | 'warning' | 'danger';
   flags: GuardianFlag[];
+  approvals?: GuardianApproval[];
 }
 
 function getSupabaseClient() {
@@ -86,6 +101,27 @@ export async function requestGuardianScan(request: GuardianScanRequest): Promise
       });
     }
 
+    // Map approvals from edge function response
+    const approvals: GuardianApproval[] = [];
+    
+    if (data.approvals && Array.isArray(data.approvals)) {
+      data.approvals.forEach((approval: any, index: number) => {
+        approvals.push({
+          id: approval.id || `approval_${index}`,
+          spender: approval.spender || approval.spender_address,
+          spenderName: approval.spender_name || approval.protocol_name,
+          token: approval.token_symbol || approval.token,
+          tokenAddress: approval.token_address,
+          amount: approval.amount || approval.allowance || 'unlimited',
+          isUnlimited: approval.is_unlimited || approval.amount === 'unlimited',
+          approvedAt: approval.approved_at || approval.timestamp || new Date().toISOString(),
+          lastUsedAt: approval.last_used_at,
+          riskLevel: approval.risk_level || this.calculateApprovalRiskLevel(approval),
+          chainId: approval.chain_id || 1
+        });
+      });
+    }
+
     // Determine risk level
     let riskLevel: 'Low' | 'Medium' | 'High' | 'Critical';
     let statusLabel: string;
@@ -116,12 +152,38 @@ export async function requestGuardianScan(request: GuardianScanRequest): Promise
       riskLevel,
       statusLabel,
       statusTone,
-      flags
+      flags,
+      approvals
     };
   } catch (error) {
     console.error('❌ [Guardian] Error calling edge function, falling back to mock data:', error);
     return getMockGuardianData();
   }
+}
+
+/**
+ * Calculate approval risk level based on approval data
+ */
+function calculateApprovalRiskLevel(approval: any): 'low' | 'medium' | 'high' | 'critical' {
+  // Critical: Unlimited approval to unknown/unverified contract
+  if (approval.is_unlimited && !approval.is_verified) {
+    return 'critical';
+  }
+  
+  // High: Unlimited approval or high-value approval
+  if (approval.is_unlimited || (approval.value_usd && approval.value_usd > 10000)) {
+    return 'high';
+  }
+  
+  // Medium: Old approval or moderate value
+  const approvedDate = new Date(approval.approved_at || approval.timestamp);
+  const monthsOld = (Date.now() - approvedDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+  
+  if (monthsOld > 6 || (approval.value_usd && approval.value_usd > 1000)) {
+    return 'medium';
+  }
+  
+  return 'low';
 }
 
 /**

@@ -65,12 +65,20 @@ export const privacySettingsSchema = z.object({
 });
 
 /**
+ * Security settings schema (V1.1 - MEV Protection)
+ */
+export const securitySettingsSchema = z.object({
+  mevProtectedMode: z.enum(['off', 'auto', 'force']),
+});
+
+/**
  * Combined settings schema
  */
 export const settingsSchema = z.object({
   profile: profileSettingsSchema,
   notifications: notificationSettingsSchema,
   privacy: privacySettingsSchema,
+  security: securitySettingsSchema,
 });
 
 /**
@@ -79,4 +87,5 @@ export const settingsSchema = z.object({
 export type ProfileSettings = z.infer<typeof profileSettingsSchema>;
 export type NotificationSettings = z.infer<typeof notificationSettingsSchema>;
 export type PrivacySettings = z.infer<typeof privacySettingsSchema>;
+export type SecuritySettings = z.infer<typeof securitySettingsSchema>;
 export type Settings = z.infer<typeof settingsSchema>;

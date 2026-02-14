@@ -3,9 +3,11 @@
  * 
  * Provides portfolio valuation and holdings data aggregation.
  * Calls the portfolio-tracker-live edge function for real blockchain data.
+ * Integrates with price oracle for real-time pricing.
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { priceOracleService } from './priceOracleService';
 
 export interface PortfolioHolding {
   token: string;
@@ -88,30 +90,72 @@ class PortfolioValuationService {
       const allHoldings: PortfolioHolding[] = [];
       let maxRiskScore = 0;
 
-      // Process each address's data
+      // Collect all unique tokens for batch price fetching
+      const tokensToPrice: Array<{ symbol: string; address?: string }> = [];
+      const tokenMap = new Map<string, any[]>();
+
+      // First pass: collect tokens
       Object.entries(data || {}).forEach(([address, walletData]: [string, any]) => {
         if (walletData && typeof walletData === 'object') {
-          totalValue += walletData.total_value_usd || 0;
           maxRiskScore = Math.max(maxRiskScore, walletData.risk_score || 0);
 
-          // Add holdings from tokens
           if (Array.isArray(walletData.tokens)) {
             walletData.tokens.forEach((token: any) => {
-              allHoldings.push({
-                token: token.symbol,
-                source: address,
-                qty: token.balance,
-                value: token.value_usd
-              });
-
-              // Calculate 24h PnL from price change
-              if (token.price_change_24h) {
-                const pnl = token.value_usd * (token.price_change_24h / 100);
-                totalPnl24h += pnl;
+              const tokenKey = token.address || token.symbol;
+              
+              if (!tokenMap.has(tokenKey)) {
+                tokenMap.set(tokenKey, []);
+                tokensToPrice.push({
+                  symbol: token.symbol,
+                  address: token.address
+                });
               }
+              
+              tokenMap.get(tokenKey)!.push({
+                ...token,
+                walletAddress: address
+              });
             });
           }
         }
+      });
+
+      // Fetch prices for all tokens in batch
+      console.log(`💰 [PortfolioValuation] Fetching prices for ${tokensToPrice.length} unique tokens`);
+      const prices = await priceOracleService.getTokenPrices(tokensToPrice);
+
+      // Second pass: calculate values with real prices
+      tokenMap.forEach((tokens, tokenKey) => {
+        const priceData = prices.get(tokenKey);
+        
+        tokens.forEach((token) => {
+          let tokenValue = token.value_usd || 0;
+          let priceChange24h = token.price_change_24h || 0;
+
+          // Use real-time price if available
+          if (priceData) {
+            tokenValue = token.balance * priceData.priceUsd;
+            priceChange24h = priceData.priceChange24h;
+            console.log(`✅ [PortfolioValuation] Using real-time price for ${token.symbol}: $${priceData.priceUsd}`);
+          } else {
+            console.warn(`⚠️ [PortfolioValuation] Using fallback price for ${token.symbol}`);
+          }
+
+          totalValue += tokenValue;
+
+          allHoldings.push({
+            token: token.symbol,
+            source: token.walletAddress,
+            qty: token.balance,
+            value: tokenValue
+          });
+
+          // Calculate 24h PnL from price change
+          if (priceChange24h) {
+            const pnl = tokenValue * (priceChange24h / 100);
+            totalPnl24h += pnl;
+          }
+        });
       });
 
       // Calculate concentration (Herfindahl-Hirschman Index)

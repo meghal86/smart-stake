@@ -81,7 +81,8 @@ describe('Feature: unified-portfolio, Property 5: Action Score Calculation', () 
             expect(mediumScore).toBeGreaterThanOrEqual(lowScore);
           }
           
-          // Property: Severity weights match specification
+          // Property: Severity weights match specification (R4.3)
+          // critical=1.0, high=0.75, medium=0.5, low=0.25
           expect(SEVERITY_WEIGHTS.critical).toBe(1.0);
           expect(SEVERITY_WEIGHTS.high).toBe(0.75);
           expect(SEVERITY_WEIGHTS.medium).toBe(0.5);
@@ -198,9 +199,20 @@ describe('Feature: unified-portfolio, Property 5: Action Score Calculation', () 
             const next = sorted[i + 1];
             
             if (current.actionScore === next.actionScore) {
-              // If scores are equal, higher confidence should come first
+              // Tie-break 1: If scores are equal, higher confidence should come first
               if (current.impactPreview.confidence !== next.impactPreview.confidence) {
                 expect(current.impactPreview.confidence).toBeGreaterThanOrEqual(next.impactPreview.confidence);
+              } else {
+                // Tie-break 2: If confidence is also equal, lower friction should come first
+                const frictionCurrent = calculateFriction(
+                  current.impactPreview.gasEstimateUsd,
+                  current.impactPreview.timeEstimateSec
+                );
+                const frictionNext = calculateFriction(
+                  next.impactPreview.gasEstimateUsd,
+                  next.impactPreview.timeEstimateSec
+                );
+                expect(frictionCurrent).toBeLessThanOrEqual(frictionNext);
               }
             }
           }

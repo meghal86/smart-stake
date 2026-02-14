@@ -259,6 +259,95 @@ describe('Settings Page', () => {
     });
   });
 
+  describe('Security Tab (V1.1 - MEV Protection)', () => {
+    test('switches to security tab', () => {
+      renderSettings();
+      
+      const securityTab = screen.getByRole('button', { name: /Security/i });
+      fireEvent.click(securityTab);
+      
+      expect(screen.getByText('Security Settings')).toBeInTheDocument();
+      expect(screen.getByText('MEV Protection Mode')).toBeInTheDocument();
+    });
+
+    test('renders MEV protection dropdown with default value', () => {
+      renderSettings();
+      
+      const securityTab = screen.getByRole('button', { name: /Security/i });
+      fireEvent.click(securityTab);
+      
+      // Check for MEV protection mode label
+      expect(screen.getByText('MEV Protection Mode')).toBeInTheDocument();
+      
+      // Check for information about MEV protection
+      expect(screen.getByText('About MEV Protection')).toBeInTheDocument();
+      expect(screen.getByText(/MEV protection routes your transactions/i)).toBeInTheDocument();
+    });
+
+    test('shows supported chains information', () => {
+      renderSettings();
+      
+      const securityTab = screen.getByRole('button', { name: /Security/i });
+      fireEvent.click(securityTab);
+      
+      expect(screen.getByText('Supported Chains:')).toBeInTheDocument();
+      expect(screen.getByText(/Ethereum Mainnet/i)).toBeInTheDocument();
+      expect(screen.getByText(/Goerli Testnet/i)).toBeInTheDocument();
+      expect(screen.getByText(/Sepolia Testnet/i)).toBeInTheDocument();
+    });
+
+    test('shows help tooltip for MEV protection', () => {
+      renderSettings();
+      
+      const securityTab = screen.getByRole('button', { name: /Security/i });
+      fireEvent.click(securityTab);
+      
+      // Check for help icon with tooltip
+      const helpIcons = screen.getAllByRole('button');
+      expect(helpIcons.length).toBeGreaterThan(0);
+    });
+
+    test('save button is disabled when form is not dirty', () => {
+      renderSettings();
+      
+      const securityTab = screen.getByRole('button', { name: /Security/i });
+      fireEvent.click(securityTab);
+      
+      const saveButton = screen.getByRole('button', { name: /Save Settings/i });
+      expect(saveButton).toBeDisabled();
+    });
+
+    test('shows loading state during security settings submission', async () => {
+      renderSettings();
+      
+      const securityTab = screen.getByRole('button', { name: /Security/i });
+      fireEvent.click(securityTab);
+      
+      // Open the select dropdown
+      const selectTrigger = screen.getByRole('combobox');
+      fireEvent.click(selectTrigger);
+      
+      // Wait for options to appear and select "Off"
+      await waitFor(() => {
+        const offOption = screen.getByText('Off');
+        fireEvent.click(offOption);
+      });
+      
+      // Wait for save button to be enabled
+      await waitFor(() => {
+        const saveButton = screen.getByRole('button', { name: /Save Settings/i });
+        expect(saveButton).not.toBeDisabled();
+      });
+      
+      const saveButton = screen.getByRole('button', { name: /Save Settings/i });
+      fireEvent.click(saveButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Saving...')).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('Account Status', () => {
     test('displays correct tier badge', () => {
       renderSettings();

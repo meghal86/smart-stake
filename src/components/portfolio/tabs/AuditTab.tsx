@@ -141,12 +141,12 @@ export function AuditTab({ walletScope, freshness, approvals }: AuditTabProps) {
         walletScope={walletScope}
       />
 
-      {/* Graph-Lite Visualizer - V1.1: Full interactive graph */}
+      {/* Graph-Lite Visualizer - V1: Static mini diagram/list-based flow placeholder */}
       <GraphLiteVisualizer
         flowData={mockFlowData}
         freshness={freshness}
         walletScope={walletScope}
-        version="v1" // V1.1: full interactive graph with zoom, pan, and filtering
+        version="v0" // V1: static mini diagram/list-based flow placeholder; V1.1: full interactive graph
       />
 
       {/* Planned vs Executed Receipts - New component */}

@@ -1,5 +1,6 @@
 import { getClientForChain } from '@/lib/rpc/providers';
 import { formatEther } from 'viem';
+import { priceService } from '@/lib/services/priceService';
 
 export interface BalanceData {
   address: string;
@@ -94,40 +95,17 @@ class BalanceService {
    */
   async enrichWithUSDValues(balances: BalanceData[]): Promise<BalanceData[]> {
     try {
-      // Get current prices for all chains
-      const prices = await this.fetchTokenPrices();
+      // Get current prices from price service (with caching)
+      const prices = await priceService.getPrices();
       
       return balances.map(balance => ({
         ...balance,
         usdValue: parseFloat(balance.formattedBalance) * (prices[balance.symbol.toLowerCase()] || 0),
       }));
     } catch (error) {
-      console.error('Error fetching USD prices:', error);
+      console.error('Error enriching with USD values:', error);
+      // Return balances without USD values on error
       return balances;
-    }
-  }
-
-  /**
-   * Fetch current token prices from CoinGecko
-   */
-  private async fetchTokenPrices(): Promise<Record<string, number>> {
-    try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,matic-network,arbitrum,optimism,base&vs_currencies=usd'
-      );
-      
-      const data = await response.json();
-      
-      return {
-        eth: data.ethereum?.usd || 0,
-        matic: data['matic-network']?.usd || 0,
-        arb: data.arbitrum?.usd || 0,
-        op: data.optimism?.usd || 0,
-        base: data.base?.usd || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching token prices:', error);
-      return {};
     }
   }
 
