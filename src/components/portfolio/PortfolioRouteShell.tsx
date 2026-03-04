@@ -6,7 +6,7 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { PositionsTab } from './tabs/PositionsTab';
 import { AuditTab } from './tabs/AuditTab';
 import { StressTestTab } from './tabs/StressTestTab';
-import { CopilotChatDrawer } from './CopilotChatDrawer';
+import { CopilotDialog } from './CopilotDialog';
 import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
@@ -235,22 +235,6 @@ export function PortfolioRouteShell() {
         <GlobalHeader />
       </header>
 
-      {/* Demo Mode Banner */}
-      {isDemo && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`fixed ${addresses.length > 0 ? 'top-36' : 'top-20'} left-0 right-0 z-40 py-2 px-4 text-center text-sm font-medium shadow-lg ${
-            isDark ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            <span>Demo Mode — Data is simulated for demonstration purposes</span>
-          </div>
-        </motion.div>
-      )}
-
       {/* Wallet Switcher - Hidden on mobile (use GlobalHeader instead), visible on desktop */}
       {addresses.length > 0 && (
         <div className={`hidden md:block fixed top-20 left-4 right-4 z-40 backdrop-blur-md border rounded-2xl p-4 ${
@@ -317,47 +301,79 @@ export function PortfolioRouteShell() {
         {/* Page Title for Screen Readers */}
         <h1 className="sr-only">Portfolio - Unified Wealth Management</h1>
 
-        {/* AI Hub Button Row */}
+        {/* AI Hub Button Row - Enhanced */}
         <div className="flex items-center justify-end mb-6 relative z-10">
-          {/* AI Hub Button - Optimized */}
           <motion.button
             onClick={() => setIsCopilotOpen(true)}
-            className={`flex items-center gap-3 bg-gradient-to-r border px-6 py-3 rounded-2xl font-medium transition-colors duration-200 will-change-transform ${
+            className={`group relative overflow-hidden flex items-center gap-3 border px-6 py-3 rounded-2xl font-medium transition-all duration-300 ${
               isDark 
-                ? 'from-[#1CA9FF]/20 to-[#7B61FF]/20 border-[#1CA9FF]/30 text-white hover:from-[#1CA9FF]/30 hover:to-[#7B61FF]/30' 
-                : 'from-[#1CA9FF]/30 to-[#7B61FF]/30 border-[#1CA9FF]/40 text-gray-900 hover:from-[#1CA9FF]/40 hover:to-[#7B61FF]/40'
+                ? 'bg-gradient-to-r from-[#1CA9FF]/20 to-[#7B61FF]/20 border-[#1CA9FF]/30 text-white hover:from-[#1CA9FF]/30 hover:to-[#7B61FF]/30 hover:border-[#1CA9FF]/50 hover:shadow-lg hover:shadow-[#1CA9FF]/20' 
+                : 'bg-gradient-to-r from-[#1CA9FF]/30 to-[#7B61FF]/30 border-[#1CA9FF]/40 text-gray-900 hover:from-[#1CA9FF]/40 hover:to-[#7B61FF]/40 hover:border-[#1CA9FF]/60 hover:shadow-lg hover:shadow-[#1CA9FF]/30'
             }`}
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <Sparkles className="w-5 h-5" />
-            <span className="hidden sm:inline">AI Copilot</span>
+            {/* Animated glow effect */}
+            <motion.div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100"
+              style={{
+                background: 'radial-gradient(circle at center, rgba(28, 169, 255, 0.2) 0%, transparent 70%)'
+              }}
+              animate={{
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+            />
+            <Sparkles className="w-5 h-5 relative z-10" />
+            <span className="hidden sm:inline relative z-10">AI Copilot</span>
           </motion.button>
         </div>
 
-        {/* Net Worth Hero Card - Now with real-time data */}
+        {/* Net Worth Hero Card - Enhanced with gradient and glow */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`backdrop-blur-md border rounded-3xl p-8 mb-6 ${
+          className={`group relative overflow-hidden backdrop-blur-md border rounded-3xl p-6 sm:p-8 mb-6 ${
             isDark 
-              ? 'bg-white/10 border-[rgba(28,169,255,0.2)] shadow-[0_8px_32px_rgba(0,0,0,0.3)]' 
-              : 'bg-white/60 border-[rgba(28,169,255,0.3)] shadow-[0_8px_32px_rgba(28,169,255,0.1)]'
+              ? 'bg-gradient-to-br from-white/10 via-white/5 to-white/10 border-[rgba(28,169,255,0.3)] shadow-[0_8px_32px_rgba(0,0,0,0.3)]' 
+              : 'bg-gradient-to-br from-white/80 via-white/60 to-white/80 border-[rgba(28,169,255,0.4)] shadow-[0_8px_32px_rgba(28,169,255,0.15)]'
           }`}
-          whileHover={{ scale: 1.01 }}
-          transition={{ duration: 0.2 }}
+          whileHover={{ scale: 1.005, y: -4 }}
+          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
           key={`hero-${activeWallet}-${isDemo}`}
         >
+          {/* Animated gradient overlay */}
+          <motion.div
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{
+              background: isDark 
+                ? 'radial-gradient(circle at 50% 50%, rgba(28, 169, 255, 0.1) 0%, transparent 70%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(28, 169, 255, 0.15) 0%, transparent 70%)'
+            }}
+          />
           {portfolioLoading && !isDemo ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-              <span className={`ml-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+            <div className="flex flex-col items-center justify-center py-12 relative z-10">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              >
+                <Loader2 className="w-10 h-10 text-blue-400" />
+              </motion.div>
+              <motion.span 
+                className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-700'} font-medium`}
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
                 Loading portfolio data...
-              </span>
+              </motion.span>
             </div>
           ) : (
-            <>
+            <div className="relative z-10">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 sm:mb-2">
@@ -405,101 +421,149 @@ export function PortfolioRouteShell() {
                 </motion.div>
               </div>
 
-              {/* Quick Stats Grid */}
+              {/* Quick Stats Grid - Enhanced with hover effects */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* Freshness */}
-                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
-                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Freshness</span>
+                <motion.div 
+                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
+                    isDark ? 'bg-white/5 border-[rgba(28,169,255,0.15)] hover:border-[rgba(28,169,255,0.3)]' : 'bg-white/50 border-[rgba(28,169,255,0.25)] hover:border-[rgba(28,169,255,0.4)]'
+                  }`}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition-all duration-300" />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Freshness</span>
+                    </div>
+                    <p className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{portfolioData.freshness.freshnessSec}s</p>
+                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {Math.round(portfolioData.freshness.confidence * 100)}% confidence
+                    </p>
                   </div>
-                  <p className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{portfolioData.freshness.freshnessSec}s</p>
-                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {Math.round(portfolioData.freshness.confidence * 100)}% confidence
-                  </p>
-                </div>
+                </motion.div>
 
                 {/* Trust Score */}
-                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CA9FF]" />
-                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Trust</span>
+                <motion.div 
+                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
+                    isDark ? 'bg-white/5 border-[rgba(28,169,255,0.15)] hover:border-[rgba(28,169,255,0.3)]' : 'bg-white/50 border-[rgba(28,169,255,0.25)] hover:border-[rgba(28,169,255,0.4)]'
+                  }`}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#1CA9FF]/0 to-[#1CA9FF]/0 group-hover:from-[#1CA9FF]/10 group-hover:to-[#1CA9FF]/20 transition-all duration-300" />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CA9FF]" />
+                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Trust</span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-[#1CA9FF]">{portfolioData.trustRiskSummary.trustScore}</p>
+                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Guardian verified</p>
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-[#1CA9FF]">{portfolioData.trustRiskSummary.trustScore}</p>
-                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Guardian verified</p>
-                </div>
+                </motion.div>
 
                 {/* Risk Score */}
-                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
-                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Risk</span>
+                <motion.div 
+                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
+                    isDark ? 'bg-white/5 border-yellow-500/15 hover:border-yellow-500/30' : 'bg-white/50 border-yellow-500/25 hover:border-yellow-500/40'
+                  }`}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-orange-500/0 group-hover:from-yellow-500/10 group-hover:to-orange-500/10 transition-all duration-300" />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
+                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Risk</span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-yellow-400">
+                      {Math.round(portfolioData.trustRiskSummary.riskScore * 100)}%
+                    </p>
+                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {portfolioData.trustRiskSummary.highRiskApprovals} high-risk approvals
+                    </p>
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-yellow-400">
-                    {Math.round(portfolioData.trustRiskSummary.riskScore * 100)}%
-                  </p>
-                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {portfolioData.trustRiskSummary.highRiskApprovals} high-risk approvals
-                  </p>
-                </div>
+                </motion.div>
 
                 {/* Alerts */}
-                <div className={`backdrop-blur-sm border rounded-xl p-3 sm:p-4 ${
-                  isDark ? 'bg-white/5 border-[rgba(28,169,255,0.1)]' : 'bg-white/40 border-[rgba(28,169,255,0.2)]'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
-                    <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Alerts</span>
+                <motion.div 
+                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
+                    isDark ? 'bg-white/5 border-red-500/15 hover:border-red-500/30' : 'bg-white/50 border-red-500/25 hover:border-red-500/40'
+                  }`}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Alerts</span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-red-400">{portfolioData.alertsCount}</p>
+                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Requires attention</p>
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-red-400">{portfolioData.alertsCount}</p>
-                  <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Requires attention</p>
-                </div>
+                </motion.div>
               </div>
-            </>
+            </div>
           )}
         </motion.div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation - Enhanced with glassmorphism */}
         <section aria-labelledby="tabs-heading">
           <h2 id="tabs-heading" className="sr-only">Portfolio Sections</h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
-            {tabs.map((tab, index) => {
-              const Icon = tab.icon;
-              return (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-medium whitespace-nowrap transition-all duration-300 text-sm sm:text-base ${
-                    activeTab === tab.id
-                      ? isDark 
-                        ? 'bg-gradient-to-r from-[#1CA9FF]/30 to-[#7B61FF]/30 border border-[#1CA9FF]/50 text-white shadow-lg shadow-[#1CA9FF]/20'
-                        : 'bg-gradient-to-r from-[#1CA9FF]/40 to-[#7B61FF]/40 border border-[#1CA9FF]/60 text-gray-900 shadow-lg shadow-[#1CA9FF]/30'
-                      : isDark 
-                        ? 'bg-white/10 border border-[rgba(28,169,255,0.2)] text-gray-300 hover:text-white hover:bg-white/15'
-                        : 'bg-white/40 border border-[rgba(28,169,255,0.3)] text-gray-700 hover:text-gray-900 hover:bg-white/60'
-                  }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span>{tab.label}</span>
-                </motion.button>
-              );
-            })}
+          <div className="relative">
+            {/* Background blur container */}
+            <div className={`backdrop-blur-md border rounded-2xl p-2 ${
+              isDark 
+                ? 'bg-white/5 border-white/10' 
+                : 'bg-white/60 border-white/30'
+            }`}>
+              <div className="flex gap-2 overflow-x-auto pb-0 scrollbar-hide">
+                {tabs.map((tab, index) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <motion.button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`relative flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium whitespace-nowrap transition-all duration-300 text-sm sm:text-base ${
+                        isActive
+                          ? isDark 
+                            ? 'bg-gradient-to-r from-[#1CA9FF]/30 to-[#7B61FF]/30 text-white shadow-lg shadow-[#1CA9FF]/20'
+                            : 'bg-gradient-to-r from-[#1CA9FF]/40 to-[#7B61FF]/40 text-gray-900 shadow-lg shadow-[#1CA9FF]/30'
+                          : isDark 
+                            ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
+                      }`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      {/* Active indicator */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute inset-0 rounded-xl border-2 border-[#1CA9FF]/50"
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 relative z-10 ${
+                        isActive ? 'text-[#1CA9FF]' : ''
+                      }`} />
+                      <span className="relative z-10">{tab.label}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Tab Content */}
-        <section aria-labelledby="content-heading">
+        {/* Tab Content with enhanced transitions */}
+        <section aria-labelledby="content-heading" className="mt-6">
           <h2 id="content-heading" className="sr-only">{activeTab} Content</h2>
           <AnimatePresence mode="wait">
             <motion.div
@@ -528,14 +592,11 @@ export function PortfolioRouteShell() {
         <FooterNav />
       </footer>
 
-      {/* Copilot Chat Drawer - Only render when open */}
-      {isCopilotOpen && (
-        <CopilotChatDrawer
-          isOpen={isCopilotOpen}
-          onClose={() => setIsCopilotOpen(false)}
-          walletScope={walletScope}
-        />
-      )}
+      {/* Copilot Dialog - Centered modal */}
+      <CopilotDialog
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+      />
     </div>
   );
 }
