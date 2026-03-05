@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/integrations/supabase/server';
 import { cacheValue, getCachedValue, withRedisLock } from '@/lib/redis/client';
+import { normalizeGuardianScanPayload, type GuardianNormalizedScanResult } from '@/lib/guardian/scan-contract';
 import { isAddress } from 'viem';
 
 interface ScanRequestBody {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
     const normalizedAddress = address.toLowerCase();
     const cacheKey = `guardian:scan:${normalizedAddress}`;
 
-    const cached = await getCachedValue<{ result: unknown }>(cacheKey);
+    const cached = await getCachedValue<{ result: GuardianNormalizedScanResult }>(cacheKey);
     if (cached) {
       return NextResponse.json({ result: cached.result, cached: true }, { status: 200 });
     }
@@ -53,35 +54,35 @@ export async function POST(request: Request) {
           throw error;
         }
 
-        if (data?.trust_score_percent) {
-          await supabase
-            .from('guardian_wallets')
-            .update({
-              trust_score: data.trust_score_percent,
-              last_scan: new Date().toISOString(),
-            })
-            .eq('user_id', user.id)
-            .eq('address', normalizedAddress);
-        } else {
-          await supabase
-            .from('guardian_wallets')
-            .update({ last_scan: new Date().toISOString() })
-            .eq('user_id', user.id)
-            .eq('address', normalizedAddress);
-        }
+        const normalized = normalizeGuardianScanPayload(data ?? {}, {
+          walletAddress: normalizedAddress,
+          network: 'ethereum',
+          dataSource: 'live',
+        });
+
+        await supabase
+          .from('guardian_wallets')
+          .update({
+            trust_score: normalized.trustScore.score,
+            last_scan: normalized.freshness.scannedAt,
+          })
+          .eq('user_id', user.id)
+          .eq('address', normalizedAddress);
 
         await supabase.from('guardian_logs').insert({
           user_id: user.id,
           event_type: 'wallet_scan',
           metadata: {
             address: normalizedAddress,
-            trust_score: data?.trust_score_percent ?? null,
+            trust_score: normalized.trustScore.score,
+            scan_id: normalized.scanId ?? null,
+            confidence: normalized.trustScore.confidence ?? null,
           },
         });
 
-        await cacheValue(cacheKey, { result: data }, 600);
+        await cacheValue(cacheKey, { result: normalized }, 600);
 
-        return NextResponse.json({ result: data, cached: false }, { status: 200 });
+        return NextResponse.json({ result: normalized, cached: false }, { status: 200 });
       },
     );
 

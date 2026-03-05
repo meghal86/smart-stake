@@ -1,19 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { 
   Shield, 
   RefreshCw, 
   Wrench, 
-  Clock, 
   TrendingUp,
-  Award,
-  History,
-  Settings,
-  Home,
-  Trophy,
-  User,
   Plus,
   Brain,
   Sun,
@@ -33,10 +26,11 @@ import { RisksTab } from '@/components/guardian/RisksTab';
 import { AlertsTab } from '@/components/guardian/AlertsTab';
 import { HistoryTab } from '@/components/guardian/HistoryTab';
 import { WalletScopeHeader } from '@/components/guardian/WalletScopeHeader';
-import { FixRiskModal } from '@/components/guardian/FixRiskModal';
 import AddWalletModal from '@/components/guardian/AddWalletModal';
 import { useGuardianScan } from '@/hooks/useGuardianScan';
+import { useWalletRegistry } from '@/hooks/useWalletRegistry';
 import { chainIdToName } from '@/config/wagmi';
+import { buildDemoGuardianScanResult, requestGuardianScan } from '@/services/guardianService';
 import { toast } from 'sonner';
 import { FooterNav } from '@/components/layout/FooterNav';
 
@@ -45,11 +39,33 @@ import { useUserModeContext } from '@/contexts/UserModeContext';
 import { useNotificationContext } from '@/contexts/NotificationContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useWallet as useWalletContext } from '@/contexts/WalletContext';
-import type { GuardianWallet } from '@/contexts/WalletContext';
+
+interface WalletScanSummary {
+  trustScore?: number;
+  riskCount?: number;
+  lastScan?: string;
+}
+
+function formatFreshness(isoTimestamp?: string) {
+  if (!isoTimestamp) return 'No completed scan yet';
+
+  const diffMs = Date.now() - new Date(isoTimestamp).getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+
+  if (diffMinutes < 1) return 'Updated just now';
+  if (diffMinutes < 60) return `Updated ${diffMinutes}m ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `Updated ${diffHours}h ago`;
+
+  return `Updated ${Math.floor(diffHours / 24)}d ago`;
+}
 
 
 export function GuardianEnhanced() {
   const { address, isConnected, chain } = useAccount();
+  const { setActiveWallet: setContextActiveWallet, activeWallet: contextActiveWallet } = useWalletContext();
+  const { wallets: registryWallets } = useWalletRegistry();
   const { mode, setMode, isBeginner, isExpert } = useUserModeContext();
   const notifications = useNotificationContext();
   const { actualTheme, setTheme } = useTheme();
@@ -60,22 +76,26 @@ export function GuardianEnhanced() {
   const [demoAddress, setDemoAddress] = useState<string | null>(null);
   const [showLearnMore, setShowLearnMore] = useState(false);
   const [showOnboard, setShowOnboard] = useState(false);
-  const [showFixModal, setShowFixModal] = useState(false);
   const [showAddWalletModal, setShowAddWalletModal] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [activeWalletIndex, setActiveWalletIndex] = useState(0);
-  const walletContext = useWalletContext();
-  const guardianWallets = walletContext?.wallets ?? [];
-  const updateWallet = walletContext?.updateWallet ?? (() => undefined);
-  const refreshWallets = walletContext?.refreshWallets ?? (() => undefined);
+  const [walletScanSummaries, setWalletScanSummaries] = useState<Record<string, WalletScanSummary>>({});
 
-  const wallets = useMemo(() => guardianWallets.map(wallet => ({
-    address: wallet.address,
-    label: wallet.alias || wallet.ens_name || wallet.short,
-    trustScore: wallet.trust_score ?? undefined,
-    riskCount: wallet.risk_count ?? undefined,
-    lastScan: wallet.last_scan ?? undefined,
-  })), [guardianWallets]);
+  const wallets = useMemo(() => registryWallets.map((wallet) => {
+    const key = wallet.address.toLowerCase();
+    const summary = walletScanSummaries[key];
+    const storedScores = wallet.guardian_scores && typeof wallet.guardian_scores === 'object'
+      ? Object.values(wallet.guardian_scores as Record<string, unknown>).find((value) => typeof value === 'number')
+      : undefined;
+
+    return {
+      address: wallet.address,
+      label: wallet.label || `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`,
+      trustScore: summary?.trustScore ?? (typeof storedScores === 'number' ? storedScores : undefined),
+      riskCount: summary?.riskCount,
+      lastScan: summary?.lastScan,
+    };
+  }), [registryWallets, walletScanSummaries]);
 
   // Get network name
   const networkName = chain?.id ? chainIdToName[chain.id] || 'ethereum' : 'ethereum';
@@ -87,49 +107,61 @@ export function GuardianEnhanced() {
 
   // Switch wallet handler
   const handleSwitchWallet = (index: number) => {
+    const nextWallet = wallets[index];
     setActiveWalletIndex(index);
     setShowWalletDropdown(false);
+    if (nextWallet) {
+      setContextActiveWallet(nextWallet.address);
+    }
   };
 
-  // Enhanced wallet handler with API integration
-  const handleWalletAdded = useCallback((wallet: GuardianWallet) => {
+  const handleWalletAdded = useCallback((wallet: { address: string }) => {
     const normalized = wallet.address.toLowerCase();
-    const index = guardianWallets.findIndex(w => w.address.toLowerCase() === normalized);
+    const index = registryWallets.findIndex(w => w.address.toLowerCase() === normalized);
     if (index >= 0) {
       setActiveWalletIndex(index);
-    } else if (guardianWallets.length > 0) {
-      setActiveWalletIndex(guardianWallets.length - 1);
+      setContextActiveWallet(wallet.address);
+    } else if (registryWallets.length > 0) {
+      setActiveWalletIndex(registryWallets.length - 1);
     }
-  }, [guardianWallets]);
-
-  const updateWalletData = useCallback((address: string, data: { trustScore?: number; riskCount?: number }) => {
-    updateWallet(address.toLowerCase(), {
-      trust_score: data.trustScore,
-      risk_count: data.riskCount,
-      last_scan: new Date().toISOString(),
-    });
-  }, [updateWallet]);
+  }, [registryWallets, setContextActiveWallet]);
 
   useEffect(() => {
-    if (guardianWallets.length === 0) {
+    if (wallets.length === 0) {
       setActiveWalletIndex(0);
       return;
     }
 
-    if (activeWalletIndex >= guardianWallets.length) {
-      const nextIndex = Math.max(guardianWallets.length - 1, 0);
+    if (contextActiveWallet) {
+      const contextIndex = wallets.findIndex((wallet) => wallet.address.toLowerCase() === contextActiveWallet.toLowerCase());
+      if (contextIndex >= 0 && contextIndex !== activeWalletIndex) {
+        setActiveWalletIndex(contextIndex);
+        return;
+      }
+    }
+
+    if (activeWalletIndex >= wallets.length) {
+      const nextIndex = Math.max(wallets.length - 1, 0);
       if (nextIndex !== activeWalletIndex) {
         setActiveWalletIndex(nextIndex);
       }
     }
-  }, [guardianWallets.length, activeWalletIndex]);
+  }, [wallets, activeWalletIndex, contextActiveWallet]);
 
   // Update wallet data after scan
   // Guardian scan hook
-  const { data: scanResult, isLoading, refetch, rescan, isRescanning } = useGuardianScan({
+  const {
+    data: liveScanResult,
+    isLoading,
+    error: scanError,
+    refetch,
+    rescan,
+    isRescanning
+  } = useGuardianScan({
     walletAddress: activeAddress || undefined,
     network: networkName,
     enabled: isActive && !!activeAddress,
+    scope: 'explicit',
   });
 
   // Achievement state (simplified)
@@ -138,12 +170,19 @@ export function GuardianEnhanced() {
 
 
 
+  const demoScanResult = useMemo(() => {
+    if (!demoMode || !activeAddress) return undefined;
+    return buildDemoGuardianScanResult(activeAddress);
+  }, [demoMode, activeAddress]);
+
+  const scanResult = demoScanResult ?? liveScanResult;
+
   // Auto-scan on connection
   useEffect(() => {
-    if ((isConnected && address) || (demoMode && demoAddress)) {
+    if (!demoMode && ((isConnected && address) || activeWallet)) {
       refetch();
     }
-  }, [isConnected, address, demoMode, demoAddress]);
+  }, [isConnected, address, demoMode, activeWallet, refetch]);
 
   // First-time onboarding
   useEffect(() => {
@@ -157,22 +196,27 @@ export function GuardianEnhanced() {
     if (scanResult && activeAddress) {
       const flagCount = scanResult.flags?.length || 0;
       
-      // Update wallet data
-      updateWalletData(activeAddress, {
-        trustScore: scanResult.trustScorePercent,
-        riskCount: flagCount
-      });
+      setWalletScanSummaries((prev) => ({
+        ...prev,
+        [activeAddress.toLowerCase()]: {
+          trustScore: scanResult.trustScorePercent,
+          riskCount: flagCount,
+          lastScan: scanResult.scannedAt,
+        },
+      }));
       
-      if (flagCount === 0) {
+      if (!demoMode && flagCount === 0) {
         toast.success('✅ All Clear! Your wallet is secure');
         awardXP(100, 'Perfect security score');
-      } else {
+      } else if (!demoMode) {
         toast.warning(`⚠️ Found ${flagCount} potential ${flagCount === 1 ? 'risk' : 'risks'}`);
       }
       
-      awardXP(50, 'Completed security scan');
+      if (!demoMode) {
+        awardXP(50, 'Completed security scan');
+      }
     }
-  }, [scanResult, activeAddress]);
+  }, [scanResult, activeAddress, demoMode]);
 
   // Exit demo mode handler
   const handleExitDemo = () => {
@@ -180,11 +224,6 @@ export function GuardianEnhanced() {
     setDemoAddress(null);
     toast.success('Demo Mode Exited');
   };
-
-  // Debug modal state
-  useEffect(() => {
-    console.log('showAddWalletModal changed to:', showAddWalletModal);
-  }, [showAddWalletModal]);
 
   // Simplified XP function
   const awardXP = (amount: number, reason: string) => {
@@ -201,19 +240,69 @@ export function GuardianEnhanced() {
 
   const handleRescan = async () => {
     if (!activeAddress) return;
+    if (demoMode) {
+      toast.success('Demo scan refreshed.');
+      return;
+    }
+
     try {
       await rescan();
-      await refreshWallets();
       toast.success('Rescan complete!');
       awardXP(25, 'Rescanned wallet');
     } catch (error) {
-      toast.error('Rescan failed. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Rescan failed. Please try again.');
+    }
+  };
+
+  const handleScanAllWallets = async () => {
+    if (wallets.length === 0 || demoMode) return;
+
+    toast.info(`Scanning ${wallets.length} wallet${wallets.length === 1 ? '' : 's'}...`);
+
+    try {
+      const results = await Promise.all(
+        wallets.map(async (wallet) => {
+          const result = await requestGuardianScan({
+            walletAddress: wallet.address,
+            network: networkName,
+          });
+
+          return {
+            address: wallet.address.toLowerCase(),
+            summary: {
+              trustScore: result.trustScorePercent,
+              riskCount: result.flags.length,
+              lastScan: result.scannedAt,
+            },
+          };
+        })
+      );
+
+      setWalletScanSummaries((prev) => {
+        const next = { ...prev };
+        results.forEach(({ address, summary }) => {
+          next[address] = summary;
+        });
+        return next;
+      });
+
+      toast.success('Scan all complete.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to scan all wallets right now.');
     }
   };
 
 
 
 
+
+  const activeSummary = activeAddress ? walletScanSummaries[activeAddress.toLowerCase()] : undefined;
+  const lastUpdatedLabel = formatFreshness(scanResult?.scannedAt || activeSummary?.lastScan);
+  const freshnessDetail = lastUpdatedLabel.startsWith('Updated ')
+    ? lastUpdatedLabel.slice('Updated '.length)
+    : lastUpdatedLabel;
+  const trustScore = scanResult?.trustScorePercent ?? null;
+  const flagCount = scanResult?.flags?.length ?? 0;
 
   // Welcome screen (not connected)
   if (!isActive && !demoMode) {
@@ -360,8 +449,8 @@ export function GuardianEnhanced() {
                 icon: <Shield className="w-5 h-5 text-[#00F5A0]" />,
               },
               {
-                title: "Fix Risks",
-                desc: "One-tap revoke for unlimited approvals and suspicious contracts.",
+                title: "Review Risks",
+                desc: "See which approvals and exposures need attention before you act.",
                 icon: <Wrench className="w-5 h-5 text-[#7B61FF]" />,
               },
               {
@@ -408,10 +497,6 @@ export function GuardianEnhanced() {
       </div>
     );
   }
-
-  // Main dashboard (connected/demo mode)
-  const trustScore = scanResult?.trustScorePercent || 87;
-  const flagCount = scanResult?.flags?.length || 2;
 
   return (
     <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
@@ -576,7 +661,6 @@ export function GuardianEnhanced() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Add Wallet dropdown button clicked');
                             setShowWalletDropdown(false);
                             setShowAddWalletModal(true);
                           }}
@@ -616,7 +700,7 @@ export function GuardianEnhanced() {
               <p className={`text-xs transition-colors duration-300 ${
                 isDarkTheme ? 'text-gray-400' : 'text-[#7C8896]'
               }`}>
-                Updated just now
+                {lastUpdatedLabel}
               </p>
               
               <div className="flex items-center gap-3">
@@ -639,10 +723,7 @@ export function GuardianEnhanced() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Add Wallet button clicked, current state:', showAddWalletModal);
                       setShowAddWalletModal(true);
-                      console.log('Set showAddWalletModal to true');
-                      alert('Add Wallet button clicked! Check console.');
                     }}
                     className={`px-3 py-1 rounded-lg border transition-all duration-300 flex items-center gap-1 ${
                       isDarkTheme
@@ -733,6 +814,31 @@ export function GuardianEnhanced() {
       </motion.header>
 
       <main className="px-4 pt-32 pb-28 max-w-2xl mx-auto space-y-6 relative z-10">
+        {!!scanError && !demoMode && (
+          <div className={`rounded-2xl border px-4 py-3 ${
+            isDarkTheme
+              ? 'border-red-500/30 bg-red-500/10 text-red-100'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold">Guardian scan unavailable</p>
+                <p className="text-sm opacity-90">
+                  {scanError instanceof Error ? scanError.message : 'We could not refresh this wallet right now.'}
+                </p>
+              </div>
+              <DisabledTooltipButton
+                onClick={handleRescan}
+                className="shrink-0 rounded-lg border border-current/20 px-3 py-1 text-sm font-medium hover:bg-current/10"
+                variant="ghost"
+                size="sm"
+              >
+                Retry
+              </DisabledTooltipButton>
+            </div>
+          </div>
+        )}
+
         {/* Tab Content */}
         {activeTab === 'Risks' && <RisksTab walletAddress={activeAddress || undefined} />}
         {activeTab === 'Alerts' && <AlertsTab walletAddress={activeAddress || undefined} />}
@@ -917,7 +1023,10 @@ export function GuardianEnhanced() {
                     
                     <DisabledTooltipButton
                       onClick={() => {
-                        setActiveWalletIndex(index);
+                        if (index !== activeWalletIndex) {
+                          handleSwitchWallet(index);
+                          return;
+                        }
                         handleRescan();
                       }}
                       className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
@@ -939,8 +1048,7 @@ export function GuardianEnhanced() {
             {wallets.length > 1 && (
               <DisabledTooltipButton
                 onClick={() => {
-                  // Scan all wallets
-                  toast.success(`Scanning ${wallets.length} wallets...`);
+                  handleScanAllWallets();
                 }}
                 className="w-full mt-4 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white font-medium hover:opacity-90 transition-all duration-200"
                 aria-label={`Scan all ${wallets.length} wallets for security risks`}
@@ -1008,12 +1116,12 @@ export function GuardianEnhanced() {
                 transition={{ type: "spring", stiffness: 120 }}
                 className="relative text-6xl md:text-7xl font-bold text-[#00C9A7] tracking-tight"
               >
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  {trustScore}
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                  {trustScore ?? '--'}
                 </motion.span>
               </motion.span>
             </div>
@@ -1024,15 +1132,25 @@ export function GuardianEnhanced() {
                 transition={{ delay: 0.2 }}
                 className="text-lg font-semibold text-[#00C9A7] leading-snug"
               >
-                {trustScore >= 80 ? 'Excellent Security' : trustScore >= 60 ? 'Moderate Risk' : 'Action Required'}
+                {trustScore === null
+                  ? 'Scan required'
+                  : trustScore >= 80
+                    ? 'Excellent Security'
+                    : trustScore >= 60
+                      ? 'Moderate Risk'
+                      : 'Action Required'}
               </motion.p>
               <p className={`text-xs leading-snug mt-1 transition-colors duration-300 ${
                 isDarkTheme ? 'text-gray-300' : 'text-[#7C8896]'
               }`}>
-                {flagCount === 0 ? 'No risks detected' : `${flagCount} risks detected`} • Last scan just now
-                {!scanResult && (
+                {trustScore === null
+                  ? 'No completed scan yet'
+                  : flagCount === 0
+                    ? 'No risks detected'
+                    : `${flagCount} risks detected`} • {freshnessDetail}
+                {demoMode && (
                   <span className="ml-2 px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">
-                    DEMO
+                    DEMO DATA
                   </span>
                 )}
                 {wallets.length > 1 && (
@@ -1093,16 +1211,16 @@ export function GuardianEnhanced() {
                 { 
                   title: "Active Risks", 
                   value: activeRisks.length.toString(), 
-                  desc: activeRisks.length === 0 ? "No issues detected" : `${activeRisks.length} ${activeRisks.length === 1 ? 'issue' : 'issues'} detected • Fix with one tap`, 
+                  desc: activeRisks.length === 0 ? "No issues detected" : `${activeRisks.length} ${activeRisks.length === 1 ? 'issue' : 'issues'} detected • Review details before acting`, 
                   icon: <Wrench className='w-5 h-5 text-[#7B61FF]'/>, 
-                  cta: activeRisks.length > 0 ? "Fix Risks" : null 
+                  cta: activeRisks.length > 0 ? "Review Risks" : null 
                 },
                 { 
                   title: "Token Approvals", 
                   value: approvalRisks.length > 0 ? `${approvalRisks.length} unlimited` : "None", 
                   desc: approvalRisks.length > 0 ? "Approvals found across contracts" : "No unlimited approvals found", 
                   icon: <Shield className='w-5 h-5 text-blue-400'/>, 
-                  cta: approvalRisks.length > 0 ? "Review" : null 
+                  cta: approvalRisks.length > 0 ? "Review Approvals" : null 
                 },
                 { 
                   title: "Mixer Exposure", 
@@ -1174,17 +1292,12 @@ export function GuardianEnhanced() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Fix risks button clicked:', card.cta);
-                        if (card.cta === 'Fix Risks') {
-                          setShowFixModal(true);
-                        } else {
-                          setActiveTab('Risks');
-                        }
+                        setActiveTab('Risks');
                       }}
                       className="w-full py-2 rounded-lg bg-gradient-to-r from-[#00B894] to-[#7B61FF] text-white font-semibold hover:opacity-90 transition-all duration-200 mt-auto"
-                      aria-label={card.cta === 'Fix Risks' ? 'Fix detected security risks in this wallet' : 'Review token approvals for this wallet'}
+                      aria-label="Review detected security risks in this wallet"
                     >
-                      {card.cta === 'Fix Risks' && wallets.length > 1 ? 'Fix Risks in Selected Wallet' : card.cta} →
+                      {card.cta} →
                     </DisabledTooltipButton>
                   )}
                 </motion.div>
@@ -1204,7 +1317,6 @@ export function GuardianEnhanced() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Rescan button clicked');
               handleRescan();
             }}
             className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] via-[#4D8CFF] to-[#7B61FF] text-white font-medium shadow-md hover:opacity-90 hover:shadow-[0_0_15px_rgba(0,201,167,0.4)] transition-all duration-200 flex items-center gap-2"
@@ -1226,126 +1338,6 @@ export function GuardianEnhanced() {
         </>
         )}
       </main>
-      
-      {/* Fix Risk Modal */}
-      {showFixModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-gray-200 border border-[rgba(255,255,255,0.1)] rounded-2xl p-6 max-w-2xl w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[#00C9A7] flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Fix Detected Risks
-              </h2>
-              <DisabledTooltipButton
-                onClick={() => setShowFixModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-                variant="ghost"
-                size="sm"
-                aria-label="Close fix risks modal"
-              >
-                ✕
-              </DisabledTooltipButton>
-            </div>
-            
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {(scanResult?.flags || []).map((flag) => (
-                <div
-                  key={flag.id}
-                  className="bg-[rgba(20,22,40,0.8)] rounded-xl p-4 border border-[rgba(255,255,255,0.08)]"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-white">{flag.type}</h3>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          flag.severity === 'high' ? 'text-red-400 bg-red-500/20' :
-                          flag.severity === 'medium' ? 'text-yellow-400 bg-yellow-500/20' :
-                          'text-green-400 bg-green-500/20'
-                        }`}>
-                          {flag.severity}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-400">
-                        {flag.details || 'Security risk detected'}
-                      </p>
-                    </div>
-                    
-                    <DisabledTooltipButton
-                      onClick={async () => {
-                        try {
-                          // Show loading state
-                          console.log('Initiating revoke for:', flag.type);
-                          
-                          // In a real implementation, this would:
-                          // 1. Get the token contract address from the flag
-                          // 2. Call the token's approve() function with 0 amount
-                          // 3. Wait for transaction confirmation
-                          // 4. Update the UI
-                          
-                          // For now, simulate the process
-                          alert(`This would revoke the ${flag.type} approval.\n\nIn production, this would:\n1. Open your wallet\n2. Ask you to sign a transaction\n3. Pay gas fees to revoke the approval\n4. Update your trust score`);
-                          
-                          // Simulate success
-                          console.log('Revoke completed for:', flag.id);
-                          
-                        } catch (error) {
-                          console.error('Revoke failed:', error);
-                          alert('Revoke failed. Please try again.');
-                        }
-                      }}
-                      className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white text-sm font-medium hover:opacity-90 transition"
-                      size="sm"
-                      aria-label={`Revoke ${flag.type} approval to improve wallet security`}
-                    >
-                      Revoke
-                    </DisabledTooltipButton>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between items-center pt-4 border-t border-gray-700/40">
-              <p className="text-sm text-gray-400">
-                {(scanResult?.flags || []).length} risk{(scanResult?.flags || []).length !== 1 ? 's' : ''} detected
-              </p>
-              <div className="flex gap-2">
-                <DisabledTooltipButton
-                  onClick={() => setShowFixModal(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700/50 transition"
-                  variant="outline"
-                  aria-label="Close fix risks modal without making changes"
-                >
-                  Close
-                </DisabledTooltipButton>
-                <DisabledTooltipButton
-                  onClick={async () => {
-                    try {
-                      const riskCount = (scanResult?.flags || []).length;
-                      
-                      if (confirm(`Are you sure you want to revoke all ${riskCount} approvals?\n\nThis will:\n- Open ${riskCount} wallet transactions\n- Cost gas fees for each transaction\n- Improve your wallet security`)) {
-                        
-                        // In production, this would batch revoke all approvals
-                        alert(`This would revoke all ${riskCount} approvals.\n\nEach revoke requires:\n1. Wallet signature\n2. Gas fees\n3. Blockchain confirmation`);
-                        
-                        // Close modal and rescan
-                        setShowFixModal(false);
-                        handleRescan();
-                      }
-                    } catch (error) {
-                      console.error('Bulk revoke failed:', error);
-                      alert('Bulk revoke failed. Please try again.');
-                    }
-                  }}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] text-white font-medium hover:opacity-90 transition"
-                  aria-label="Revoke all detected security risks at once"
-                >
-                  Revoke All
-                </DisabledTooltipButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       
       <FooterNav />
       
@@ -1383,10 +1375,7 @@ export function GuardianEnhanced() {
       {/* Add Wallet Modal */}
       <AddWalletModal
         isOpen={showAddWalletModal}
-        onClose={() => {
-          console.log('Closing AddWalletModal');
-          setShowAddWalletModal(false);
-        }}
+        onClose={() => setShowAddWalletModal(false)}
         onWalletAdded={handleWalletAdded}
       />
     </div>

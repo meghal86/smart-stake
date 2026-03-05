@@ -3,6 +3,7 @@
  * Progressive scan results with real-time updates
  */
 import { useState, useEffect, useCallback } from 'react';
+import { normalizeGuardianScanPayload } from '@/lib/guardian/scan-contract';
 import { useGuardianStore } from '@/store/guardianStore';
 
 export interface ScanStep {
@@ -77,32 +78,27 @@ export function useSSEScan() {
               setCurrentStep(data);
 
               if (data.step === 'complete' && data.data) {
-                // Transform to GuardianScanResult format
-                const result = {
-                  trustScorePercent: Math.round(data.data.trust_score * 100),
-                  trustScoreRaw: data.data.trust_score,
-                  riskScore: data.data.risk_score,
-                  riskLevel: data.data.risk_level,
-                  confidence: data.data.confidence,
-                  statusLabel: data.data.risk_level === 'Low' ? 'Trusted' : data.data.risk_level === 'Medium' ? 'Warning' : 'Danger',
-                  statusTone: data.data.risk_level === 'Low' ? 'trusted' : data.data.risk_level === 'Medium' ? 'warning' : 'danger',
-                  walletAddress: data.data.wallet_address,
-                  network: data.data.network,
-                  networkCode: network,
-                  lastScan: data.data.last_scan,
-                  lastScanRelative: 'just now',
-                  flags: data.data.flags,
-                  issuesBySeverity: {
-                    low: data.data.flags.filter((f: unknown) => f.severity === 'low').length,
-                    medium: data.data.flags.filter((f: unknown) => f.severity === 'medium').length,
-                    high: data.data.flags.filter((f: unknown) => f.severity === 'high').length,
+                const result = normalizeGuardianScanPayload(
+                  {
+                    trust_score_percent:
+                      typeof data.data.trust_score === 'number'
+                        ? Math.round(data.data.trust_score * 100)
+                        : data.data.trust_score_percent,
+                    risk_score: data.data.risk_score,
+                    scanned_at: data.data.last_scan || data.data.scanned_at,
+                    confidence: data.data.confidence,
+                    risks: data.data.flags || data.data.risks,
+                    approvals: data.data.approvals,
+                    scan_id: data.data.guardian_scan_id || data.data.scan_id,
                   },
-                  hasFlags: data.data.flags.length > 0,
-                  summary: `Scan completed with ${data.data.flags.length} flags`,
-                  guardianScanId: data.data.guardian_scan_id,
-                };
+                  {
+                    walletAddress: data.data.wallet_address || walletAddress,
+                    network: data.data.network || network,
+                    dataSource: 'live',
+                  }
+                );
 
-                setResult(result as unknown);
+                setResult(result);
               } else if (data.step === 'error') {
                 setError(data.error?.message || 'Scan failed');
               }
@@ -125,4 +121,3 @@ export function useSSEScan() {
     startScan,
   };
 }
-

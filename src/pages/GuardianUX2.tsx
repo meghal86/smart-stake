@@ -20,10 +20,11 @@ export function GuardianUX2() {
   const [scanStartTime, setScanStartTime] = useState<number | null>(null);
   const analytics = useGuardianAnalytics();
 
-  const { data, isLoading, rescan, isRescanning } = useGuardianScan({
+  const { data, isLoading, error, rescan, isRescanning } = useGuardianScan({
     walletAddress: activeWallet || undefined,
     network: 'ethereum',
     enabled: !!activeWallet,
+    scope: 'explicit',
   });
 
   // Auto-scan on connect
@@ -66,12 +67,20 @@ export function GuardianUX2() {
     }
   };
 
-  const trustScore = data?.trustScorePercent || 87;
-  const confidence = data?.confidence || 0.85;
-  const flags = data?.flags?.length || 2;
-  const criticalFlags = data?.flags?.filter((f: unknown) => f.severity === 'high').length || 0;
+  const trustScore = data?.trustScorePercent ?? null;
+  const confidence = data?.confidence ?? null;
+  const flags = data?.flags?.length ?? 0;
+  const criticalFlags = data?.flags?.filter((f: any) => f.severity === 'high').length ?? 0;
 
-  const getEmotionalMessage = (score: number, flagCount: number) => {
+  const getEmotionalMessage = (score: number | null, flagCount: number) => {
+    if (score === null) {
+      return {
+        title: 'Scan unavailable',
+        subtitle: 'Guardian could not load a trustworthy result for this wallet yet.',
+        icon: Info,
+        color: 'text-slate-400',
+      };
+    }
     if (score >= 90 && flagCount === 0) {
       return {
         title: 'Your wallet looks pristine',
@@ -238,7 +247,11 @@ export function GuardianUX2() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <TrustGauge score={trustScore} confidence={confidence} isScanning={isScanning || isLoading} />
+          <TrustGauge
+            score={trustScore ?? 0}
+            confidence={confidence ?? 0}
+            isScanning={isScanning || isLoading}
+          />
         </motion.div>
 
         {/* Emotional Message with extra breathing room */}
@@ -387,4 +400,3 @@ export function GuardianUX2() {
 }
 
 export default GuardianUX2;
-

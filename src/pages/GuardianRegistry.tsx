@@ -38,6 +38,7 @@ export function GuardianRegistry() {
     walletAddress: selectedWallet?.address,
     network: 'ethereum',
     enabled: !!selectedWallet,
+    scope: 'explicit',
   })
 
   // Auto-select first wallet if none selected
@@ -479,7 +480,6 @@ export function GuardianRegistry() {
 }
 
 export default GuardianRegistry
-
 
 
 

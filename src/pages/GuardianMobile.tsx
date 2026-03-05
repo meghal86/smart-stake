@@ -32,6 +32,7 @@ export function GuardianMobile() {
     walletAddress: address || undefined,
     network: 'ethereum',
     enabled: isConnected && !!address,
+    scope: 'explicit',
   });
 
   // Auto-scan on connect + analytics
@@ -395,4 +396,3 @@ export function GuardianMobile() {
 }
 
 export default GuardianMobile;
-

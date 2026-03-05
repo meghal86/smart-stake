@@ -8,6 +8,7 @@ export interface UseGuardianScanOptions {
   walletAddress?: string;
   network?: string;
   enabled?: boolean;
+  scope?: 'auto' | 'explicit';
 }
 
 export interface UseGuardianScanResult {
@@ -49,17 +50,17 @@ function getScoreGlow(tone: GuardianScanResult['statusTone']) {
 }
 
 export function useGuardianScan({
-  walletAddress = '0xA6bF1D4E9c34d12BfC5e8A946f912e7cC42D2D9C',
+  walletAddress,
   network = 'ethereum',
-  enabled = true
+  enabled = true,
+  scope = 'auto'
 }: UseGuardianScanOptions = {}): UseGuardianScanResult {
   const queryClient = useQueryClient();
   const { activeWallet, activeNetwork, isAuthenticated } = useWallet();
   
-  // When authenticated, ALWAYS use WalletContext values (never independent wallet state)
-  // This ensures all modules read from the same source of truth
-  const effectiveWalletAddress = isAuthenticated && activeWallet ? activeWallet : walletAddress;
-  const effectiveNetwork = isAuthenticated ? activeNetwork : network;
+  const useContextWallet = scope !== 'explicit' && isAuthenticated && Boolean(activeWallet);
+  const effectiveWalletAddress = useContextWallet ? activeWallet : walletAddress;
+  const effectiveNetwork = useContextWallet ? activeNetwork : network;
   
   const queryKey = useMemo(
     () => guardianKeys.scan(effectiveWalletAddress, effectiveNetwork),

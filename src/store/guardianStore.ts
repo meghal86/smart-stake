@@ -2,8 +2,7 @@
  * Guardian state management with Zustand
  */
 import { create } from 'zustand';
-import type { TrustScoreResult } from '@/lib/guardian/trust-score';
-import type { ApprovalRisk } from '@/lib/guardian/approvals';
+import type { GuardianScanResult } from '@/services/guardianService';
 
 export interface GuardianState {
   // Scan state
@@ -25,14 +24,6 @@ export interface GuardianState {
   setLastScannedAddress: (address: string | null) => void;
 }
 
-export interface GuardianScanResult extends TrustScoreResult {
-  chains: string[];
-  lastScanAt: number;
-  approvals: ApprovalRisk[];
-  targetAddress: string;
-  scanId?: string;
-}
-
 const initialState = {
   scanning: false,
   result: null,
@@ -51,7 +42,7 @@ export const useGuardianStore = create<GuardianState>((set) => ({
       result,
       scanning: false,
       lastError: null,
-      lastScannedAddress: result.targetAddress,
+      lastScannedAddress: result.walletAddress,
     }),
 
   setError: (error) =>
@@ -97,4 +88,3 @@ export const useGuardianError = () =>
 
 export const useGuardianAutoScan = () =>
   useGuardianStore((state) => state.autoScanEnabled);
-

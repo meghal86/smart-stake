@@ -2,6 +2,7 @@
  * Guardian TypeScript Types
  * Evidence-based trust scoring with confidence tracking
  */
+import type { GuardianNormalizedScanResult } from '@/lib/guardian/scan-contract';
 
 export interface Evidence {
   source: string;        // 'alchemy' | 'etherscan' | 'honeypot-api' | 'cache' | 'heuristic'
@@ -143,14 +144,7 @@ export interface RevokeResponse {
   };
 }
 
-export interface GuardianScanResult extends TrustScoreResult {
-  targetAddress: string;
-  chains: string[];
-  lastScanAt: number;
-  approvals: ApprovalRisk[];
-  scanId?: string;
-  requestId?: string;
-}
+export type GuardianScanResult = GuardianNormalizedScanResult;
 
 export interface CacheMetrics {
   hitRatio: number;
@@ -171,4 +165,3 @@ export interface HealthCheckResult {
   timestamp: string;
   requestId: string;
 }
-
