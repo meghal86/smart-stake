@@ -7,7 +7,7 @@ import { HarvestProFeatureCard } from '@/components/home/HarvestProFeatureCard';
 import { ImpactStats } from '@/components/home/ImpactStats';
 import { TrustBuilders } from '@/components/home/TrustBuilders';
 import { OnboardingSection } from '@/components/home/OnboardingSection';
-import { FooterNav } from '@/components/home/FooterNav';
+import { FooterNav } from '@/components/layout/FooterNav';
 import { HomeAuthProvider } from '@/lib/context/HomeAuthContext';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
@@ -54,34 +54,17 @@ export default function AlphaWhaleHome() {
         pullDistance={pullDistance}
         threshold={threshold}
       />
-      <div className="min-h-screen relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-[#0A0E1A] dark:to-[#111827] bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]">
-        {/* Animated Background Glow - Theme Aware */}
+      <div className="min-h-screen relative overflow-hidden bg-[#050505] text-[#f6f2ea]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(126,163,242,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.04),transparent_35%)]" />
         <motion.div
-          className="absolute inset-0 pointer-events-none dark:block hidden"
+          className="absolute inset-0 pointer-events-none"
           animate={{
             background: [
-              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)',
-              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.06) 0%, transparent 50%)',
-              'radial-gradient(circle at 50% 30%, rgba(0,245,160,0.04) 0%, transparent 50%)',
-              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.08) 0%, transparent 50%)',
-              'radial-gradient(circle at 30% 40%, rgba(0,245,160,0.08) 0%, transparent 50%)'
-            ]
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: [0.25, 1, 0.5, 1]
-          }}
-        />
-        <motion.div
-          className="absolute inset-0 pointer-events-none dark:hidden block"
-          animate={{
-            background: [
-              'radial-gradient(circle at 30% 40%, rgba(20,184,166,0.06) 0%, transparent 50%)',
-              'radial-gradient(circle at 70% 60%, rgba(123,97,255,0.04) 0%, transparent 50%)',
-              'radial-gradient(circle at 50% 30%, rgba(20,184,166,0.03) 0%, transparent 50%)',
-              'radial-gradient(circle at 30% 70%, rgba(123,97,255,0.06) 0%, transparent 50%)',
-              'radial-gradient(circle at 30% 40%, rgba(20,184,166,0.06) 0%, transparent 50%)'
+              'radial-gradient(circle at 30% 40%, rgba(126,163,242,0.10) 0%, transparent 50%)',
+              'radial-gradient(circle at 70% 60%, rgba(255,255,255,0.04) 0%, transparent 50%)',
+              'radial-gradient(circle at 50% 30%, rgba(126,163,242,0.05) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 70%, rgba(255,255,255,0.06) 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 40%, rgba(126,163,242,0.10) 0%, transparent 50%)'
             ]
           }}
           transition={{
@@ -93,103 +76,94 @@ export default function AlphaWhaleHome() {
         
         {/* Header */}
         <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load header</div>}>
-          <GlobalHeader />
-        </HomeErrorBoundary>
-        
-        {/* Hero Section */}
-        <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load hero section</div>}>
-          <HeroSection />
+          <GlobalHeader className="border-white/8 bg-[#050505]/94" />
         </HomeErrorBoundary>
 
-        {/* Feature Cards Section with Progressive Revelation */}
-        <section className="container mx-auto px-4 py-8 md:py-12 space-y-6">
-          <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load features</div>}>
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: {
-                    staggerChildren: 0.1, // 100ms stagger between cards
-                  },
-                },
-              }}
-            >
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { 
-                    opacity: 1, 
-                    y: 0,
-                    transition: { duration: 0.5, ease: 'easeOut' }
-                  },
-                }}
-              >
-                <GuardianFeatureCard />
-              </motion.div>
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { 
-                    opacity: 1, 
-                    y: 0,
-                    transition: { duration: 0.5, ease: 'easeOut' }
-                  },
-                }}
-              >
-                <HunterFeatureCard />
-              </motion.div>
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { 
-                    opacity: 1, 
-                    y: 0,
-                    transition: { duration: 0.5, ease: 'easeOut' }
-                  },
-                }}
-              >
-                <HarvestProFeatureCard />
-              </motion.div>
-            </motion.div>
+        <div className="relative mx-auto max-w-[1600px] px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+          <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load hero section</div>}>
+            <HeroSection />
           </HomeErrorBoundary>
-        </section>
 
-        {/* Section Divider */}
-        <div className="container mx-auto px-4 py-4 md:py-6">
-          <div className="h-px bg-gray-800" />
+          <section className="py-8 md:py-12 space-y-6">
+            <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load features</div>}>
+              <motion.div
+                className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+              >
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.5, ease: 'easeOut' }
+                    },
+                  }}
+                >
+                  <GuardianFeatureCard />
+                </motion.div>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.5, ease: 'easeOut' }
+                    },
+                  }}
+                >
+                  <HunterFeatureCard />
+                </motion.div>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 30 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.5, ease: 'easeOut' }
+                    },
+                  }}
+                >
+                  <HarvestProFeatureCard />
+                </motion.div>
+              </motion.div>
+            </HomeErrorBoundary>
+          </section>
+
+          <div className="py-4 md:py-6">
+            <div className="h-px bg-white/8" />
+          </div>
+
+          <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load impact stats</div>}>
+            <ImpactStats />
+          </HomeErrorBoundary>
+
+          <div className="py-4 md:py-6">
+            <div className="h-px bg-white/8" />
+          </div>
+
+          <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load trust builders</div>}>
+            <TrustBuilders />
+          </HomeErrorBoundary>
+
+          <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load onboarding</div>}>
+            <OnboardingSection />
+          </HomeErrorBoundary>
         </div>
 
-        {/* Impact Stats Section - NEW! */}
-        <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load impact stats</div>}>
-          <ImpactStats />
-        </HomeErrorBoundary>
-
-        {/* Section Divider */}
-        <div className="container mx-auto px-4 py-4 md:py-6">
-          <div className="h-px bg-gray-800" />
-        </div>
-
-        {/* Trust Builders Section */}
-        <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load trust builders</div>}>
-          <TrustBuilders />
-        </HomeErrorBoundary>
-
-        {/* Onboarding Section */}
-        <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load onboarding</div>}>
-          <OnboardingSection />
-        </HomeErrorBoundary>
-
-        {/* Bottom Padding for Fixed Footer */}
-        <div className="h-20" aria-hidden="true" />
-
-        {/* Footer Navigation */}
         <HomeErrorBoundary fallback={<div className="p-6 text-center text-red-400">Failed to load footer</div>}>
-          <FooterNav />
+          <FooterNav currentRoute="/" />
         </HomeErrorBoundary>
       </div>
     </HomeAuthProvider>

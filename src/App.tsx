@@ -48,6 +48,7 @@ import PortfolioEnhanced from "./pages/PortfolioEnhanced";
 import PortfolioIntelligence from "./pages/PortfolioIntelligence";
 import Portfolio from "./pages/Portfolio";
 import PortfolioUnified from "./pages/PortfolioUnified";
+import PortfolioPositions from "./pages/portfolio/positions";
 import PortfolioRisk from "./pages/portfolio/risk";
 import PortfolioGuardian from "./pages/portfolio/guardian";
 import PortfolioStress from "./pages/portfolio/stress";
@@ -193,6 +194,7 @@ const App = () => {
                   <Route path="/portfolio-enhanced" element={<Navigate to="/portfolio" replace />} />
                   <Route path="/portfolio-intelligence" element={<PortfolioIntelligence />} />
                   <Route path="/portfolio" element={<PortfolioUnified />} />
+                  <Route path="/portfolio/positions" element={<PortfolioPositions />} />
                   <Route path="/portfolio/risk" element={<PortfolioRisk />} />
                   <Route path="/portfolio/guardian" element={<PortfolioGuardian />} />
                   <Route path="/portfolio/stress" element={<PortfolioStress />} />

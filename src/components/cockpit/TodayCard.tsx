@@ -66,40 +66,40 @@ const KIND_COLORS: Record<TodayCardKind, {
   text: string;
 }> = {
   onboarding: {
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/20',
-    icon: 'text-blue-400',
-    text: 'text-blue-100',
+    bg: 'bg-[#7ea3f2]/10',
+    border: 'border-[#7ea3f2]/20',
+    icon: 'text-[#bfd0ff]',
+    text: 'text-[#f6f2ea]',
   },
   scan_required: {
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
-    icon: 'text-amber-400',
-    text: 'text-amber-100',
+    bg: 'bg-[#d0a35c]/10',
+    border: 'border-[#d0a35c]/20',
+    icon: 'text-[#e4c998]',
+    text: 'text-[#f6f2ea]',
   },
   critical_risk: {
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/20',
-    icon: 'text-red-400',
-    text: 'text-red-100',
+    bg: 'bg-[#d48080]/10',
+    border: 'border-[#d48080]/20',
+    icon: 'text-[#e7b0b0]',
+    text: 'text-[#f6f2ea]',
   },
   pending_actions: {
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/20',
-    icon: 'text-purple-400',
-    text: 'text-purple-100',
+    bg: 'bg-[#9b8bd5]/10',
+    border: 'border-[#9b8bd5]/20',
+    icon: 'text-[#cec3ef]',
+    text: 'text-[#f6f2ea]',
   },
   daily_pulse: {
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500/20',
-    icon: 'text-cyan-400',
-    text: 'text-cyan-100',
+    bg: 'bg-[#88b9d8]/10',
+    border: 'border-[#88b9d8]/20',
+    icon: 'text-[#c7dce9]',
+    text: 'text-[#f6f2ea]',
   },
   portfolio_anchor: {
-    bg: 'bg-green-500/10',
-    border: 'border-green-500/20',
-    icon: 'text-green-400',
-    text: 'text-green-100',
+    bg: 'bg-[#8eb79a]/10',
+    border: 'border-[#8eb79a]/20',
+    icon: 'text-[#d1e4d6]',
+    text: 'text-[#f6f2ea]',
   },
 };
 
@@ -108,7 +108,7 @@ const KIND_COLORS: Record<TodayCardKind, {
 // ============================================================================
 
 const TodayCardSkeleton: React.FC = memo(() => (
-  <Card className="relative overflow-hidden bg-white/5 backdrop-blur-md border border-white/10 p-6">
+  <Card className="relative overflow-hidden rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
     <div className="animate-pulse">
       {/* Header chrome skeleton */}
       <div className="flex items-center justify-between mb-4">
@@ -135,7 +135,7 @@ TodayCardSkeleton.displayName = 'TodayCardSkeleton';
 // ============================================================================
 
 const TodayCardError: React.FC<{ error: string; onRetry?: () => void }> = memo(({ error, onRetry }) => (
-  <Card className="relative overflow-hidden bg-red-500/10 backdrop-blur-md border border-red-500/20 p-6">
+  <Card className="relative overflow-hidden rounded-[30px] border border-red-400/20 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
     <div className="flex items-center gap-3 mb-4">
       <AlertTriangle className="w-5 h-5 text-red-400" />
       <span className="text-sm text-red-100">Error loading dashboard</span>
@@ -298,7 +298,8 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
       layout={false}
     >
       <Card className={`
-        relative overflow-hidden backdrop-blur-md p-6
+        relative overflow-hidden rounded-[30px] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]
+        bg-[#0b0b0c] border
         ${colors.bg} ${colors.border}
         transition-transform duration-150 hover:scale-[1.01]
         will-change-transform
@@ -310,7 +311,7 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
             {isDemo && (
               <Badge 
                 variant="outline" 
-                className="text-xs border-white/20 text-white/70 bg-white/5"
+                className="text-xs border-white/10 text-[#cfc8bd] bg-white/[0.03]"
               >
                 Demo Mode
               </Badge>
@@ -323,11 +324,11 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
               variant="ghost"
               size="sm"
               onClick={handleInsightsClick}
-              className="w-8 h-8 p-0 hover:bg-white/10 transition-colors duration-150 relative z-10"
+              className="w-8 h-8 p-0 hover:bg-white/[0.06] transition-colors duration-150 relative z-10"
               aria-label="Open insights and settings"
               title="Settings"
             >
-              <Settings className="w-4 h-4 text-white/70" />
+              <Settings className="w-4 h-4 text-[#cfc8bd]" />
             </Button>
           )}
         </div>
@@ -335,13 +336,13 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
         {/* Icon and Anchor Metric */}
         <div className="flex items-center gap-3 mb-2">
           <IconComponent className={`w-6 h-6 ${colors.icon}`} />
-          <div className="text-2xl font-semibold text-white">
+          <div className="text-2xl font-semibold text-[#f6f2ea]">
             {anchor_metric}
           </div>
         </div>
         
         {/* Context Line */}
-        <div className="text-sm text-slate-300 mb-6">
+        <div className="text-sm text-[#9c978f] mb-6">
           {context_line}
         </div>
         
@@ -350,7 +351,7 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
           {/* Primary CTA */}
           <Button
             onClick={handlePrimaryClick}
-            className="bg-white/10 hover:bg-white/20 text-white border-white/20 transition-colors duration-150"
+            className="bg-[#f6f2ea] hover:bg-white text-black transition-colors duration-150"
           >
             {primary_cta.label}
           </Button>
@@ -360,7 +361,7 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
             <Button
               onClick={handleSecondaryClick}
               variant="link"
-              className="text-white/70 hover:text-white p-0 h-auto font-normal cursor-pointer transition-colors duration-150"
+              className="text-[#cfc8bd] hover:text-[#f6f2ea] p-0 h-auto font-normal cursor-pointer transition-colors duration-150"
             >
               {secondary_cta.label}
             </Button>

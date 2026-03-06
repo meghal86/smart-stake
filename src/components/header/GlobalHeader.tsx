@@ -28,7 +28,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
     if (showMenu && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
       setMenuPosition({
-        top: rect.bottom + 8,
+        top: rect.bottom + 14,
         right: window.innerWidth - rect.right
       })
     }
@@ -49,9 +49,9 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
     if (!showMenu) return null
     return createPortal(
       <>
-        <div className="fixed inset-0 z-[9998]" onClick={() => setShowMenu(false)} />
+        <div className="fixed inset-0 z-[1200]" onClick={() => setShowMenu(false)} />
         <div 
-          className="fixed z-[10000] w-56 rounded-[22px] border border-black/10 bg-[rgba(245,243,238,0.98)] py-1 shadow-2xl dark:border-white/8 dark:bg-[rgba(10,10,10,0.98)]"
+          className="fixed z-[1210] w-56 rounded-[22px] border border-black/10 bg-[rgba(245,243,238,0.98)] py-1 shadow-2xl dark:border-white/8 dark:bg-[rgba(10,10,10,0.98)]"
           style={{ top: `${menuPosition.top}px`, right: `${menuPosition.right}px` }}
         >
           {content}
@@ -62,7 +62,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   }
 
   return (
-    <header className={cn('sticky top-0 z-50 border-b border-black/8 bg-[#f3f1ed]/92 backdrop-blur-xl dark:border-white/8 dark:bg-[#050505]/92', className)}>
+    <header className={cn('sticky top-0 z-[120] border-b border-black/8 bg-[#f3f1ed]/92 backdrop-blur-xl dark:border-white/8 dark:bg-[#050505]/92', className)}>
       <div className="mx-auto h-16 max-w-7xl px-4 sm:px-6">
         <div className="flex h-full items-center justify-between">
           <button
@@ -83,7 +83,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
             </div>
           </button>
 
-          <div className="flex items-center gap-3 relative z-[60]">
+          <div className="relative z-[130] flex items-center gap-3">
             {/* Wallet Chip - Show if:
                 1. User is authenticated AND
                 2. Either:

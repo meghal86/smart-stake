@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, Brain, Briefcase, MapPin, Shield, Sparkles, TrendingUp } from 'lucide-react';
+import { Activity, Brain, Briefcase, Layers, MapPin, Shield, Sparkles, TrendingUp } from 'lucide-react';
 import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ interface PortfolioExperienceShellProps {
 
 const portfolioNav = [
   { href: '/portfolio', label: 'Overview', icon: Briefcase },
+  { href: '/portfolio/positions', label: 'Positions', icon: Layers },
   { href: '/portfolio/risk', label: 'Risk', icon: TrendingUp },
   { href: '/portfolio/guardian', label: 'Guardian', icon: Shield },
   { href: '/portfolio/stress', label: 'Stress', icon: Activity },
@@ -47,7 +48,7 @@ export function PortfolioExperienceShell({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(126,163,242,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.04),transparent_35%)]" />
       <GlobalHeader className="border-white/8 bg-[#050505]/94" />
 
-      <div className="relative mx-auto max-w-[1600px] px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1600px] px-4 pb-28 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
         <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
             <div className="sticky top-24 rounded-[28px] border border-white/8 bg-[#0b0b0c] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.34)]">

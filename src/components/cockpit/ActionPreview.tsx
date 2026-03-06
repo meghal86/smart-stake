@@ -206,7 +206,7 @@ const ActionRowSkeleton: React.FC = () => (
 );
 
 const ActionPreviewSkeleton: React.FC = () => (
-  <Card className="bg-white/5 backdrop-blur-md border border-white/10 p-6">
+  <Card className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
     <div className="flex items-center justify-between mb-4">
       <div className="w-32 h-5 bg-white/10 rounded animate-pulse" />
       <div className="w-24 h-4 bg-white/10 rounded animate-pulse" />
@@ -220,7 +220,7 @@ const ActionPreviewSkeleton: React.FC = () => (
 );
 
 const ActionPreviewError: React.FC<{ error: string }> = ({ error }) => (
-  <Card className="bg-red-500/10 backdrop-blur-md border border-red-500/20 p-6">
+  <Card className="rounded-[30px] border border-red-400/20 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
     <div className="flex items-center gap-3 mb-4">
       <AlertTriangle className="w-5 h-5 text-red-400" />
       <span className="text-sm text-red-100">Error loading actions</span>
@@ -232,7 +232,7 @@ const ActionPreviewError: React.FC<{ error: string }> = ({ error }) => (
 );
 
 const EmptyActionPreview: React.FC<{ onSeeAllClick?: () => void }> = ({ onSeeAllClick }) => (
-  <Card className="bg-white/5 backdrop-blur-md border border-white/10 p-6">
+  <Card className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-lg font-semibold text-white">Action Preview</h3>
     </div>
@@ -303,9 +303,9 @@ const ActionRow: React.FC<{
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
       className={`
-        flex items-center gap-4 p-4 rounded-lg border transition-all duration-200
+        flex items-center gap-4 rounded-[24px] border p-4 transition-all duration-200
         ${laneConfig.bgColor} ${laneConfig.borderColor}
-        hover:bg-white/5 hover:border-white/20
+        hover:bg-white/[0.04] hover:border-white/16
       `}
     >
       {/* Lane Indicator */}
@@ -316,7 +316,7 @@ const ActionRow: React.FC<{
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Title */}
-        <div className="text-white font-medium mb-1 truncate">
+        <div className="text-[#f6f2ea] font-medium mb-1 truncate">
           {action.title}
         </div>
         
@@ -339,7 +339,7 @@ const ActionRow: React.FC<{
             variant="outline"
             size="sm"
             disabled
-            className="border-white/20 text-white/50 cursor-not-allowed"
+            className="border-white/10 text-[#8f8a82] cursor-not-allowed"
             title="Demo mode - action disabled"
           >
             {action.cta.kind}
@@ -408,16 +408,16 @@ export const ActionPreview: React.FC<ActionPreviewProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <Card className="bg-white/5 backdrop-blur-md border border-white/10 p-6">
+      <Card className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Action Preview</h3>
+          <h3 className="text-lg font-semibold text-[#f6f2ea]">Action Preview</h3>
           {onSeeAllClick && (
             <Button
               variant="link"
               size="sm"
               onClick={onSeeAllClick}
-              className="text-cyan-400 hover:text-cyan-300 p-0 h-auto"
+              className="text-[#a7c0ff] hover:text-[#c5d4ff] p-0 h-auto"
             >
               See all signals
             </Button>
@@ -439,7 +439,7 @@ export const ActionPreview: React.FC<ActionPreviewProps> = ({
         {/* Footer note if actions were truncated */}
         {actions.length > 3 && (
           <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="text-xs text-slate-400 text-center">
+            <div className="text-xs text-[#8f8a82] text-center">
               Showing top 3 of {actions.length} actions
             </div>
           </div>

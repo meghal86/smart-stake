@@ -229,8 +229,8 @@ const Cockpit: React.FC = () => {
   // Show loading state while checking authentication
   if (!sessionEstablished || loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-slate-900 dark:text-white">Loading...</div>
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="text-[#f6f2ea]">Loading...</div>
       </div>
     );
   }
@@ -242,38 +242,91 @@ const Cockpit: React.FC = () => {
 
   // Data is provided by the hook based on demo mode
   const data = summary;
+  const actionCount = data?.action_preview?.length ?? 0;
+  const providerState = data?.provider_status?.state ?? 'offline';
+  const todayKind = data?.today_card?.kind?.replace(/_/g, ' ') ?? 'waiting';
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
-      <GlobalHeader />
-      {/* Three-block layout as per requirements */}
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Today Card */}
-        <TodayCard 
-          todayCard={data?.today_card || {
-            kind: 'portfolio_anchor',
-            anchor_metric: 'Loading...',
-            context_line: 'Please wait',
-            primary_cta: { label: 'Loading', href: '#' }
-          }}
-          isLoading={isLoading}
-          error={error}
-          isDemo={isDemo}
-          onInsightsClick={() => {
-            console.log('[Cockpit] Insights button clicked, opening sheet');
-            setInsightsSheetOpen(true);
-          }}
-          showInsightsLauncher={true}
-        />
+    <div className="min-h-screen bg-[#050505] text-[#f6f2ea]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(126,163,242,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.04),transparent_35%)]" />
+      <GlobalHeader className="border-white/8 bg-[#050505]/94" />
 
-        {/* Action Preview */}
-        <ActionPreview 
-          actions={data?.action_preview || []}
-          isLoading={isLoading}
-          error={error}
-          isDemo={isDemo}
-          onSeeAllClick={() => setPeekDrawerOpen(true)}
-        />
+      <div className="relative mx-auto max-w-[1600px] px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-[#a7c0ff]">
+              Daily cockpit
+            </div>
+            <h1 className="text-3xl tracking-tight text-[#f6f2ea] sm:text-4xl">Good morning, Meghal</h1>
+            <p className="mt-2 max-w-3xl text-sm text-[#9c978f] sm:text-base">
+              The clearest read on what needs attention right now across portfolio, Guardian, and daily signal flow.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="space-y-6">
+            <TodayCard 
+              todayCard={data?.today_card || {
+                kind: 'portfolio_anchor',
+                anchor_metric: 'Loading...',
+                context_line: 'Please wait',
+                primary_cta: { label: 'Loading', href: '#' }
+              }}
+              isLoading={isLoading}
+              error={error}
+              isDemo={isDemo}
+              onInsightsClick={() => {
+                console.log('[Cockpit] Insights button clicked, opening sheet');
+                setInsightsSheetOpen(true);
+              }}
+              showInsightsLauncher={true}
+            />
+
+            <ActionPreview 
+              actions={data?.action_preview || []}
+              isLoading={isLoading}
+              error={error}
+              isDemo={isDemo}
+              onSeeAllClick={() => setPeekDrawerOpen(true)}
+            />
+          </div>
+
+          <aside className="space-y-6">
+            <section className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">System read</p>
+              <div className="mt-4 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                  <span className="text-sm text-[#9c978f]">Provider state</span>
+                  <span className="text-sm text-[#f6f2ea] capitalize">{providerState}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                  <span className="text-sm text-[#9c978f]">Action count</span>
+                  <span className="text-sm text-[#f6f2ea]">{actionCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[#9c978f]">Today card</span>
+                  <span className="text-sm capitalize text-[#f6f2ea]">{todayKind}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(126,163,242,0.16),rgba(255,255,255,0.02))] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#b7c8f0]">Mode</p>
+              <p
+                className="mt-4 text-3xl text-[#f6f2ea]"
+                style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+              >
+                {isDemo ? 'Demo' : 'Live'}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-[#b8b2a7]">
+                {isDemo
+                  ? 'This cockpit is using sample data for walkthrough purposes.'
+                  : 'This cockpit is reading the live authenticated experience.'}
+              </p>
+            </section>
+          </aside>
+        </div>
       </div>
 
       {/* Peek Drawer */}
@@ -320,7 +373,7 @@ const Cockpit: React.FC = () => {
         isDemo={isDemo || !isAuthenticated} // Use demo mode if not authenticated or explicitly in demo mode
       />
       
-      <FooterNav />
+      <FooterNav currentRoute="/cockpit" />
     </div>
   );
 };
