@@ -114,24 +114,23 @@ function PersonalPicks() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="relative bg-gradient-to-br from-slate-900/80 via-blue-950/40 to-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-teal-400/20 overflow-hidden"
+      className="relative overflow-hidden rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]"
       style={{
-        boxShadow: '0 20px 60px -12px rgba(0,0,0,0.6), 0 8px 32px -8px rgba(20,184,166,0.1)'
+        boxShadow: '0 22px 80px rgba(0,0,0,0.28)'
       }}
     >
-      {/* Gradient Header */}
       <div className="flex items-center gap-2 mb-5">
         <motion.div
           animate={{ rotate: [0, 360] }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         >
-          <Sparkles className="w-5 h-5 text-amber-400" />
+          <Sparkles className="w-5 h-5 text-[#a7c0ff]" />
         </motion.div>
         <h3 
-          className="text-lg font-bold bg-gradient-to-r from-amber-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent"
+          className="text-lg font-bold text-[#f6f2ea]"
           style={{ letterSpacing: '-0.02em' }}
         >
-          🔥 Personal Picks This Season
+          Personal picks
         </h3>
       </div>
 
@@ -184,7 +183,7 @@ function PersonalPicks() {
                 <div className="relative z-10">
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-white mb-1 group-hover:text-teal-300 transition-colors">
+                      <h4 className="text-sm font-bold text-white mb-1 group-hover:text-[#d8e4ff] transition-colors">
                         {pick.title}
                       </h4>
                       <p className="text-xs text-gray-400">{pick.protocol}</p>
@@ -204,7 +203,7 @@ function PersonalPicks() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">APY</p>
-                      <p className="text-base font-bold text-amber-400">{pick.apy}</p>
+                      <p className="text-base font-bold text-[#d6c08d]">{pick.apy}</p>
                     </div>
                   </div>
 
@@ -212,17 +211,17 @@ function PersonalPicks() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-400 capitalize">{pick.type}</span>
                     <motion.div 
-                      className="relative flex items-center gap-1.5 px-2 py-1 rounded-full bg-teal-500/10 border border-teal-400/30"
+                      className="relative flex items-center gap-1.5 rounded-full border border-[#7ea3f2]/30 bg-[#7ea3f2]/10 px-2 py-1"
                       whileHover={{ scale: 1.05 }}
                     >
                       {/* Guardian Halo */}
                       <motion.div
-                        className="absolute inset-0 rounded-full bg-teal-400/20"
+                        className="absolute inset-0 rounded-full bg-[#7ea3f2]/20"
                         animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity }}
                       />
-                      <div className="w-2 h-2 rounded-full bg-teal-400 shadow-lg shadow-teal-400/50" />
-                      <span className="text-xs font-bold text-teal-300">{pick.trustScore}</span>
+                      <div className="w-2 h-2 rounded-full bg-[#a7c0ff] shadow-lg shadow-[#7ea3f2]/50" />
+                      <span className="text-xs font-bold text-[#d8e4ff]">{pick.trustScore}</span>
                     </motion.div>
                   </div>
                 </div>
@@ -240,14 +239,14 @@ function PersonalPicks() {
             onClick={() => setScrollIndex(index)}
             className={cn(
               'h-1.5 rounded-full transition-all duration-300',
-              scrollIndex === index ? 'w-8 bg-teal-400' : 'w-1.5 bg-gray-600'
+              scrollIndex === index ? 'w-8 bg-[#a7c0ff]' : 'w-1.5 bg-gray-600'
             )}
             aria-label={`Go to pick ${index + 1}`}
           />
         ))}
       </div>
 
-      <button className="w-full mt-4 py-2 text-sm font-medium text-gray-400 hover:text-teal-400 transition-colors">
+      <button className="mt-4 w-full py-2 text-sm font-medium text-gray-400 transition-colors hover:text-[#d8e4ff]">
         View all picks →
       </button>
     </motion.div>
@@ -271,14 +270,14 @@ function SavedItems({ savedOpportunities, isLoading }: SavedItemsProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
+      className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Bookmark className="w-5 h-5 text-[#7B61FF]" />
-          <h3 className="text-lg font-semibold text-white">Saved Items</h3>
+          <Bookmark className="w-5 h-5 text-[#a7c0ff]" />
+          <h3 className="text-lg font-semibold text-white">Saved items</h3>
         </div>
-        <span className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded-full">
+        <span className="rounded-full bg-white/[0.04] px-2 py-1 text-xs text-gray-400">
           {savedOpportunities.length}
         </span>
       </div>
@@ -286,7 +285,7 @@ function SavedItems({ savedOpportunities, isLoading }: SavedItemsProps) {
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-3 rounded-xl bg-white/5 animate-pulse">
+            <div key={i} className="rounded-xl bg-white/[0.04] p-3 animate-pulse">
               <div className="h-4 bg-gray-700 rounded w-3/4 mb-2" />
               <div className="h-3 bg-gray-700 rounded w-1/2" />
             </div>
@@ -310,17 +309,17 @@ function SavedItems({ savedOpportunities, isLoading }: SavedItemsProps) {
               transition={{ delay: 0.3 + index * 0.1 }}
               className="group cursor-pointer"
             >
-              <div className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-200 border border-transparent hover:border-[#7B61FF]/20">
+              <div className="rounded-xl border border-transparent bg-white/[0.04] p-3 transition-all duration-200 hover:border-[#7ea3f2]/20 hover:bg-white/[0.08]">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-white truncate group-hover:text-[#7B61FF] transition-colors">
+                    <h4 className="text-sm font-medium text-white truncate transition-colors group-hover:text-[#d8e4ff]">
                       {item.opportunity?.title || 'Untitled'}
                     </h4>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {item.opportunity?.protocol_name || 'Unknown'}
                     </p>
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-gray-500 group-hover:text-[#7B61FF] transition-colors flex-shrink-0" />
+                  <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 text-gray-500 transition-colors group-hover:text-[#d8e4ff]" />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -348,7 +347,7 @@ function SavedItems({ savedOpportunities, isLoading }: SavedItemsProps) {
       )}
 
       {savedOpportunities.length > 5 && (
-        <button className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-[#7B61FF] transition-colors">
+        <button className="mt-4 w-full py-2 text-sm text-gray-400 transition-colors hover:text-[#d8e4ff]">
           View all saved ({savedOpportunities.length}) →
         </button>
       )}
@@ -458,9 +457,9 @@ function SeasonProgress() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="relative bg-gradient-to-br from-violet-950/40 via-slate-900/80 to-teal-950/40 backdrop-blur-xl rounded-3xl p-6 border border-violet-400/20 overflow-hidden"
+      className="relative overflow-hidden rounded-[30px] border border-white/8 bg-[#0b0b0c] p-6 shadow-[0_22px_80px_rgba(0,0,0,0.28)]"
       style={{
-        boxShadow: '0 20px 60px -12px rgba(0,0,0,0.6), 0 8px 32px -8px rgba(124,58,237,0.1)'
+        boxShadow: '0 22px 80px rgba(0,0,0,0.28)'
       }}
     >
       {/* Floating Particles */}
@@ -468,7 +467,7 @@ function SeasonProgress() {
         {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-amber-400/30 rounded-full"
+            className="absolute w-1 h-1 rounded-full bg-[#a7c0ff]/20"
             animate={{
               y: [0, -60, 0],
               x: [0, Math.sin(i) * 20, 0],
@@ -500,10 +499,10 @@ function SeasonProgress() {
             scale: { duration: 2, repeat: Infinity }
           }}
         >
-          <Trophy className="w-6 h-6 text-amber-400" />
+          <Trophy className="w-6 h-6 text-[#d6c08d]" />
         </motion.div>
         <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-          Your Alpha Journey
+          Your alpha journey
         </h3>
       </div>
 

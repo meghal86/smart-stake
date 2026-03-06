@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Activity, Shield, Sparkles } from 'lucide-react';
 import { GlobalHeader } from '@/components/header/GlobalHeader';
 import {
   FilterChipRow,
@@ -26,7 +27,6 @@ import {
 } from '@/components/harvestpro';
 import { HarvestProErrorBoundary } from '@/components/harvestpro/HarvestProErrorBoundary';
 import { FooterNav } from '@/components/layout/FooterNav';
-import { DemoBanner } from '@/components/ux/DemoBanner';
 import { useHarvestFilters } from '@/hooks/useHarvestFilters';
 import { useHarvestOpportunities } from '@/hooks/useHarvestOpportunities';
 import { useWallet } from '@/contexts/WalletContext';
@@ -102,7 +102,7 @@ export default function HarvestPro() {
     if (!shouldUseDemoMode && !isLoading) {
       refetch();
     }
-  }, [shouldUseDemoMode]);
+  }, [shouldUseDemoMode, isLoading, refetch]);
 
   // Mock data for demo mode
   const mockSummary: OpportunitiesSummary = {
@@ -517,42 +517,42 @@ export default function HarvestPro() {
             </HarvestProErrorBoundary>
 
             {/* Demo State Switcher */}
-            <div className="mt-8 text-center py-6 text-gray-400 rounded-2xl border border-white/10 bg-white/5">
+            <div className="mt-8 rounded-[28px] border border-white/8 bg-[#0b0b0c] py-6 text-center text-[#9c978f] shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
               <p className="text-sm mb-4">Demo State Switcher</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button
                   onClick={() => setViewState('loading')}
-                  className="px-3 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#cfc8bd] transition-colors hover:bg-white/[0.08]"
                 >
                   Show Loading
                 </button>
                 <button
                   onClick={() => setViewState('no-wallet')}
-                  className="px-3 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#cfc8bd] transition-colors hover:bg-white/[0.08]"
                 >
                   Show No Wallet
                 </button>
                 <button
                   onClick={() => setViewState('no-opportunities')}
-                  className="px-3 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#cfc8bd] transition-colors hover:bg-white/[0.08]"
                 >
                   Show No Opportunities
                 </button>
                 <button
                   onClick={() => setViewState('all-harvested')}
-                  className="px-3 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#cfc8bd] transition-colors hover:bg-white/[0.08]"
                 >
                   Show All Harvested
                 </button>
                 <button
                   onClick={() => setViewState('error')}
-                  className="px-3 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/15 transition-colors"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-[#cfc8bd] transition-colors hover:bg-white/[0.08]"
                 >
                   Show Error
                 </button>
                 <button
                   onClick={() => setViewState('normal')}
-                  className="px-3 py-1 text-xs rounded-lg bg-[#ed8f2d] hover:bg-[#B8722E] transition-colors"
+                  className="rounded-lg bg-[#f6f2ea] px-3 py-1 text-xs text-black transition-colors hover:bg-white"
                 >
                   Reset
                 </button>
@@ -563,23 +563,25 @@ export default function HarvestPro() {
     }
   };
 
+  const totalLoss = summary?.totalHarvestableLoss ?? 0;
+  const netBenefit = summary?.estimatedNetBenefit ?? 0;
+  const eligibleCount = summary?.eligibleTokensCount ?? 0;
+
   return (
-    <div className="min-h-screen relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-[#0A0E1A] dark:to-[#111827] bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]">
+    <div className="min-h-screen relative overflow-hidden bg-[#050505] text-[#f6f2ea]">
       <PullToRefreshIndicator
         isPulling={isPulling}
         isRefreshing={isPullRefreshing}
         pullDistance={pullDistance}
         threshold={threshold}
       />
-      {/* Background Effects - Theme Aware */}
       <motion.div
-        className="absolute inset-0 pointer-events-none dark:block hidden"
+        className="absolute inset-0 pointer-events-none"
         animate={{
           background: [
-            'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(237,143,45,0.12) 0%, transparent 70%)',
-            'radial-gradient(ellipse 60% 40% at 20% 80%, rgba(20,184,166,0.08) 0%, transparent 70%)',
-            'radial-gradient(ellipse 70% 45% at 50% 50%, rgba(237,143,45,0.10) 0%, transparent 70%)',
-            'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(237,143,45,0.12) 0%, transparent 70%)',
+            'radial-gradient(circle at top right, rgba(126,163,242,0.16), transparent 28%), radial-gradient(circle at bottom left, rgba(255,255,255,0.04), transparent 35%)',
+            'radial-gradient(circle at top right, rgba(208,163,92,0.14), transparent 30%), radial-gradient(circle at bottom left, rgba(255,255,255,0.05), transparent 38%)',
+            'radial-gradient(circle at top right, rgba(126,163,242,0.16), transparent 28%), radial-gradient(circle at bottom left, rgba(255,255,255,0.04), transparent 35%)',
           ],
         }}
         transition={{
@@ -589,25 +591,6 @@ export default function HarvestPro() {
         }}
         aria-hidden="true"
       />
-      <motion.div
-        className="absolute inset-0 pointer-events-none dark:hidden block"
-        animate={{
-          background: [
-            'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(251,191,36,0.08) 0%, transparent 70%)',
-            'radial-gradient(ellipse 60% 40% at 20% 80%, rgba(20,184,166,0.05) 0%, transparent 70%)',
-            'radial-gradient(ellipse 70% 45% at 50% 50%, rgba(251,191,36,0.06) 0%, transparent 70%)',
-            'radial-gradient(ellipse 80% 50% at 80% 20%, rgba(251,191,36,0.08) 0%, transparent 70%)',
-          ],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: [0.25, 1, 0.5, 1],
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Skip to main content link for screen readers */}
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -623,61 +606,109 @@ export default function HarvestPro() {
           onEnterDemoMode={handleServiceDegradation}
           cacheKey="harvestpro-header"
         >
-          <GlobalHeader />
+          <GlobalHeader className="border-white/8 bg-[#050505]/94" />
         </HarvestProErrorBoundary>
       </header>
 
-      {/* Demo Banner - DISABLED */}
-      {/* {isDemo && (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <HarvestProErrorBoundary
-            component="demo-banner"
-            enableRecovery={false}
-          >
-            <DemoBanner 
-              onExitDemo={() => setDemoMode(false)}
-            />
-          </HarvestProErrorBoundary>
-        </div>
-      )} */}
-
-      {/* Main Content - Responsive Container */}
-      <main 
-        id="main-content"
-        role="main"
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28"
-        aria-label="HarvestPro tax-loss harvesting opportunities"
-      >
-        {/* Page Title for Screen Readers */}
-        <h1 className="sr-only">HarvestPro - Tax-Loss Harvesting Opportunities</h1>
-
-        {/* Filter Chips - Horizontally scrollable on mobile */}
-        <section aria-labelledby="filters-heading">
-          <h2 id="filters-heading" className="sr-only">Filter Opportunities</h2>
-          <HarvestProErrorBoundary
-            component="filters"
-            enableDemoMode={true}
-            onEnterDemoMode={handleServiceDegradation}
-          >
-            <FilterChipRow className="mb-6" />
-          </HarvestProErrorBoundary>
-        </section>
-
-        {/* Content Area */}
-        <section aria-labelledby="opportunities-heading">
-          <h2 id="opportunities-heading" className="sr-only">Harvest Opportunities</h2>
-          <HarvestProErrorBoundary
-            component="main-content"
-            enableDemoMode={true}
-            onEnterDemoMode={handleServiceDegradation}
-            cacheKey="harvestpro-opportunities"
-          >
-            <div>
-              {renderContent()}
+      <div className="relative mx-auto max-w-[1600px] px-4 pb-28 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-[#d6c08d]">
+              <Sparkles className="h-3.5 w-3.5" />
+              HarvestPro
             </div>
-          </HarvestProErrorBoundary>
-        </section>
-      </main>
+            <h1 className="text-3xl tracking-tight text-[#f6f2ea] sm:text-4xl">Tax-aware exits, without noise.</h1>
+            <p className="mt-2 max-w-3xl text-sm text-[#9c978f] sm:text-base">
+              Review live harvesting opportunities, compare net benefit, and move through execution from one quieter surface.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <main
+            id="main-content"
+            role="main"
+            className="min-w-0"
+            aria-label="HarvestPro tax-loss harvesting opportunities"
+          >
+            <h1 className="sr-only">HarvestPro - Tax-Loss Harvesting Opportunities</h1>
+
+            <section aria-labelledby="filters-heading">
+              <h2 id="filters-heading" className="sr-only">Filter Opportunities</h2>
+              <HarvestProErrorBoundary
+                component="filters"
+                enableDemoMode={true}
+                onEnterDemoMode={handleServiceDegradation}
+              >
+                <FilterChipRow className="mb-6" />
+              </HarvestProErrorBoundary>
+            </section>
+
+            <section aria-labelledby="opportunities-heading">
+              <h2 id="opportunities-heading" className="sr-only">Harvest Opportunities</h2>
+              <HarvestProErrorBoundary
+                component="main-content"
+                enableDemoMode={true}
+                onEnterDemoMode={handleServiceDegradation}
+                cacheKey="harvestpro-opportunities"
+              >
+                <div>
+                  {renderContent()}
+                </div>
+              </HarvestProErrorBoundary>
+            </section>
+          </main>
+
+          <aside className="space-y-6">
+            <section className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Opportunity read</p>
+              <div className="mt-4 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                  <span className="text-sm text-[#9c978f]">Harvestable loss</span>
+                  <span className="text-sm text-[#f6f2ea]">${totalLoss.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                  <span className="text-sm text-[#9c978f]">Net benefit</span>
+                  <span className="text-sm text-[#f6f2ea]">${netBenefit.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[#9c978f]">Eligible lots</span>
+                  <span className="text-sm text-[#f6f2ea]">{eligibleCount}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(208,163,92,0.16),rgba(255,255,255,0.02))] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-[#e4c998]">
+                <Shield className="h-3.5 w-3.5" />
+                Mode
+              </div>
+              <p
+                className="mt-4 text-3xl text-[#f6f2ea]"
+                style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+              >
+                {shouldUseDemoMode ? 'Demo' : 'Live'}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-[#b8b2a7]">
+                {shouldUseDemoMode
+                  ? 'Showing simulated opportunities for walkthrough and review.'
+                  : 'Using the authenticated harvesting dataset for the active wallet scope.'}
+              </p>
+            </section>
+
+            <section className="rounded-[30px] border border-white/8 bg-[#0b0b0c] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)]">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">
+                <Activity className="h-3.5 w-3.5" />
+                Last refresh
+              </div>
+              <p className="mt-4 text-lg text-[#f6f2ea]">{lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+              <p className="mt-2 text-sm leading-6 text-[#9c978f]">
+                Refresh stays manual here to avoid noisy polling during execution review.
+              </p>
+            </section>
+          </aside>
+        </div>
+      </div>
 
       {/* Footer Navigation */}
       <footer role="contentinfo">
@@ -685,7 +716,7 @@ export default function HarvestPro() {
           component="footer"
           enableRecovery={false}
         >
-          <FooterNav />
+          <FooterNav currentRoute="/harvestpro" />
         </HarvestProErrorBoundary>
       </footer>
 

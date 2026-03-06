@@ -1,162 +1,157 @@
-/**
- * HarvestPro Page Routing Test
- * 
- * Tests that the HarvestPro page renders correctly when accessed via /harvestpro route
- * Requirements: Enhanced Req 18 AC1 (responsive nav)
- * Design: Navigation Architecture → Route Canonicalization
- */
-
+import React from 'react';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HarvestPro from '@/pages/HarvestPro';
 
-// Mock the required hooks and contexts
+const mockUseDemoMode = vi.fn();
+
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  },
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/lib/ux/DemoModeManager', () => ({
+  useDemoMode: () => mockUseDemoMode(),
+}));
+
 vi.mock('@/contexts/WalletContext', () => ({
   useWallet: () => ({
     connectedWallets: [],
     activeWallet: null,
-    isConnecting: false
-  })
+    isAuthenticated: false,
+  }),
 }));
 
 vi.mock('@/hooks/useHarvestFilters', () => ({
   useHarvestFilters: () => ({
-    filteredOpportunities: [], // This is what was missing!
+    filteredOpportunities: [],
     isFiltered: false,
     activeFilterCount: 0,
-    filters: {
-      search: '',
-      types: [],
-      wallets: [],
-      riskLevels: [],
-      minBenefit: 0,
-      holdingPeriod: 'all',
-      gasEfficiency: 'all',
-      liquidity: 'all',
-      sort: 'net-benefit-desc'
-    },
-    setFilters: vi.fn(),
-    resetFilters: vi.fn()
-  })
+  }),
 }));
 
 vi.mock('@/hooks/useHarvestOpportunities', () => ({
   useHarvestOpportunities: () => ({
-    opportunities: [],
-    summary: {
-      totalHarvestableLoss: 0,
-      estimatedNetBenefit: 0,
-      eligibleTokensCount: 0,
-      gasEfficiencyScore: 'A'
-    },
+    data: null,
     isLoading: false,
-    error: null,
-    refetch: vi.fn()
-  })
+    isError: false,
+    refetch: vi.fn(),
+  }),
 }));
 
 vi.mock('@/hooks/usePullToRefresh', () => ({
   usePullToRefresh: () => ({
+    isPulling: false,
     isRefreshing: false,
-    pullToRefreshProps: {}
-  })
+    pullDistance: 0,
+    threshold: 80,
+  }),
 }));
 
-vi.mock('@/lib/harvestpro/disclosure', () => ({
-  shouldShowDisclosure: () => false,
-  saveDisclosureAcceptance: vi.fn()
-}));
-
-// Mock framer-motion to avoid animation issues
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    header: ({ children, ...props }: any) => <header {...props}>{children}</header>,
-    main: ({ children, ...props }: any) => <main {...props}>{children}</main>
+vi.mock('@/lib/harvestpro/service-availability', () => ({
+  HarvestProService: {},
+  serviceAvailability: {
+    startMonitoringAll: vi.fn(),
+    cleanup: vi.fn(),
+    getHealthSummary: () => ({ overallHealth: 'healthy' }),
   },
-  AnimatePresence: ({ children }: any) => children
 }));
 
-const renderHarvestProWithRouter = (initialPath = '/harvestpro') => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false }
-    }
-  });
+vi.mock('@/lib/harvestpro/performance-monitor', () => ({
+  harvestProPerformanceMonitor: {
+    measureLoadingState: (_label: string, fn: () => void) => fn(),
+    measureInteraction: (_label: string, fn: () => void) => fn(),
+    measureCSVGeneration: (_label: string, fn: () => void) => fn(),
+  },
+}));
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <HarvestPro />
-      </MemoryRouter>
-    </QueryClientProvider>
+vi.mock('@/components/header/GlobalHeader', () => ({
+  GlobalHeader: ({ className }: { className?: string }) => (
+    <div data-testid="global-header" className={className}>
+      Global Header
+    </div>
+  ),
+}));
+
+vi.mock('@/components/layout/FooterNav', () => ({
+  FooterNav: ({ currentRoute }: { currentRoute?: string }) => (
+    <footer data-testid="footer-nav">Footer {currentRoute}</footer>
+  ),
+}));
+
+vi.mock('@/components/ui/PullToRefreshIndicator', () => ({
+  PullToRefreshIndicator: () => null,
+}));
+
+vi.mock('@/components/harvestpro/HarvestProErrorBoundary', () => ({
+  HarvestProErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/components/harvestpro', () => ({
+  FilterChipRow: () => <div data-testid="filter-chip-row">Filter chips</div>,
+  HarvestSummaryCard: () => <div>Summary card</div>,
+  HarvestOpportunityCard: () => <div>Opportunity card</div>,
+  HarvestDetailModal: () => null,
+  HarvestSuccessScreen: () => null,
+  SummaryCardSkeleton: () => <div>Summary loading</div>,
+  OpportunityCardSkeletonGrid: () => <div>Opportunity loading</div>,
+  NoWalletsConnected: () => <div>No Wallets Connected</div>,
+  NoOpportunitiesDetected: () => <div>No Opportunities Detected</div>,
+  AllOpportunitiesHarvested: () => <div>All Opportunities Harvested</div>,
+  APIFailureFallback: () => <div>API Failure</div>,
+}));
+
+const renderHarvestProWithRouter = (initialPath = '/harvestpro') =>
+  render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <HarvestPro />
+    </MemoryRouter>
   );
-};
 
 describe('HarvestPro Page Routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseDemoMode.mockReturnValue({
+      isDemo: false,
+      setDemoMode: vi.fn(),
+    });
   });
 
-  test('HarvestPro page renders when accessed via /harvestpro route', () => {
+  test('renders the new HarvestPro shell at /harvestpro', () => {
     renderHarvestProWithRouter('/harvestpro');
-    
-    // Check that the HarvestPro header is rendered
-    expect(screen.getByText('HarvestPro')).toBeInTheDocument();
-    
-    // Check that the demo/live toggle is present
-    expect(screen.getByText('Demo')).toBeInTheDocument();
+
+    expect(screen.getByTestId('global-header')).toBeInTheDocument();
+    expect(screen.getByText('Tax-aware exits, without noise.')).toBeInTheDocument();
+    expect(screen.getByText(/review live harvesting opportunities/i)).toBeInTheDocument();
+    expect(screen.getByTestId('filter-chip-row')).toBeInTheDocument();
+    expect(screen.getByTestId('footer-nav')).toHaveTextContent('Footer /harvestpro');
+  });
+
+  test('shows the current empty-state content when there are no opportunities', () => {
+    renderHarvestProWithRouter('/harvestpro');
+
+    expect(screen.getByText('No Opportunities Detected')).toBeInTheDocument();
+  });
+
+  test('renders live-mode helper copy when demo mode is off', () => {
+    renderHarvestProWithRouter('/harvestpro');
+
     expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByText(/authenticated harvesting dataset/i)).toBeInTheDocument();
   });
 
-  test('HarvestPro page includes FooterNav component', () => {
-    renderHarvestProWithRouter('/harvestpro');
-    
-    // Check that footer navigation is present
-    const footerNav = screen.getByRole('navigation', { name: 'Main navigation' });
-    expect(footerNav).toBeInTheDocument();
-    
-    // Check that HarvestPro nav item is active
-    const harvestNavItem = screen.getByLabelText('Navigate to Harvest tax optimization');
-    expect(harvestNavItem).toHaveAttribute('aria-current', 'page');
-  });
+  test('renders demo-mode helper copy when demo mode is on', () => {
+    mockUseDemoMode.mockReturnValue({
+      isDemo: true,
+      setDemoMode: vi.fn(),
+    });
 
-  test('HarvestPro page shows no wallets connected state by default', () => {
     renderHarvestProWithRouter('/harvestpro');
-    
-    // Since we mocked no connected wallets, should show the no wallets state
-    // The exact text depends on the component implementation
-    expect(screen.getByText(/connect/i)).toBeInTheDocument();
-  });
 
-  test('HarvestPro page has correct document structure', () => {
-    renderHarvestProWithRouter('/harvestpro');
-    
-    // Check that main content area exists
-    const mainContent = screen.getByRole('main');
-    expect(mainContent).toBeInTheDocument();
-    
-    // Check that header exists
-    const header = document.querySelector('header');
-    expect(header).toBeInTheDocument();
-    
-    // Check that footer exists
-    const footer = document.querySelector('footer');
-    expect(footer).toBeInTheDocument();
-  });
-
-  test('HarvestPro page is accessible via direct URL navigation', () => {
-    // Test that the page can be accessed directly via URL
-    renderHarvestProWithRouter('/harvestpro');
-    
-    // Verify the page loads without errors
-    expect(screen.getByText('HarvestPro')).toBeInTheDocument();
-    
-    // Verify that the URL would be correct (in a real browser)
-    // This is implicitly tested by MemoryRouter with initialEntries
-    expect(true).toBe(true); // Placeholder assertion
+    expect(screen.getByText('Demo')).toBeInTheDocument();
+    expect(screen.getByText(/showing simulated opportunities/i)).toBeInTheDocument();
   });
 });
