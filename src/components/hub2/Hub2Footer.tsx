@@ -35,7 +35,7 @@ const navItems = [
 ];
 
 const quickActions = [
-  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced' },
+  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio' },
   { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner' },
   { id: 'guardian', label: 'Guardian', icon: Shield, path: '/guardian' },
   { id: 'hunter', label: 'Hunter', icon: Target, path: '/hunter' },

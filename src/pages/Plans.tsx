@@ -29,7 +29,7 @@ export default function Plans() {
         title: "Plan Updated!",
         description: `Successfully upgraded to ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan.`,
       });
-      navigate('/portfolio-enhanced');
+      navigate('/portfolio');
     } catch (error) {
       toast({
         title: "Upgrade Failed",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
@@ -48,7 +48,6 @@ import PortfolioEnhanced from "./pages/PortfolioEnhanced";
 import PortfolioIntelligence from "./pages/PortfolioIntelligence";
 import Portfolio from "./pages/Portfolio";
 import PortfolioUnified from "./pages/PortfolioUnified";
-import PortfolioOverview from "./pages/portfolio/index";
 import PortfolioRisk from "./pages/portfolio/risk";
 import PortfolioGuardian from "./pages/portfolio/guardian";
 import PortfolioStress from "./pages/portfolio/stress";
@@ -191,7 +190,7 @@ const App = () => {
                   <Route path="/admin/ops/health" element={<HealthEndpoint />} />
                   <Route path="/admin/onboarding" element={<OnboardingAnalytics />} />
                   <Route path="/health" element={<HealthCheck />} />
-                  <Route path="/portfolio-enhanced" element={<PortfolioOverview />} />
+                  <Route path="/portfolio-enhanced" element={<Navigate to="/portfolio" replace />} />
                   <Route path="/portfolio-intelligence" element={<PortfolioIntelligence />} />
                   <Route path="/portfolio" element={<PortfolioUnified />} />
                   <Route path="/portfolio/risk" element={<PortfolioRisk />} />

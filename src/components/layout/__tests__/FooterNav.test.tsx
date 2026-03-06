@@ -79,32 +79,32 @@ describe('FooterNav', () => {
       renderFooterNav();
       
       const guardianLink = screen.getByLabelText('Navigate to Guardian security scanner');
-      expect(guardianLink).toHaveClass('text-white');
-      expect(guardianLink).toHaveClass('opacity-100');
+      expect(guardianLink).toHaveClass('bg-[#111111]');
+      expect(guardianLink).toHaveClass('text-[#f6f2ea]');
     });
 
     test('shows 2px top border for active navigation item - R9.NAV.ACTIVE_VISUAL', () => {
       const { container } = renderFooterNav();
       
       // Look for the top border element
-      const topBorder = container.querySelector('.absolute.top-0');
+      const topBorder = container.querySelector('.absolute.top-1');
       expect(topBorder).toBeInTheDocument();
-      expect(topBorder).toHaveClass('h-0.5'); // 2px border
-      expect(topBorder).toHaveClass('bg-gradient-to-r');
+      expect(topBorder).toHaveClass('h-1');
+      expect(topBorder).toHaveClass('bg-[#7ea3f2]');
     });
 
     test('applies bold text to active navigation item - R9.NAV.ACTIVE_VISUAL', () => {
       renderFooterNav();
       
       const guardianLabel = screen.getByText('Guardian');
-      expect(guardianLabel).toHaveClass('font-bold');
+      expect(guardianLabel).toHaveClass('font-semibold');
     });
 
     test('applies reduced opacity to non-active items - R9.NAV.ACTIVE_VISUAL', () => {
       renderFooterNav();
       
       const hunterLink = screen.getByLabelText('Navigate to Hunter opportunities');
-      expect(hunterLink).toHaveClass('opacity-60');
+      expect(hunterLink).toHaveClass('text-[#7f7a72]');
     });
 
     test('uses smooth transitions - R9.NAV.SMOOTH_TRANSITIONS', () => {
@@ -152,7 +152,7 @@ describe('FooterNav', () => {
       const guardianLink = screen.getByLabelText('Navigate to Guardian security scanner');
       expect(guardianLink).toHaveClass('focus:outline-none');
       expect(guardianLink).toHaveClass('focus:ring-2');
-      expect(guardianLink).toHaveClass('focus:ring-cyan-500');
+      expect(guardianLink).toHaveClass('focus:ring-[#6c8ed6]');
     });
   });
 
@@ -180,7 +180,7 @@ describe('FooterNav', () => {
     test('has glassmorphism backdrop', () => {
       const { container } = renderFooterNav();
       
-      const backdrop = container.querySelector('.backdrop-blur-md');
+      const backdrop = container.querySelector('.backdrop-blur-xl');
       expect(backdrop).toBeInTheDocument();
     });
 

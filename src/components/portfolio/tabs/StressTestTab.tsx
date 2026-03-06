@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Slider } from '@/components/ui/slider';
 import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
-import { usePortfolioSummary } from '@/hooks/portfolio/usePortfolioSummary';
 import {
   Activity,
   Bitcoin,
@@ -34,6 +33,8 @@ interface StressTestTabProps {
   walletScope: WalletScope;
   freshness: FreshnessConfidence;
   onWalletScopeChange?: (scope: WalletScope) => void;
+  portfolioValue?: number;
+  isLoading?: boolean;
 }
 
 const scenarioMeta: Array<{
@@ -153,7 +154,12 @@ const severityBg = (value: number) => {
   return 'bg-red-500/10 border-red-500/30';
 };
 
-export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
+export function StressTestTab({
+  walletScope,
+  freshness,
+  portfolioValue: providedPortfolioValue,
+  isLoading: isPortfolioLoading = false,
+}: StressTestTabProps) {
   const [view, setView] = useState<'custom' | 'predefined' | 'results'>('custom');
   const [isRunning, setIsRunning] = useState(false);
   const [scenarios, setScenarios] = useState<ScenarioConfig>({
@@ -175,22 +181,7 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
     recommendations: string[];
   } | null>(null);
 
-  // Get real portfolio data
-  const { data: portfolioData, isLoading: portfolioLoading } = usePortfolioSummary();
-  
-  // Use real portfolio value or fallback to demo value
-  const portfolioValue = portfolioData?.totalValue || 2450000;
-  
-  // Log when portfolio data changes
-  useEffect(() => {
-    if (portfolioData) {
-      console.log('📊 Portfolio data loaded:', {
-        totalValue: portfolioValue,
-        pnl24h: portfolioData.pnl24hPct,
-        riskScore: portfolioData.riskScore
-      });
-    }
-  }, [portfolioData, portfolioValue]);
+  const portfolioValue = providedPortfolioValue && providedPortfolioValue > 0 ? providedPortfolioValue : 0;
 
   const scenarioSummaries = useMemo(() => {
     return scenarioMeta.map((scenario) => {
@@ -409,13 +400,13 @@ export function StressTestTab({ walletScope, freshness }: StressTestTabProps) {
           <p className="text-xs sm:text-sm text-gray-300 mt-1">
             Simulate market conditions
           </p>
-          {portfolioLoading && (
+          {isPortfolioLoading && (
             <p className="text-xs text-yellow-400 mt-1 flex items-center gap-2">
               <div className="w-3 h-3 border-2 border-yellow-400/30 border-t-yellow-400 rounded-full animate-spin" />
               <span>Loading...</span>
             </p>
           )}
-          {!portfolioLoading && portfolioData && (
+          {!isPortfolioLoading && portfolioValue > 0 && (
             <p className="text-xs text-[#00F5A0] mt-1 font-medium">
               ✓ {formatCurrency(portfolioValue)}
             </p>

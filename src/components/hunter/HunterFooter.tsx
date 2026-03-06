@@ -17,7 +17,7 @@ import { Briefcase, Shield, Radar, Target, Home } from 'lucide-react';
 export function HunterFooter() {
   const appLinks = [
     { label: 'Home', path: '/', icon: Home },
-    { label: 'Portfolio', path: '/portfolio-enhanced', icon: Briefcase },
+    { label: 'Portfolio', path: '/portfolio', icon: Briefcase },
     { label: 'Guardian', path: '/guardian', icon: Shield },
     { label: 'Scanner', path: '/scanner', icon: Radar },
     { label: 'Hunter', path: '/hunter', icon: Target },

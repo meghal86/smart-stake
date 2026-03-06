@@ -243,7 +243,7 @@ describe('GuardianEnhanced Phase 1', () => {
 
     expect(screen.getByText('Guardian scan unavailable')).toBeInTheDocument();
     expect(screen.getByText('Guardian scan is currently unavailable.')).toBeInTheDocument();
-    expect(screen.getByText('Scan required')).toBeInTheDocument();
+    expect(screen.getAllByText('Scan required').length).toBeGreaterThan(0);
   });
 
   it('uses deterministic demo data when demo mode is explicitly enabled', async () => {
@@ -254,9 +254,11 @@ describe('GuardianEnhanced Phase 1', () => {
     await user.click(screen.getByRole('button', { name: /enter demo mode/i }));
 
     expect(screen.queryByText('Guardian scan unavailable')).not.toBeInTheDocument();
-    expect(screen.getByText('DEMO DATA')).toBeInTheDocument();
-    expect(screen.getByText('78')).toBeInTheDocument();
-    expect(screen.getByText('Moderate Risk')).toBeInTheDocument();
+    expect(screen.getAllByText('DEMO DATA').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('78').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText((text) => text === 'Moderate Risk' || text === 'A little attention helps').length
+    ).toBeGreaterThan(0);
   });
 
   it('scans every wallet from the live wallet list when scan all is requested', async () => {

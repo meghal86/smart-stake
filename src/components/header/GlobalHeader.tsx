@@ -23,18 +23,6 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   
   const { connectedWallets, activeWallet, isLoading: walletsLoading } = useWallet()
   const { isDemo, setDemoMode } = useDemoMode()
-  
-  // Debug logging for wallet state
-  useEffect(() => {
-    console.log('🔍 GlobalHeader - Wallet State:', {
-      user: !!user,
-      walletsLoading,
-      connectedWalletsCount: connectedWallets.length,
-      activeWallet,
-      isDemo,
-      shouldShowWalletChip: user && !walletsLoading && (connectedWallets.length > 0 || isDemo)
-    })
-  }, [user, walletsLoading, connectedWallets.length, activeWallet, isDemo])
 
   useEffect(() => {
     if (showMenu && buttonRef.current) {
@@ -63,7 +51,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
       <>
         <div className="fixed inset-0 z-[9998]" onClick={() => setShowMenu(false)} />
         <div 
-          className="fixed w-56 rounded-lg bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-[10000]"
+          className="fixed z-[10000] w-56 rounded-[22px] border border-black/10 bg-[rgba(245,243,238,0.98)] py-1 shadow-2xl dark:border-white/8 dark:bg-[rgba(10,10,10,0.98)]"
           style={{ top: `${menuPosition.top}px`, right: `${menuPosition.right}px` }}
         >
           {content}
@@ -74,11 +62,25 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
   }
 
   return (
-    <header className={cn('h-16 sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50', className)}>
-      <div className="mx-auto h-full max-w-7xl px-6">
+    <header className={cn('sticky top-0 z-50 border-b border-black/8 bg-[#f3f1ed]/92 backdrop-blur-xl dark:border-white/8 dark:bg-[#050505]/92', className)}>
+      <div className="mx-auto h-16 max-w-7xl px-4 sm:px-6">
         <div className="flex h-full items-center justify-between">
-          <button onClick={() => navigate(user ? '/cockpit' : '/')} className="text-xl font-bold text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
-            AlphaWhale
+          <button
+            onClick={() => navigate(user ? '/cockpit' : '/')}
+            className="flex items-center gap-3 text-left transition-opacity hover:opacity-80"
+          >
+            <img src="/header.png" alt="WhalePulse" className="h-8 w-8 rounded-full" />
+            <div className="flex flex-col">
+              <span
+                className="text-lg font-semibold tracking-tight text-[#111111] dark:text-[#f5f2ea]"
+                style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+              >
+                WhalePulse
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.22em] text-[#7a766e] dark:text-[#8f8a82]">
+                Overview
+              </span>
+            </div>
           </button>
 
           <div className="flex items-center gap-3 relative z-[60]">
@@ -102,31 +104,35 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
                 {/* Theme Toggle */}
                 <ThemeToggle />
                 
-                <button ref={buttonRef} onClick={() => setShowMenu(!showMenu)} className="w-9 h-9 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center hover:opacity-90 transition-opacity">
-                  <User className="w-4 h-4 text-white dark:text-slate-900" />
+                <button
+                  ref={buttonRef}
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-[#111111] transition hover:bg-[#ece9e2] dark:border-white/10 dark:bg-[#111111] dark:text-[#f5f2ea] dark:hover:bg-[#171717]"
+                >
+                  <User className="w-4 h-4" />
                 </button>
                 {renderMenu(
                   <>
-                    <button onClick={() => { navigate('/profile'); setShowMenu(false) }} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
+                    <button onClick={() => { navigate('/profile'); setShowMenu(false) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">
                       <User className="w-4 h-4" /> Profile
                     </button>
-                    <button onClick={() => { navigate('/settings'); setShowMenu(false) }} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
+                    <button onClick={() => { navigate('/settings'); setShowMenu(false) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">
                       <Settings className="w-4 h-4" /> Settings
                     </button>
-                    <button onClick={() => { navigate('/subscription'); setShowMenu(false) }} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
+                    <button onClick={() => { navigate('/subscription'); setShowMenu(false) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">
                       <CreditCard className="w-4 h-4" /> Subscription
                     </button>
-                    <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
-                    <button onClick={() => { setDemoMode(!isDemo); setShowMenu(false) }} className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between">
+                    <div className="my-1 border-t border-black/8 dark:border-white/8" />
+                    <button onClick={() => { setDemoMode(!isDemo); setShowMenu(false) }} className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">
                       <span className="flex items-center gap-2">
                         <TestTube2 className="w-4 h-4" /> Demo Mode
                       </span>
-                      <div className={cn("w-9 h-5 rounded-full transition-colors", isDemo ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600")}>
+                      <div className={cn("h-5 w-9 rounded-full transition-colors", isDemo ? "bg-[#5f83c2]" : "bg-[#d6d1c8] dark:bg-[#2f2f2f]")}>
                         <div className={cn("w-4 h-4 rounded-full bg-white shadow-sm transition-transform mt-0.5", isDemo ? "ml-4" : "ml-0.5")} />
                       </div>
                     </button>
-                    <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
-                    <button onClick={handleSignOut} className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2">
+                    <div className="my-1 border-t border-black/8 dark:border-white/8" />
+                    <button onClick={handleSignOut} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#8a6469] hover:bg-[#fbf1f4] dark:text-[#d7aeb6] dark:hover:bg-[#1a1013]">
                       <LogOut className="w-4 h-4" /> Sign out
                     </button>
                   </>
@@ -136,13 +142,13 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => navigate('/signin')} 
-                  className="px-4 py-2 rounded-full text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-[#44423d] transition-colors hover:bg-[#ece9e2] dark:text-[#d7d1c7] dark:hover:bg-[#171717]"
                 >
                   Sign In
                 </button>
                 <button 
                   onClick={() => navigate('/signup')} 
-                  className="px-4 py-2 rounded-full bg-cyan-500 text-sm font-medium text-white hover:bg-cyan-600 transition-colors"
+                  className="rounded-full border border-black/10 bg-[#111111] px-4 py-2 text-sm font-medium text-[#f5f2ea] transition-colors hover:bg-[#1a1a1a] dark:border-white/10 dark:bg-white dark:text-black dark:hover:bg-[#ece9e2]"
                 >
                   Sign Up
                 </button>

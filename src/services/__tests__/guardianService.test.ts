@@ -13,8 +13,6 @@ vi.mock('@supabase/supabase-js', () => ({
 describe('guardianService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key';
   });
 
   it('maps a live Guardian scan response without falling back to fake data', async () => {
@@ -88,6 +86,12 @@ describe('guardianService', () => {
         riskLevel: 'critical',
       }),
     ]);
+    expect(invokeMock).toHaveBeenCalledWith('guardian-scan-v2', {
+      body: {
+        wallet_address: '0x1234567890123456789012345678901234567890',
+        network: 'ethereum',
+      },
+    });
   });
 
   it('throws when the scan backend fails instead of inventing a random score', async () => {

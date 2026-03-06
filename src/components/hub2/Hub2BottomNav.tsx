@@ -23,7 +23,7 @@ const navItems = [
   { id: 'explore', label: 'Explore', icon: Search, path: '/hub2/explore', useCanonical: false },
   { id: 'alerts', label: 'Alerts', icon: Bell, path: '/hub2/alerts', useCanonical: false },
   { id: 'watchlist', label: 'Watch', icon: Star, path: '/hub2/watchlist', useCanonical: false },
-  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio-enhanced', useCanonical: false },
+  { id: 'portfolio', label: 'Portfolio', icon: Briefcase, path: '/portfolio', useCanonical: false },
   { id: 'scanner', label: 'Scanner', icon: Radar, path: '/scanner', useCanonical: false },
   { id: 'guardian', label: 'Guardian', icon: Shield, navId: 'guardian', useCanonical: true },
   { id: 'hunter', label: 'Hunter', icon: Target, navId: 'hunter', useCanonical: true },
@@ -45,7 +45,7 @@ export default function Hub2BottomNav({ className }: Hub2BottomNavProps) {
     if (path.startsWith('/hub2/explore')) return 'explore';
     if (path.startsWith('/hub2/alerts')) return 'alerts';
     if (path.startsWith('/hub2/watchlist')) return 'watchlist';
-    if (path.startsWith('/portfolio-enhanced')) return 'portfolio';
+    if (path.startsWith('/portfolio')) return 'portfolio';
     if (path.startsWith('/scanner')) return 'scanner';
     if (path.startsWith('/guardian')) return 'guardian';
     if (path.startsWith('/hunter')) return 'hunter';

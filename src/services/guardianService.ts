@@ -1,6 +1,6 @@
 /**
  * Guardian Service
- * 
+ *
  * Provides security scanning and risk assessment functionality.
  * Calls the guardian-scan-v2 edge function for real security data.
  */
@@ -9,10 +9,10 @@ import { createClient } from '@supabase/supabase-js';
 import {
   buildDemoGuardianPayload,
   normalizeGuardianScanPayload,
-  type GuardianApproval,
-  type GuardianFinding,
   type GuardianNormalizedScanResult,
+  type GuardianFinding,
 } from '@/lib/guardian/scan-contract';
+import { env } from '@/lib/env';
 
 export interface GuardianScanRequest {
   walletAddress: string;
@@ -39,21 +39,19 @@ export interface GuardianRevokeResponse {
   [key: string]: unknown;
 }
 
+let guardianSupabaseClient:
+  | ReturnType<typeof createClient>
+  | null = null;
+
 function getSupabaseClient() {
-  // Lazy load Supabase client to avoid issues with process.env
-  if (typeof window === 'undefined') {
-    // Server-side
-    return createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-  } else {
-    // Client-side (shouldn't happen, but fallback)
-    return createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  if (!guardianSupabaseClient) {
+    guardianSupabaseClient = createClient(
+      env.NEXT_PUBLIC_SUPABASE_URL,
+      env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
   }
+
+  return guardianSupabaseClient;
 }
 
 /**
@@ -61,11 +59,14 @@ function getSupabaseClient() {
  */
 export async function requestGuardianScan(request: GuardianScanRequest): Promise<GuardianScanResult> {
   console.log('🛡️ [Guardian] Attempting to call guardian-scan-v2 edge function for:', request.walletAddress);
-  
+
   const supabase = getSupabaseClient();
-  
+
   const { data, error } = await supabase.functions.invoke('guardian-scan-v2', {
-    body: { address: request.walletAddress }
+    body: {
+      wallet_address: request.walletAddress,
+      network: request.network,
+    },
   });
 
   if (error) {

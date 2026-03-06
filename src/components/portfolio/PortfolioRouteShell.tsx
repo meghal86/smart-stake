@@ -1,602 +1,346 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { OverviewTab } from './tabs/OverviewTab';
-import { PositionsTab } from './tabs/PositionsTab';
-import { AuditTab } from './tabs/AuditTab';
-import { StressTestTab } from './tabs/StressTestTab';
-import { CopilotDialog } from './CopilotDialog';
-import { GlobalHeader } from '@/components/header/GlobalHeader';
-import { FooterNav } from '@/components/layout/FooterNav';
-import { WalletScope, FreshnessConfidence } from '@/types/portfolio';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
-import { useTheme } from '@/contexts/ThemeContext';
-import { useWalletSwitching } from '@/hooks/useWalletSwitching';
-import { usePortfolioIntegration } from '@/hooks/portfolio/usePortfolioIntegration';
-import { useUserAddresses } from '@/hooks/useUserAddresses';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Shield, 
-  Bell, 
-  Sparkles,
-  RefreshCw,
-  AlertTriangle,
-  Activity,
-  Loader2
-} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { RefreshCw, Wallet } from 'lucide-react';
+import { PortfolioExperienceShell } from './PortfolioExperienceShell';
+import { usePortfolioRouteData } from '@/hooks/portfolio/usePortfolioRouteData';
+import { Button } from '@/components/ui/button';
+
+const currency = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value);
+
+const surfaceClass =
+  'rounded-[30px] border border-white/8 bg-[#0b0b0c] shadow-[0_22px_80px_rgba(0,0,0,0.28)]';
 
 export function PortfolioRouteShell() {
-  const { actualTheme } = useTheme();
-  const isDark = actualTheme === 'dark';
-  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'audit' | 'stress'>('overview');
-  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
-
-  // Wallet management
-  const { addresses, loading: addressesLoading } = useUserAddresses();
-  const { 
-    activeWallet, 
-    switchWallet, 
-    isLoading: walletSwitchLoading 
-  } = useWalletSwitching();
-
-  // Determine current wallet scope
-  const walletScope = useMemo<WalletScope>(() => {
-    if (activeWallet) {
-      const wallet = addresses.find(addr => addr.id === activeWallet);
-      if (wallet) {
-        return { mode: 'active_wallet', address: wallet.address as `0x${string}` };
-      }
-    }
-    return { mode: 'all_wallets' };
-  }, [activeWallet, addresses]);
-
-  // Integrate with portfolio APIs - THIS IS THE KEY CHANGE
   const {
-    snapshot,
+    addresses,
+    activeWalletId,
+    setActiveWalletId,
+    activeWallet,
+    walletScopeLabel,
     actions,
     approvals,
-    isLoading: portfolioLoading,
+    freshness,
+    totalValue,
+    dailyDelta,
+    overallRiskScore,
+    trustIndex,
+    highRiskApprovals,
+    chainExposure,
+    topPositions,
+    snapshot,
+    isLoading,
+    isDemo,
     invalidateAll,
-    isDemo
-  } = usePortfolioIntegration({
-    scope: walletScope,
-    enableSnapshot: true,
-    enableActions: true,
-    enableApprovals: true,
-  });
-
-  // Extract data from snapshot or use defaults
-  const portfolioData = useMemo(() => {
-    return {
-      netWorth: snapshot?.netWorth || 0,
-      delta24h: snapshot?.delta24h || 0,
-      freshness: snapshot?.freshness || {
-        freshnessSec: 0,
-        confidence: 0.70,
-        confidenceThreshold: 0.70,
-        degraded: false
-      } as FreshnessConfidence,
-      trustRiskSummary: {
-        trustScore: snapshot?.riskSummary ? Math.max(0, 100 - (snapshot.riskSummary.overallScore * 100)) : 0,
-        riskScore: snapshot?.riskSummary?.overallScore || 0,
-        criticalIssues: snapshot?.riskSummary?.criticalIssues || 0,
-        highRiskApprovals: snapshot?.riskSummary?.highRiskApprovals || 0
-      },
-      alertsCount: actions.filter(a => a.severity === 'critical' || a.severity === 'high').length
-    };
-  }, [snapshot, actions, approvals]);
-
-  // Pull-to-refresh with real data invalidation
-  const handleRefresh = useCallback(async () => {
-    invalidateAll();
-  }, [invalidateAll]);
-
-  const { isPulling, isRefreshing, pullDistance, threshold } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    threshold: 80,
-    disabled: isCopilotOpen,
-  });
-
-  const handleWalletScopeChange = useCallback((scope: WalletScope) => {
-    // When scope changes, find the wallet and switch to it
-    if (scope.mode === 'active_wallet') {
-      const wallet = addresses.find(addr => addr.address.toLowerCase() === scope.address.toLowerCase());
-      if (wallet) {
-        switchWallet(wallet.id);
-      }
-    }
-  }, [addresses, switchWallet]);
-
-  const handleWalletSwitch = useCallback((walletId: string) => {
-    switchWallet(walletId);
-  }, [switchWallet]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  // Tab configuration
-  const tabs = [
-    { 
-      id: 'overview' as const, 
-      label: 'Overview', 
-      component: OverviewTab,
-      icon: DollarSign 
-    },
-    { 
-      id: 'positions' as const, 
-      label: 'Positions', 
-      component: PositionsTab,
-      icon: TrendingUp 
-    },
-    { 
-      id: 'audit' as const, 
-      label: 'Audit', 
-      component: AuditTab,
-      icon: Shield 
-    },
-    { 
-      id: 'stress' as const, 
-      label: 'Stress Test', 
-      component: StressTestTab,
-      icon: Activity 
-    },
-  ];
-
-  const CurrentTabComponent = tabs.find(tab => tab.id === activeTab)?.component || OverviewTab;
+  } = usePortfolioRouteData();
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden"
-      style={{ 
-        background: isDark 
-          ? 'linear-gradient(135deg, #0A0F1F 0%, #0D1B3A 100%)' 
-          : 'linear-gradient(135deg, #F0F6FF 0%, #E0EFFF 100%)'
+    <PortfolioExperienceShell
+      title="Good morning, Meghal"
+      subtitle={
+        isDemo
+          ? 'Demo mode is active. This view is intentionally using sample portfolio data.'
+          : 'Live wallet scope, positions, approvals, and recommended actions in one portfolio surface.'
+      }
+      badge="Portfolio overview"
+      guideContext={{
+        screenLabel: 'Overview',
+        walletScopeLabel,
+        totalValue,
+        dailyDelta,
+        overallRiskScore,
+        trustIndex,
+        approvalsCount: approvals.length,
+        highRiskApprovals,
+        actionTitles: actions.map((action) => action.title),
+        topPositions: topPositions.map((position) => ({ token: position.token, valueUsd: position.valueUsd })),
+        isDemo,
       }}
-    >
-      <PullToRefreshIndicator
-        isPulling={isPulling}
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-        threshold={threshold}
-      />
-
-      {/* Background Effects - Same as Hunter */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        animate={{
-          background: isDark ? [
-            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.05) 50%, transparent 70%)',
-            'linear-gradient(45deg, transparent 20%, rgba(28, 169, 255, 0.08) 50%, transparent 80%)',
-            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.05) 50%, transparent 70%)'
-          ] : [
-            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.03) 50%, transparent 70%)',
-            'linear-gradient(45deg, transparent 20%, rgba(28, 169, 255, 0.05) 50%, transparent 80%)',
-            'linear-gradient(45deg, transparent 30%, rgba(28, 169, 255, 0.03) 50%, transparent 70%)'
-          ]
-        }}
-        style={{
-          backgroundSize: '200% 200%'
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: 'easeInOut'
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Ambient Particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              background: isDark ? 'rgba(28, 169, 255, 0.3)' : 'rgba(28, 169, 255, 0.4)',
-              left: `${15 + i * 12}%`,
-              top: `${10 + (i % 3) * 25}%`,
-              boxShadow: isDark ? '0 0 20px rgba(28, 169, 255, 0.3)' : '0 0 20px rgba(28, 169, 255, 0.4)'
-            }}
-            animate={{
-              y: [0, -80, 0],
-              x: [0, Math.sin(i) * 30, 0],
-              opacity: [0.2, 0.5, 0.2],
-              scale: [1, 1.3, 1]
-            }}
-            transition={{
-              duration: 12 + i * 2,
-              repeat: Infinity,
-              ease: [0.25, 1, 0.5, 1],
-              delay: i * 1.5
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Skip to main content link for screen readers */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        Skip to main content
-      </a>
-
-      {/* Header - Same as Hunter/Harvest */}
-      <header role="banner">
-        <GlobalHeader />
-      </header>
-
-      {/* Wallet Switcher - Hidden on mobile (use GlobalHeader instead), visible on desktop */}
-      {addresses.length > 0 && (
-        <div className={`hidden md:block fixed top-20 left-4 right-4 z-40 backdrop-blur-md border rounded-2xl p-4 ${
-          isDark ? 'bg-white/10 border-[rgba(28,169,255,0.2)]' : 'bg-white/60 border-[rgba(28,169,255,0.3)]'
-        }`}>
-          <div className="flex items-center gap-3">
-            <label className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              Active Wallet:
-            </label>
-            <select
-              value={activeWallet || ''}
-              onChange={(e) => handleWalletSwitch(e.target.value)}
-              disabled={addressesLoading || walletSwitchLoading || portfolioLoading || isDemo}
-              className={`flex-1 px-4 py-2 rounded-xl font-medium transition-colors ${
-                isDark 
-                  ? 'bg-gray-800 border border-gray-600 text-white' 
-                  : 'bg-white border border-gray-300 text-gray-900'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+      actions={
+        <>
+          <Button
+            variant="outline"
+            onClick={() => void invalidateAll()}
+            className="rounded-full border-white/10 bg-white/[0.03] px-5 text-[#f6f2ea] hover:bg-white/[0.08]"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Link to="/portfolio/addresses">
+            <Button className="rounded-full bg-[#f6f2ea] px-5 text-black hover:bg-white">
+              <Wallet className="mr-2 h-4 w-4" />
+              Review wallets
+            </Button>
+          </Link>
+        </>
+      }
+      aside={
+        <>
+          <section className={`${surfaceClass} p-5`}>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Wallet scope</p>
+            <p
+              className="mt-4 text-3xl text-[#f6f2ea]"
+              style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
             >
-              <option value="">All Wallets</option>
-              {addresses.map((addr) => (
-                <option key={addr.id} value={addr.id}>
-                  {addr.label || `${addr.address.slice(0, 6)}...${addr.address.slice(-4)}`}
+              {activeWallet ? activeWallet.label || 'Selected wallet' : 'All wallets'}
+            </p>
+            <p className="mt-2 text-sm text-[#9c978f]">
+              {activeWallet
+                ? `${activeWallet.address.slice(0, 6)}...${activeWallet.address.slice(-4)}`
+                : 'Portfolio totals are aggregated across every saved wallet.'}
+            </p>
+            <select
+              value={activeWalletId ?? 'all'}
+              onChange={(event) => setActiveWalletId(event.target.value === 'all' ? null : event.target.value)}
+              className="mt-5 w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-[#f6f2ea] outline-none"
+            >
+              <option value="all">All wallets</option>
+              {addresses.map((address) => (
+                <option key={address.id} value={address.id}>
+                  {address.label || `${address.address.slice(0, 6)}...${address.address.slice(-4)}`}
                 </option>
               ))}
             </select>
-            {(walletSwitchLoading || portfolioLoading) && !isDemo && (
-              <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-            )}
-            {isDemo && (
-              <span className={`text-xs px-2 py-1 rounded-lg ${
-                isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-500/30 text-blue-700'
-              }`}>
-                Demo
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+          </section>
 
-      {/* Degraded Mode Banner */}
-      {portfolioData.freshness.degraded && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`fixed ${addresses.length > 0 ? 'top-36' : 'top-20'} left-0 right-0 z-40 py-2 px-4 text-center text-sm font-medium shadow-lg ${
-            isDark ? 'bg-yellow-600 text-white' : 'bg-yellow-500 text-gray-900'
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            <span>Limited Preview Mode — Confidence below threshold. Some actions may be restricted.</span>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Main Content - Same structure as Hunter/Harvest */}
-      <main 
-        id="main-content"
-        role="main"
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-28"
-        aria-label="Portfolio management dashboard"
-      >
-        {/* Page Title for Screen Readers */}
-        <h1 className="sr-only">Portfolio - Unified Wealth Management</h1>
-
-        {/* AI Hub Button Row - Enhanced */}
-        <div className="flex items-center justify-end mb-6 relative z-10">
-          <motion.button
-            onClick={() => setIsCopilotOpen(true)}
-            className={`group relative overflow-hidden flex items-center gap-3 border px-6 py-3 rounded-2xl font-medium transition-all duration-300 ${
-              isDark 
-                ? 'bg-gradient-to-r from-[#1CA9FF]/20 to-[#7B61FF]/20 border-[#1CA9FF]/30 text-white hover:from-[#1CA9FF]/30 hover:to-[#7B61FF]/30 hover:border-[#1CA9FF]/50 hover:shadow-lg hover:shadow-[#1CA9FF]/20' 
-                : 'bg-gradient-to-r from-[#1CA9FF]/30 to-[#7B61FF]/30 border-[#1CA9FF]/40 text-gray-900 hover:from-[#1CA9FF]/40 hover:to-[#7B61FF]/40 hover:border-[#1CA9FF]/60 hover:shadow-lg hover:shadow-[#1CA9FF]/30'
-            }`}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            {/* Animated glow effect */}
-            <motion.div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100"
-              style={{
-                background: 'radial-gradient(circle at center, rgba(28, 169, 255, 0.2) 0%, transparent 70%)'
-              }}
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut'
-              }}
-            />
-            <Sparkles className="w-5 h-5 relative z-10" />
-            <span className="hidden sm:inline relative z-10">AI Copilot</span>
-          </motion.button>
-        </div>
-
-        {/* Net Worth Hero Card - Enhanced with gradient and glow */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`group relative overflow-hidden backdrop-blur-md border rounded-3xl p-6 sm:p-8 mb-6 ${
-            isDark 
-              ? 'bg-gradient-to-br from-white/10 via-white/5 to-white/10 border-[rgba(28,169,255,0.3)] shadow-[0_8px_32px_rgba(0,0,0,0.3)]' 
-              : 'bg-gradient-to-br from-white/80 via-white/60 to-white/80 border-[rgba(28,169,255,0.4)] shadow-[0_8px_32px_rgba(28,169,255,0.15)]'
-          }`}
-          whileHover={{ scale: 1.005, y: -4 }}
-          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-          key={`hero-${activeWallet}-${isDemo}`}
-        >
-          {/* Animated gradient overlay */}
-          <motion.div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{
-              background: isDark 
-                ? 'radial-gradient(circle at 50% 50%, rgba(28, 169, 255, 0.1) 0%, transparent 70%)'
-                : 'radial-gradient(circle at 50% 50%, rgba(28, 169, 255, 0.15) 0%, transparent 70%)'
-            }}
-          />
-          {portfolioLoading && !isDemo ? (
-            <div className="flex flex-col items-center justify-center py-12 relative z-10">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              >
-                <Loader2 className="w-10 h-10 text-blue-400" />
-              </motion.div>
-              <motion.span 
-                className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-700'} font-medium`}
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                Loading portfolio data...
-              </motion.span>
+          <section className={`${surfaceClass} p-5`}>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">At a glance</p>
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                <span className="text-sm text-[#9c978f]">Wallets tracked</span>
+                <span className="text-xl text-[#f6f2ea]">{addresses.length}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                <span className="text-sm text-[#9c978f]">High-risk approvals</span>
+                <span className="text-xl text-[#f6f2ea]">{highRiskApprovals}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                <span className="text-sm text-[#9c978f]">Recommended actions</span>
+                <span className="text-xl text-[#f6f2ea]">{actions.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[#9c978f]">Freshness</span>
+                <span className="text-sm text-[#f6f2ea]">
+                  {freshness.freshnessSec ? `${Math.round(freshness.freshnessSec)}s` : 'Waiting'}
+                </span>
+              </div>
             </div>
-          ) : (
-            <div className="relative z-10">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
-                    <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Total Net Worth
+          </section>
+        </>
+      }
+    >
+      <section className={`${surfaceClass} overflow-hidden`}>
+        <div className="border-b border-white/8 px-6 py-4">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Net worth</p>
+        </div>
+        <div className="grid gap-6 px-6 py-6 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="min-w-0">
+            <div className="flex items-end gap-3">
+              <p className="text-4xl tracking-tight text-[#f6f2ea] sm:text-5xl">{currency(totalValue)}</p>
+              <p className={`pb-1 text-sm ${dailyDelta >= 0 ? 'text-[#8ec5a2]' : 'text-[#d98f8f]'}`}>
+                {currency(dailyDelta)}
+              </p>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {topPositions.length > 0 ? (
+                topPositions.map((position) => (
+                  <div key={position.id} className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-[#8f8a82]">{position.symbol}</p>
+                    <p className="mt-3 text-2xl text-[#f6f2ea]">{currency(position.valueUsd)}</p>
+                    <p className="mt-2 text-sm text-[#9c978f]">
+                      {position.protocol || 'Direct holding'} • chain {position.chainId}
                     </p>
-                    {isDemo && (
-                      <span className={`text-xs px-2 py-0.5 rounded-md ${
-                        isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-500/30 text-blue-700'
-                      }`}>
-                        Demo Data
-                      </span>
-                    )}
                   </div>
-                  <motion.h2 
-                    className={`text-3xl sm:text-4xl md:text-5xl font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    style={{ textShadow: isDark ? '0 0 30px rgba(240, 246, 255, 0.5)' : '0 0 30px rgba(28, 169, 255, 0.3)' }}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    key={`networth-${portfolioData.netWorth}`}
-                  >
-                    {formatCurrency(portfolioData.netWorth)}
-                  </motion.h2>
+                ))
+              ) : (
+                <div className="flex min-h-[140px] items-center justify-center rounded-[24px] border border-white/8 bg-white/[0.02] text-sm text-[#8f8a82] sm:col-span-2 xl:col-span-3">
+                  {isLoading ? 'Loading positions' : 'No live positions found for this scope'}
                 </div>
-                <motion.div
-                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl self-start sm:self-auto ${
-                    portfolioData.delta24h >= 0 
-                      ? isDark 
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                        : 'bg-green-500/30 text-green-700 border border-green-500/40'
-                      : isDark 
-                        ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                        : 'bg-red-500/30 text-red-700 border border-red-500/40'
-                  }`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  key={`delta-${portfolioData.delta24h}`}
-                >
-                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-base sm:text-lg font-semibold">
-                    {formatCurrency(portfolioData.delta24h)}
-                  </span>
-                  <span className="text-xs sm:text-sm font-medium">24h</span>
-                </motion.div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { label: 'Risk score', value: `${(overallRiskScore * 10).toFixed(1)}/10` },
+              { label: 'Trust index', value: `${trustIndex}%` },
+              { label: 'Primary action', value: actions[0]?.title ?? 'No urgent action' },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-[#8f8a82]">{item.label}</p>
+                <p className="mt-3 text-2xl text-[#f6f2ea]">{item.value}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              {/* Quick Stats Grid - Enhanced with hover effects */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {/* Freshness */}
-                <motion.div 
-                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
-                    isDark ? 'bg-white/5 border-[rgba(28,169,255,0.15)] hover:border-[rgba(28,169,255,0.3)]' : 'bg-white/50 border-[rgba(28,169,255,0.25)] hover:border-[rgba(28,169,255,0.4)]'
-                  }`}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition-all duration-300" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Freshness</span>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <section className={`${surfaceClass} p-6`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Recommended actions</p>
+              <p
+                className="mt-3 text-3xl text-[#f6f2ea]"
+                style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+              >
+                What needs attention
+              </p>
+            </div>
+            <Link to="/portfolio/risk" className="text-sm text-[#a7c0ff]">
+              Open risk
+            </Link>
+          </div>
+          <div className="mt-6 space-y-3">
+            {actions.length > 0 ? (
+              actions.slice(0, 4).map((action) => (
+                <div key={action.id} className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg text-[#f6f2ea]">{action.title}</p>
+                      <p className="mt-2 text-sm text-[#9c978f]">{action.why?.[0] ?? 'Review this recommendation.'}</p>
                     </div>
-                    <p className={`text-xl sm:text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{portfolioData.freshness.freshnessSec}s</p>
-                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {Math.round(portfolioData.freshness.confidence * 100)}% confidence
-                    </p>
+                    <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#8f8a82]">
+                      {action.severity}
+                    </span>
                   </div>
-                </motion.div>
-
-                {/* Trust Score */}
-                <motion.div 
-                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
-                    isDark ? 'bg-white/5 border-[rgba(28,169,255,0.15)] hover:border-[rgba(28,169,255,0.3)]' : 'bg-white/50 border-[rgba(28,169,255,0.25)] hover:border-[rgba(28,169,255,0.4)]'
-                  }`}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#1CA9FF]/0 to-[#1CA9FF]/0 group-hover:from-[#1CA9FF]/10 group-hover:to-[#1CA9FF]/20 transition-all duration-300" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CA9FF]" />
-                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Trust</span>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-[#1CA9FF]">{portfolioData.trustRiskSummary.trustScore}</p>
-                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Guardian verified</p>
-                  </div>
-                </motion.div>
-
-                {/* Risk Score */}
-                <motion.div 
-                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
-                    isDark ? 'bg-white/5 border-yellow-500/15 hover:border-yellow-500/30' : 'bg-white/50 border-yellow-500/25 hover:border-yellow-500/40'
-                  }`}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 to-orange-500/0 group-hover:from-yellow-500/10 group-hover:to-orange-500/10 transition-all duration-300" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
-                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Risk</span>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-yellow-400">
-                      {Math.round(portfolioData.trustRiskSummary.riskScore * 100)}%
-                    </p>
-                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {portfolioData.trustRiskSummary.highRiskApprovals} high-risk approvals
-                    </p>
-                  </div>
-                </motion.div>
-
-                {/* Alerts */}
-                <motion.div 
-                  className={`group relative overflow-hidden backdrop-blur-sm border rounded-xl p-3 sm:p-4 cursor-pointer ${
-                    isDark ? 'bg-white/5 border-red-500/15 hover:border-red-500/30' : 'bg-white/50 border-red-500/25 hover:border-red-500/40'
-                  }`}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-500/0 to-pink-500/0 group-hover:from-red-500/10 group-hover:to-pink-500/10 transition-all duration-300" />
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
-                      <span className={`text-[10px] sm:text-xs uppercase tracking-wide font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Alerts</span>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-red-400">{portfolioData.alertsCount}</p>
-                    <p className={`text-[10px] sm:text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Requires attention</p>
-                  </div>
-                </motion.div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm text-[#9c978f]">
+                {isLoading ? 'Loading actions' : 'No live actions available for this scope'}
               </div>
+            )}
+          </div>
+        </section>
+
+        <section className={`${surfaceClass} p-6`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Chain exposure</p>
+              <p
+                className="mt-3 text-3xl text-[#f6f2ea]"
+                style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+              >
+                Where the value sits
+              </p>
+            </div>
+            <Link to="/portfolio/addresses" className="text-sm text-[#a7c0ff]">
+              Review wallets
+            </Link>
+          </div>
+          <div className="mt-6 space-y-3">
+            {isLoading ? (
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-[#8f8a82]">
+                Loading chain exposure
+              </div>
+            ) : chainExposure.length > 0 ? (
+              chainExposure.slice(0, 5).map((row) => (
+                <div key={row.chain} className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-[#f6f2ea]">{row.chain}</p>
+                    <p className="text-sm text-[#f6f2ea]">{currency(row.value)}</p>
+                  </div>
+                  <div className="mt-3 h-1.5 rounded-full bg-white/[0.06]">
+                    <div
+                      className="h-full rounded-full bg-[#7ea3f2]"
+                      style={{ width: `${Math.min(100, totalValue > 0 ? (row.value / totalValue) * 100 : 0)}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-[#8f8a82]">
+                No chain exposure available yet.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <section className={`${surfaceClass} p-6`} id="positions">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Positions</p>
+            <p
+              className="mt-3 text-3xl text-[#f6f2ea]"
+              style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+            >
+              Largest live holdings
+            </p>
+          </div>
+          <span className="text-sm text-[#8f8a82]">{snapshot?.positions?.length ?? 0} tracked positions</span>
+        </div>
+        <div className="mt-6 space-y-3">
+          {topPositions.length > 0 ? (
+            topPositions.map((position) => (
+              <div key={`${position.id}-detail`} className="flex items-center justify-between rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                <div>
+                  <p className="text-sm text-[#f6f2ea]">{position.token}</p>
+                  <p className="mt-1 text-xs text-[#8f8a82]">
+                    {position.amount} {position.symbol} • {position.category}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-[#f6f2ea]">{currency(position.valueUsd)}</p>
+                  <p className="mt-1 text-xs text-[#8f8a82]">{position.protocol || 'Direct holding'}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-[#8f8a82]">
+              {isLoading ? 'Loading positions' : 'No live positions returned for this scope'}
             </div>
           )}
-        </motion.div>
+        </div>
+      </section>
 
-        {/* Tab Navigation - Enhanced with glassmorphism */}
-        <section aria-labelledby="tabs-heading">
-          <h2 id="tabs-heading" className="sr-only">Portfolio Sections</h2>
-          <div className="relative">
-            {/* Background blur container */}
-            <div className={`backdrop-blur-md border rounded-2xl p-2 ${
-              isDark 
-                ? 'bg-white/5 border-white/10' 
-                : 'bg-white/60 border-white/30'
-            }`}>
-              <div className="flex gap-2 overflow-x-auto pb-0 scrollbar-hide">
-                {tabs.map((tab, index) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <motion.button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`relative flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium whitespace-nowrap transition-all duration-300 text-sm sm:text-base ${
-                        isActive
-                          ? isDark 
-                            ? 'bg-gradient-to-r from-[#1CA9FF]/30 to-[#7B61FF]/30 text-white shadow-lg shadow-[#1CA9FF]/20'
-                            : 'bg-gradient-to-r from-[#1CA9FF]/40 to-[#7B61FF]/40 text-gray-900 shadow-lg shadow-[#1CA9FF]/30'
-                          : isDark 
-                            ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                            : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
-                      }`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.03, y: -1 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      {/* Active indicator */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 rounded-xl border-2 border-[#1CA9FF]/50"
-                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 relative z-10 ${
-                        isActive ? 'text-[#1CA9FF]' : ''
-                      }`} />
-                      <span className="relative z-10">{tab.label}</span>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Tab Content with enhanced transitions */}
-        <section aria-labelledby="content-heading" className="mt-6">
-          <h2 id="content-heading" className="sr-only">{activeTab} Content</h2>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+      <section className={`${surfaceClass} p-6`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Approval watch</p>
+            <p
+              className="mt-3 text-3xl text-[#f6f2ea]"
+              style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
             >
-              <CurrentTabComponent 
-                walletScope={walletScope}
-                freshness={portfolioData.freshness}
-                onWalletScopeChange={handleWalletScopeChange}
-                snapshot={snapshot}
-                actions={actions}
-                approvals={approvals}
-                isLoading={portfolioLoading}
-              />
-            </motion.div>
-          </AnimatePresence>
-        </section>
-      </main>
-
-      {/* Footer Navigation */}
-      <footer role="contentinfo">
-        <FooterNav />
-      </footer>
-
-      {/* Copilot Dialog - Centered modal */}
-      <CopilotDialog
-        isOpen={isCopilotOpen}
-        onClose={() => setIsCopilotOpen(false)}
-      />
-    </div>
+              Approvals with live value at risk
+            </p>
+          </div>
+          <Link to="/portfolio/guardian" className="text-sm text-[#a7c0ff]">
+            Open Guardian
+          </Link>
+        </div>
+        <div className="mt-6 space-y-3">
+          {approvals.length > 0 ? (
+            approvals.slice(0, 4).map((approval) => (
+              <div key={approval.id} className="flex items-center justify-between rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                <div>
+                  <p className="text-sm text-[#f6f2ea]">{approval.token}</p>
+                  <p className="mt-1 text-xs text-[#8f8a82]">
+                    {approval.spender.slice(0, 6)}...{approval.spender.slice(-4)} • {approval.severity}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-[#f6f2ea]">{currency(approval.valueAtRisk)}</p>
+                  <p className="mt-1 text-xs text-[#8f8a82]">{approval.amount}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-[#8f8a82]">
+              {isLoading ? 'Loading approvals' : 'No approvals returned for this wallet scope'}
+            </div>
+          )}
+        </div>
+        {snapshot?.lastUpdated ? (
+          <p className="mt-4 text-xs text-[#8f8a82]">Last updated {new Date(snapshot.lastUpdated).toLocaleString()}</p>
+        ) : null}
+      </section>
+    </PortfolioExperienceShell>
   );
 }

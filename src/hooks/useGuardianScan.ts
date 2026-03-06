@@ -71,7 +71,11 @@ export function useGuardianScan({
     queryKey,
     enabled: enabled && Boolean(effectiveWalletAddress),
     queryFn: () => requestGuardianScan({ walletAddress: effectiveWalletAddress, network: effectiveNetwork }),
-    staleTime: 60_000
+    staleTime: 5 * 60_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   const mutation = useMutation<GuardianScanResult>({
@@ -94,7 +98,8 @@ export function useGuardianScan({
   const refetch = async () => {
     const result = await queryClient.fetchQuery({
       queryKey,
-      queryFn: () => requestGuardianScan({ walletAddress: effectiveWalletAddress, network: effectiveNetwork })
+      queryFn: () => requestGuardianScan({ walletAddress: effectiveWalletAddress, network: effectiveNetwork }),
+      staleTime: 0,
     });
     return result;
   };

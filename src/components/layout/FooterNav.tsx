@@ -31,10 +31,14 @@ import { NavigationRouter } from '@/lib/navigation/NavigationRouter';
  * 
  * Used across: All major feature pages
  */
-export function FooterNav() {
+interface FooterNavProps {
+  currentRoute?: string;
+}
+
+export function FooterNav({ currentRoute }: FooterNavProps = {}) {
   const location = useLocation();
   const navigate = useNavigate();
-  const currentPath = location.pathname + location.search;
+  const currentPath = currentRoute || (location.pathname + location.search);
 
   // Initialize browser navigation handling - Requirement R9.NAV.BROWSER_SYNC
   useEffect(() => {
@@ -117,12 +121,15 @@ export function FooterNav() {
 
   return (
     <footer 
-      className="fixed bottom-0 w-full h-[72px] z-40"
+      className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2"
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="backdrop-blur-md bg-[rgba(255,255,255,0.7)] dark:bg-[rgba(16,18,30,0.8)] border-t border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.1)]" style={{ boxShadow: '0 -4px 20px rgba(0,0,0,0.1)' }}>
-        <nav className="flex justify-around items-center h-full px-4 text-gray-500 dark:text-gray-300 max-w-screen-xl mx-auto">
+      <div
+        className="mx-auto max-w-screen-md rounded-[28px] border border-black/10 bg-[rgba(245,243,238,0.92)] shadow-[0_16px_48px_rgba(0,0,0,0.08)] backdrop-blur-xl ring-1 ring-black/[0.04] dark:border-white/8 dark:bg-[rgba(8,8,8,0.92)] dark:ring-white/[0.05]"
+        style={{ boxShadow: '0 -8px 32px rgba(0,0,0,0.10)' }}
+      >
+        <nav className="flex items-center justify-around px-2 py-2 text-[#7f7a72] dark:text-[#8f8a82]">
           {navItems.map(({ href, icon: Icon, path, label, ariaLabel }) => {
             const active = isActive(path);
             return (
@@ -132,52 +139,49 @@ export function FooterNav() {
                 aria-label={ariaLabel}
                 aria-current={active ? 'page' : undefined}
                 className={`
-                  relative flex flex-col items-center justify-center 
+                  relative flex flex-1 flex-col items-center justify-center rounded-[20px]
+                  px-2 py-2.5
                   transition-all duration-150 ease-out
-                  flex-1 py-2
                   min-h-[44px] min-w-[44px]
-                  focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900
+                  focus:outline-none focus:ring-2 focus:ring-[#6c8ed6] focus:ring-offset-2 focus:ring-offset-[#f5f3ee] dark:focus:ring-offset-[#080808]
                   ${active 
-                    ? 'text-white opacity-100' 
-                    : 'text-gray-400 opacity-60 hover:text-white hover:opacity-80'
+                    ? 'bg-[#111111] text-[#f6f2ea] shadow-[0_10px_30px_rgba(0,0,0,0.22)] dark:bg-[#111111] dark:text-[#f6f2ea]'
+                    : 'text-[#7f7a72] hover:bg-black/[0.04] hover:text-[#111111] dark:text-[#8f8a82] dark:hover:bg-white/[0.04] dark:hover:text-[#f6f2ea]'
                   }
                 `}
               >
-                {/* 2px top border for active items - Requirement R9.NAV.ACTIVE_VISUAL */}
                 {active && (
                   <div 
-                    className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] rounded-full"
+                    className="absolute left-1/2 top-1 h-1 w-8 -translate-x-1/2 rounded-full bg-[#7ea3f2]"
                     aria-hidden="true"
                   />
                 )}
                 
                 <div 
                   className={`
-                    p-3 rounded-xl transition-all duration-150 ease-out
+                    rounded-2xl p-2.5 transition-all duration-150 ease-out
                     ${active 
-                      ? 'bg-gradient-to-r from-[#00C9A7] to-[#7B61FF] shadow-lg transform scale-105' 
-                      : 'hover:bg-white/10 hover:scale-102'
+                      ? 'bg-white/[0.08] dark:bg-white/[0.05]' 
+                      : 'bg-transparent'
                     }
-                  `} 
-                  style={active ? { boxShadow: '0 0 20px rgba(0, 201, 167, 0.4)' } : {}}
+                  `}
                 >
                   <Icon 
                     className={`w-6 h-6 transition-all duration-150 ease-out ${
                       active 
-                        ? 'stroke-white stroke-2 fill-white/20' 
+                        ? 'stroke-[#f6f2ea]' 
                         : 'stroke-current'
                     }`}
                     aria-hidden="true"
                   />
                 </div>
                 
-                {/* Bold text for active items - Requirement R9.NAV.ACTIVE_VISUAL */}
                 <span 
                   className={`
-                    text-xs mt-1 transition-all duration-150 ease-out
+                    mt-1 text-[11px] tracking-[0.12em] uppercase transition-all duration-150 ease-out
                     ${active 
-                      ? 'text-cyan-400 font-bold' 
-                      : 'text-gray-400 font-medium'
+                      ? 'font-semibold text-[#f6f2ea]' 
+                      : 'font-medium text-[#7f7a72] dark:text-[#8f8a82]'
                     }
                   `}
                 >
