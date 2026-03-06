@@ -39,7 +39,7 @@ function GasPriceStatus() {
   
   if (isLoading) {
     return (
-      <div className="flex items-center gap-1 text-xs text-gray-400">
+      <div className="flex items-center gap-1 text-xs text-[#8f8a82]">
         <Zap className="w-3 h-3 animate-pulse" />
         <span>Loading...</span>
       </div>
@@ -49,14 +49,14 @@ function GasPriceStatus() {
   if (error || !networkStatus) {
     return (
       <div className="flex items-center gap-1 text-xs">
-        <Zap className="w-3 h-3 text-red-400" />
-        <span className="text-red-400">Unavailable</span>
+        <Zap className="w-3 h-3 text-[#e0b4b4]" />
+        <span className="text-[#e0b4b4]">Unavailable</span>
         <button
           onClick={() => refetch()}
-          className="p-0.5 rounded hover:bg-red-500/20 transition-colors"
+          className="rounded p-0.5 transition-colors hover:bg-white/[0.06]"
           title="Retry gas price fetch"
         >
-          <RotateCcw className="w-2 h-2 text-red-400" />
+          <RotateCcw className="w-2 h-2 text-[#e0b4b4]" />
         </button>
       </div>
     );
@@ -67,14 +67,14 @@ function GasPriceStatus() {
   if (formattedGasPrice === 'Gas unavailable') {
     return (
       <div className="flex items-center gap-1 text-xs">
-        <Zap className="w-3 h-3 text-red-400" />
-        <span className="text-red-400">Unavailable</span>
+        <Zap className="w-3 h-3 text-[#e0b4b4]" />
+        <span className="text-[#e0b4b4]">Unavailable</span>
         <button
           onClick={() => refetch()}
-          className="p-0.5 rounded hover:bg-red-500/20 transition-colors"
+          className="rounded p-0.5 transition-colors hover:bg-white/[0.06]"
           title="Retry gas price fetch"
         >
-          <RotateCcw className="w-2 h-2 text-red-400" />
+          <RotateCcw className="w-2 h-2 text-[#e0b4b4]" />
         </button>
       </div>
     );
@@ -82,7 +82,7 @@ function GasPriceStatus() {
 
   return (
     <div className="flex items-center gap-1 text-xs">
-      <Zap className="w-3 h-3 text-gray-400" />
+      <Zap className="w-3 h-3 text-[#8f8a82]" />
       <span className={gasColorClass}>{formattedGasPrice}</span>
     </div>
   );
@@ -113,7 +113,7 @@ function MetricWithTrustSignal({
         <Icon className={cn('w-5 h-5', color)} aria-hidden="true" />
         <p 
           id={metricId}
-          className="text-xs uppercase text-gray-500 tracking-wider font-medium"
+          className="text-xs font-medium uppercase tracking-[0.24em] text-[#8f8a82]"
         >
           {label}
         </p>
@@ -121,7 +121,7 @@ function MetricWithTrustSignal({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className="text-gray-400 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
+                className="rounded text-[#8f8a82] transition-colors hover:text-[#f6f2ea] focus:outline-none focus:ring-2 focus:ring-[#7ea3f2] focus:ring-offset-2 focus:ring-offset-[#0b0b0c]"
                 aria-label={`How ${label.toLowerCase()} is calculated`}
                 title={`How ${label.toLowerCase()} is calculated`}
               >
@@ -130,11 +130,11 @@ function MetricWithTrustSignal({
             </TooltipTrigger>
             <TooltipContent 
               side="top" 
-              className="max-w-sm p-4 bg-slate-800 border-slate-600 text-slate-100"
+              className="max-w-sm border-white/10 bg-[#111111] p-4 text-[#f6f2ea]"
               role="tooltip"
             >
               <div className="space-y-2">
-                <div className="font-semibold text-cyan-400 mb-3">
+                <div className="mb-3 font-semibold text-[#d6c08d]">
                   {label} Calculation
                 </div>
                 <div className="space-y-1 text-xs">
@@ -142,7 +142,7 @@ function MetricWithTrustSignal({
                     <div key={index}>{line}</div>
                   ))}
                 </div>
-                <div className="mt-3 pt-2 border-t border-slate-600 text-xs text-slate-400">
+                <div className="mt-3 border-t border-white/8 pt-2 text-xs text-[#8f8a82]">
                   Last updated: {new Date().toLocaleDateString()}
                 </div>
               </div>
@@ -152,7 +152,7 @@ function MetricWithTrustSignal({
       </div>
       <p 
         id={descriptionId}
-        className="text-3xl font-bold text-white"
+        className="text-3xl font-bold text-[#f6f2ea]"
         aria-label={`${label}: ${value}`}
       >
         {value}
@@ -178,13 +178,13 @@ export function HarvestSummaryCard({
   const getGasEfficiencyColor = (grade: string) => {
     switch (grade) {
       case 'A':
-        return 'text-green-500';
+        return 'text-[#bcd7c5]';
       case 'B':
-        return 'text-yellow-500';
+        return 'text-[#d6c08d]';
       case 'C':
-        return 'text-orange-500';
+        return 'text-[#e0b4b4]';
       default:
-        return 'text-gray-400';
+        return 'text-[#8f8a82]';
     }
   };
 
@@ -223,10 +223,7 @@ export function HarvestSummaryCard({
   return (
     <motion.div
       className={cn(
-        'rounded-2xl border-2 p-7',
-        'bg-gradient-to-br from-[rgba(20,184,166,0.12)] via-[rgba(139,92,246,0.08)] to-[rgba(6,182,212,0.06)]',
-        'border-[rgba(20,184,166,0.25)]',
-        'backdrop-blur-md',
+        'rounded-[30px] border border-white/8 bg-[#0b0b0c] p-7 shadow-2xl',
         className
       )}
       initial={{ opacity: 0, y: 30 }}
@@ -247,15 +244,15 @@ export function HarvestSummaryCard({
       {/* Warning Banner */}
       {hasHighRiskOpportunities && (
         <motion.div
-          className="mb-4 p-3 rounded-lg bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.3)] flex items-center gap-2"
+          className="mb-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           role="alert"
           aria-live="polite"
         >
-          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" aria-hidden="true" />
-          <p className="text-sm text-yellow-500">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 text-[#d6c08d]" aria-hidden="true" />
+          <p className="text-sm text-[#d6c08d]">
             Some opportunities have elevated risk. Review Guardian scores carefully.
           </p>
         </motion.div>
@@ -302,14 +299,14 @@ export function HarvestSummaryCard({
         >
           <div className="flex items-center gap-2">
             <Zap className={cn('w-5 h-5', getGasEfficiencyColor(summary.gasEfficiencyScore))} aria-hidden="true" />
-            <p className="text-xs uppercase text-gray-500 tracking-wider font-medium">
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[#8f8a82]">
               Gas Efficiency
             </p>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="text-gray-400 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
+                    className="rounded text-[#8f8a82] transition-colors hover:text-[#f6f2ea] focus:outline-none focus:ring-2 focus:ring-[#7ea3f2] focus:ring-offset-2 focus:ring-offset-[#0b0b0c]"
                     aria-label="How gas efficiency is calculated"
                     title="How gas efficiency is calculated"
                   >
@@ -318,11 +315,11 @@ export function HarvestSummaryCard({
                 </TooltipTrigger>
                 <TooltipContent 
                   side="top" 
-                  className="max-w-sm p-4 bg-slate-800 border-slate-600 text-slate-100"
+                  className="max-w-sm border-white/10 bg-[#111111] p-4 text-[#f6f2ea]"
                   role="tooltip"
                 >
                   <div className="space-y-2">
-                    <div className="font-semibold text-cyan-400 mb-3">
+                    <div className="mb-3 font-semibold text-[#d6c08d]">
                       Gas Efficiency Calculation
                     </div>
                     <div className="space-y-1 text-xs">
@@ -330,7 +327,7 @@ export function HarvestSummaryCard({
                         <div key={index}>{line}</div>
                       ))}
                     </div>
-                    <div className="mt-3 pt-2 border-t border-slate-600 text-xs text-slate-400">
+                    <div className="mt-3 border-t border-white/8 pt-2 text-xs text-[#8f8a82]">
                       Last updated: {new Date().toLocaleDateString()}
                     </div>
                   </div>

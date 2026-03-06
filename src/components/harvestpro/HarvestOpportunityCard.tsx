@@ -41,7 +41,7 @@ interface HarvestOpportunityCardProps {
 // Category Tag Component
 function CategoryTag({ token }: { token: string }) {
   return (
-    <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#ed8f2d] text-white">
+    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-[#f6f2ea]">
       {token.toUpperCase()}
     </span>
   );
@@ -52,17 +52,17 @@ function RiskChip({ riskLevel }: { riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' }) {
   const config = {
     LOW: {
       icon: CheckCircle,
-      color: 'text-green-400 bg-green-400/10',
+      color: 'text-[#bcd7c5] bg-white/[0.04] border border-white/10',
       label: 'LOW RISK',
     },
     MEDIUM: {
       icon: AlertTriangle,
-      color: 'text-yellow-400 bg-yellow-400/10',
+      color: 'text-[#d6c08d] bg-white/[0.04] border border-white/10',
       label: 'MEDIUM RISK',
     },
     HIGH: {
       icon: AlertTriangle,
-      color: 'text-red-400 bg-red-400/10',
+      color: 'text-[#e0b4b4] bg-white/[0.04] border border-white/10',
       label: 'HIGH RISK',
     },
   };
@@ -86,27 +86,27 @@ function RecommendationBadge({
   const config = {
     recommended: {
       icon: CheckCircle,
-      color: 'text-green-400 bg-green-400/10 border-green-400/20',
+      color: 'text-[#bcd7c5] bg-white/[0.04] border-white/10',
       label: 'Recommended',
     },
     'not-recommended': {
       icon: AlertTriangle,
-      color: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
+      color: 'text-[#8f8a82] bg-white/[0.04] border-white/10',
       label: 'Not Recommended',
     },
     'high-benefit': {
       icon: Flame,
-      color: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+      color: 'text-[#d6c08d] bg-white/[0.04] border-white/10',
       label: 'High Benefit',
     },
     'gas-heavy': {
       icon: Zap,
-      color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+      color: 'text-[#d6c08d] bg-white/[0.04] border-white/10',
       label: 'Gas Heavy',
     },
     'guardian-flagged': {
       icon: Shield,
-      color: 'text-red-400 bg-red-400/10 border-red-400/20',
+      color: 'text-[#e0b4b4] bg-white/[0.04] border-white/10',
       label: 'Guardian Flagged',
     },
   };
@@ -192,14 +192,9 @@ export function HarvestOpportunityCard({
   return (
     <motion.article
       className={cn(
-        'backdrop-blur-lg rounded-[20px] py-8 px-6 cursor-pointer group transition-all duration-700 border relative transform-gpu',
-        'bg-gradient-to-br from-slate-900/80 via-blue-950/60 to-slate-900/80 border-teal-400/20',
+        'relative cursor-pointer rounded-[30px] border border-white/8 bg-[#0b0b0c] px-6 py-8 shadow-2xl transition-all duration-500',
         className
       )}
-      style={{
-        boxShadow:
-          '0 20px 60px -12px rgba(0,0,0,0.6), 0 8px 32px -8px rgba(237,143,45,0.1), 0 2px 0 0 rgba(255,255,255,0.08) inset, 0 -2px 0 0 rgba(237,143,45,0.1) inset',
-      }}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -208,9 +203,8 @@ export function HarvestOpportunityCard({
         ease: [0.25, 1, 0.5, 1],
       }}
       whileHover={{
-        scale: 1.015,
-        y: -4,
-        boxShadow: '0 30px 80px -12px rgba(0,0,0,0.75), 0 0 0 1px rgba(237,143,45,0.35)',
+        scale: 1.01,
+        y: -3,
       }}
       whileTap={{ scale: 0.99 }}
       role="article"
@@ -224,18 +218,17 @@ export function HarvestOpportunityCard({
         }
       }}
     >
-      {/* Hover Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#ed8f2d]/0 via-[#14b8a6]/0 to-[#ed8f2d]/0 group-hover:from-[#ed8f2d]/8 group-hover:via-[#14b8a6]/6 group-hover:to-[#ed8f2d]/8 transition-all duration-700 rounded-[20px]" />
+      <div className="absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top_right,rgba(214,192,141,0.12),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.03),transparent_34%)] opacity-70" />
       <motion.div
-        className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent rounded-[20px] pointer-events-none"
-        whileHover={{ scale: 1.02, rotateX: 2 }}
+        className="absolute inset-0 rounded-[30px] border border-white/6 pointer-events-none"
+        whileHover={{ scale: 1.005 }}
         transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
       />
 
       {/* Demo Mode Badge */}
       {isDemo && (
         <div className="absolute top-4 right-4 z-20">
-          <div className="px-3 py-1 bg-blue-500/90 backdrop-blur-sm rounded-full text-xs font-semibold text-white border border-blue-400/30">
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[#f6f2ea]">
             Demo Mode
           </div>
         </div>
@@ -246,10 +239,10 @@ export function HarvestOpportunityCard({
         <div className="flex items-start gap-4 mb-6">
           {/* Token Logo */}
           <motion.div
-            className="p-3 rounded-xl bg-[#ed8f2d] shadow-lg flex-shrink-0"
+            className="flex-shrink-0 rounded-2xl border border-white/10 bg-[#141414] p-3 text-[#d6c08d]"
             whileHover={{ scale: 1.05 }}
           >
-            <Coins className="w-6 h-6 text-white" />
+            <Coins className="h-6 w-6" />
           </motion.div>
 
           {/* Title & Key Metrics */}
@@ -265,18 +258,18 @@ export function HarvestOpportunityCard({
             {/* Key Financial Info - Second Most Important */}
             <div className="flex items-center gap-4 mb-3">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-green-400" aria-hidden="true" />
-                <span className="font-bold text-green-400 text-lg" aria-label={`Net benefit: ${formatCurrency(opportunity.netTaxBenefit)}`}>
+                <DollarSign className="w-4 h-4 text-[#d6c08d]" aria-hidden="true" />
+                <span className="text-lg font-bold text-[#f6f2ea]" aria-label={`Net benefit: ${formatCurrency(opportunity.netTaxBenefit)}`}>
                   {formatCurrency(opportunity.netTaxBenefit)}
                 </span>
-                <span className="text-gray-500 text-sm">Net Benefit</span>
+                <span className="text-sm text-[#8f8a82]">Net Benefit</span>
               </div>
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-400" aria-hidden="true" />
-                <span className="font-semibold text-white" aria-label={`Confidence: ${opportunity.confidence} percent`}>
+                <Shield className="w-4 h-4 text-[#a7c0ff]" aria-hidden="true" />
+                <span className="font-semibold text-[#f6f2ea]" aria-label={`Confidence: ${opportunity.confidence} percent`}>
                   {opportunity.confidence}%
                 </span>
-                <span className="text-gray-500 text-sm">Confidence</span>
+                <span className="text-sm text-[#8f8a82]">Confidence</span>
               </div>
             </div>
 
@@ -288,7 +281,7 @@ export function HarvestOpportunityCard({
             </div>
 
             {/* Subtitle - Context Information */}
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[#8f8a82]">
               {opportunity.metadata.walletName || 'Wallet'} • {opportunity.metadata.venue || 'DEX'}
             </p>
           </div>
@@ -298,37 +291,37 @@ export function HarvestOpportunityCard({
             {onSave && (
               <motion.button
                 onClick={handleSave}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="rounded-lg border border-white/8 bg-white/[0.03] p-2 transition-colors hover:bg-white/[0.06]"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label={`Save ${opportunity.token} harvest opportunity`}
                 title={`Save ${opportunity.token} harvest opportunity`}
               >
-                <Bookmark className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                <Bookmark className="w-4 h-4 text-[#8f8a82]" aria-hidden="true" />
               </motion.button>
             )}
             {onShare && (
               <motion.button
                 onClick={handleShare}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="rounded-lg border border-white/8 bg-white/[0.03] p-2 transition-colors hover:bg-white/[0.06]"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label={`Share ${opportunity.token} harvest opportunity`}
                 title={`Share ${opportunity.token} harvest opportunity`}
               >
-                <Share2 className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                <Share2 className="w-4 h-4 text-[#8f8a82]" aria-hidden="true" />
               </motion.button>
             )}
             {onReport && (
               <motion.button
                 onClick={handleReport}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="rounded-lg border border-white/8 bg-white/[0.03] p-2 transition-colors hover:bg-white/[0.06]"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label={`Report issue with ${opportunity.token} harvest opportunity`}
                 title={`Report issue with ${opportunity.token} harvest opportunity`}
               >
-                <Flag className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                <Flag className="w-4 h-4 text-[#8f8a82]" aria-hidden="true" />
               </motion.button>
             )}
           </div>
@@ -339,11 +332,11 @@ export function HarvestOpportunityCard({
           {/* Condensed Description */}
           <p 
             id={`opportunity-description-${opportunity.id}`}
-            className="text-sm leading-relaxed text-gray-400"
+            className="text-sm leading-relaxed text-[#b8b2a7]"
           >
-            Harvest <span className="text-white font-semibold">{formatCurrency(opportunity.unrealizedLoss)}</span> in losses
+            Harvest <span className="font-semibold text-[#f6f2ea]">{formatCurrency(opportunity.unrealizedLoss)}</span> in losses
             {opportunity.metadata.reasons && opportunity.metadata.reasons.length > 0 && (
-              <span className="text-gray-500"> • {opportunity.metadata.reasons[0]}</span>
+              <span className="text-[#8f8a82]"> • {opportunity.metadata.reasons[0]}</span>
             )}
           </p>
 
@@ -356,7 +349,7 @@ export function HarvestOpportunityCard({
                 className="flex items-center gap-2"
               />
             </div>
-            <div className="flex items-center gap-2 text-gray-400">
+            <div className="flex items-center gap-2 text-[#8f8a82]">
               <Clock className="w-4 h-4" />
               <span>{opportunity.executionTimeEstimate || '5-10 min'}</span>
             </div>
@@ -369,13 +362,12 @@ export function HarvestOpportunityCard({
           disabled={!isConnected && !isDemo}
           className={cn(
             'relative w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 overflow-hidden mt-6',
-            'bg-gradient-to-r from-[#ed8f2d] to-[#B8722E] text-white shadow-lg',
+            'border border-white/10 bg-[#f6f2ea] text-black',
             (!isConnected && !isDemo) && 'opacity-50 cursor-not-allowed'
           )}
           whileHover={(isConnected || isDemo) ? {
             scale: 1.02,
             y: -1,
-            boxShadow: '0 8px 25px rgba(237,143,45,0.3)',
           } : {}}
           whileTap={(isConnected || isDemo) ? { scale: 0.98 } : {}}
           transition={{
@@ -389,7 +381,7 @@ export function HarvestOpportunityCard({
         >
           {/* Ripple Effect */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0"
+            className="absolute inset-0 bg-gradient-to-r from-black/0 via-black/10 to-black/0"
             initial={{ x: '-100%' }}
             whileHover={(isConnected || isDemo) ? { x: '100%' } : {}}
             transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
