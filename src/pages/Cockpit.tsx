@@ -14,110 +14,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GlobalHeader } from '@/components/header/GlobalHeader';
 import { TodayCard } from '@/components/cockpit/TodayCard';
 import { ActionPreview } from '@/components/cockpit/ActionPreview';
-import { PeekDrawer, createDefaultSections } from '@/components/cockpit/PeekDrawer';
 import { InsightsSheet } from '@/components/cockpit/InsightsSheet';
 import { PulseSheet } from '@/components/cockpit/PulseSheet';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useCockpitData } from '@/hooks/useCockpitData';
-
-// Demo data helpers
-const getDemoDrawerSections = () => {
-  const sections = createDefaultSections();
-  
-  // Add demo items to Daily Pulse section
-  sections[0].items = [
-    {
-      id: 'demo-pulse-1',
-      title: 'Arbitrum quest ends in 8h',
-      subtitle: 'High reward opportunity',
-      timestamp: '2 hours ago',
-      badge: { text: '8h left', variant: 'destructive' },
-      href: '#demo'
-    },
-    {
-      id: 'demo-pulse-2',
-      title: 'New DeFi yield opportunity detected',
-      subtitle: 'Compound V3 USDC pool',
-      timestamp: '1 hour ago',
-      badge: { text: 'New', variant: 'default' },
-      href: '#demo'
-    },
-    {
-      id: 'demo-pulse-3',
-      title: 'ETH position increased by 15%',
-      subtitle: 'Portfolio update',
-      timestamp: '30 minutes ago',
-      badge: { text: '+15%', variant: 'default' },
-      href: '#demo'
-    }
-  ];
-  
-  // Add demo items to Expiring Opportunities section
-  sections[1].items = [
-    {
-      id: 'demo-exp-1',
-      title: 'Uniswap V3 position expires',
-      subtitle: 'ETH/USDC pool',
-      timestamp: '1 day ago',
-      badge: { text: '2d left', variant: 'outline' },
-      href: '#demo'
-    },
-    {
-      id: 'demo-exp-2',
-      title: 'Airdrop claim window closing',
-      subtitle: 'Optimism governance tokens',
-      timestamp: '3 hours ago',
-      badge: { text: '5d left', variant: 'outline' },
-      href: '#demo'
-    }
-  ];
-  
-  // Add demo items to Guardian Deltas section
-  sections[2].items = [
-    {
-      id: 'demo-guardian-1',
-      title: 'New approval detected: Uniswap V3',
-      subtitle: 'Router contract',
-      timestamp: '45 minutes ago',
-      badge: { text: 'High', variant: 'destructive' },
-      href: '#demo'
-    },
-    {
-      id: 'demo-guardian-2',
-      title: 'Unused approval: 1inch Router',
-      subtitle: 'Last used 6 months ago',
-      timestamp: '2 days ago',
-      badge: { text: 'Medium', variant: 'outline' },
-      href: '#demo'
-    }
-  ];
-  
-  // Add demo items to Portfolio Pulse section
-  sections[3].items = [
-    {
-      id: 'demo-portfolio-1',
-      title: 'Portfolio rebalancing opportunity',
-      subtitle: 'Optimize asset allocation',
-      timestamp: '4 hours ago',
-      badge: { text: 'Review', variant: 'outline' },
-      href: '#demo'
-    }
-  ];
-  
-  // Add demo items to Proof/Receipts section
-  sections[4].items = [
-    {
-      id: 'demo-proof-1',
-      title: 'Tax loss harvest executed',
-      subtitle: 'ETH → WETH swap',
-      timestamp: '1 week ago',
-      badge: { text: 'Complete', variant: 'default' },
-      href: '#demo'
-    }
-  ];
-  
-  return sections;
-};
 
 const getDemoCoverageInfo = () => ({
   wallets: 3,
@@ -132,12 +32,6 @@ const getDemoPreferences = () => ({
   dnd_end_local: '08:00',
   notif_cap_per_day: 3
 });
-
-const getDrawerSections = (data: any) => {
-  // In a real implementation, this would extract sections from the data
-  // For now, return empty sections (will fall back to demo data)
-  return createDefaultSections();
-};
 
 const getCoverageInfo = (data: any) => ({
   wallets: 0,
@@ -163,7 +57,6 @@ const Cockpit: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { isAuthenticated, loading, sessionEstablished } = useAuth();
   const [isDemo, setIsDemo] = useState(false);
-  const [peekDrawerOpen, setPeekDrawerOpen] = useState(false);
   const [insightsSheetOpen, setInsightsSheetOpen] = useState(false);
   const [pulseSheetOpen, setPulseSheetOpen] = useState(false);
 
@@ -288,7 +181,7 @@ const Cockpit: React.FC = () => {
               isLoading={isLoading}
               error={error}
               isDemo={isDemo}
-              onSeeAllClick={() => setPeekDrawerOpen(true)}
+              onSeeAllClick={() => navigate('/signals')}
             />
           </div>
 
@@ -328,22 +221,6 @@ const Cockpit: React.FC = () => {
           </aside>
         </div>
       </div>
-
-      {/* Peek Drawer */}
-      <PeekDrawer 
-        isOpen={peekDrawerOpen}
-        onClose={() => setPeekDrawerOpen(false)}
-        sections={(() => {
-          // Get sections based on demo mode
-          const sections = isDemo ? getDemoDrawerSections() : getDrawerSections(data);
-          
-          // If sections are empty (no items in any section), fall back to demo data
-          const hasAnyItems = sections.some(section => section.items.length > 0);
-          return hasAnyItems ? sections : getDemoDrawerSections();
-        })()}
-        isLoading={isLoading}
-        error={error}
-      />
 
       {/* Insights Sheet */}
       <InsightsSheet 
