@@ -482,6 +482,10 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
   const refetch = useCallback(() => {
     summaryQuery.refetch();
   }, [summaryQuery]);
+
+  const isFallbackDemo =
+    !isDemo &&
+    Boolean(summaryQuery.data?.action_preview?.some((action) => action.id.startsWith('demo_')));
   
   return {
     // Data
@@ -492,6 +496,9 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
     isLoading: summaryQuery.isLoading || preferencesQuery.isLoading,
     error: summaryQuery.error?.message || preferencesQuery.error?.message || null,
     walletScope,
+    isDemo,
+    isFallbackDemo,
+    isSampleData: isDemo || isFallbackDemo,
     
     // Cache info for debugging
     isSummaryStale: summaryQuery.isStale,

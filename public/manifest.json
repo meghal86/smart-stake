@@ -1,7 +1,7 @@
 {
-  "name": "AlphaWhale - Master the DeFi Waves",
-  "short_name": "AlphaWhale",
-  "description": "Track whale transactions, discover high-yield DeFi opportunities, and analyze wallet risks with AI-powered insights",
+  "name": "WhalePulse",
+  "short_name": "WhalePulse",
+  "description": "Read live portfolio drift, Guardian health, hunting opportunities, and harvest workflows from one calmer DeFi command surface",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

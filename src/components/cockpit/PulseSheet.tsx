@@ -154,12 +154,12 @@ const PulseRowComponent = ({ row, isDemo, onClick }: PulseRowComponentProps) => 
   return (
     <motion.div
       className={`
-        group relative p-4 rounded-lg border border-white/10 
-        bg-white/5 backdrop-blur-sm hover:bg-white/10 
+        group relative rounded-[24px] border border-white/8
+        bg-white/[0.03] p-4 backdrop-blur-sm hover:bg-white/[0.06]
         transition-all duration-200 cursor-pointer
         ${isDemo ? 'opacity-75' : ''}
       `}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.01, y: -1 }}
       transition={{ duration: 0.15 }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -183,12 +183,12 @@ const PulseRowComponent = ({ row, isDemo, onClick }: PulseRowComponentProps) => 
             {/* Chip */}
             {row.chip && (
               <span className={`
-                flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full
+                flex-shrink-0 rounded-full px-2 py-1 text-xs font-medium
                 ${row.kind === 'expiring_opportunity' 
-                  ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                  ? 'border border-red-500/30 bg-red-500/15 text-red-200'
                   : row.kind === 'new_opportunity'
-                  ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                  : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                  ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-200'
+                  : 'border border-[#7ea3f2]/30 bg-[#7ea3f2]/12 text-[#dbe4ff]'
                 }
               `}>
                 {row.chip}
@@ -197,7 +197,7 @@ const PulseRowComponent = ({ row, isDemo, onClick }: PulseRowComponentProps) => 
           </div>
           
           {/* Metadata */}
-          <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+          <div className="mt-2 flex items-center gap-4 text-xs text-[#8f8a82]">
             <span>{formatEventTime(row.event_time)}</span>
             <span className="capitalize">{row.provenance}</span>
           </div>
@@ -206,8 +206,8 @@ const PulseRowComponent = ({ row, isDemo, onClick }: PulseRowComponentProps) => 
       
       {/* Demo overlay */}
       {isDemo && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className="text-xs text-white bg-black/60 px-2 py-1 rounded">
+        <div className="absolute inset-0 flex items-center justify-center rounded-[24px] bg-black/25 opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="rounded-full bg-black/60 px-2 py-1 text-xs text-white">
             Demo
           </span>
         </div>
@@ -376,62 +376,103 @@ export const PulseSheet = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 z-40 bg-black/92 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
 
-          {/* Sheet */}
           <motion.div
             ref={sheetRef}
-            className="fixed inset-0 z-50 bg-slate-950 overflow-y-auto"
-            initial={{ opacity: 0, y: '100%' }}
+            className="fixed inset-0 z-50 overflow-y-auto"
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="pulse-sheet-title"
           >
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b border-white/10">
-              <div className="flex items-center justify-between p-4">
-                <div>
-                  <h1 id="pulse-sheet-title" className="text-xl font-semibold text-white">
-                    Daily Pulse
-                  </h1>
-                  {displayData && (
-                    <p className="text-sm text-gray-400 mt-1">
-                      {formatPulseDate(displayData.pulse_date)}
-                    </p>
-                  )}
-                </div>
-                
-                <button
-                  ref={closeButtonRef}
-                  onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                  aria-label="Close pulse sheet"
-                >
-                  <X size={20} className="text-gray-400" />
-                </button>
-              </div>
-            </div>
+            <div className="min-h-full px-4 py-6 sm:px-6 lg:px-8">
+              <div className="mx-auto max-w-[1180px]">
+                <div className="overflow-hidden rounded-[34px] border border-white/10 bg-[#0b0b0c] shadow-[0_30px_120px_rgba(0,0,0,0.6)]">
+                  <div className="sticky top-0 z-10 border-b border-white/8 bg-[#0b0b0c]/95 px-5 py-5 backdrop-blur-sm sm:px-7">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Daily pulse</p>
+                        <h1
+                          id="pulse-sheet-title"
+                          className="mt-3 text-3xl text-[#f6f2ea] sm:text-4xl"
+                          style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+                        >
+                          Today&apos;s pulse
+                        </h1>
+                        {displayData ? (
+                          <p className="mt-2 text-sm text-[#9c978f]">
+                            {formatPulseDate(displayData.pulse_date)}
+                          </p>
+                        ) : null}
+                      </div>
 
-            {/* Content */}
-            <div className="p-4 pb-8">
+                      <button
+                        ref={closeButtonRef}
+                        onClick={onClose}
+                        className="rounded-full border border-white/10 bg-white/[0.03] p-3 text-[#9c978f] transition-colors hover:bg-white/[0.08] hover:text-[#f6f2ea]"
+                        aria-label="Close pulse sheet"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-5 pb-8 sm:p-7">
+                    {displayData ? (
+                      <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                        <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(126,163,242,0.16),rgba(255,255,255,0.02))] p-5">
+                          <p className="text-[11px] uppercase tracking-[0.28em] text-[#dbe4ff]">Opening read</p>
+                          <p
+                            className="mt-4 text-3xl text-[#f6f2ea]"
+                            style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+                          >
+                            {displayData.rows.length} items in motion
+                          </p>
+                          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#b8b2a7]">
+                            A calmer read on what changed today across opportunities, portfolio drift, and Guardian events.
+                          </p>
+                        </div>
+
+                        <div className="rounded-[28px] border border-white/8 bg-white/[0.02] p-5">
+                          <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Coverage</p>
+                          <div className="mt-4 space-y-3 text-sm text-[#b8b2a7]">
+                            <div className="flex items-center justify-between border-b border-white/8 pb-3">
+                              <span>Rows loaded</span>
+                              <span className="text-[#f6f2ea]">{displayData.rows.length}</span>
+                            </div>
+                            <div className="flex items-center justify-between border-b border-white/8 pb-3">
+                              <span>Source</span>
+                              <span className="text-[#f6f2ea]">{isDemo ? 'Demo' : 'Live'}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Generated</span>
+                              <span className="text-[#f6f2ea]">
+                                {new Date(displayData.generated_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
               {/* Demo Mode Banner */}
               {isDemo && (
-                <div className="mb-6 p-3 rounded-lg bg-blue-500/20 border border-blue-500/30">
+                <div className="mb-6 rounded-[24px] border border-[#7ea3f2]/25 bg-[#7ea3f2]/12 p-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span className="text-sm text-blue-300 font-medium">Demo Mode</span>
+                    <div className="h-2 w-2 rounded-full bg-[#a7c0ff]"></div>
+                    <span className="text-sm font-medium text-[#dbe4ff]">Demo Mode</span>
                   </div>
-                  <p className="text-xs text-blue-200 mt-1">
+                  <p className="mt-1 text-xs text-[#bfd0ff]">
                     This is sample pulse data. Connect your wallet to see real insights.
                   </p>
                 </div>
@@ -442,7 +483,7 @@ export const PulseSheet = ({
                 <div className="space-y-4">
                   {[...Array(4)].map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="h-20 bg-white/5 rounded-lg"></div>
+                      <div className="h-24 rounded-[24px] border border-white/8 bg-white/[0.03]"></div>
                     </div>
                   ))}
                 </div>
@@ -450,31 +491,31 @@ export const PulseSheet = ({
 
               {/* Error State */}
               {error && !isLoading && (
-                <div className="text-center py-8">
-                  <div className="text-red-400 mb-2">Failed to load pulse data</div>
-                  <div className="text-sm text-gray-400">{error}</div>
+                <div className="py-10 text-center">
+                  <div className="mb-2 text-red-400">Failed to load pulse data</div>
+                  <div className="text-sm text-[#9c978f]">{error}</div>
                 </div>
               )}
 
               {/* Empty State */}
               {!isLoading && !error && displayData && displayData.rows.length === 0 && (
-                <div className="text-center py-12">
-                  <Calendar size={48} className="text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-white mb-2">Quiet Day</h3>
-                  <p className="text-gray-400 mb-6">
+                <div className="py-12 text-center">
+                  <Calendar size={48} className="mx-auto mb-4 text-[#6f6a62]" />
+                  <h3 className="mb-2 text-lg font-medium text-white">Quiet Day</h3>
+                  <p className="mb-6 text-[#9c978f]">
                     No new activity since your last visit. Check back later for updates.
                   </p>
                   <div className="space-y-2">
                     <button
                       onClick={() => !isDemo && (window.location.href = '/hunter')}
-                      className="block w-full px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      className="block w-full px-4 py-2 text-sm text-[#a7c0ff] transition-colors hover:text-[#dbe4ff]"
                       disabled={isDemo}
                     >
                       Explore Hunter opportunities
                     </button>
                     <button
                       onClick={() => !isDemo && (window.location.href = '/alerts')}
-                      className="block w-full px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      className="block w-full px-4 py-2 text-sm text-[#a7c0ff] transition-colors hover:text-[#dbe4ff]"
                       disabled={isDemo}
                     >
                       Create alert rules
@@ -499,12 +540,15 @@ export const PulseSheet = ({
 
               {/* Footer */}
               {displayData && displayData.rows.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-white/10">
-                  <p className="text-xs text-gray-500 text-center">
+                <div className="mt-8 border-t border-white/8 pt-6">
+                  <p className="text-center text-xs text-[#6f6a62]">
                     Generated at {new Date(displayData.generated_at).toLocaleTimeString()}
                   </p>
                 </div>
               )}
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         </>

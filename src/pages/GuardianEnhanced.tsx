@@ -164,6 +164,7 @@ export function GuardianEnhanced() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [showGuideDrawer, setShowGuideDrawer] = useState(false);
   const [activeWalletIndex, setActiveWalletIndex] = useState(0);
+  const [activeScanView, setActiveScanView] = useState<'Overview' | 'Health' | 'Exposure'>('Overview');
   const [walletScanSummaries, setWalletScanSummaries] = useState<Record<string, WalletScanSummary>>({});
 
   const wallets = useMemo(() => {
@@ -456,6 +457,107 @@ export function GuardianEnhanced() {
   const trendAreaPath = useMemo(() => buildAreaPath(trendPoints, 720, 180), [trendPoints]);
   const topFindings = useMemo(() => (scanResult?.flags || []).slice(0, 4), [scanResult?.flags]);
   const topApprovals = useMemo(() => (scanResult?.approvals || []).slice(0, 4), [scanResult?.approvals]);
+  const scanViewContent = useMemo(() => {
+    if (activeScanView === 'Health') {
+      return {
+        eyebrow: 'Wallet Health',
+        title:
+          trustScore === null
+            ? 'Start with one easy check-in.'
+            : trustScore >= 85
+              ? 'Your wallet health feels clear and steady.'
+              : trustScore >= 70
+                ? 'The health score is steady, with room to improve.'
+                : 'A short cleanup will lift the health reading quickly.',
+        body:
+          trustScore === null
+            ? 'Health view keeps the read simple: run a first scan, then Guardian can explain the score and what moved it.'
+            : `This view is focused on the score itself, the confidence behind it, and how recently Guardian checked the wallet. ${flagCount > 0 ? 'The next lift will usually come from the top flagged item.' : 'No active issues are weighing it down right now.'}`,
+        statusLabel: trustScore === null ? 'Scan required' : healthBand,
+        statusTone: trustScore === null ? chipClass : trustScore >= 70 ? accentPanelClass : warningPanelClass,
+        metricA: { label: 'Health Score', value: trustScore ?? '--', detail: 'Current reading' },
+        metricB: { label: 'Confidence', value: scanResult?.confidence ?? '--', detail: 'How sure Guardian is' },
+        metricC: { label: 'Last Check-In', value: freshnessDetail, detail: 'Most recent completed scan' },
+        trendTitle: 'Health trajectory',
+        trendBody: 'A narrow view of how the score has moved across recent reads.',
+        actionTitle: 'Keep the score moving',
+        actionBody:
+          flagCount > 0
+            ? 'The fastest way to improve the health reading is still the highest-impact open item.'
+            : 'There is no urgent fix right now. Refresh after new wallet activity to keep the read current.',
+        actionPrimary: flagCount > 0 ? 'Review health fixes' : 'Refresh now',
+        actionSecondary: 'See score details',
+      };
+    }
+
+    if (activeScanView === 'Exposure') {
+      return {
+        eyebrow: 'Exposure Read',
+        title:
+          flagCount === 0
+            ? 'Exposure looks quiet across the latest pass.'
+            : 'Exposure is concentrated in a few places worth attention.',
+        body:
+          flagCount === 0
+            ? 'This view highlights where approvals, risky counterparties, or wallet patterns could create drag. Nothing dominant is showing right now.'
+            : `Guardian is currently tracking ${(scanResult?.approvals || []).length} approvals, ${approvalRiskCount} approval-related items, and ${flagCount} open findings across the wallet.`,
+        statusLabel: flagCount === 0 ? 'Low exposure' : `${flagCount} open items`,
+        statusTone: flagCount === 0 ? accentPanelClass : dangerPanelClass,
+        metricA: { label: 'Approvals Tracked', value: (scanResult?.approvals || []).length, detail: 'Contracts with spending access' },
+        metricB: { label: 'Approval Risks', value: approvalRiskCount, detail: 'Approval-related findings' },
+        metricC: { label: 'Open Findings', value: flagCount, detail: 'Items shaping the exposure view' },
+        trendTitle: 'Exposure pulse',
+        trendBody: 'A simplified posture line that helps spot drift before it compounds.',
+        actionTitle: 'Review the main exposure',
+        actionBody:
+          approvalRiskCount > 0
+            ? 'Approval cleanup is the fastest place to reduce exposure today.'
+            : 'Exposure is being driven by broader findings instead of token approvals.',
+        actionPrimary: approvalRiskCount > 0 ? 'Review approvals' : 'Review findings',
+        actionSecondary: 'Open exposure details',
+      };
+    }
+
+    return {
+      eyebrow: 'Wallet Health',
+      title: healthHeadline,
+      body: healthMessage,
+      statusLabel: healthBand,
+      statusTone: trustScore === null ? chipClass : trustScore >= 85 ? accentPanelClass : trustScore >= 70 ? warningPanelClass : dangerPanelClass,
+      metricA: { label: 'Health Score', value: trustScore ?? '--', detail: 'Current reading' },
+      metricB: { label: 'Last Check-In', value: freshnessDetail, detail: 'Most recent full wallet reading.' },
+      metricC: { label: 'Open Items', value: flagCount, detail: flagCount === 0 ? 'Nothing urgent right now.' : `${flagCount} items are shaping today’s reading.` },
+      trendTitle: 'Health Trend',
+      trendBody: 'A clean view of the recent posture swing.',
+      actionTitle: primaryCareAction,
+      actionBody:
+        flagCount === 0
+          ? 'You are in maintenance mode. Keep this feeling by refreshing after new approvals or contract interactions.'
+          : 'Guardian is surfacing the easiest way to improve today’s reading. Start with the highest-impact item and the rest gets lighter.',
+      actionPrimary: flagCount > 0 ? 'Review fixes' : 'Refresh now',
+      actionSecondary: 'Open details',
+    };
+  }, [
+    activeScanView,
+    accentPanelClass,
+    approvalRiskCount,
+    chipClass,
+    dangerPanelClass,
+    flagCount,
+    freshnessDetail,
+    healthBand,
+    healthHeadline,
+    healthMessage,
+    primaryCareAction,
+    scanResult?.approvals,
+    scanResult?.confidence,
+    trustScore,
+    warningPanelClass,
+  ]);
+  const scoredWallets = useMemo(() => wallets.filter((wallet) => typeof wallet.trustScore === 'number'), [wallets]);
+  const averageWalletHealth = scoredWallets.length > 0
+    ? Math.round(scoredWallets.reduce((total, wallet) => total + (wallet.trustScore || 0), 0) / scoredWallets.length)
+    : null;
 
   // Welcome screen (not connected)
   if (!isActive && !demoMode) {
@@ -687,6 +789,9 @@ export function GuardianEnhanced() {
                     size="sm"
                     aria-label="Select active wallet for security scan"
                   >
+                    <span className={`hidden text-[11px] uppercase tracking-[0.2em] sm:inline ${mutedTextClass}`}>
+                      Active wallet
+                    </span>
                     <Wallet className="w-3 h-3" />
                     <span className="text-xs font-mono">
                       {activeAddress ? `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}` : 'No Wallet'}
@@ -787,7 +892,7 @@ export function GuardianEnhanced() {
               )}
               
               <p className={`text-xs uppercase tracking-[0.18em] transition-colors duration-300 ${mutedTextClass}`}>
-                {lastUpdatedLabel}
+                {demoMode ? 'Demo data' : lastUpdatedLabel}
               </p>
               
               <div className="flex flex-wrap items-center gap-2">
@@ -873,7 +978,7 @@ export function GuardianEnhanced() {
         </div>
       </motion.header>
 
-      <main className="px-4 pt-44 pb-28 max-w-6xl mx-auto space-y-6 relative z-10 lg:pt-32">
+      <main className="px-4 pt-36 pb-28 max-w-6xl mx-auto space-y-6 relative z-10 lg:pt-28">
         {!!scanError && !demoMode && (
           <div className={`rounded-[24px] px-4 py-4 ${dangerPanelClass}`}>
             <div className="flex items-start justify-between gap-4">
@@ -914,15 +1019,19 @@ export function GuardianEnhanced() {
               </h2>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {['Overview', 'Health', 'Exposure'].map((item, index) => (
-                <div
+              {(['Overview', 'Health', 'Exposure'] as const).map((item) => (
+                <DisabledTooltipButton
                   key={item}
+                  onClick={() => setActiveScanView(item)}
                   className={`shrink-0 rounded-2xl px-4 py-2 text-sm ${
-                    index === 0 ? primaryButtonClass : secondaryButtonClass
+                    activeScanView === item ? primaryButtonClass : secondaryButtonClass
                   }`}
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Switch Guardian overview to ${item}`}
                 >
                   {item}
-                </div>
+                </DisabledTooltipButton>
               ))}
             </div>
           </div>
@@ -943,44 +1052,45 @@ export function GuardianEnhanced() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-2xl">
                 <p className={`text-[11px] font-semibold uppercase tracking-[0.28em] ${mutedTextClass}`}>
-                  Wallet Health
+                  {scanViewContent.eyebrow}
                 </p>
                 <h2 className={`mt-3 text-4xl md:text-5xl font-semibold tracking-tight ${titleTextClass}`} style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}>
-                  {healthHeadline}
+                  {scanViewContent.title}
                 </h2>
                 <p className={`mt-4 max-w-xl text-base leading-7 ${bodyTextClass}`}>
-                  {healthMessage}
+                  {scanViewContent.body}
                 </p>
               </div>
 
-              <div className={`rounded-[28px] px-5 py-4 ${trustScore === null ? chipClass : trustScore >= 85 ? accentPanelClass : trustScore >= 70 ? warningPanelClass : dangerPanelClass}`}>
+              <div className={`rounded-[28px] px-5 py-4 ${scanViewContent.statusTone}`}>
                 <p className="text-[11px] uppercase tracking-[0.24em]">Status</p>
-                <p className="mt-2 text-2xl font-semibold">{healthBand}</p>
+                <p className="mt-2 text-2xl font-semibold">{scanViewContent.statusLabel}</p>
               </div>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <div className={`rounded-[24px] p-5 ${deepPanelClass}`}>
-                <p className={`text-[11px] uppercase tracking-[0.22em] ${isDarkTheme ? 'text-[#f7dec2]' : 'text-[#9d6d57]'}`}>Health Score</p>
-                <p className="mt-3 text-5xl font-bold tracking-tight text-[#eef3f0] sm:text-6xl">{trustScore ?? '--'}</p>
+                <p className={`text-[11px] uppercase tracking-[0.22em] ${isDarkTheme ? 'text-[#f7dec2]' : 'text-[#9d6d57]'}`}>{scanViewContent.metricA.label}</p>
+                <p className="mt-3 text-5xl font-bold tracking-tight text-[#eef3f0] sm:text-6xl">{scanViewContent.metricA.value}</p>
+                <p className="mt-2 text-sm text-[#d8d2c8]">{scanViewContent.metricA.detail}</p>
               </div>
               <div className={`rounded-[24px] p-5 ${mutedPanelClass}`}>
-                <p className={`text-[11px] uppercase tracking-[0.22em] ${mutedTextClass}`}>Last Check-In</p>
-                <p className={`mt-3 text-2xl font-semibold ${titleTextClass}`}>{freshnessDetail}</p>
-                <p className={`mt-2 text-sm ${bodyTextClass}`}>Most recent full wallet reading.</p>
+                <p className={`text-[11px] uppercase tracking-[0.22em] ${mutedTextClass}`}>{scanViewContent.metricB.label}</p>
+                <p className={`mt-3 text-2xl font-semibold ${titleTextClass}`}>{scanViewContent.metricB.value}</p>
+                <p className={`mt-2 text-sm ${bodyTextClass}`}>{scanViewContent.metricB.detail}</p>
               </div>
               <div className={`rounded-[24px] p-5 ${mutedPanelClass}`}>
-                <p className={`text-[11px] uppercase tracking-[0.22em] ${mutedTextClass}`}>Open Items</p>
-                <p className={`mt-3 text-2xl font-semibold ${titleTextClass}`}>{flagCount}</p>
-                <p className={`mt-2 text-sm ${bodyTextClass}`}>{flagCount === 0 ? 'Nothing urgent right now.' : `${flagCount} items are shaping today’s reading.`}</p>
+                <p className={`text-[11px] uppercase tracking-[0.22em] ${mutedTextClass}`}>{scanViewContent.metricC.label}</p>
+                <p className={`mt-3 text-2xl font-semibold ${titleTextClass}`}>{scanViewContent.metricC.value}</p>
+                <p className={`mt-2 text-sm ${bodyTextClass}`}>{scanViewContent.metricC.detail}</p>
               </div>
             </div>
 
             <div className={`mt-6 overflow-hidden rounded-[28px] ${mutedPanelClass}`}>
               <div className="flex items-center justify-between px-5 py-4">
                 <div>
-                  <p className={`text-[11px] uppercase tracking-[0.22em] ${mutedTextClass}`}>Health Trend</p>
-                  <p className={`mt-1 text-sm ${bodyTextClass}`}>A clean view of the recent posture swing.</p>
+                  <p className={`text-[11px] uppercase tracking-[0.22em] ${mutedTextClass}`}>{scanViewContent.trendTitle}</p>
+                  <p className={`mt-1 text-sm ${bodyTextClass}`}>{scanViewContent.trendBody}</p>
                 </div>
                 <div className={`rounded-full px-3 py-1 text-xs ${chipClass}`}>{demoMode ? 'Demo trajectory' : 'Latest pass'}</div>
               </div>
@@ -1019,28 +1129,36 @@ export function GuardianEnhanced() {
             <div className={`rounded-[30px] p-6 ${sunnyPanelClass}`}>
               <p className={`text-[11px] font-semibold uppercase tracking-[0.26em] ${isDarkTheme ? 'text-white/72' : 'text-white/78'}`}>Next Best Move</p>
               <h3 className="mt-3 text-3xl font-semibold tracking-tight" style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}>
-                {primaryCareAction}
+                {scanViewContent.actionTitle}
               </h3>
               <p className="mt-3 text-sm leading-7 text-white/82">
-                {flagCount === 0
-                  ? 'You are in maintenance mode. Keep this feeling by refreshing after new approvals or contract interactions.'
-                  : 'Guardian is surfacing the easiest way to improve today’s reading. Start with the highest-impact item and the rest gets lighter.'}
+                {scanViewContent.actionBody}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <DisabledTooltipButton
-                  onClick={() => setActiveTab(flagCount > 0 ? 'Risks' : 'Scan')}
+                  onClick={() => setActiveTab(flagCount > 0 || activeScanView === 'Exposure' ? 'Risks' : 'Scan')}
                   className={primaryButtonClass}
                   aria-label="Review detected security risks in this wallet"
                 >
-                  {flagCount > 0 ? 'Review fixes' : 'Refresh now'}
+                  {scanViewContent.actionPrimary}
                 </DisabledTooltipButton>
                 <DisabledTooltipButton
-                  onClick={handleRescan}
+                  onClick={() => {
+                    if (activeScanView === 'Health') {
+                      setShowLearnMore(true);
+                      return;
+                    }
+                    if (activeScanView === 'Exposure') {
+                      setActiveTab('Risks');
+                      return;
+                    }
+                    handleRescan();
+                  }}
                   className={secondaryButtonClass}
                   variant="ghost"
                   aria-label="Re-scan active wallet for updated risk analysis"
                 >
-                  Open details
+                  {scanViewContent.actionSecondary}
                 </DisabledTooltipButton>
               </div>
             </div>
@@ -1110,8 +1228,13 @@ export function GuardianEnhanced() {
                   Your Wallets
                 </h3>
                 <p className={`text-xs uppercase tracking-[0.18em] transition-colors duration-300 ${mutedTextClass}`}>
-                  {wallets.length} wallets • Avg: {Math.round(wallets.filter(w => w.trustScore).reduce((acc, w) => acc + (w.trustScore || 0), 0) / wallets.filter(w => w.trustScore).length) || '--'}% health
+                  {wallets.length} wallets • Avg: {averageWalletHealth ?? '--'}% health
                 </p>
+                {demoMode ? (
+                  <p className={`mt-2 text-xs normal-case tracking-normal ${bodyTextClass}`}>
+                    Demo mode only populates the sample wallet above. Your saved wallet rows stay unchanged.
+                  </p>
+                ) : null}
               </div>
               <div className="text-right">
                 <div className={`text-2xl font-bold transition-colors duration-300 ${accentTextClass}`}>
@@ -1294,7 +1417,7 @@ export function GuardianEnhanced() {
                 )}
                 {wallets.length > 1 && (
                   <span className={`ml-2 rounded-full px-2 py-1 text-xs font-medium ${chipClass}`}>
-                    Portfolio Avg: {Math.round(wallets.filter(w => w.trustScore).reduce((acc, w) => acc + (w.trustScore || 0), 0) / wallets.filter(w => w.trustScore).length) || '--'}
+                    Portfolio Avg: {averageWalletHealth ?? '--'}
                   </span>
                 )}
               </p>

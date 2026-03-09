@@ -227,11 +227,11 @@ export default function SignalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#f6f2ea]">
+    <div className="min-h-screen overflow-x-hidden bg-[#050505] text-[#f6f2ea]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(126,163,242,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.04),transparent_35%)]" />
       <GlobalHeader className="border-white/8 bg-[#050505]/94" />
 
-      <div className="relative mx-auto max-w-[1600px] px-4 pb-28 pt-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-[1600px] px-4 pb-36 pt-8 sm:px-6 sm:pb-40 sm:pt-10 lg:px-8 lg:pb-36">
         <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-[#a7c0ff]">

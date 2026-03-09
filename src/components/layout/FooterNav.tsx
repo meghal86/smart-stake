@@ -47,6 +47,16 @@ export function FooterNav({ currentRoute }: FooterNavProps = {}) {
 
   // Use NavigationRouter for consistent active state detection
   const isActive = (path: string) => {
+    const currentPathname = currentPath.split('?')[0];
+
+    if (path === '/portfolio' && currentPathname.startsWith('/portfolio')) {
+      return true;
+    }
+
+    if (path === '/settings' && currentPathname.startsWith('/settings')) {
+      return true;
+    }
+
     const currentRoute = NavigationRouter.canonicalize(currentPath);
     const targetRoute = NavigationRouter.canonicalize(path);
     return currentRoute.id === targetRoute.id;

@@ -18,6 +18,7 @@ import { InsightsSheet } from '@/components/cockpit/InsightsSheet';
 import { PulseSheet } from '@/components/cockpit/PulseSheet';
 import { FooterNav } from '@/components/layout/FooterNav';
 import { useCockpitData } from '@/hooks/useCockpitData';
+import { Compass, Briefcase, Shield } from 'lucide-react';
 
 const getDemoCoverageInfo = () => ({
   wallets: 3,
@@ -113,7 +114,8 @@ const Cockpit: React.FC = () => {
   const { 
     summary, 
     isLoading, 
-    error 
+    error,
+    isSampleData,
   } = useCockpitData({ 
     isDemo,
     initialWalletScope: 'active'
@@ -138,6 +140,30 @@ const Cockpit: React.FC = () => {
   const actionCount = data?.action_preview?.length ?? 0;
   const providerState = data?.provider_status?.state ?? 'offline';
   const todayKind = data?.today_card?.kind?.replace(/_/g, ' ') ?? 'waiting';
+  const sourceCounts = (data?.action_preview ?? []).reduce<Record<string, number>>((acc, action) => {
+    acc[action.source.kind] = (acc[action.source.kind] ?? 0) + 1;
+    return acc;
+  }, {});
+  const moduleRead = [
+    {
+      label: 'Guardian',
+      icon: Shield,
+      value: sourceCounts.guardian ?? 0,
+      helper: sourceCounts.guardian ? 'Live security actions' : 'Quiet right now',
+    },
+    {
+      label: 'Hunter',
+      icon: Compass,
+      value: sourceCounts.hunter ?? 0,
+      helper: sourceCounts.hunter ? 'Fresh opportunity flow' : 'No fresh quests yet',
+    },
+    {
+      label: 'Portfolio',
+      icon: Briefcase,
+      value: sourceCounts.portfolio ?? 0,
+      helper: sourceCounts.portfolio ? 'Review suggestions ready' : 'No drift flagged yet',
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#f6f2ea]">
@@ -156,6 +182,17 @@ const Cockpit: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {isSampleData ? (
+          <section className="mb-6 rounded-[24px] border border-[#7ea3f2]/20 bg-[rgba(126,163,242,0.08)] px-5 py-4">
+            <div className="flex flex-col gap-1">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-[#b7c8f0]">Sample state</p>
+              <p className="text-sm text-[#f6f2ea]">
+                Cockpit is showing guided sample actions right now. Connect or refresh a wallet to replace these with live signals.
+              </p>
+            </div>
+          </section>
+        ) : null}
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="space-y-6">
@@ -180,9 +217,30 @@ const Cockpit: React.FC = () => {
               actions={data?.action_preview || []}
               isLoading={isLoading}
               error={error}
-              isDemo={isDemo}
+              isDemo={isSampleData}
               onSeeAllClick={() => navigate('/signals')}
             />
+
+            <section className="grid gap-4 md:grid-cols-3">
+              {moduleRead.map(({ label, icon: Icon, value, helper }) => (
+                <div
+                  key={label}
+                  className="rounded-[26px] border border-white/8 bg-[#0b0b0c] p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)]"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-[#8f8a82]">{label}</p>
+                    <Icon className="h-4 w-4 text-[#a7c0ff]" />
+                  </div>
+                  <p
+                    className="mt-4 text-3xl text-[#f6f2ea]"
+                    style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+                  >
+                    {value}
+                  </p>
+                  <p className="mt-2 text-sm text-[#9c978f]">{helper}</p>
+                </div>
+              ))}
+            </section>
           </div>
 
           <aside className="space-y-6">
@@ -215,7 +273,9 @@ const Cockpit: React.FC = () => {
               <p className="mt-3 text-sm leading-6 text-[#b8b2a7]">
                 {isDemo
                   ? 'This cockpit is using sample data for walkthrough purposes.'
-                  : 'This cockpit is reading the live authenticated experience.'}
+                  : isSampleData
+                    ? 'This cockpit is temporarily showing sample actions because live cockpit data is not ready.'
+                    : 'This cockpit is reading the live authenticated experience.'}
               </p>
             </section>
           </aside>

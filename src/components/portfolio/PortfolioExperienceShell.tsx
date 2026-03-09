@@ -58,7 +58,7 @@ export function PortfolioExperienceShell({
                   className="mt-3 text-[28px] leading-none text-[#f6f2ea]"
                   style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
                 >
-                  Wealth
+                  Command
                 </p>
               </div>
 

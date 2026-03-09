@@ -261,6 +261,55 @@ describe('GuardianEnhanced Phase 1', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('switches the Guardian overview sub-tabs and updates the main content', async () => {
+    const user = userEvent.setup();
+
+    useGuardianScanMock.mockReturnValue({
+      data: {
+        trustScorePercent: 82,
+        trustScoreRaw: 0.82,
+        riskScore: 2,
+        riskLevel: 'Low',
+        statusLabel: 'Trusted',
+        statusTone: 'trusted',
+        confidence: 0.91,
+        approvals: [
+          { spender: '0xabc', severity: 'high' },
+          { spender: '0xdef', severity: 'low' },
+        ],
+        flags: [
+          { type: 'approval_risk' },
+          { type: 'mixer_exposure' },
+        ],
+        scannedAt: '2026-03-05T11:55:00.000Z',
+        dataSource: 'live',
+      },
+      isLoading: false,
+      error: null,
+      refetch: refetchMock,
+      rescan: rescanMock,
+      isRescanning: false,
+      isRefetching: false,
+      statusAccent: '',
+      scoreGlow: '',
+    });
+
+    render(<GuardianEnhanced />);
+
+    expect(screen.getByText('Wallet Health')).toBeInTheDocument();
+    expect(screen.getByText('Health Trend')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /switch guardian overview to health/i }));
+
+    expect(screen.getByText('Health trajectory')).toBeInTheDocument();
+    expect(screen.getByText('How sure Guardian is')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /switch guardian overview to exposure/i }));
+
+    expect(screen.getByText('Exposure Read')).toBeInTheDocument();
+    expect(screen.getByText('Contracts with spending access')).toBeInTheDocument();
+  });
+
   it('scans every wallet from the live wallet list when scan all is requested', async () => {
     const user = userEvent.setup();
 

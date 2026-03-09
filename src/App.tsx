@@ -154,7 +154,7 @@ const App = () => {
     <ErrorBoundary>
       <ClientProviders>
         {showSplash && (
-          <SplashScreen onComplete={handleSplashComplete} duration={5000} />
+          <SplashScreen onComplete={handleSplashComplete} duration={1700} />
         )}
         <BrowserRouter>
           <BrowserNavigationProvider showToast={(message) => toast({ description: message })}>

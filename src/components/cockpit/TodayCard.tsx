@@ -367,6 +367,17 @@ export const TodayCard: React.FC<TodayCardProps> = memo(({
             </Button>
           )}
         </div>
+
+        {(primary_cta.label === "Open today's pulse" || secondary_cta?.label === 'Explore Hunter') && (
+          <div className="mt-4 flex flex-col gap-2 text-xs text-[#8f8a82] sm:flex-row sm:items-center sm:gap-4">
+            {primary_cta.label === "Open today's pulse" ? (
+              <span>Daily AI briefing · about 30 seconds</span>
+            ) : null}
+            {secondary_cta?.label === 'Explore Hunter' ? (
+              <span>Explore Hunter · find new opportunities</span>
+            ) : null}
+          </div>
+        )}
         
         {/* Background decoration - Optimized with transform3d for GPU acceleration */}
         <div 

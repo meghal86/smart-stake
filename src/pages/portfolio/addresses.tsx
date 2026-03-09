@@ -1,4 +1,5 @@
-import { RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PortfolioExperienceShell } from '@/components/portfolio/PortfolioExperienceShell';
 import { usePortfolioRouteData } from '@/hooks/portfolio/usePortfolioRouteData';
 import { Button } from '@/components/ui/button';
@@ -43,12 +44,37 @@ export default function Addresses() {
       }}
       guideLabel="Ask Portfolio AI"
       actions={
-        <Button className="rounded-full bg-[#f6f2ea] px-5 text-black hover:bg-white" onClick={() => void refetchAddresses()}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh addresses
-        </Button>
+        <>
+          <Link to="/settings/wallets">
+            <Button
+              variant="outline"
+              className="rounded-full border-white/10 bg-white/[0.03] px-5 text-[#f6f2ea] hover:bg-white/[0.08]"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Manage addresses
+            </Button>
+          </Link>
+          <Button className="rounded-full bg-[#f6f2ea] px-5 text-black hover:bg-white" onClick={() => void refetchAddresses()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh addresses
+          </Button>
+        </>
       }
     >
+      <section className={`${surfaceClass} p-5`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Registry notes</p>
+            <p className="mt-2 text-sm leading-6 text-[#9c978f]">
+              Wallets are managed from Wallet Settings. This roster only shows sanitized live addresses that feed portfolio totals.
+            </p>
+          </div>
+          <Link to="/settings/wallets" className="text-sm text-[#a7c0ff]">
+            Open wallet settings
+          </Link>
+        </div>
+      </section>
+
       <section className={`${surfaceClass} overflow-hidden`}>
         <div className="hidden grid-cols-[1.4fr_0.8fr_0.8fr] gap-4 border-b border-white/8 px-6 py-4 text-[11px] uppercase tracking-[0.24em] text-[#8f8a82] md:grid">
           <span>Wallet</span>
@@ -89,7 +115,9 @@ export default function Addresses() {
               </div>
             ))
           ) : (
-            <div className="px-6 py-8 text-sm text-[#8f8a82]">No addresses added yet.</div>
+            <div className="px-6 py-8 text-sm text-[#8f8a82]">
+              No addresses added yet. Open wallet settings to connect the first wallet.
+            </div>
           )}
         </div>
       </section>

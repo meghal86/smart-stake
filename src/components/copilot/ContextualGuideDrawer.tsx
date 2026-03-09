@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Bot, Brain, Briefcase, Send, Shield, Sparkles } from 'lucide-react';
 import {
   Drawer,
@@ -10,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useIsDesktop } from '@/hooks/use-mobile';
 
 type GuideKind = 'portfolio' | 'guardian';
 
@@ -209,6 +211,7 @@ export function ContextualGuideDrawer({
   kind,
   context,
 }: ContextualGuideDrawerProps) {
+  const isDesktop = useIsDesktop();
   const prompts = kind === 'portfolio' ? portfolioPrompts : guardianPrompts;
   const initialMessage = useMemo(() => buildInitialMessage(kind, context), [kind, context]);
   const [messages, setMessages] = useState<GuideMessage[]>([]);
@@ -228,11 +231,118 @@ export function ContextualGuideDrawer({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [isOpen, messages, isThinking]);
 
+  useEffect(() => {
+    if (!isOpen || !isDesktop) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDesktop, isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isDesktop || !isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isDesktop, isOpen]);
+
   const title = kind === 'portfolio' ? 'Portfolio AI Guide' : 'Guardian AI Guide';
   const description =
     kind === 'portfolio'
       ? 'A calmer read on positions, risk, approvals, and next actions.'
       : 'A wallet-safety guide focused on health score, fixes, approvals, and scan timing.';
+
+  const panelBody = (
+    <>
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="mb-4 flex flex-wrap gap-2">
+          {prompts.map((prompt) => (
+            <Button
+              key={prompt.id}
+              variant="outline"
+              onClick={() => sendPrompt(prompt.prompt)}
+              className="rounded-full border-white/10 bg-white/[0.03] text-[#f6f2ea] hover:bg-white/[0.08]"
+            >
+              <Brain className="mr-2 h-4 w-4 text-[#a7c0ff]" />
+              {prompt.label}
+            </Button>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
+            >
+              <div
+                className={`max-w-[88%] rounded-[24px] px-4 py-3 text-sm leading-6 ${
+                  message.role === 'assistant'
+                    ? 'border border-white/8 bg-white/[0.04] text-[#f6f2ea]'
+                    : 'bg-[#f6f2ea] text-black'
+                }`}
+              >
+                <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
+                  {message.role === 'assistant' ? (
+                    <>
+                      <Bot className="h-3.5 w-3.5 text-[#a7c0ff]" />
+                      <span className="text-[#9c978f]">{title}</span>
+                    </>
+                  ) : (
+                    <span className="text-black/60">You</span>
+                  )}
+                </div>
+                <p className="whitespace-pre-wrap">{message.content}</p>
+              </div>
+            </div>
+          ))}
+
+          {isThinking ? (
+            <div className="flex justify-start">
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.04] px-4 py-3 text-sm text-[#9c978f]">
+                Thinking through the current {kind === 'portfolio' ? 'portfolio' : 'wallet'} context...
+              </div>
+            </div>
+          ) : null}
+
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      <div className="border-t border-white/8 px-4 py-4">
+        <div className="flex gap-2">
+          <Input
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                sendPrompt(inputValue);
+              }
+            }}
+            placeholder={kind === 'portfolio' ? 'Ask about positions, risk, or approvals...' : 'Ask about health score, fixes, or scan timing...'}
+            className="border-white/10 bg-white/[0.03] text-[#f6f2ea] placeholder:text-[#7c776f]"
+          />
+          <Button
+            onClick={() => sendPrompt(inputValue)}
+            disabled={!inputValue.trim() || isThinking}
+            className="rounded-2xl bg-[#f6f2ea] px-4 text-black hover:bg-white"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </>
+  );
 
   const sendPrompt = (prompt: string) => {
     const trimmed = prompt.trim();
@@ -262,114 +372,66 @@ export function ContextualGuideDrawer({
     }, 420);
   };
 
+  const panelHeader = (
+    <div className="flex items-start gap-3 pr-10">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
+        {kind === 'portfolio' ? (
+          <Briefcase className="h-5 w-5 text-[#a7c0ff]" />
+        ) : (
+          <Shield className="h-5 w-5 text-[#a7c0ff]" />
+        )}
+      </div>
+      <div className="min-w-0">
+        <div className="text-left text-xl text-[#f6f2ea]">{title}</div>
+        <div className="mt-1 text-left text-sm text-[#9c978f]">{description}</div>
+      </div>
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {'isDemo' in context && context.isDemo ? (
+          <Badge variant="outline" className="border-[#d7bf7d]/30 text-[#d7bf7d]">
+            Demo Mode
+          </Badge>
+        ) : null}
+        <Badge variant="outline" className="border-white/10 text-[#9c978f]">
+          <Sparkles className="mr-1 h-3 w-3" />
+          Guided
+        </Badge>
+      </div>
+    </div>
+  );
+
+  if (isDesktop) {
+    if (!isOpen) {
+      return null;
+    }
+
+    return createPortal(
+      <>
+        <button
+          type="button"
+          aria-label="Close AI guide"
+          className="fixed inset-0 z-[1400] bg-[rgba(5,5,5,0.96)] backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <section className="fixed left-1/2 top-1/2 z-[1410] flex w-[min(760px,calc(100vw-40px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[30px] border border-white/10 bg-[#080808] text-[#f6f2ea] shadow-[0_30px_120px_rgba(0,0,0,0.72)]">
+          <div className="border-b border-white/8 px-4 py-4 text-left">
+            {panelHeader}
+          </div>
+          {panelBody}
+        </section>
+      </>,
+      document.body
+    );
+  }
+
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="h-[82vh] border-white/10 bg-[#080808] text-[#f6f2ea]">
         <DrawerHeader className="border-b border-white/8">
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
-              {kind === 'portfolio' ? (
-                <Briefcase className="h-5 w-5 text-[#a7c0ff]" />
-              ) : (
-                <Shield className="h-5 w-5 text-[#a7c0ff]" />
-              )}
-            </div>
-            <div>
-              <DrawerTitle className="text-left text-xl text-[#f6f2ea]">{title}</DrawerTitle>
-              <DrawerDescription className="text-left text-[#9c978f]">{description}</DrawerDescription>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              {'isDemo' in context && context.isDemo ? (
-                <Badge variant="outline" className="border-[#d7bf7d]/30 text-[#d7bf7d]">
-                  Demo Mode
-                </Badge>
-              ) : null}
-              <Badge variant="outline" className="border-white/10 text-[#9c978f]">
-                <Sparkles className="mr-1 h-3 w-3" />
-                Guided
-              </Badge>
-            </div>
-          </div>
+          {panelHeader}
+          <DrawerTitle className="sr-only">{title}</DrawerTitle>
+          <DrawerDescription className="sr-only">{description}</DrawerDescription>
         </DrawerHeader>
-
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="mb-4 flex flex-wrap gap-2">
-            {prompts.map((prompt) => (
-              <Button
-                key={prompt.id}
-                variant="outline"
-                onClick={() => sendPrompt(prompt.prompt)}
-                className="rounded-full border-white/10 bg-white/[0.03] text-[#f6f2ea] hover:bg-white/[0.08]"
-              >
-                <Brain className="mr-2 h-4 w-4 text-[#a7c0ff]" />
-                {prompt.label}
-              </Button>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
-              >
-                <div
-                  className={`max-w-[88%] rounded-[24px] px-4 py-3 text-sm leading-6 ${
-                    message.role === 'assistant'
-                      ? 'border border-white/8 bg-white/[0.04] text-[#f6f2ea]'
-                      : 'bg-[#f6f2ea] text-black'
-                  }`}
-                >
-                  <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
-                    {message.role === 'assistant' ? (
-                      <>
-                        <Bot className="h-3.5 w-3.5 text-[#a7c0ff]" />
-                        <span className="text-[#9c978f]">{title}</span>
-                      </>
-                    ) : (
-                      <span className="text-black/60">You</span>
-                    )}
-                  </div>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
-              </div>
-            ))}
-
-            {isThinking ? (
-              <div className="flex justify-start">
-                <div className="rounded-[24px] border border-white/8 bg-white/[0.04] px-4 py-3 text-sm text-[#9c978f]">
-                  Thinking through the current {kind === 'portfolio' ? 'portfolio' : 'wallet'} context...
-                </div>
-              </div>
-            ) : null}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        <div className="border-t border-white/8 px-4 py-4">
-          <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={(event) => setInputValue(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  sendPrompt(inputValue);
-                }
-              }}
-              placeholder={kind === 'portfolio' ? 'Ask about positions, risk, or approvals...' : 'Ask about health score, fixes, or scan timing...'}
-              className="border-white/10 bg-white/[0.03] text-[#f6f2ea] placeholder:text-[#7c776f]"
-            />
-            <Button
-              onClick={() => sendPrompt(inputValue)}
-              disabled={!inputValue.trim() || isThinking}
-              className="rounded-2xl bg-[#f6f2ea] px-4 text-black hover:bg-white"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        {panelBody}
       </DrawerContent>
     </Drawer>
   );

@@ -137,17 +137,21 @@ export default function Guardian() {
           <p className="text-[11px] uppercase tracking-[0.28em] text-[#8f8a82]">Status</p>
           <div className="mt-6 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(126,163,242,0.18),rgba(255,255,255,0.02))] p-5">
             <CheckCircle2 className="h-6 w-6 text-[#a7c0ff]" />
-            <p
-              className="mt-4 text-3xl text-[#f6f2ea]"
-              style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
-            >
+              <p
+                className="mt-4 text-3xl text-[#f6f2ea]"
+                style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
+              >
               {isLoading ? 'Scanning...' : 'Reading complete'}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-[#9c978f]">
-              Last updated {snapshot?.lastUpdated ? new Date(snapshot.lastUpdated).toLocaleString() : 'not yet'}.
-            </p>
-          </div>
-        </article>
+              </p>
+              <p className="mt-3 text-sm leading-6 text-[#9c978f]">
+              {snapshot?.lastUpdated
+                ? `Last updated ${new Date(snapshot.lastUpdated).toLocaleString()}.`
+                : isLoading
+                  ? 'Refreshing Guardian posture now.'
+                  : 'No live reading yet. Run a rescan to generate the first posture.'}
+              </p>
+            </div>
+          </article>
       </section>
 
       <section className={`${surfaceClass} p-6`}>

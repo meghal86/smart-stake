@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,19 +9,42 @@ interface UserAddress {
   group?: string;
 }
 
+const PLACEHOLDER_ADDRESSES = new Set([
+  '0x1234567890123456789012345678901234567890',
+]);
+
+const sanitizeAddresses = (rows: UserAddress[]) => {
+  const seen = new Set<string>();
+
+  return rows.filter((row) => {
+    const normalizedAddress = row.address.toLowerCase();
+
+    if (PLACEHOLDER_ADDRESSES.has(normalizedAddress)) {
+      return false;
+    }
+
+    if (seen.has(normalizedAddress)) {
+      return false;
+    }
+
+    seen.add(normalizedAddress);
+    return true;
+  });
+};
+
 export function useUserAddresses() {
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   // Load addresses from database
-  const loadAddresses = async () => {
+  const loadAddresses = useCallback(async () => {
     if (!user) {
       // Load from localStorage for non-authenticated users
       const saved = localStorage.getItem('portfolio-addresses');
       if (saved) {
         try {
-          setAddresses(JSON.parse(saved));
+          setAddresses(sanitizeAddresses(JSON.parse(saved)));
         } catch (error) {
           console.error('Error parsing saved addresses:', error);
         }
@@ -46,14 +69,14 @@ export function useUserAddresses() {
         group: item.address_group || undefined
       }));
 
-      setAddresses(userAddresses);
+      setAddresses(sanitizeAddresses(userAddresses));
     } catch (error) {
       console.error('Error loading addresses:', error);
       // Fallback to localStorage
       const saved = localStorage.getItem('portfolio-addresses');
       if (saved) {
         try {
-          setAddresses(JSON.parse(saved));
+          setAddresses(sanitizeAddresses(JSON.parse(saved)));
         } catch (parseError) {
           console.error('Error parsing saved addresses:', parseError);
         }
@@ -61,7 +84,7 @@ export function useUserAddresses() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Add new address
   const addAddress = async (newAddress: Omit<UserAddress, 'id'>) => {
@@ -71,7 +94,7 @@ export function useUserAddresses() {
         id: Date.now().toString(),
         ...newAddress
       };
-      const updated = [...addresses, addressWithId];
+      const updated = sanitizeAddresses([...addresses, addressWithId]);
       setAddresses(updated);
       localStorage.setItem('portfolio-addresses', JSON.stringify(updated));
       return;
@@ -98,7 +121,7 @@ export function useUserAddresses() {
         group: data.address_group || undefined
       };
 
-      setAddresses(prev => [...prev, addressWithId]);
+      setAddresses(prev => sanitizeAddresses([...prev, addressWithId]));
     } catch (error) {
       console.error('Error adding address:', error);
       throw error;
@@ -165,8 +188,8 @@ export function useUserAddresses() {
   };
 
   useEffect(() => {
-    loadAddresses();
-  }, [user]);
+    void loadAddresses();
+  }, [loadAddresses]);
 
   return {
     addresses,

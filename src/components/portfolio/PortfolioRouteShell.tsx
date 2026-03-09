@@ -126,7 +126,11 @@ export function PortfolioRouteShell() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[#9c978f]">Freshness</span>
                 <span className="text-sm text-[#f6f2ea]">
-                  {freshness.freshnessSec ? `${Math.round(freshness.freshnessSec)}s` : 'Waiting'}
+                  {freshness.freshnessSec
+                    ? `${Math.round(freshness.freshnessSec)}s ago`
+                    : isLoading
+                      ? 'Building read'
+                      : 'Refresh to generate'}
                 </span>
               </div>
             </div>
@@ -159,7 +163,9 @@ export function PortfolioRouteShell() {
                 ))
               ) : (
                 <div className="flex min-h-[140px] items-center justify-center rounded-[24px] border border-white/8 bg-white/[0.02] text-sm text-[#8f8a82] sm:col-span-2 xl:col-span-3">
-                  {isLoading ? 'Loading positions' : 'No live positions found for this scope'}
+                  {isLoading
+                    ? 'Loading positions'
+                    : 'No live positions yet. Add or review wallets to build this view.'}
                 </div>
               )}
             </div>
@@ -213,7 +219,9 @@ export function PortfolioRouteShell() {
               ))
             ) : (
               <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4 text-sm text-[#9c978f]">
-                {isLoading ? 'Loading actions' : 'No live actions available for this scope'}
+                {isLoading
+                  ? 'Loading actions'
+                  : 'No live actions yet. Refresh after adding a wallet to generate guidance.'}
               </div>
             )}
           </div>
@@ -256,7 +264,7 @@ export function PortfolioRouteShell() {
               ))
             ) : (
               <div className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-[#8f8a82]">
-                No chain exposure available yet.
+                No chain exposure yet. Add your first wallet or refresh this scope to generate exposure.
               </div>
             )}
           </div>
@@ -294,7 +302,9 @@ export function PortfolioRouteShell() {
             ))
           ) : (
             <div className="rounded-[24px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-[#8f8a82]">
-              {isLoading ? 'Loading positions' : 'No live positions returned for this scope'}
+              {isLoading
+                ? 'Loading positions'
+                : 'No live positions returned yet. Add or review wallets to populate this section.'}
             </div>
           )}
         </div>
