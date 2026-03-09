@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -63,6 +63,15 @@ export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWa
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addedWallet, setAddedWallet] = useState<GuardianWallet | null>(null);
 
+  const walletTypeTitles = useMemo(
+    () =>
+      [...walletTypes, ...advancedTypes].reduce<Record<WalletType, string>>((acc, item) => {
+        acc[item.type] = item.title;
+        return acc;
+      }, {} as Record<WalletType, string>),
+    [],
+  );
+
   const resetState = useCallback(() => {
     setFlowState('main');
     setShowAdvanced(false);
@@ -88,7 +97,13 @@ export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWa
       setFlowState('scanning');
 
       try {
-        const wallet = await addWallet({ input, walletType, alias: alias.trim() || undefined });
+        const normalizedInput = normalizeAddress(input);
+        const resolvedWallet = await resolveEns(normalizedInput);
+        const wallet = await addWallet({
+          address: resolvedWallet.address.toLowerCase(),
+          label: alias.trim() || resolvedWallet.ensName || walletTypeTitles[walletType] || 'Guardian Wallet',
+          chain_namespace: 'eip155:1',
+        });
         setAddedWallet(wallet);
         onWalletAdded?.(wallet);
         
@@ -108,7 +123,7 @@ export default function AddWalletModal({ isOpen, onClose, onWalletAdded }: AddWa
         setIsSubmitting(false);
       }
     },
-    [addWallet, alias, onWalletAdded, toast, handleClose],
+    [addWallet, alias, onWalletAdded, toast, handleClose, walletTypeTitles],
   );
 
   const handleManualSubmit = useCallback(async () => {

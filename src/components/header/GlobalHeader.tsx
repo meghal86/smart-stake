@@ -113,7 +113,7 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
                 </button>
                 {renderMenu(
                   <>
-                    <button onClick={() => { navigate('/profile'); setShowMenu(false) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">
+                    <button onClick={() => { navigate('/settings'); setShowMenu(false) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">
                       <User className="w-4 h-4" /> Profile
                     </button>
                     <button onClick={() => { navigate('/settings'); setShowMenu(false) }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#44423d] hover:bg-[#f3f1ed] dark:text-[#d7d1c7] dark:hover:bg-[#171717]">

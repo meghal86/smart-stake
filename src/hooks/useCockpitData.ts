@@ -161,6 +161,31 @@ const DEMO_PREFERENCES: CockpitPreferences = {
   notif_cap_per_day: 3,
 };
 
+const createLiveFallbackSummary = (
+  walletScope: 'active' | 'all',
+): CockpitSummaryResponse['data'] => ({
+  wallet_scope: walletScope,
+  today_card: {
+    kind: 'onboarding',
+    anchor_metric: 'Connect Wallet',
+    context_line: 'Live cockpit actions appear after a wallet is connected and scanned.',
+    primary_cta: { label: 'Open wallet settings', href: '/settings/wallets' },
+    secondary_cta: { label: 'Open Guardian', href: '/guardian' },
+  },
+  action_preview: [],
+  counters: {
+    new_since_last: 0,
+    expiring_soon: 0,
+    critical_risk: 0,
+    pending_actions: 0,
+  },
+  provider_status: {
+    state: 'offline',
+    detail: 'Live cockpit data is unavailable right now.',
+  },
+  degraded_mode: true,
+});
+
 // ============================================================================
 // Hook Implementation with Risk-Aware Caching
 // ============================================================================
@@ -199,21 +224,21 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
         });
         
         if (!response.ok) {
-          // If API endpoint doesn't exist (404), fall back to demo data
+          // If API endpoint doesn't exist (404), render an honest live fallback
           if (response.status === 404) {
-            console.warn('Cockpit summary API not available, using demo data');
+            console.warn('Cockpit summary API not available, using live fallback state');
             trackCachePerformance('miss', 'summary-fallback', Date.now() - startTime);
-            return { ...DEMO_SUMMARY, wallet_scope: walletScope };
+            return createLiveFallbackSummary(walletScope);
           }
           throw new Error(`Failed to fetch summary: ${response.status}`);
         }
         
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          // If response is not JSON (likely HTML error page), fall back to demo data
-          console.warn('Cockpit summary API returned non-JSON response, using demo data');
+          // If response is not JSON (likely HTML error page), render an honest live fallback
+          console.warn('Cockpit summary API returned non-JSON response, using live fallback state');
           trackCachePerformance('miss', 'summary-fallback', Date.now() - startTime);
-          return { ...DEMO_SUMMARY, wallet_scope: walletScope };
+          return createLiveFallbackSummary(walletScope);
         }
         
         const data: CockpitSummaryResponse = await response.json();
@@ -222,10 +247,10 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
         return data.data;
       } catch (error) {
         console.error('Failed to fetch cockpit summary:', error);
-        // Fall back to demo data on any error
-        console.warn('Using demo data due to API error');
+        // Do not masquerade sample data as live
+        console.warn('Using live fallback state due to API error');
         trackCachePerformance('miss', 'summary-error', Date.now() - startTime);
-        return { ...DEMO_SUMMARY, wallet_scope: walletScope };
+        return createLiveFallbackSummary(walletScope);
       }
     },
     ...getRiskAwareCacheConfig(undefined), // Will be updated when we get the data
@@ -483,9 +508,7 @@ export const useCockpitData = (options: UseCockpitDataOptions = {}) => {
     summaryQuery.refetch();
   }, [summaryQuery]);
 
-  const isFallbackDemo =
-    !isDemo &&
-    Boolean(summaryQuery.data?.action_preview?.some((action) => action.id.startsWith('demo_')));
+  const isFallbackDemo = false;
   
   return {
     // Data

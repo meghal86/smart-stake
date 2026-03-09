@@ -217,7 +217,7 @@ const Cockpit: React.FC = () => {
               actions={data?.action_preview || []}
               isLoading={isLoading}
               error={error}
-              isDemo={isSampleData}
+              isDemo={isDemo}
               onSeeAllClick={() => navigate('/signals')}
             />
 

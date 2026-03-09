@@ -13,6 +13,7 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Shield, 
   TrendingUp, 
@@ -290,6 +291,7 @@ const ActionRow: React.FC<{
   isDemo: boolean;
   index: number;
 }> = ({ action, isDemo, index }) => {
+  const navigate = useNavigate();
   const laneConfig = LANE_CONFIG[action.lane];
   const ctaConfig = CTA_CONFIG[action.cta.kind];
   const LaneIcon = laneConfig.icon;
@@ -297,6 +299,17 @@ const ActionRow: React.FC<{
   // Determine if CTA should be disabled in demo mode
   const isCtaDisabled = isDemo && (action.cta.kind === 'Fix' || action.cta.kind === 'Execute');
   
+  const handleNavigate = useCallback(() => {
+    if (!action.cta.href) return;
+
+    if (action.cta.href.startsWith('/')) {
+      navigate(action.cta.href);
+      return;
+    }
+
+    window.location.href = action.cta.href;
+  }, [action.cta.href, navigate]);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -346,15 +359,15 @@ const ActionRow: React.FC<{
           </Button>
         ) : (
           <Button
-            asChild
             variant={ctaConfig.variant}
             size="sm"
             className={action.cta.kind === 'Review' ? ctaConfig.color : ''}
+            onClick={handleNavigate}
           >
-            <a href={action.cta.href} className="flex items-center gap-1">
+            <span className="flex items-center gap-1">
               {action.cta.kind}
               <ChevronRight className="w-3 h-3" />
-            </a>
+            </span>
           </Button>
         )}
       </div>

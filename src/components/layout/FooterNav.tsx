@@ -49,6 +49,10 @@ export function FooterNav({ currentRoute }: FooterNavProps = {}) {
   const isActive = (path: string) => {
     const currentPathname = currentPath.split('?')[0];
 
+    if (path === '/') {
+      return currentPathname === '/' || currentPathname === '/cockpit';
+    }
+
     if (path === '/portfolio' && currentPathname.startsWith('/portfolio')) {
       return true;
     }
