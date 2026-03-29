@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Demo Mode Button Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS Variables matching the app */
+        :root {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --primary: 160 84% 39%;
+            --primary-foreground: 355 7% 97%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --border: 217.2 32.6% 17.5%;
+            --ring: 160 84% 39%;
+            
+            /* Glass morphism */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-hover: rgba(255, 255, 255, 0.10);
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
+            --gradient-background: linear-gradient(135deg, #0A0E1A 0%, #141A28 100%);
+        }
+        
+        body {
+            background: var(--gradient-background);
+            color: hsl(var(--foreground));
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Button variants matching shadcn/ui */
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(0, 245, 160, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 245, 160, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 2px solid var(--glass-border);
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-outline:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary {
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: hsl(var(--secondary) / 0.8);
+        }
+        
+        .demo-badge {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .wallet-scope-header {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .wallet-scope-header.demo {
+            background: rgba(146, 64, 14, 0.2);
+            border-color: rgba(180, 83, 9, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Guardian Demo Mode Button Test</h1>
+        
+        <!-- Test 1: ConnectGate Buttons -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold">1. ConnectGate Buttons (Initial State)</h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <div class="text-center space-y-4">
+                    <div class="flex flex-col gap-3 items-center">
+                        <!-- Connect Wallet Button -->
+                        <button class="btn-primary flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            Connect Wallet
+                        </button>
+                        
+                        <div class="text-xs text-slate-400">or</div>
+                        
+                        <!-- Try Demo Mode Button -->
+                        <button class="btn-outline flex items-center gap-2" id="demoButton">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Try Demo Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test 2: Demo Mode Active State -->
+        <div class="space-y-6" id="demoModeSection" style="display: none;">
+            <h2 class="text-xl font-semibold">2. Demo Mode Active State</h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <!-- Wallet Scope Header -->
+                <div class="wallet-scope-header demo flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <span class="text-sm text-slate-300">Analyzing:</span>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-amber-200">Demo Wallet</span>
+                        <span class="text-xs text-slate-400 font-mono">0xd8dA...6045</span>
+                    </div>
+                </div>
+                
+                <!-- Header with Demo Badge -->
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2">
+                            Guardian <span class="text-slate-400 font-normal">Trust & Safety</span>
+                        </h3>
+                        <p class="text-slate-400">
+                            Comprehensive security scan for wallet 
+                            <span class="font-mono text-sm">0xd8dA...6045</span>
+                            <span class="demo-badge ml-2">Demo Mode</span>
+                        </p>
+                    </div>
+                    <button class="btn-secondary" id="exitDemoButton">
+                        Exit Demo
+                    </button>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-4">
+                    <button class="btn-primary">
+                        Rescan Wallet
+                    </button>
+                    <button class="btn-outline">
+                        Fix Risks
+                    </button>
+                    <button class="btn-secondary">
+                        View Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test 3: Button Color Variations -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold">3. Button Color Test (All Variants)</h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-slate-700/50">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-medium text-slate-300">Primary Buttons</h4>
+                        <button class="btn-primary w-full">Primary Button</button>
+                        <button class="btn-primary w-full" disabled style="opacity: 0.5;">Primary Disabled</button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-medium text-slate-300">Outline Buttons</h4>
+                        <button class="btn-outline w-full">Outline Button</button>
+                        <button class="btn-outline w-full" disabled style="opacity: 0.5;">Outline Disabled</button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-medium text-slate-300">Secondary Buttons</h4>
+                        <button class="btn-secondary w-full">Secondary Button</button>
+                        <button class="btn-secondary w-full" disabled style="opacity: 0.5;">Secondary Disabled</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test 4: Current Issue Reproduction -->
+        <div class="space-y-6">
+            <h2 class="text-xl font-semibold text-red-400">4. Issue Reproduction - White Button Colors</h2>
+            <div class="bg-slate-900/50 p-6 rounded-lg border border-red-700/50">
+                <p class="text-sm text-slate-300 mb-4">
+                    If buttons appear white instead of their intended colors, this indicates a CSS override issue.
+                </p>
+                
+                <!-- Buttons that might show the issue -->
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <button class="px-6 py-3 bg-white text-black rounded-lg font-medium">
+                            ❌ White Button (Issue)
+                        </button>
+                        <button class="btn-primary">
+                            ✅ Correct Primary
+                        </button>
+                        <button class="btn-outline">
+                            ✅ Correct Outline
+                        </button>
+                    </div>
+                    
+                    <!-- Test with Tailwind classes directly -->
+                    <div class="flex gap-4">
+                        <button class="px-6 py-3 bg-gradient-to-r from-emerald-400 to-purple-600 text-white rounded-lg font-medium hover:from-emerald-500 hover:to-purple-700 transition-all">
+                            Tailwind Gradient
+                        </button>
+                        <button class="px-6 py-3 bg-slate-700 text-white border-2 border-slate-600 rounded-lg font-medium hover:bg-slate-600 transition-all">
+                            Tailwind Outline
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Demo mode toggle functionality
+        const demoButton = document.getElementById('demoButton');
+        const exitDemoButton = document.getElementById('exitDemoButton');
+        const demoModeSection = document.getElementById('demoModeSection');
+        
+        demoButton.addEventListener('click', () => {
+            demoModeSection.style.display = 'block';
+            demoButton.textContent = 'Demo Mode Active';
+            demoButton.disabled = true;
+            demoButton.style.opacity = '0.5';
+            
+            // Simulate toast notification
+            showToast('Demo mode activated - scanning sample wallet', 'success');
+        });
+        
+        exitDemoButton.addEventListener('click', () => {
+            demoModeSection.style.display = 'none';
+            demoButton.textContent = 'Try Demo Mode';
+            demoButton.disabled = false;
+            demoButton.style.opacity = '1';
+            
+            showToast('Demo mode deactivated', 'info');
+        });
+        
+        // Simple toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white font-medium z-50 transition-all transform translate-x-full`;
+            
+            if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            } else if (type === 'error') {
+                toast.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            } else {
+                toast.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+            }
+            
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                toast.style.transform = 'translateX(full)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Test button color detection
+        function checkButtonColors() {
+            const buttons = document.querySelectorAll('button');
+            const issues = [];
+            
+            buttons.forEach((button, index) => {
+                const styles = window.getComputedStyle(button);
+                const bgColor = styles.backgroundColor;
+                const color = styles.color;
+                
+                // Check for white background (potential issue)
+                if (bgColor === 'rgb(255, 255, 255)' && !button.textContent.includes('White Button')) {
+                    issues.push(`Button ${index + 1}: Unexpected white background`);
+                }
+            });
+            
+            if (issues.length > 0) {
+                console.warn('Button color issues detected:', issues);
+                showToast(`${issues.length} button color issues detected - check console`, 'error');
+            } else {
+                console.log('All button colors appear correct');
+            }
+        }
+        
+        // Run color check after page load
+        window.addEventListener('load', () => {
+            setTimeout(checkButtonColors, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Stress Test - Verification</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0A0F1F 0%, #1a1f35 100%);
+      color: #fff;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 3rem;
+      font-size: 1.1rem;
+    }
+
+    .test-section {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .test-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #00F5A0;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .scenario-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .scenario-card:hover {
+      transform: translateY(-4px);
+      border-color: #00F5A0;
+      box-shadow: 0 10px 30px rgba(0, 245, 160, 0.2);
+    }
+
+    .scenario-label {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+    }
+
+    .scenario-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .scenario-value.positive {
+      color: #00F5A0;
+    }
+
+    .scenario-value.negative {
+      color: #ef4444;
+    }
+
+    .scenario-value.neutral {
+      color: #fbbf24;
+    }
+
+    .slider-container {
+      margin-top: 1rem;
+    }
+
+    .slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #00F5A0;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0, 245, 160, 0.5);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #00F5A0;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 10px rgba(0, 245, 160, 0.5);
+    }
+
+    .button {
+      background: linear-gradient(135deg, #00F5A0 0%, #7B61FF 100%);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0, 245, 160, 0.35);
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(0, 245, 160, 0.45);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .result-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .result-card.critical {
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .result-card.warning {
+      border-color: rgba(251, 191, 36, 0.5);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .result-card.success {
+      border-color: rgba(0, 245, 160, 0.5);
+      background: rgba(0, 245, 160, 0.1);
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-description {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .recommendations {
+      margin-top: 2rem;
+    }
+
+    .recommendation-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .recommendation-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #00F5A0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .recommendation-text {
+      flex: 1;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .status-badge.live {
+      background: rgba(0, 245, 160, 0.2);
+      color: #00F5A0;
+      border: 1px solid rgba(0, 245, 160, 0.3);
+    }
+
+    .portfolio-info {
+      background: rgba(0, 245, 160, 0.1);
+      border: 1px solid rgba(0, 245, 160, 0.3);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .portfolio-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #00F5A0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Portfolio Stress Test</h1>
+    <p class="subtitle">Simulate extreme market conditions and assess portfolio resilience</p>
+
+    <div class="portfolio-info">
+      <div>
+        <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.25rem;">Current Portfolio Value</div>
+        <div class="portfolio-value" id="portfolioValue">$125,000.00</div>
+      </div>
+      <div class="status-badge live">✓ Live Data</div>
+    </div>
+
+    <div class="test-section">
+      <h2>📊 Custom Scenarios</h2>
+      <p style="color: #94a3b8; margin-bottom: 2rem;">Adjust the sliders to simulate different market conditions</p>
+
+      <div class="scenario-grid">
+        <div class="scenario-card">
+          <div class="scenario-label">Ethereum Shock</div>
+          <div class="scenario-value negative" id="ethereum-value">-30.0%</div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="ethereum" min="-80" max="30" value="-30" step="1">
+          </div>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-label">Bitcoin Drawdown</div>
+          <div class="scenario-value negative" id="bitcoin-value">-25.0%</div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="bitcoin" min="-80" max="30" value="-25" step="1">
+          </div>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-label">Altcoin Capitulation</div>
+          <div class="scenario-value negative" id="altcoins-value">-50.0%</div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="altcoins" min="-80" max="30" value="-50" step="1">
+          </div>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-label">Stablecoin Depeg</div>
+          <div class="scenario-value negative" id="stablecoinDepeg-value">-5.0%</div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="stablecoinDepeg" min="-80" max="30" value="-5" step="1">
+          </div>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-label">Liquidity Crisis</div>
+          <div class="scenario-value negative" id="liquidityCrisis-value">-40.0%</div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="liquidityCrisis" min="-80" max="30" value="-40" step="1">
+          </div>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-label">Regulatory Shock</div>
+          <div class="scenario-value negative" id="regulatoryShock-value">-35.0%</div>
+          <div class="slider-container">
+            <input type="range" class="slider" id="regulatoryShock" min="-80" max="30" value="-35" step="1">
+          </div>
+        </div>
+      </div>
+
+      <button class="button" id="runTestBtn" onclick="runStressTest()">
+        Run Stress Test
+      </button>
+    </div>
+
+    <div class="test-section" id="resultsSection" style="display: none;">
+      <h2>📈 Stress Test Results</h2>
+      <p style="color: #94a3b8; margin-bottom: 1rem;">Your portfolio resilience analysis</p>
+
+      <div class="results-grid">
+        <div class="result-card critical">
+          <div class="result-label">Worst Case Scenario</div>
+          <div class="result-value" style="color: #ef4444;" id="worstCase">$0</div>
+          <div class="result-description">Maximum potential loss</div>
+        </div>
+
+        <div class="result-card warning">
+          <div class="result-label">Expected Loss</div>
+          <div class="result-value" style="color: #fbbf24;" id="expectedLoss">$0</div>
+          <div class="result-description">Probability-weighted average</div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-label">Value at Risk (95%)</div>
+          <div class="result-value" style="color: #f97316;" id="var95">$0</div>
+          <div class="result-description">95% confidence level</div>
+        </div>
+
+        <div class="result-card success">
+          <div class="result-label">Recovery Time</div>
+          <div class="result-value" style="color: #00F5A0;" id="recoveryTime">0 mo</div>
+          <div class="result-description">Estimated recovery period</div>
+        </div>
+      </div>
+
+      <div style="background: rgba(0, 245, 160, 0.1); border: 1px solid rgba(0, 245, 160, 0.3); border-radius: 16px; padding: 1.5rem; margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.5rem;">Overall Risk Assessment</div>
+            <div style="font-size: 1.8rem; font-weight: bold;" id="riskLevel">MODERATE</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.5rem;">Portfolio Volatility</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: white;" id="volatility">0.0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recommendations">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #00F5A0;">💡 Risk Mitigation Recommendations</h3>
+        <div id="recommendationsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const portfolioValue = 125000;
+    const scenarios = {
+      ethereum: -30,
+      bitcoin: -25,
+      altcoins: -50,
+      stablecoinDepeg: -5,
+      liquidityCrisis: -40,
+      regulatoryShock: -35
+    };
+
+    // Update slider values
+    Object.keys(scenarios).forEach(key => {
+      const slider = document.getElementById(key);
+      const valueDisplay = document.getElementById(`${key}-value`);
+      
+      slider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        scenarios[key] = value;
+        
+        const sign = value > 0 ? '+' : '';
+        valueDisplay.textContent = `${sign}${value.toFixed(1)}%`;
+        
+        // Update color based on value
+        if (value >= 0) {
+          valueDisplay.className = 'scenario-value positive';
+        } else if (value >= -15) {
+          valueDisplay.className = 'scenario-value neutral';
+        } else {
+          valueDisplay.className = 'scenario-value negative';
+        }
+      });
+    });
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    async function runStressTest() {
+      const btn = document.getElementById('runTestBtn');
+      const resultsSection = document.getElementById('resultsSection');
+      
+      // Disable button and show loading
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Running Stress Test...';
+      
+      console.log('🧪 Starting stress test...');
+      console.log('📊 Portfolio Value:', formatCurrency(portfolioValue));
+      console.log('📊 Current scenarios:', scenarios);
+      
+      // Simulate calculation delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Calculate results
+      const scenarioValues = Object.values(scenarios);
+      const avgLoss = scenarioValues.reduce((sum, val) => sum + val, 0) / scenarioValues.length;
+      const worstCase = Math.min(...scenarioValues);
+      const bestCase = Math.max(...scenarioValues);
+      
+      // Calculate standard deviation
+      const variance = scenarioValues.reduce((sum, val) => sum + Math.pow(val - avgLoss, 2), 0) / scenarioValues.length;
+      const stdDev = Math.sqrt(variance);
+      
+      // Calculate VaR (95% confidence)
+      const var95 = avgLoss - (1.645 * stdDev);
+      
+      // Calculate monetary impacts
+      const worstCaseImpact = portfolioValue * (worstCase / 100);
+      const expectedLossImpact = portfolioValue * (avgLoss / 100);
+      const var95Impact = portfolioValue * (var95 / 100);
+      
+      // Calculate recovery time
+      const recoveryMonths = Math.abs(Math.ceil(avgLoss / 5));
+      
+      // Determine risk level
+      let riskLevel, riskColor;
+      if (avgLoss < -40) {
+        riskLevel = 'CRITICAL';
+        riskColor = '#ef4444';
+      } else if (avgLoss < -25) {
+        riskLevel = 'HIGH';
+        riskColor = '#f97316';
+      } else if (avgLoss < -10) {
+        riskLevel = 'MODERATE';
+        riskColor = '#fbbf24';
+      } else if (avgLoss < 0) {
+        riskLevel = 'LOW';
+        riskColor = '#3b82f6';
+      } else {
+        riskLevel = 'POSITIVE';
+        riskColor = '#00F5A0';
+      }
+      
+      // Generate recommendations
+      const recommendations = [];
+      
+      if (avgLoss < -40) {
+        recommendations.push('🚨 CRITICAL: Consider immediate portfolio rebalancing');
+        recommendations.push('Increase stablecoin allocation to 30-40% of portfolio');
+        recommendations.push('Implement stop-loss orders on high-risk positions');
+        recommendations.push('Consider hedging with inverse ETFs or options');
+      } else if (avgLoss < -25) {
+        recommendations.push('⚠️ HIGH RISK: Diversify across uncorrelated assets');
+        recommendations.push('Increase stablecoin allocation to 20-30%');
+        recommendations.push('Review and reduce leverage positions');
+        recommendations.push('Consider dollar-cost averaging strategy');
+      } else if (avgLoss < -10) {
+        recommendations.push('📊 MODERATE RISK: Monitor positions closely');
+        recommendations.push('Maintain 15-20% stablecoin buffer');
+        recommendations.push('Review liquidity positions');
+        recommendations.push('Consider rebalancing to target allocation');
+      } else if (avgLoss < 0) {
+        recommendations.push('✅ LOW RISK: Portfolio appears resilient');
+        recommendations.push('Maintain current diversification strategy');
+        recommendations.push('Monitor for opportunities to increase positions');
+        recommendations.push('Keep 10-15% in stablecoins for flexibility');
+      } else {
+        recommendations.push('🚀 POSITIVE OUTLOOK: Portfolio positioned for growth');
+        recommendations.push('Consider taking profits on overperforming assets');
+        recommendations.push('Maintain disciplined risk management');
+        recommendations.push('Keep emergency reserves in stablecoins');
+      }
+      
+      // Add scenario-specific recommendations
+      if (scenarios.liquidityCrisis < -35) {
+        recommendations.push('💧 Liquidity Warning: Ensure sufficient liquid assets');
+      }
+      if (scenarios.stablecoinDepeg < -10) {
+        recommendations.push('⚖️ Depeg Risk: Diversify stablecoin holdings across multiple issuers');
+      }
+      if (scenarios.regulatoryShock < -30) {
+        recommendations.push('⚖️ Regulatory Risk: Review compliance and geographic exposure');
+      }
+      
+      // Update UI
+      document.getElementById('worstCase').textContent = formatCurrency(worstCaseImpact);
+      document.getElementById('expectedLoss').textContent = formatCurrency(expectedLossImpact);
+      document.getElementById('var95').textContent = formatCurrency(var95Impact);
+      document.getElementById('recoveryTime').textContent = `${recoveryMonths} mo`;
+      document.getElementById('riskLevel').textContent = riskLevel;
+      document.getElementById('riskLevel').style.color = riskColor;
+      document.getElementById('volatility').textContent = `${stdDev.toFixed(1)}%`;
+      
+      // Display recommendations
+      const recommendationsList = document.getElementById('recommendationsList');
+      recommendationsList.innerHTML = recommendations.slice(0, 6).map(rec => `
+        <div class="recommendation-item">
+          <div class="recommendation-icon">✓</div>
+          <div class="recommendation-text">${rec}</div>
+        </div>
+      `).join('');
+      
+      // Show results
+      resultsSection.style.display = 'block';
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // Reset button
+      btn.disabled = false;
+      btn.innerHTML = 'Run Stress Test Again';
+      
+      console.log('✅ Stress test completed successfully');
+      console.log('📊 Results:', {
+        worstCase: formatCurrency(worstCaseImpact),
+        expectedLoss: formatCurrency(expectedLossImpact),
+        var95: formatCurrency(var95Impact),
+        recoveryMonths,
+        riskLevel,
+        volatility: stdDev.toFixed(1)
+      });
+    }
+  </script>
+</body>
+</html>

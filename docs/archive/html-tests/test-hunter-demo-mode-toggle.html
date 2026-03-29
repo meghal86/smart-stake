@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunter Demo Mode Toggle - Visual Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0A0E1A 0%, #111827 100%);
+      color: #E4E8F3;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00F5A0;
+    }
+    
+    .test-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .test-section h2 {
+      color: #00F5A0;
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+    
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 16px;
+    }
+    
+    .mode-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .mode-card.demo {
+      border-color: #3B82F6;
+    }
+    
+    .mode-card.live {
+      border-color: #00F5A0;
+    }
+    
+    .mode-card h3 {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .badge {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .badge.demo {
+      background: #3B82F6;
+      color: white;
+    }
+    
+    .badge.live {
+      background: #00F5A0;
+      color: #0A0E1A;
+    }
+    
+    .feature-list {
+      list-style: none;
+      margin-top: 12px;
+    }
+    
+    .feature-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .feature-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .icon {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .banner-demo {
+      background: #3B82F6;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    
+    .wallet-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .wallet-chip.demo {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid #3B82F6;
+      color: #3B82F6;
+    }
+    
+    .wallet-chip.live {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #E4E8F3;
+    }
+    
+    .opportunity-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    
+    .opportunity-card h4 {
+      color: #E4E8F3;
+      margin-bottom: 8px;
+    }
+    
+    .opportunity-card p {
+      color: #94A3B8;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      font-size: 13px;
+    }
+    
+    .metric {
+      color: #94A3B8;
+    }
+    
+    .metric strong {
+      color: #00F5A0;
+    }
+    
+    .toggle-demo {
+      background: linear-gradient(135deg, #3B82F6 0%, #7B61FF 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 20px auto;
+      display: block;
+      transition: transform 0.2s;
+    }
+    
+    .toggle-demo:hover {
+      transform: scale(1.05);
+    }
+    
+    .toggle-demo:active {
+      transform: scale(0.98);
+    }
+    
+    .checklist {
+      background: rgba(0, 245, 160, 0.05);
+      border: 1px solid rgba(0, 245, 160, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    
+    .checklist h4 {
+      color: #00F5A0;
+      margin-bottom: 12px;
+    }
+    
+    .checklist ul {
+      list-style: none;
+    }
+    
+    .checklist li {
+      padding: 6px 0;
+      color: #94A3B8;
+    }
+    
+    .checklist li::before {
+      content: "✓ ";
+      color: #00F5A0;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Hunter Demo Mode Toggle - Visual Test Guide</h1>
+    
+    <div class="test-section">
+      <h2>Current State: <span id="current-mode">Demo Mode ON</span></h2>
+      <button class="toggle-demo" onclick="toggleMode()">Toggle Demo Mode</button>
+    </div>
+    
+    <div class="test-section">
+      <h2>Visual Comparison</h2>
+      <div class="comparison">
+        <!-- Demo Mode -->
+        <div class="mode-card demo">
+          <h3>
+            <span class="badge demo">DEMO MODE ON</span>
+          </h3>
+          
+          <div class="banner-demo">
+            🎭 Demo Mode — Showing simulated opportunities
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <strong>Wallet Display:</strong>
+            <div style="margin-top: 8px;">
+              <div class="wallet-chip demo">
+                🧪 Demo Wallet 0xd8dA...6045 <span class="badge demo">DEMO</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <strong>Data Source:</strong>
+            <ul class="feature-list">
+              <li>
+                <span class="icon">📦</span>
+                <span>5 hardcoded opportunities</span>
+              </li>
+              <li>
+                <span class="icon">⚡</span>
+                <span>Instant load (< 200ms)</span>
+              </li>
+              <li>
+                <span class="icon">🚫</span>
+                <span>No API calls</span>
+              </li>
+              <li>
+                <span class="icon">🎨</span>
+                <span>Static sample data</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="opportunity-card">
+            <h4>Ethereum 2.0 Staking</h4>
+            <p>Stake ETH and earn rewards while securing the network.</p>
+            <div class="metrics">
+              <div class="metric">APY: <strong>4.2%</strong></div>
+              <div class="metric">Confidence: <strong>95%</strong></div>
+              <div class="metric">Guardian: <strong>9/10</strong></div>
+              <div class="metric">Risk: <strong>LOW</strong></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Live Mode -->
+        <div class="mode-card live">
+          <h3>
+            <span class="badge live">DEMO MODE OFF</span>
+          </h3>
+          
+          <div style="height: 52px; margin-bottom: 16px; display: flex; align-items: center; color: #94A3B8;">
+            <em>(No banner - clean interface)</em>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <strong>Wallet Display:</strong>
+            <div style="margin-top: 8px;">
+              <div class="wallet-chip live">
+                👛 Wallet 0x379c...72e3
+              </div>
+            </div>
+            <div style="margin-top: 8px; font-size: 13px; color: #94A3B8;">
+              <em>Or "🔌 No Wallet Connected" if no wallet</em>
+            </div>
+          </div>
+          
+          <div>
+            <strong>Data Source:</strong>
+            <ul class="feature-list">
+              <li>
+                <span class="icon">🌐</span>
+                <span>Real API calls</span>
+              </li>
+              <li>
+                <span class="icon">🔄</span>
+                <span>Live blockchain data</span>
+              </li>
+              <li>
+                <span class="icon">📊</span>
+                <span>Personalized ranking</span>
+              </li>
+              <li>
+                <span class="icon">♾️</span>
+                <span>Infinite scroll pagination</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="opportunity-card">
+            <h4>Pendle Finance PT-stETH</h4>
+            <p>Real opportunity with actual APY and Guardian scores.</p>
+            <div class="metrics">
+              <div class="metric">APY: <strong>8.2%</strong></div>
+              <div class="metric">Confidence: <strong>98%</strong></div>
+              <div class="metric">Guardian: <strong>8.5/10</strong></div>
+              <div class="metric">Risk: <strong>LOW</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>Testing Checklist</h2>
+      <div class="checklist">
+        <h4>When Demo Mode is ON:</h4>
+        <ul>
+          <li>Blue banner appears: "Demo Mode — Showing simulated opportunities"</li>
+          <li>Wallet chip shows "Demo Wallet 0xd8dA...6045" with DEMO badge</li>
+          <li>5 sample opportunities load instantly</li>
+          <li>No API calls in Network tab</li>
+          <li>Data is static (Ethereum Staking, LayerZero, etc.)</li>
+        </ul>
+      </div>
+      
+      <div class="checklist">
+        <h4>When Demo Mode is OFF:</h4>
+        <ul>
+          <li>Banner disappears completely</li>
+          <li>Wallet chip shows real wallet address (or "No Wallet Connected")</li>
+          <li>API call to /api/hunter/opportunities</li>
+          <li>Real opportunities from backend/blockchain</li>
+          <li>Infinite scroll works with pagination</li>
+          <li>Real-time updates every 60 seconds</li>
+        </ul>
+      </div>
+      
+      <div class="checklist">
+        <h4>Switching Between Modes:</h4>
+        <ul>
+          <li>Toggle in profile dropdown updates immediately</li>
+          <li>No page reload required</li>
+          <li>Data switches seamlessly</li>
+          <li>No crashes or errors</li>
+          <li>Scroll position maintained</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>Manual Testing Steps</h2>
+      <ol style="color: #94A3B8; line-height: 1.8; padding-left: 20px;">
+        <li>Open Hunter page at <code>http://localhost:8088/hunter</code></li>
+        <li>Verify Demo Mode is ON (blue banner visible)</li>
+        <li>Check wallet chip shows "Demo Wallet" with DEMO badge</li>
+        <li>Verify 5 sample opportunities are displayed</li>
+        <li>Open DevTools Network tab</li>
+        <li>Confirm no API calls to /api/hunter/opportunities</li>
+        <li>Click profile dropdown → Toggle "Demo Mode" OFF</li>
+        <li>Verify banner disappears</li>
+        <li>Check wallet chip updates to real wallet (or "No Wallet Connected")</li>
+        <li>Verify API call appears in Network tab</li>
+        <li>Check opportunities update to real data</li>
+        <li>Scroll down to test infinite scroll (live mode only)</li>
+        <li>Toggle Demo Mode back ON</li>
+        <li>Verify everything switches back to demo state</li>
+      </ol>
+    </div>
+  </div>
+  
+  <script>
+    let isDemoMode = true;
+    
+    function toggleMode() {
+      isDemoMode = !isDemoMode;
+      const modeText = document.getElementById('current-mode');
+      modeText.textContent = isDemoMode ? 'Demo Mode ON' : 'Demo Mode OFF (Live)';
+      modeText.style.color = isDemoMode ? '#3B82F6' : '#00F5A0';
+      
+      // Simulate the actual behavior
+      console.log(`%c${isDemoMode ? '🎭 DEMO MODE ON' : '🌐 LIVE MODE ON'}`, 
+        `color: ${isDemoMode ? '#3B82F6' : '#00F5A0'}; font-size: 16px; font-weight: bold;`);
+      
+      if (isDemoMode) {
+        console.log('✓ Banner: Visible');
+        console.log('✓ Wallet: Demo Wallet 0xd8dA...6045 [DEMO]');
+        console.log('✓ Data: 5 mock opportunities');
+        console.log('✓ API Calls: None');
+      } else {
+        console.log('✓ Banner: Hidden');
+        console.log('✓ Wallet: Real wallet or "No Wallet Connected"');
+        console.log('✓ Data: Fetching from API...');
+        console.log('✓ API Calls: GET /api/hunter/opportunities');
+      }
+    }
+    
+    // Initial log
+    console.log('%c🎯 Hunter Demo Mode Test Guide', 'color: #00F5A0; font-size: 20px; font-weight: bold;');
+    console.log('Toggle the button above to see the expected behavior in console.');
+  </script>
+</body>
+</html>

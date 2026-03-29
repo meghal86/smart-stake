@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Wallet - Existing Connection Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .pass { background: #065f46; color: #d1fae5; }
+        .fail { background: #7f1d1d; color: #fecaca; }
+        .info { background: #1e3a8a; color: #dbeafe; }
+        .warning { background: #92400e; color: #fde68a; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .code {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Add Wallet - Existing Connection Fix Test</h1>
+    
+    <div class="info">
+        <strong>Test Purpose:</strong> Verify that the AddWalletWizard properly handles cases where:
+        <ul>
+            <li>User tries to "add" a wallet that's already connected via wagmi</li>
+            <li>Wallet is already in their collection → Set as active and show success</li>
+            <li>Wallet is connected but not in collection → Add to collection and show success</li>
+            <li>No infinite loops or timeout issues</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Test Scenario Analysis</h2>
+        
+        <div class="status info">
+            <strong>Problem Identified:</strong><br>
+            From the console logs, we can see the issue:
+            <div class="code">
+1. User clicks MetaMask to connect
+2. wagmiConnected: true, wagmiAddress: 0x379c186A7582706388D20cd4258bfd5f9D7d72E3
+3. previousWagmiAddress: 0x379c186a7582706388d20cd4258bfd5f9d7d72e3 (same, lowercase)
+4. isNewConnection: false (correctly detected as same wallet)
+5. Timeout after 30 seconds → Returns to provider selection
+6. User tries again → Infinite loop
+            </div>
+        </div>
+
+        <div class="status pass">
+            <strong>Root Cause:</strong><br>
+            The wizard was designed to detect "new" wallet connections, but when a user tries to add a wallet that's already connected via wagmi, it doesn't handle that case properly. It just waits for a "new" connection that will never come.
+        </div>
+
+        <div class="status pass">
+            <strong>Fix Applied:</strong><br>
+            Modified <code>handleProviderSelect</code> to check if wagmi is already connected before starting the connection flow:
+            <div class="code">
+// NEW LOGIC:
+if (wagmiConnected && wagmiAddress) {
+  const currentAddress = wagmiAddress.toLowerCase();
+  
+  // Check if wallet is already in collection
+  const isAlreadyInCollection = connectedWallets.some(
+    w => w.address.toLowerCase() === currentAddress
+  );
+  
+  if (isAlreadyInCollection) {
+    // Set as active and show success immediately
+    setActiveWallet(currentAddress);
+    setConnectedAddress(currentAddress);
+    setCurrentStep('success');
+    return;
+  } else {
+    // Add to collection and show success
+    await addWallet({...});
+    setConnectedAddress(currentAddress);
+    setCurrentStep('success');
+    return;
+  }
+}
+
+// Only proceed to connection flow if no wagmi connection exists
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Cases</h2>
+        
+        <div class="status info">
+            <strong>Test Case 1:</strong> Wallet already connected and in collection<br>
+            <strong>Expected:</strong> Immediately show success screen, set as active wallet<br>
+            <strong>Result:</strong> ✅ Should work - no connection attempt needed
+        </div>
+
+        <div class="status info">
+            <strong>Test Case 2:</strong> Wallet connected via wagmi but not in user's collection<br>
+            <strong>Expected:</strong> Add to collection, show success screen<br>
+            <strong>Result:</strong> ✅ Should work - no connection attempt needed
+        </div>
+
+        <div class="status info">
+            <strong>Test Case 3:</strong> No wagmi connection, user wants to connect new wallet<br>
+            <strong>Expected:</strong> Open RainbowKit modal, detect new connection<br>
+            <strong>Result:</strong> ✅ Should work - existing logic preserved
+        </div>
+
+        <div class="status info">
+            <strong>Test Case 4:</strong> User cancels connection<br>
+            <strong>Expected:</strong> Return to provider selection, no errors<br>
+            <strong>Result:</strong> ✅ Should work - existing logic preserved
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Code Changes Summary</h2>
+        
+        <div class="status pass">
+            <strong>Files Modified:</strong>
+            <ul>
+                <li><code>src/pages/AddWalletWizard.tsx</code> - Fixed handleProviderSelect logic</li>
+                <li>Removed unused imports: <code>legacyChainToCAIP2</code>, <code>useSearchParams</code></li>
+                <li>Removed unused function: <code>getChainName</code></li>
+            </ul>
+        </div>
+
+        <div class="status pass">
+            <strong>Key Improvements:</strong>
+            <ul>
+                <li>✅ Detects existing wagmi connections before starting connection flow</li>
+                <li>✅ Handles wallets already in collection (set as active)</li>
+                <li>✅ Handles wallets connected but not in collection (add to registry)</li>
+                <li>✅ Prevents infinite loops and timeouts for existing connections</li>
+                <li>✅ Preserves existing logic for new wallet connections</li>
+                <li>✅ Better error handling and user feedback</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Expected User Experience</h2>
+        
+        <div class="status pass">
+            <strong>Before Fix:</strong>
+            <ol>
+                <li>User clicks "Add MetaMask Wallet"</li>
+                <li>Shows "Connecting..." screen</li>
+                <li>Waits 30 seconds (wallet already connected, no new connection detected)</li>
+                <li>Times out, returns to provider selection</li>
+                <li>User tries again → Infinite loop</li>
+            </ol>
+        </div>
+
+        <div class="status pass">
+            <strong>After Fix:</strong>
+            <ol>
+                <li>User clicks "Add MetaMask Wallet"</li>
+                <li>System detects wagmi is already connected to MetaMask</li>
+                <li>Checks if wallet is in user's collection</li>
+                <li>If yes: Sets as active, shows success screen immediately</li>
+                <li>If no: Adds to collection, shows success screen immediately</li>
+                <li>No waiting, no timeouts, no loops ✅</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Testing Instructions</h2>
+        
+        <div class="status warning">
+            <strong>To test this fix:</strong>
+            <ol>
+                <li>Make sure you have a wallet connected via wagmi (e.g., MetaMask)</li>
+                <li>Go to <code>/settings/wallets/add</code></li>
+                <li>Click on the same wallet provider (e.g., MetaMask)</li>
+                <li>Should immediately show success screen (no 30-second wait)</li>
+                <li>Try with different wallet providers to test new connection flow</li>
+            </ol>
+        </div>
+
+        <div class="status info">
+            <strong>Console Logs to Watch:</strong>
+            <div class="code">
+✅ Good logs:
+- "Wallet already in collection, setting as active and showing success"
+- "Wallet connected via wagmi but not in collection, adding it..."
+- "Existing wagmi wallet added to registry successfully"
+
+❌ Bad logs (should not see):
+- "Starting connection timeout and fallback logic" (for existing connections)
+- "Final timeout reached - returning to provider selection"
+- Multiple repeated connection attempts
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="testResults">
+            <div class="status info">
+                Run the actual test in the application to see results here.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // This would be used for automated testing
+        console.log('🧪 Add Wallet Existing Connection Fix Test loaded');
+        console.log('📋 Test scenarios ready for manual verification');
+        
+        // Log current state for debugging
+        console.log('🔍 Current test environment:', {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            testFile: 'test-add-wallet-existing-connection-fix.html'
+        });
+    </script>
+</body>
+</html>

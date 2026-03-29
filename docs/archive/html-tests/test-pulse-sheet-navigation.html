@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Sheet Hash Navigation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #065f46;
+            border: 1px solid #10b981;
+        }
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+        }
+        .info {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pulse Sheet Hash Navigation Test</h1>
+    
+    <div class="test-section">
+        <h2>Hash Navigation Tests</h2>
+        <p>Test the hash-based navigation functionality for the Pulse Sheet.</p>
+        
+        <button class="test-button" onclick="testHashNavigation()">Test Hash Navigation</button>
+        <button class="test-button" onclick="testDirectHashAccess()">Test Direct Hash Access</button>
+        <button class="test-button" onclick="testBrowserBackButton()">Test Browser Back Button</button>
+        <button class="test-button" onclick="clearHash()">Clear Hash</button>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Current State</h2>
+        <div id="current-state">
+            <p><strong>Current URL:</strong> <span id="current-url"></span></p>
+            <p><strong>Current Hash:</strong> <span id="current-hash"></span></p>
+            <p><strong>History Length:</strong> <span id="history-length"></span></p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Requirements</h2>
+        <ul>
+            <li>/cockpit#pulse MUST open Pulse full-screen sheet</li>
+            <li>Closing MUST remove hash (back to /cockpit) without full reload</li>
+            <li>Mobile: swipe-down closes; Desktop: ESC closes</li>
+            <li>Must restore focus to the CTA that opened it</li>
+        </ul>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function updateCurrentState() {
+            document.getElementById('current-url').textContent = window.location.href;
+            document.getElementById('current-hash').textContent = window.location.hash || '(none)';
+            document.getElementById('history-length').textContent = window.history.length;
+        }
+
+        function addTestResult(test, status, message) {
+            testResults.push({ test, status, message, timestamp: new Date().toLocaleTimeString() });
+            displayResults();
+        }
+
+        function displayResults() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = testResults.map(result => `
+                <div class="status ${result.status}">
+                    <strong>[${result.timestamp}] ${result.test}:</strong> ${result.message}
+                </div>
+            `).join('');
+        }
+
+        function testHashNavigation() {
+            addTestResult('Hash Navigation', 'info', 'Starting hash navigation test...');
+            
+            // Test 1: Set hash to #pulse
+            const originalUrl = window.location.href;
+            window.location.hash = 'pulse';
+            
+            setTimeout(() => {
+                if (window.location.hash === '#pulse') {
+                    addTestResult('Set Hash', 'success', 'Successfully set hash to #pulse');
+                } else {
+                    addTestResult('Set Hash', 'error', `Failed to set hash. Current: ${window.location.hash}`);
+                }
+                
+                // Test 2: Remove hash using pushState
+                const newUrl = window.location.pathname + window.location.search;
+                window.history.pushState(null, '', newUrl);
+                
+                setTimeout(() => {
+                    if (window.location.hash === '') {
+                        addTestResult('Remove Hash', 'success', 'Successfully removed hash without reload');
+                    } else {
+                        addTestResult('Remove Hash', 'error', `Failed to remove hash. Current: ${window.location.hash}`);
+                    }
+                    updateCurrentState();
+                }, 100);
+            }, 100);
+        }
+
+        function testDirectHashAccess() {
+            addTestResult('Direct Hash Access', 'info', 'Testing direct hash access...');
+            
+            // Simulate direct navigation to #pulse
+            const baseUrl = window.location.origin + window.location.pathname + window.location.search;
+            const pulseUrl = baseUrl + '#pulse';
+            
+            // Use pushState to simulate navigation
+            window.history.pushState(null, '', pulseUrl);
+            
+            setTimeout(() => {
+                if (window.location.hash === '#pulse') {
+                    addTestResult('Direct Hash Access', 'success', 'Successfully navigated to #pulse');
+                } else {
+                    addTestResult('Direct Hash Access', 'error', `Failed direct navigation. Current: ${window.location.hash}`);
+                }
+                updateCurrentState();
+            }, 100);
+        }
+
+        function testBrowserBackButton() {
+            addTestResult('Browser Back Button', 'info', 'Testing browser back button behavior...');
+            
+            // First, navigate to #pulse
+            window.location.hash = 'pulse';
+            
+            setTimeout(() => {
+                // Then simulate back button
+                window.history.back();
+                
+                setTimeout(() => {
+                    if (window.location.hash === '') {
+                        addTestResult('Browser Back Button', 'success', 'Back button correctly removed hash');
+                    } else {
+                        addTestResult('Browser Back Button', 'error', `Back button failed. Current: ${window.location.hash}`);
+                    }
+                    updateCurrentState();
+                }, 200);
+            }, 100);
+        }
+
+        function clearHash() {
+            window.location.hash = '';
+            addTestResult('Clear Hash', 'info', 'Manually cleared hash');
+            updateCurrentState();
+        }
+
+        // Listen for hash changes
+        window.addEventListener('hashchange', function(event) {
+            addTestResult('Hash Change Event', 'info', `Hash changed from ${new URL(event.oldURL).hash || '(none)'} to ${new URL(event.newURL).hash || '(none)'}`);
+            updateCurrentState();
+        });
+
+        // Listen for popstate (back/forward)
+        window.addEventListener('popstate', function(event) {
+            addTestResult('Popstate Event', 'info', `Popstate triggered. Current hash: ${window.location.hash || '(none)'}`);
+            updateCurrentState();
+        });
+
+        // Initialize
+        updateCurrentState();
+        addTestResult('Initialization', 'success', 'Test page loaded successfully');
+
+        // Test ESC key handling
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && window.location.hash === '#pulse') {
+                addTestResult('ESC Key', 'info', 'ESC key pressed while hash is #pulse');
+                // Simulate closing the sheet
+                window.history.pushState(null, '', window.location.pathname + window.location.search);
+                addTestResult('ESC Key', 'success', 'ESC key successfully removed hash');
+                updateCurrentState();
+            }
+        });
+    </script>
+</body>
+</html>

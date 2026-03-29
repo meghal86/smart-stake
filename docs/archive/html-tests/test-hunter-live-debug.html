@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunter Live Mode Debug</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #0a0e1a;
+      color: #00f5a0;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #1a1f2e;
+      border: 1px solid #00f5a0;
+      border-radius: 8px;
+    }
+    .error { color: #ff4444; }
+    .success { color: #00f5a0; }
+    .warning { color: #ffaa00; }
+    button {
+      background: #00f5a0;
+      color: #0a0e1a;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #00cc80;
+    }
+    pre {
+      background: #0a0e1a;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Hunter Live Mode Diagnostic</h1>
+  
+  <div class="section">
+    <h2>Step 1: Environment Variables</h2>
+    <button onclick="checkEnv()">Check Environment</button>
+    <pre id="env-result">Click button to check...</pre>
+  </div>
+
+  <div class="section">
+    <h2>Step 2: Supabase Connection</h2>
+    <button onclick="testSupabase()">Test Supabase</button>
+    <pre id="supabase-result">Click button to test...</pre>
+  </div>
+
+  <div class="section">
+    <h2>Step 3: Demo Mode Status</h2>
+    <button onclick="checkDemoMode()">Check Demo Mode</button>
+    <button onclick="disableDemoMode()">Force Live Mode</button>
+    <pre id="demo-result">Click button to check...</pre>
+  </div>
+
+  <div class="section">
+    <h2>Step 4: Fetch Opportunities</h2>
+    <button onclick="fetchOpportunities()">Fetch from Supabase</button>
+    <pre id="fetch-result">Click button to fetch...</pre>
+  </div>
+
+  <div class="section">
+    <h2>Step 5: Browser Console Logs</h2>
+    <p>Open DevTools Console (F12) and look for:</p>
+    <ul>
+      <li>🎯 Hunter Page State</li>
+      <li>🌐 Live Mode: Fetching from Supabase</li>
+      <li>✅ Supabase Response</li>
+      <li>❌ Any error messages</li>
+    </ul>
+  </div>
+
+  <script type="module">
+    window.checkEnv = function() {
+      const result = document.getElementById('env-result');
+      const env = {
+        VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+        VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? '✅ Present' : '❌ Missing',
+        DEV_MODE: import.meta.env.DEV,
+        MODE: import.meta.env.MODE
+      };
+      
+      result.innerHTML = JSON.stringify(env, null, 2);
+      
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        result.innerHTML += '\n\n<span class="error">❌ ERROR: VITE_SUPABASE_URL is missing!</span>';
+        result.innerHTML += '\n<span class="warning">💡 Solution: Restart dev server (npm run dev)</span>';
+      } else {
+        result.innerHTML += '\n\n<span class="success">✅ Environment variables loaded</span>';
+      }
+    };
+
+    window.testSupabase = async function() {
+      const result = document.getElementById('supabase-result');
+      result.innerHTML = 'Testing Supabase connection...';
+      
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+        );
+        
+        const { data, error } = await supabase
+          .from('opportunities')
+          .select('id, title, type')
+          .limit(1);
+        
+        if (error) {
+          result.innerHTML = `<span class="error">❌ Supabase Error:\n${JSON.stringify(error, null, 2)}</span>`;
+        } else {
+          result.innerHTML = `<span class="success">✅ Supabase Connected!\n\nSample opportunity:\n${JSON.stringify(data[0], null, 2)}</span>`;
+        }
+      } catch (err) {
+        result.innerHTML = `<span class="error">❌ Connection Error:\n${err.message}</span>`;
+      }
+    };
+
+    window.checkDemoMode = function() {
+      const result = document.getElementById('demo-result');
+      const demoMode = localStorage.getItem('demo_mode');
+      const isDemoActive = demoMode === 'true' || demoMode === null;
+      
+      result.innerHTML = `Demo Mode: ${demoMode || 'null (defaults to true)'}\n`;
+      result.innerHTML += `Is Active: ${isDemoActive}\n\n`;
+      
+      if (isDemoActive) {
+        result.innerHTML += '<span class="warning">⚠️ Demo mode is ACTIVE - you will see mock data</span>\n';
+        result.innerHTML += '<span class="warning">💡 Click "Force Live Mode" button to disable</span>';
+      } else {
+        result.innerHTML += '<span class="success">✅ Live mode is active - you should see real data</span>';
+      }
+    };
+
+    window.disableDemoMode = function() {
+      localStorage.setItem('demo_mode', 'false');
+      const result = document.getElementById('demo-result');
+      result.innerHTML = '<span class="success">✅ Demo mode disabled!\n\nRefresh the Hunter page to see live data.</span>';
+    };
+
+    window.fetchOpportunities = async function() {
+      const result = document.getElementById('fetch-result');
+      result.innerHTML = 'Fetching opportunities from Supabase...';
+      
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+        );
+        
+        const { data, error, count } = await supabase
+          .from('opportunities')
+          .select('*', { count: 'exact' })
+          .eq('status', 'published')
+          .limit(12);
+        
+        if (error) {
+          result.innerHTML = `<span class="error">❌ Error:\n${JSON.stringify(error, null, 2)}</span>`;
+        } else {
+          result.innerHTML = `<span class="success">✅ Success!\n\n`;
+          result.innerHTML += `Total published: ${count}\n`;
+          result.innerHTML += `Fetched: ${data.length} opportunities\n\n`;
+          result.innerHTML += `Sample opportunities:\n`;
+          data.slice(0, 3).forEach(opp => {
+            result.innerHTML += `- [${opp.type}] ${opp.title}\n`;
+          });
+          result.innerHTML += `</span>`;
+        }
+      } catch (err) {
+        result.innerHTML = `<span class="error">❌ Fetch Error:\n${err.message}\n\n${err.stack}</span>`;
+      }
+    };
+
+    // Auto-run checks on load
+    window.addEventListener('load', () => {
+      console.log('🔍 Hunter Debug Tool Loaded');
+      checkEnv();
+      checkDemoMode();
+    });
+  </script>
+</body>
+</html>

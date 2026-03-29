@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HarvestPro Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0A0E1A;
+            color: white;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1f2e;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .button {
+            background: #ed8f2d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        .button:hover {
+            background: #B8722E;
+            transform: scale(1.02);
+        }
+        .button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .log {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .opportunity-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: #1a1f2e;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 HarvestPro Start Harvest Button Test</h1>
+        <p>This test simulates the HarvestPro start harvest button functionality to identify issues.</p>
+        
+        <h2>Test Scenarios</h2>
+        
+        <!-- Test 1: Normal Flow -->
+        <div class="opportunity-card">
+            <h3>✅ Test 1: Normal Flow (ETH Opportunity)</h3>
+            <p><strong>Token:</strong> ETH | <strong>Loss:</strong> $4,500 | <strong>Net Benefit:</strong> $1,080</p>
+            <button class="button" onclick="testStartHarvest('eth-1', 'ETH', 1080)">
+                Start Harvest ETH
+            </button>
+        </div>
+        
+        <!-- Test 2: Wallet Not Connected -->
+        <div class="opportunity-card">
+            <h3>❌ Test 2: Wallet Not Connected</h3>
+            <p><strong>Token:</strong> MATIC | <strong>Loss:</strong> $2,800 | <strong>Net Benefit:</strong> $672</p>
+            <button class="button" onclick="testStartHarvest('matic-1', 'MATIC', 672, false)" disabled>
+                Start Harvest MATIC (Wallet Not Connected)
+            </button>
+        </div>
+        
+        <!-- Test 3: Negative Net Benefit -->
+        <div class="opportunity-card">
+            <h3>⚠️ Test 3: Negative Net Benefit</h3>
+            <p><strong>Token:</strong> LINK | <strong>Loss:</strong> $500 | <strong>Net Benefit:</strong> -$50</p>
+            <button class="button" onclick="testStartHarvest('link-1', 'LINK', -50)" disabled>
+                Start Harvest LINK (Negative Benefit)
+            </button>
+        </div>
+        
+        <!-- Test 4: Loading State -->
+        <div class="opportunity-card">
+            <h3>⏳ Test 4: Loading State</h3>
+            <p><strong>Token:</strong> UNI | <strong>Loss:</strong> $1,200 | <strong>Net Benefit:</strong> $288</p>
+            <button class="button" id="loading-btn" onclick="testLoadingState()">
+                Start Harvest UNI
+            </button>
+        </div>
+        
+        <h2>Debug Actions</h2>
+        <button class="button" onclick="clearLog()">Clear Log</button>
+        <button class="button" onclick="testModalOpen()">Test Modal Open</button>
+        <button class="button" onclick="testModalClose()">Test Modal Close</button>
+        
+        <div class="log" id="log">
+            <div>🚀 HarvestPro Button Test Ready</div>
+            <div>📝 Click buttons above to test different scenarios</div>
+        </div>
+    </div>
+    
+    <!-- Mock Modal -->
+    <div class="modal" id="harvest-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h2 id="modal-title">Harvest Details</h2>
+            <div id="modal-content">
+                <p>Loading opportunity details...</p>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="button" onclick="executeHarvest()">Execute Harvest</button>
+                <button class="button" onclick="closeModal()" style="background: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+        
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#00ff00',
+                error: '#ff0000',
+                warning: '#ffaa00',
+                success: '#00ffaa'
+            };
+            
+            logCount++;
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> <span style="color: ${colors[type]};">${message}</span>`;
+            logEl.appendChild(logEntry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            logCount = 0;
+            log('🧹 Log cleared');
+        }
+        
+        function testStartHarvest(opportunityId, token, netBenefit, isConnected = true) {
+            log(`🚀 Start Harvest clicked! Opportunity ID: ${opportunityId}`, 'info');
+            log(`📦 Token: ${token}, Net Benefit: $${netBenefit}`, 'info');
+            
+            // Simulate wallet connection check
+            if (!isConnected) {
+                log('❌ Wallet not connected - button should be disabled', 'error');
+                return;
+            }
+            
+            // Simulate negative benefit check
+            if (netBenefit <= 0) {
+                log('⚠️ Negative net benefit - execution not recommended', 'warning');
+                return;
+            }
+            
+            // Simulate finding opportunity in array
+            const mockOpportunity = {
+                id: opportunityId,
+                token: token,
+                netTaxBenefit: netBenefit,
+                unrealizedLoss: Math.abs(netBenefit * 4.2), // Mock calculation
+                guardianScore: 8.5,
+                riskLevel: 'LOW'
+            };
+            
+            log(`✅ Found opportunity: ${JSON.stringify(mockOpportunity)}`, 'success');
+            
+            // Simulate opening modal
+            setTimeout(() => {
+                openModal(mockOpportunity);
+                log('🎭 Modal should open now', 'success');
+            }, 100);
+        }
+        
+        function testLoadingState() {
+            const btn = document.getElementById('loading-btn');
+            btn.disabled = true;
+            btn.textContent = 'Preparing harvest...';
+            btn.style.background = '#666';
+            
+            log('⏳ Button entered loading state', 'info');
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'Start Harvest UNI';
+                btn.style.background = '#ed8f2d';
+                log('✅ Loading state cleared', 'success');
+                testStartHarvest('uni-1', 'UNI', 288);
+            }, 2000);
+        }
+        
+        function openModal(opportunity) {
+            const modal = document.getElementById('harvest-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            title.textContent = `Harvest ${opportunity.token}`;
+            content.innerHTML = `
+                <p><strong>Token:</strong> ${opportunity.token}</p>
+                <p><strong>Net Benefit:</strong> $${opportunity.netTaxBenefit}</p>
+                <p><strong>Unrealized Loss:</strong> $${opportunity.unrealizedLoss}</p>
+                <p><strong>Guardian Score:</strong> ${opportunity.guardianScore}/10</p>
+                <p><strong>Risk Level:</strong> ${opportunity.riskLevel}</p>
+                <br>
+                <p>Review the execution plan and costs before proceeding.</p>
+            `;
+            
+            modal.classList.add('open');
+            log('🎭 Modal opened successfully', 'success');
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('harvest-modal');
+            modal.classList.remove('open');
+            log('🚪 Modal closed', 'info');
+        }
+        
+        function testModalOpen() {
+            const mockOpportunity = {
+                id: 'test-1',
+                token: 'TEST',
+                netTaxBenefit: 500,
+                unrealizedLoss: 2100,
+                guardianScore: 7.5,
+                riskLevel: 'MEDIUM'
+            };
+            openModal(mockOpportunity);
+        }
+        
+        function testModalClose() {
+            closeModal();
+        }
+        
+        function executeHarvest() {
+            log('🔄 Executing harvest...', 'info');
+            closeModal();
+            
+            setTimeout(() => {
+                log('✅ Harvest execution completed successfully!', 'success');
+                log('📊 Success screen should appear', 'info');
+            }, 2000);
+        }
+        
+        // Simulate page load
+        window.addEventListener('load', () => {
+            log('📱 HarvestPro page loaded', 'success');
+            log('🔗 Wallet connection status: Connected', 'success');
+            log('📊 Mock opportunities loaded: 3 items', 'info');
+        });
+    </script>
+</body>
+</html>

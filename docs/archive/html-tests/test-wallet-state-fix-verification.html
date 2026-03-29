@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet State Fix Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .fix-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .fix-title {
+            color: #10b981;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .code {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #059669;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #064e3b;
+            border: 1px solid #10b981;
+        }
+        .status.error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+        }
+        .status.warning {
+            background: #78350f;
+            border: 1px solid #f59e0b;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Wallet State Fix Verification</h1>
+        <p>Testing the fixes for wallet switching state update issues.</p>
+
+        <div class="fix-section">
+            <div class="fix-title">🔧 Critical Fixes Applied</div>
+            <div class="status success">
+                <strong>Fix 1: Removed activeWallet from wagmi useEffect dependencies</strong><br>
+                This prevents the wagmi sync from running every time activeWallet changes, eliminating race conditions.
+            </div>
+            <div class="status success">
+                <strong>Fix 2: Used functional state updates in wagmi sync</strong><br>
+                Replaced direct state access with functional updates to avoid stale closures.
+            </div>
+            <div class="status success">
+                <strong>Fix 3: Removed activeWallet from setActiveWallet dependencies</strong><br>
+                This prevents the function from being recreated on every state change, eliminating stale closures.
+            </div>
+            <div class="status success">
+                <strong>Fix 4: Used functional state update in setActiveWallet</strong><br>
+                Ensures state updates are atomic and not affected by stale closures.
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="fix-section">
+                <div class="fix-title">🎯 Expected Behavior</div>
+                <div class="code">When you click a wallet switch button:
+
+1. Console shows:
+   🔘 Wallet button clicked: 0x7942...
+   🔄 setActiveWallet called with: 0x7942...
+   ✅ Wallet found, proceeding with switch...
+   🔄 Setting active wallet state to: 0x7942...
+   🔄 Functional state update: { from: '0x18cb...', to: '0x7942...' }
+   ✅ Active wallet state updated
+
+2. UI updates immediately:
+   - Check mark moves to selected wallet
+   - Dropdown closes
+   - Header shows new active wallet
+
+3. State persists:
+   - localStorage updated
+   - Refresh maintains selection</div>
+            </div>
+
+            <div class="fix-section">
+                <div class="fix-title">🚫 What Should NOT Happen</div>
+                <div class="code">These issues should be FIXED:
+
+❌ No more: "Active wallet already set, not overriding"
+   (wagmi won't interfere with manual switches)
+
+❌ No more: contextActiveWallet staying the same
+   (functional updates prevent stale closures)
+
+❌ No more: State reverting after switch
+   (race conditions eliminated)
+
+❌ No more: Function recreating on every change
+   (removed activeWallet from dependencies)</div>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <div class="fix-title">🧪 Testing Protocol</div>
+            <button class="button" onclick="runPreTest()">1. Pre-Test Check</button>
+            <button class="button" onclick="runWalletSwitchTest()">2. Wallet Switch Test</button>
+            <button class="button" onclick="runPersistenceTest()">3. Persistence Test</button>
+            <button class="button" onclick="runRaceConditionTest()">4. Race Condition Test</button>
+            
+            <div id="test-results" class="code" style="margin-top: 15px; min-height: 300px;">
+Click test buttons above to run verification protocol...
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <div class="fix-title">🔍 Technical Details</div>
+            <div class="code">Before Fix - wagmi useEffect:
+useEffect(() => {
+  // ... wagmi sync logic
+}, [wagmiAddress, wagmiChainId, connectedWallets, getLabel, activeWallet]);
+                                                                    ^^^^^^^^^^^^
+                                                                    PROBLEM: Runs on every activeWallet change
+
+After Fix - wagmi useEffect:
+useEffect(() => {
+  // ... wagmi sync logic with functional updates
+}, [wagmiAddress, wagmiChainId, connectedWallets, getLabel]);
+                                                             ^^^^
+                                                             FIXED: No activeWallet dependency
+
+Before Fix - setActiveWallet:
+const setActiveWallet = useCallback((address) => {
+  const previousWallet = activeWallet; // Stale closure risk
+  setActiveWalletState(address);       // Direct update
+}, [connectedWallets, activeWallet, queryClient, startTransition]);
+                      ^^^^^^^^^^^^
+                      PROBLEM: Function recreated on every change
+
+After Fix - setActiveWallet:
+const setActiveWallet = useCallback((address) => {
+  setActiveWalletState(prevActive => {  // Functional update
+    console.log('🔄 Functional state update:', { from: prevActive, to: address });
+    return address;
+  });
+}, [connectedWallets, queryClient, startTransition]);
+                                                    ^^^^
+                                                    FIXED: No activeWallet dependency</div>
+        </div>
+
+        <div class="fix-section">
+            <div class="fix-title">✅ Success Criteria</div>
+            <div class="status success">
+                1. Console shows "Functional state update" logs with correct from/to values
+            </div>
+            <div class="status success">
+                2. contextActiveWallet updates immediately in React DevTools
+            </div>
+            <div class="status success">
+                3. UI check mark moves to selected wallet instantly
+            </div>
+            <div class="status success">
+                4. No "Active wallet already set, not overriding" messages during manual switches
+            </div>
+            <div class="status success">
+                5. localStorage aw_active_address updates correctly
+            </div>
+            <div class="status success">
+                6. Selection persists after page refresh
+            </div>
+            <div class="status success">
+                7. Multiple rapid clicks don't cause state conflicts
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function runPreTest() {
+            const results = document.getElementById('test-results');
+            
+            const activeAddress = localStorage.getItem('aw_active_address');
+            const connectedWallets = localStorage.getItem('connectedWallets');
+            
+            let walletData = [];
+            if (connectedWallets) {
+                try {
+                    walletData = JSON.parse(connectedWallets);
+                } catch (e) {
+                    console.error('Failed to parse connectedWallets:', e);
+                }
+            }
+            
+            results.textContent = `PRE-TEST CHECK RESULTS:
+
+Current State:
+✓ Active Address: ${activeAddress || 'None'}
+✓ Connected Wallets: ${walletData.length}
+✓ Wallet Details:
+${walletData.map((w, i) => `  ${i + 1}. ${w.address.slice(0, 6)}...${w.address.slice(-4)} ${w.address === activeAddress ? '← ACTIVE' : ''}`).join('\n')}
+
+Prerequisites:
+${walletData.length >= 2 ? '✅' : '❌'} At least 2 wallets connected (needed for switching test)
+${activeAddress ? '✅' : '❌'} Active wallet set
+${typeof window !== 'undefined' ? '✅' : '❌'} Browser environment ready
+
+Next Steps:
+1. If prerequisites are met, run Wallet Switch Test
+2. If not, connect more wallets in the app first
+3. Open DevTools Console to monitor state changes`;
+        }
+
+        function runWalletSwitchTest() {
+            const results = document.getElementById('test-results');
+            
+            results.textContent = `WALLET SWITCH TEST PROTOCOL:
+
+Step 1: Open the app in another tab
+Step 2: Open DevTools Console (F12)
+Step 3: Click profile icon to open dropdown
+Step 4: Click on a DIFFERENT wallet (not the currently active one)
+
+Expected Console Output:
+🔘 Wallet button clicked: 0x[target-address]
+🔄 setActiveWallet called with: 0x[target-address]
+🔍 Current connectedWallets: ['0x...', '0x...', ...]
+✅ Wallet found, proceeding with switch...
+🔄 Setting active wallet state to: 0x[target-address]
+🔄 Functional state update: { from: '0x[old-address]', to: '0x[target-address]' }
+✅ Active wallet state updated
+
+Key Success Indicators:
+✅ "Functional state update" log appears with correct from/to values
+✅ No "Active wallet already set, not overriding" messages
+✅ Check mark moves to selected wallet immediately
+✅ Dropdown closes automatically
+
+If you see these logs and behaviors, the fix is working!
+
+Run Persistence Test next to verify localStorage sync.`;
+        }
+
+        function runPersistenceTest() {
+            const results = document.getElementById('test-results');
+            
+            results.textContent = `PERSISTENCE TEST PROTOCOL:
+
+Step 1: Complete a successful wallet switch (from previous test)
+Step 2: Check localStorage in DevTools Console:
+   localStorage.getItem('aw_active_address')
+   
+Step 3: Refresh the page (F5)
+Step 4: Check if the same wallet is still selected
+
+Expected Results:
+✅ localStorage shows the newly selected wallet address
+✅ After refresh, the same wallet remains active
+✅ Check mark is on the correct wallet in dropdown
+✅ No console errors during page load
+
+Test Commands (run in app's DevTools Console):
+// Check current localStorage
+console.log('Active:', localStorage.getItem('aw_active_address'));
+
+// Check if it matches the selected wallet
+const wallets = JSON.parse(localStorage.getItem('connectedWallets') || '[]');
+const active = localStorage.getItem('aw_active_address');
+console.log('Match found:', wallets.some(w => w.address === active));
+
+If localStorage matches the selected wallet and persists after refresh, persistence is working!
+
+Run Race Condition Test next to verify stability.`;
+        }
+
+        function runRaceConditionTest() {
+            const results = document.getElementById('test-results');
+            
+            results.textContent = `RACE CONDITION TEST PROTOCOL:
+
+This test verifies that rapid wallet switches don't cause state conflicts.
+
+Step 1: Open the app with multiple wallets connected
+Step 2: Open DevTools Console
+Step 3: Rapidly click between different wallets in the dropdown
+   - Click Wallet A
+   - Immediately click Wallet B  
+   - Immediately click Wallet C
+   - Repeat several times quickly
+
+Expected Behavior:
+✅ Each click produces clean console logs
+✅ Final active wallet matches the last clicked wallet
+✅ No error messages or state conflicts
+✅ UI updates smoothly without flickering
+✅ localStorage reflects the final selection
+
+Warning Signs (should NOT happen):
+❌ Console errors about state updates
+❌ "Active wallet already set, not overriding" during manual switches
+❌ UI showing wrong active wallet
+❌ localStorage not matching UI state
+❌ Wallet switching stops working after rapid clicks
+
+Advanced Test (DevTools Console):
+// Monitor state changes during rapid switching
+let switchCount = 0;
+window.addEventListener('walletConnected', (e) => {
+  switchCount++;
+  console.log(\`Switch #\${switchCount}: \${e.detail.address}\`);
+});
+
+If rapid switching works smoothly without conflicts, the race condition fix is successful!
+
+All tests complete. The wallet switching should now work reliably.`;
+        }
+
+        // Auto-run pre-test on load
+        window.addEventListener('load', () => {
+            runPreTest();
+        });
+    </script>
+</body>
+</html>

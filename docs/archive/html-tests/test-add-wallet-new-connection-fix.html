@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Wallet New Connection Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #2563EB;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { background: rgba(34, 197, 94, 0.1); border: 1px solid #22C55E; }
+        .error { background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; }
+        .info { background: rgba(59, 130, 246, 0.1); border: 1px solid #3B82F6; }
+        .warning { background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Add Wallet New Connection Fix Test</h1>
+    <p>Testing the fix for AddWalletWizard treating existing connections as "new"</p>
+
+    <div class="test-section">
+        <h3>🎯 Test Scenario</h3>
+        <p>This test simulates the issue where:</p>
+        <ul>
+            <li>User has 9 existing wallets connected</li>
+            <li>User clicks "Add Wallet" to add a NEW wallet</li>
+            <li>Wizard incorrectly detects existing wagmi connection as "new"</li>
+            <li>Goes straight to success screen instead of opening wallet modal</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Simulated State</h3>
+        <div id="simulatedState" class="info status">
+            <strong>Current Simulated State:</strong><br>
+            • wagmiConnected: true<br>
+            • wagmiAddress: 0x379c186A7582706388D20cd4258bfd5F9D7d72E3<br>
+            • connectedWallets: 9 wallets<br>
+            • previousWagmiAddress: null (component just mounted)<br>
+            • currentStep: providers
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Test Actions</h3>
+        <button class="test-button" onclick="testOriginalBehavior()">
+            Test Original (Broken) Behavior
+        </button>
+        <button class="test-button" onclick="testFixedBehavior()">
+            Test Fixed Behavior
+        </button>
+        <button class="test-button" onclick="testActualNewConnection()">
+            Test Actual New Connection
+        </button>
+        <button class="test-button" onclick="clearLog()">
+            Clear Log
+        </button>
+    </div>
+
+    <div class="test-section">
+        <h3>📋 Test Results</h3>
+        <div id="testResults"></div>
+        <div id="testLog" class="log"></div>
+    </div>
+
+    <script>
+        let testLog = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            testLog.push(`[${timestamp}] ${message}`);
+            updateLogDisplay();
+            
+            // Also show in results
+            const resultsDiv = document.getElementById('testResults');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            resultsDiv.appendChild(statusDiv);
+        }
+        
+        function updateLogDisplay() {
+            document.getElementById('testLog').textContent = testLog.join('\n');
+        }
+        
+        function clearLog() {
+            testLog = [];
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('testLog').textContent = '';
+        }
+
+        // Simulate the original broken behavior
+        function testOriginalBehavior() {
+            log('🔴 Testing Original (Broken) Behavior', 'error');
+            
+            // Simulate component state
+            const wagmiConnected = true;
+            const wagmiAddress = '0x379c186A7582706388D20cd4258bfd5F9D7d72E3';
+            const previousWagmiAddress = null; // This is the bug - not initialized
+            const currentStep = 'connecting';
+            const connectedWallets = Array(9).fill(null).map((_, i) => ({
+                address: `0x${i.toString().padStart(40, '0')}`
+            }));
+            
+            log(`State: wagmiConnected=${wagmiConnected}, wagmiAddress=${wagmiAddress?.slice(0, 8)}...`);
+            log(`previousWagmiAddress=${previousWagmiAddress}, currentStep=${currentStep}`);
+            
+            // Original logic (broken)
+            if (wagmiConnected && wagmiAddress && currentStep === 'connecting') {
+                const newAddress = wagmiAddress.toLowerCase();
+                
+                // BUG: This comparison is always true when previousWagmiAddress is null
+                if (newAddress !== previousWagmiAddress) {
+                    log('❌ ORIGINAL BUG: Treating existing connection as new!', 'error');
+                    log('❌ Would go straight to success screen', 'error');
+                    log('❌ User never gets to connect a new wallet', 'error');
+                    return;
+                }
+            }
+            
+            log('✅ Original logic would not trigger (unexpected)', 'warning');
+        }
+
+        // Simulate the fixed behavior
+        function testFixedBehavior() {
+            log('🟢 Testing Fixed Behavior', 'success');
+            
+            // Simulate component state with fix
+            const wagmiConnected = true;
+            const wagmiAddress = '0x379c186A7582706388D20cd4258bfd5F9D7d72E3';
+            // FIX: Initialize previousWagmiAddress with current wagmi address
+            const previousWagmiAddress = wagmiAddress ? wagmiAddress.toLowerCase() : null;
+            const currentStep = 'connecting';
+            
+            log(`State: wagmiConnected=${wagmiConnected}, wagmiAddress=${wagmiAddress?.slice(0, 8)}...`);
+            log(`previousWagmiAddress=${previousWagmiAddress?.slice(0, 8)}..., currentStep=${currentStep}`);
+            
+            // Fixed logic
+            if (wagmiConnected && wagmiAddress && currentStep === 'connecting') {
+                const newAddress = wagmiAddress.toLowerCase();
+                
+                // FIX: Only treat as new connection if we have a previous address AND it's different
+                const isActuallyNewConnection = previousWagmiAddress && newAddress !== previousWagmiAddress;
+                
+                if (isActuallyNewConnection) {
+                    log('✅ Would treat as new connection', 'success');
+                } else {
+                    log('✅ FIXED: Not treating existing connection as new!', 'success');
+                    log('✅ Wizard stays in connecting state', 'success');
+                    log('✅ User can connect a different wallet', 'success');
+                }
+            }
+        }
+
+        // Simulate an actual new connection
+        function testActualNewConnection() {
+            log('🔵 Testing Actual New Connection', 'info');
+            
+            // Simulate state when user actually connects a different wallet
+            const wagmiConnected = true;
+            const wagmiAddress = '0x742d35Cc6634C0532925a3b8D4C9db96590c6C87'; // Different address
+            const previousWagmiAddress = '0x379c186A7582706388D20cd4258bfd5F9D7d72E3'; // Previous address
+            const currentStep = 'connecting';
+            
+            log(`State: wagmiConnected=${wagmiConnected}, wagmiAddress=${wagmiAddress?.slice(0, 8)}...`);
+            log(`previousWagmiAddress=${previousWagmiAddress?.slice(0, 8)}..., currentStep=${currentStep}`);
+            
+            // Fixed logic with actual new connection
+            if (wagmiConnected && wagmiAddress && currentStep === 'connecting') {
+                const newAddress = wagmiAddress.toLowerCase();
+                
+                // This should detect as new connection
+                const isActuallyNewConnection = previousWagmiAddress && newAddress !== previousWagmiAddress.toLowerCase();
+                
+                if (isActuallyNewConnection) {
+                    log('✅ CORRECTLY detected as new connection!', 'success');
+                    log('✅ Would proceed to success screen', 'success');
+                    log('✅ Would add wallet to registry', 'success');
+                } else {
+                    log('❌ Failed to detect new connection', 'error');
+                }
+            }
+        }
+
+        // Show initial state
+        log('🚀 Add Wallet New Connection Fix Test Ready', 'info');
+        log('Click buttons above to test different scenarios', 'info');
+    </script>
+</body>
+</html>

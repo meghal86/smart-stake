@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { suppressExtensionErrors } from "@/utils/suppressExtensionErrors";
 import { BrowserNavigationProvider } from "@/components/navigation/BrowserNavigationProvider";
+import { LegalDisclosureModal } from "@/components/LegalDisclosureModal";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { toast } from "@/hooks/use-toast";
 import "@/theme/ocean.css";
 import Index from "./pages/Index";
@@ -29,13 +31,9 @@ import Contact from "./pages/legal/Contact";
 import Premium from "./pages/Premium";
 import Debug from "./pages/Debug";
 import NotificationSettings from "./pages/NotificationSettings";
-import WalletAnalysis from "./pages/WalletAnalysis";
 import HealthCheck from "./pages/HealthCheck";
 import PremiumTest from "./pages/PremiumTest";
 import SubscriptionTest from "./pages/SubscriptionTest";
-import PredictionsScenarios from "./pages/PredictionsScenarios";
-import AdminBI from "./pages/AdminBI";
-import AdminOps from "./pages/AdminOps";
 import HealthEndpoint from "./pages/HealthEndpoint";
 // Hub 2 imports
 import PulsePage from "./pages/hub2/Pulse";
@@ -55,35 +53,52 @@ import PortfolioStress from "./pages/portfolio/stress";
 import PortfolioResults from "./pages/portfolio/results";
 import PortfolioAddresses from "./pages/portfolio/addresses";
 import Plans from "./pages/Plans";
-import MarketHub from "./pages/MarketHub";
-import Overview from "./pages/Overview";
 import Alerts from "./pages/Alerts";
 import LiteHub from "./pages/LiteHub";
 import Hub5Page from "./pages/Hub5Page";
-import WhaleAnalyticsDashboard from "./pages/WhaleAnalytics";
-import ReportsExports from "./pages/ReportsExports";
 import SignalsPage from "./pages/SignalsFeed";
-import TestWorldClass from "./pages/TestWorldClass";
 import WhaleSignalsPhaseD from "./pages/whale-signals/index";
 import PatternModalDemo from "./pages/PatternModalDemo";
 import Cockpit from "./pages/Cockpit";
 import Hub2Plus from "./pages/Hub2Plus";
 // import Guardian from "./pages/Guardian"; // File removed
-import GuardianEnhanced from "./pages/GuardianEnhanced";
+import { ProtectedRouteWrapper } from '@/components/ProtectedRouteWrapper';
+import { AdminRouteWrapper } from '@/components/AdminRouteWrapper';
+import { ClientProviders } from "@/providers/ClientProviders";
+
+// Lazy load heavy component pages
+const GuardianEnhanced = React.lazy(() => import("./pages/GuardianEnhanced"));
+const GuardianLearn = React.lazy(() => import("./pages/GuardianLearn"));
+const Hunter = React.lazy(() => import("./pages/Hunter"));
+const HarvestPro = React.lazy(() => import("./pages/HarvestPro"));
+const AnomalyDetection = React.lazy(() => import("./pages/AnomalyDetection"));
+const ReportsExports = React.lazy(() => import("./pages/ReportsExports"));
+const WalletAnalysis = React.lazy(() => import("./pages/WalletAnalysis"));
+const PredictionsScenarios = React.lazy(() => import("./pages/PredictionsScenarios"));
+const AdminBI = React.lazy(() => import("./pages/AdminBI"));
+const AdminOps = React.lazy(() => import("./pages/AdminOps"));
+const WhaleAnalyticsDashboard = React.lazy(() => import("./pages/WhaleAnalytics"));
+const MarketHub = React.lazy(() => import("./pages/MarketHub"));
+const Overview = React.lazy(() => import("./pages/Overview"));
+const PatternModalDemo = React.lazy(() => import("./pages/PatternModalDemo"));
+const TestWorldClass = React.lazy(() => import("./pages/TestWorldClass"));
+
+// Non-lazy imports (lightweight or critical)
 import GuardianUX2 from "./pages/GuardianUX2";
-import GuardianLearn from "./pages/GuardianLearn";
-import Hunter from "./pages/Hunter";
-import HarvestPro from "./pages/HarvestPro";
-import AnomalyDetection from "./pages/AnomalyDetection";
 import OnboardingAnalytics from "./pages/admin/OnboardingAnalytics";
 import AddWalletWizard from "./pages/AddWalletWizard";
 import WalletSettings from "./pages/WalletSettings";
-import { ProtectedRouteWrapper } from '@/components/ProtectedRouteWrapper';
-import { ClientProviders } from "@/providers/ClientProviders";
 
 // Placeholder components for missing imports
 const SignupTest = () => <div>Signup Test</div>;
 const PerformanceDebugger = () => null;
+
+// Page loader component for lazy-loaded routes
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+  </div>
+);
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -97,27 +112,10 @@ const App = () => {
     // Suppress extension errors globally
     suppressExtensionErrors();
 
-    // Fix RainbowKit modal clickability - with proper cleanup
+    // Fix RainbowKit modal pointer-events on mount (one-time only, no polling)
     let cleanupFn: (() => void) | undefined;
-    let aggressiveInterval: NodeJS.Timeout | undefined;
-    
-    import('@/utils/fixRainbowKit').then(({ fixRainbowKitModals, forceFixRainbowKit }) => {
+    import('@/utils/fixRainbowKit').then(({ fixRainbowKitModals }) => {
       cleanupFn = fixRainbowKitModals();
-      
-      // Run fixes less aggressively - only when needed
-      aggressiveInterval = setInterval(() => {
-        const rkElements = document.querySelectorAll('[data-rk]');
-        if (rkElements.length > 0) {
-          forceFixRainbowKit();
-        }
-      }, 2000); // Reduced from 200ms to 2 seconds
-      
-      return () => {
-        cleanupFn?.();
-        if (aggressiveInterval) {
-          clearInterval(aggressiveInterval);
-        }
-      };
     });
 
     const handleError = (event: ErrorEvent) => {
@@ -130,7 +128,8 @@ const App = () => {
       // Handle auth errors
       if (event.reason?.message?.includes('Invalid Refresh Token')) {
         console.log('Clearing invalid auth tokens...');
-        localStorage.removeItem('sb-rebeznxivaxgserswhbn-auth-token');
+        const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_REF ?? 'supabase';
+        localStorage.removeItem(`sb-${projectRef}-auth-token`);
         sessionStorage.clear();
         event.preventDefault();
         return;
@@ -145,6 +144,7 @@ const App = () => {
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
 
     return () => {
+      cleanupFn?.();
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
@@ -156,8 +156,11 @@ const App = () => {
         {showSplash && (
           <SplashScreen onComplete={handleSplashComplete} duration={1700} />
         )}
+        <LegalDisclosureModal />
+        <InstallPrompt />
         <BrowserRouter>
           <BrowserNavigationProvider showToast={(message) => toast({ description: message })}>
+            <Suspense fallback={<PageLoader />}>
             <Routes>
                   <Route path="/" element={<AlphaWhaleHome />} />
                   <Route path="/lite" element={<Index />} />
@@ -167,12 +170,13 @@ const App = () => {
                   <Route path="/signup-old" element={<Signup />} />
                   <Route path="/signup" element={<SignupNew />} />
                   <Route path="/welcome" element={<Welcome />} />
-                  <Route path="/signup-test" element={<SignupTest />} />
+                  {/* Dev-only routes — not rendered in production */}
+                  {import.meta.env.DEV && <Route path="/signup-test" element={<SignupTest />} />}
                   <Route path="/subscription" element={<Subscription />} />
                   <Route path="/subscription/manage" element={<ManageSubscription />} />
                   <Route path="/subscription/success" element={<SubscriptionSuccess />} />
                   <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
-                  <Route path="/debug" element={<Debug />} />
+                  {import.meta.env.DEV && <Route path="/debug" element={<Debug />} />}
                   <Route path="/notifications" element={<NotificationSettings />} />
                   <Route path="/analysis" element={<WalletAnalysis />} />
                   <Route path="/analysis/:address" element={<WalletAnalysis />} />
@@ -183,13 +187,14 @@ const App = () => {
                   <Route path="/hunter" element={<ProtectedRouteWrapper><Hunter /></ProtectedRouteWrapper>} />
                   <Route path="/harvestpro" element={<ProtectedRouteWrapper><HarvestPro /></ProtectedRouteWrapper>} />
                   <Route path="/anomaly-detection" element={<AnomalyDetection />} />
-                  <Route path="/premium-test" element={<PremiumTest />} />
-                  <Route path="/subscription-test" element={<SubscriptionTest />} />
+                  {import.meta.env.DEV && <Route path="/premium-test" element={<PremiumTest />} />}
+                  {import.meta.env.DEV && <Route path="/subscription-test" element={<SubscriptionTest />} />}
                   <Route path="/predictions-scenarios" element={<PredictionsScenarios />} />
-                  <Route path="/admin/bi" element={<AdminBI />} />
-                  <Route path="/admin/ops" element={<AdminOps />} />
-                  <Route path="/admin/ops/health" element={<HealthEndpoint />} />
-                  <Route path="/admin/onboarding" element={<OnboardingAnalytics />} />
+                  {/* Admin routes — requires auth + admin email in VITE_ADMIN_EMAILS */}
+                  <Route path="/admin/bi" element={<AdminRouteWrapper><AdminBI /></AdminRouteWrapper>} />
+                  <Route path="/admin/ops" element={<AdminRouteWrapper><AdminOps /></AdminRouteWrapper>} />
+                  <Route path="/admin/ops/health" element={<AdminRouteWrapper><HealthEndpoint /></AdminRouteWrapper>} />
+                  <Route path="/admin/onboarding" element={<AdminRouteWrapper><OnboardingAnalytics /></AdminRouteWrapper>} />
                   <Route path="/health" element={<HealthCheck />} />
                   <Route path="/portfolio-enhanced" element={<Navigate to="/portfolio" replace />} />
                   <Route path="/portfolio-intelligence" element={<PortfolioIntelligence />} />
@@ -232,8 +237,8 @@ const App = () => {
                   <Route path="/hub2-plus" element={<Hub2Plus />} />
                   <Route path="/signals" element={<SignalsPage />} />
                   <Route path="/signals-feed" element={<SignalsPage />} />
-                  <Route path="/test-world-class" element={<TestWorldClass />} />
-                  <Route path="/pattern-demo" element={<PatternModalDemo />} />
+                  {import.meta.env.DEV && <Route path="/test-world-class" element={<TestWorldClass />} />}
+                  {import.meta.env.DEV && <Route path="/pattern-demo" element={<PatternModalDemo />} />}
                   <Route path="/hub/whale-signals" element={<WhaleSignalsPhaseD />} />
                   <Route path="/cockpit" element={<Cockpit />} />
                   <Route path="/insights" element={<div className="p-6">Insights Coming Soon</div>} />
@@ -243,6 +248,7 @@ const App = () => {
                   <Route path="/pro-signals" element={<SignalsPage />} />
             <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </BrowserNavigationProvider>
         </BrowserRouter>
         <PerformanceDebugger />

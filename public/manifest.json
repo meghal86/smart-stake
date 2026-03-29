@@ -1,29 +1,74 @@
 {
-  "name": "WhalePulse",
-  "short_name": "WhalePulse",
-  "description": "Read live portfolio drift, Guardian health, hunting opportunities, and harvest workflows from one calmer DeFi command surface",
-  "start_url": "/",
+  "name": "AlphaWhale — DeFi Intelligence",
+  "short_name": "AlphaWhale",
+  "description": "Track whales, protect your wallet with Guardian, hunt airdrops, and manage your DeFi portfolio — all in one place.",
+  "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0a0a0f",
   "theme_color": "#003366",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["finance", "productivity", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "/favicon-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
     {
       "src": "/favicon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/favicon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/whaleplus-android-foreground-432x432.png",
+      "sizes": "432x432",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/whaleplus-appstore-1024x1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "categories": ["finance", "productivity", "utilities"],
-  "lang": "en",
-  "dir": "ltr",
-  "scope": "/",
-  "prefer_related_applications": false
+  "shortcuts": [
+    {
+      "name": "Portfolio",
+      "short_name": "Portfolio",
+      "description": "View your DeFi portfolio",
+      "url": "/portfolio?source=shortcut",
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Guardian",
+      "short_name": "Guardian",
+      "description": "Protect your wallet with Guardian",
+      "url": "/guardian?source=shortcut",
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Whale Signals",
+      "short_name": "Signals",
+      "description": "Live whale movement signals",
+      "url": "/signals?source=shortcut",
+      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

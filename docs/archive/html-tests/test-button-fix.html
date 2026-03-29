@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        .button {
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .button:hover {
+            transform: scale(1.02);
+        }
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Basic Button Click</h2>
+        <button class="button" onclick="testClick('basic')">Basic Button</button>
+        <div id="basic-result" class="result">Click the button above</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Button with Event Handler</h2>
+        <button class="button" id="event-button">Event Handler Button</button>
+        <div id="event-result" class="result">Click the button above</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Disabled Button</h2>
+        <button class="button" disabled onclick="testClick('disabled')">Disabled Button</button>
+        <div id="disabled-result" class="result">This button should not respond</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Button Inside Motion Div (Simulating Framer Motion)</h2>
+        <div style="transform: scale(1); transition: transform 0.2s;">
+            <button class="button" onclick="testClick('motion')">Motion Wrapped Button</button>
+        </div>
+        <div id="motion-result" class="result">Click the button above</div>
+    </div>
+
+    <script>
+        function testClick(testName) {
+            const resultElement = document.getElementById(testName + '-result');
+            resultElement.innerHTML = `✅ ${testName} button clicked at ${new Date().toLocaleTimeString()}`;
+            resultElement.style.background = '#0a5a0a';
+        }
+
+        // Test 2: Event handler
+        document.getElementById('event-button').addEventListener('click', function() {
+            testClick('event');
+        });
+
+        console.log('Button test page loaded');
+    </script>
+</body>
+</html>

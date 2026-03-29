@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Switching Final Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #06b6d4;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 4px;
+            border-left: 3px solid #06b6d4;
+        }
+        .success {
+            border-left-color: #10b981;
+            background: #064e3b;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background: #7f1d1d;
+        }
+        .warning {
+            border-left-color: #f59e0b;
+            background: #78350f;
+        }
+        .code {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #334155;
+            white-space: pre-wrap;
+        }
+        .button {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0891b2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Wallet Switching Final Test</h1>
+        <p>Testing the fixed wallet switching functionality with enhanced debugging.</p>
+
+        <div class="test-section">
+            <div class="test-title">🔧 Fixes Applied</div>
+            <div class="test-step success">
+                <strong>Fix 1: Case-Insensitive Wallet Matching</strong>
+                <div class="code">// Before: w.address === address
+// After: w.address.toLowerCase() === address.toLowerCase()</div>
+                <p>Ensures wallet addresses match regardless of case differences</p>
+            </div>
+
+            <div class="test-step success">
+                <strong>Fix 2: Enhanced Debug Logging</strong>
+                <div class="code">console.log('🔄 setActiveWallet called with:', address)
+console.log('🔍 Current connectedWallets:', connectedWallets.map(w => w.address))
+console.log('✅ Wallet found, proceeding with switch...')
+console.log('🔄 Setting active wallet state to:', address)
+console.log('✅ Active wallet state updated')</div>
+                <p>Detailed logging to track the wallet switching process</p>
+            </div>
+
+            <div class="test-step success">
+                <strong>Fix 3: Wagmi Override Prevention</strong>
+                <div class="code">// Only set wagmi wallet as active if no active wallet exists
+if (!activeWallet) {
+  console.log('No active wallet set, using wagmi wallet:', address);
+  setActiveWalletState(address);
+} else {
+  console.log('Active wallet already set, not overriding with wagmi wallet');
+}</div>
+                <p>Prevents wagmi from overriding manual wallet switches</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🧪 Expected Console Output</div>
+            <div class="test-step">
+                <strong>When clicking a wallet switch button, you should see:</strong>
+                <div class="code">🔘 Wallet button clicked: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+
+=== WALLET SWITCH DEBUG ===
+Switching to wallet: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+Current active wallet: 0x18cbcBe89507d7494cA51796C2945A41e3BB3527
+Connected wallets: 3
+Wallet switch completed
+
+🔄 setActiveWallet called with: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+🔍 Current connectedWallets: ['0x18cbcBe89507d7494cA51796C2945A41e3BB3527', '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E', '0x...']
+✅ Wallet found, proceeding with switch...
+🔄 Setting active wallet state to: 0x7942938f82031776F044aF9740a0Bd1EEaf1b43E
+✅ Active wallet state updated
+
+🔄 WalletContext state updated: {
+  connectedWalletsCount: 3,
+  contextActiveWallet: '0x7942938f82031776F044aF9740a0Bd1EEaf1b43E',  // ← Should change!
+  wagmiActiveWallet: '0x18cbcBe89507d7494cA51796C2945A41e3BB3527',
+  connectedWallets: [...]
+}</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🎯 Testing Steps</div>
+            
+            <div class="test-step">
+                <strong>1. Open DevTools Console</strong>
+                <p>Press F12 and go to Console tab to see debug logs</p>
+            </div>
+
+            <div class="test-step">
+                <strong>2. Test Wallet Switching</strong>
+                <ul>
+                    <li>Click profile icon in header</li>
+                    <li>Click on a different wallet in the dropdown</li>
+                    <li>Watch console for the debug logs above</li>
+                    <li>Verify the check mark moves to the selected wallet</li>
+                </ul>
+            </div>
+
+            <div class="test-step">
+                <strong>3. Verify State Persistence</strong>
+                <ul>
+                    <li>Check localStorage: <code>localStorage.getItem('aw_active_address')</code></li>
+                    <li>Should match the selected wallet address</li>
+                    <li>Refresh page and verify selection persists</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🚨 Troubleshooting</div>
+            
+            <div class="test-step error">
+                <strong>If you see: "❌ Wallet not found in connected wallets"</strong>
+                <p><strong>Solution:</strong> Address case mismatch. Check the exact addresses in console logs.</p>
+            </div>
+
+            <div class="test-step error">
+                <strong>If contextActiveWallet doesn't change</strong>
+                <p><strong>Solution:</strong> Wagmi might be overriding. Check for "Active wallet already set" logs.</p>
+            </div>
+
+            <div class="test-step error">
+                <strong>If no console logs appear</strong>
+                <p><strong>Solution:</strong> Click event not firing. Check button pointer-events and z-index.</p>
+            </div>
+
+            <div class="test-step warning">
+                <strong>If wagmiActiveWallet differs from contextActiveWallet</strong>
+                <p><strong>This is normal!</strong> wagmi tracks the connected wallet, context tracks the selected wallet.</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔧 Manual Testing Tools</div>
+            <button class="button" onclick="checkWalletState()">Check Wallet State</button>
+            <button class="button" onclick="testWalletSwitch()">Test Wallet Switch</button>
+            <button class="button" onclick="clearWalletState()">Clear Wallet State</button>
+            
+            <div id="test-results" style="margin-top: 15px; background: #1e293b; border: 1px solid #475569; border-radius: 4px; padding: 15px;">
+                <strong>Test Results:</strong>
+                <div id="results-content">Click a test button above to run diagnostics</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">✅ Success Criteria</div>
+            <div class="test-step success">
+                1. Console shows detailed debug logs when switching wallets
+            </div>
+            <div class="test-step success">
+                2. contextActiveWallet updates to the selected wallet address
+            </div>
+            <div class="test-step success">
+                3. Check mark moves to the selected wallet in dropdown
+            </div>
+            <div class="test-step success">
+                4. localStorage aw_active_address updates correctly
+            </div>
+            <div class="test-step success">
+                5. Selection persists after page refresh
+            </div>
+            <div class="test-step success">
+                6. No "wallet not found" errors in console
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkWalletState() {
+            const results = document.getElementById('results-content');
+            
+            const activeAddress = localStorage.getItem('aw_active_address');
+            const connectedWallets = localStorage.getItem('connectedWallets');
+            
+            let walletData = [];
+            if (connectedWallets) {
+                try {
+                    walletData = JSON.parse(connectedWallets);
+                } catch (e) {
+                    console.error('Failed to parse connectedWallets:', e);
+                }
+            }
+            
+            results.innerHTML = `
+                <div class="code">
+<strong>Current Wallet State:</strong>
+Active Address: ${activeAddress || 'None'}
+Connected Wallets: ${walletData.length}
+
+<strong>Wallet Addresses:</strong>
+${walletData.map((w, i) => `${i + 1}. ${w.address} ${w.address === activeAddress ? '← ACTIVE' : ''}`).join('\n')}
+
+<strong>Next Steps:</strong>
+1. Open the app and click profile icon
+2. Try switching to a different wallet
+3. Watch console for debug logs
+4. Run this test again to see changes
+                </div>
+            `;
+        }
+
+        function testWalletSwitch() {
+            const results = document.getElementById('results-content');
+            
+            // Try to find wallet buttons and simulate click
+            const walletButtons = document.querySelectorAll('[data-testid="wallet-switch-button"]');
+            
+            results.innerHTML = `
+                <div class="code">
+<strong>Wallet Switch Test:</strong>
+Found ${walletButtons.length} wallet buttons
+
+<strong>Instructions:</strong>
+1. Make sure the app is open in another tab
+2. Open DevTools Console in that tab
+3. Click profile icon to open dropdown
+4. Click on a different wallet
+5. Watch for these console logs:
+
+Expected logs:
+🔘 Wallet button clicked: 0x...
+🔄 setActiveWallet called with: 0x...
+✅ Wallet found, proceeding with switch...
+✅ Active wallet state updated
+                </div>
+            `;
+        }
+
+        function clearWalletState() {
+            const results = document.getElementById('results-content');
+            
+            // Clear wallet-related localStorage
+            localStorage.removeItem('aw_active_address');
+            localStorage.removeItem('aw_active_network');
+            localStorage.removeItem('connectedWallets');
+            
+            results.innerHTML = `
+                <div class="code">
+<strong>Wallet State Cleared:</strong>
+Removed:
+- aw_active_address
+- aw_active_network  
+- connectedWallets
+
+<strong>Next Steps:</strong>
+1. Refresh the app
+2. Connect wallets again
+3. Test wallet switching functionality
+                </div>
+            `;
+        }
+
+        // Auto-run initial check
+        window.addEventListener('load', () => {
+            checkWalletState();
+        });
+    </script>
+</body>
+</html>

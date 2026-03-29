@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Button Color Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+        }
+        
+        .button-demo {
+            margin: 10px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        /* Expected Guardian Button Styles */
+        .glow-button {
+            background: linear-gradient(to right, #10b981, #14b8a6);
+            color: white;
+            border: none;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .glow-button:hover {
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+            transform: scale(1.05) translateY(-2px);
+        }
+        
+        .outline-glow-button {
+            background: transparent;
+            color: #10b981;
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .outline-glow-button:hover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .demo-mode-button {
+            background: transparent;
+            color: #64748b;
+            border: 2px solid #334155;
+        }
+        
+        .demo-mode-button:hover {
+            background: #334155;
+            color: white;
+            border-color: #475569;
+        }
+        
+        /* Problem: White button (what you're seeing) */
+        .white-button-problem {
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+        }
+        
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <h1>Guardian Button Color Test & Fix</h1>
+    
+    <div class="test-section">
+        <h2>Expected Button Colors (How they should look)</h2>
+        
+        <div>
+            <h3>Connect Wallet Button (GlowButton variant="glow")</h3>
+            <button class="button-demo glow-button">Connect Wallet</button>
+            <p class="success">✅ Should be emerald gradient with glow effect</p>
+        </div>
+        
+        <div>
+            <h3>Demo Mode Button (GlowButton variant="outlineGlow")</h3>
+            <button class="button-demo outline-glow-button">Try Demo Mode</button>
+            <p class="success">✅ Should be transparent with emerald border</p>
+        </div>
+        
+        <div>
+            <h3>Scan Again Button (GlowButton variant="outlineGlow")</h3>
+            <button class="button-demo outline-glow-button">🔄 Scan Again</button>
+            <p class="success">✅ Should be transparent with emerald border</p>
+        </div>
+        
+        <div>
+            <h3>Exit Demo Button (Button variant="outline")</h3>
+            <button class="button-demo demo-mode-button">Exit Demo</button>
+            <p class="success">✅ Should be gray outline button</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="error">❌ Problem: White Button Issue</h2>
+        <button class="button-demo white-button-problem">White Button (Problem)</button>
+        <p class="error">This is what you're seeing - buttons appearing white instead of proper colors</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔧 How to Test & Fix</h2>
+        
+        <h3>Step 1: Test Current Implementation</h3>
+        <ol>
+            <li>Start dev server: <code>npm run dev</code></li>
+            <li>Go to <code>http://localhost:3000/guardian</code></li>
+            <li>Check if "Try Demo Mode" button is white instead of emerald outline</li>
+            <li>Check if other buttons have lost their colors</li>
+        </ol>
+        
+        <h3>Step 2: Possible Causes & Solutions</h3>
+        <ul>
+            <li><strong>CSS Variables Issue:</strong> Tailwind CSS variables might be overridden</li>
+            <li><strong>Import Order:</strong> CSS imports might be in wrong order</li>
+            <li><strong>Theme Context:</strong> Dark/light theme context might be broken</li>
+            <li><strong>Component Props:</strong> Button variant props might not be passed correctly</li>
+        </ul>
+        
+        <h3>Step 3: Quick Fixes to Try</h3>
+        <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p><strong>Fix 1: Check CSS Import Order</strong></p>
+            <p>Ensure Tailwind CSS is imported before component styles in your main CSS file.</p>
+        </div>
+        
+        <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p><strong>Fix 2: Force Button Variants</strong></p>
+            <p>Explicitly set button variants in Guardian components:</p>
+            <code>
+                &lt;GlowButton variant="glow"&gt;Connect Wallet&lt;/GlowButton&gt;<br>
+                &lt;GlowButton variant="outlineGlow"&gt;Try Demo Mode&lt;/GlowButton&gt;
+            </code>
+        </div>
+        
+        <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <p><strong>Fix 3: Check Theme Provider</strong></p>
+            <p>Ensure ThemeProvider is wrapping the app and providing correct CSS variables.</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Browser Developer Tools Test</h2>
+        <p>Open browser dev tools and check:</p>
+        <ol>
+            <li><strong>Computed Styles:</strong> Look for the button element and check if CSS variables are defined</li>
+            <li><strong>Console Errors:</strong> Check for any CSS or JavaScript errors</li>
+            <li><strong>Network Tab:</strong> Ensure all CSS files are loading correctly</li>
+            <li><strong>Elements Tab:</strong> Inspect button element and verify classes are applied</li>
+        </ol>
+        
+        <p class="warning">⚠️ If buttons appear white, the issue is likely CSS variables not being defined or Tailwind classes not being applied.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>✅ Verification Checklist</h2>
+        <p>After applying fixes, verify:</p>
+        <ul>
+            <li>□ Connect Wallet button has emerald gradient background</li>
+            <li>□ Demo Mode button has transparent background with emerald border</li>
+            <li>□ Scan Again button has emerald outline styling</li>
+            <li>□ Exit Demo button has gray outline styling</li>
+            <li>□ All buttons have proper hover effects</li>
+            <li>□ Button text is readable (white on colored backgrounds)</li>
+        </ul>
+    </div>
+</body>
+</html>

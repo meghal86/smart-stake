@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Portal Exact Replica - World-Class UX</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0A0F1F 0%, #1E293B 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .mobile-container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: #0A0F1F;
+            min-height: 100vh;
+            position: relative;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #06B6D4, #3B82F6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .mock-app {
+            padding: 20px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .wallet-chip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px;
+            margin-bottom: 20px;
+        }
+        .wallet-chip:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(6, 182, 212, 0.5);
+            transform: translateY(-1px);
+        }
+        .wallet-chip:active {
+            transform: scale(0.97);
+        }
+        .demo-button {
+            padding: 12px 24px;
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+        .demo-button:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+        }
+        
+        /* MetaMask Portal Bottom Sheet */
+        .bottom-sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .bottom-sheet-backdrop.open {
+            opacity: 1;
+        }
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1E293B;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            max-height: 80vh;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .drag-handle {
+            width: 48px;
+            height: 4px;
+            background: #64748B;
+            border-radius: 2px;
+            margin: 12px auto 8px;
+        }
+        .sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+        }
+        .sheet-header h3 {
+            margin: 0;
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .close-button {
+            width: 32px;
+            height: 32px;
+            background: #334155;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: #94A3B8;
+        }
+        .close-button:hover {
+            background: #475569;
+        }
+        
+        /* Search Bar */
+        .search-section {
+            padding: 0 24px 16px;
+        }
+        .search-container {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 12px;
+            font-size: 16px;
+            color: white;
+            box-sizing: border-box;
+        }
+        .search-input::placeholder {
+            color: #94A3B8;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+        }
+        
+        /* Wallet Cards - MetaMask Portal Style */
+        .wallets-section {
+            padding: 0 24px 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .wallet-card {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 100px;
+            position: relative;
+        }
+        .wallet-card:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+        .wallet-card.active {
+            background: #334155;
+            border-color: #3B82F6;
+        }
+        .wallet-card:active {
+            transform: scale(0.98);
+        }
+        
+        /* Top Row: Icon, Name, Balance */
+        .wallet-top-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .wallet-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .wallet-icon {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: #475569;
+        }
+        .wallet-card.active .wallet-icon {
+            background: #3B82F6;
+        }
+        .active-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            background: #10B981;
+            border: 2px solid #1E293B;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: white;
+        }
+        .wallet-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+        .wallet-card.active .wallet-info h4 {
+            color: #60A5FA;
+        }
+        .wallet-address {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            color: #94A3B8;
+            margin: 0;
+        }
+        .wallet-balance {
+            text-align: right;
+        }
+        .balance-usd {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            margin: 0 0 2px 0;
+        }
+        .wallet-card.active .balance-usd {
+            color: #60A5FA;
+        }
+        .balance-eth {
+            font-size: 14px;
+            color: #94A3B8;
+            margin: 0;
+        }
+        
+        /* Bottom Row: Notifications & Activity */
+        .wallet-bottom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .wallet-notifications {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .notification-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .notification-dot.new {
+            background: #10B981;
+        }
+        .notification-dot.expiring {
+            background: #F59E0B;
+        }
+        .notification-text {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .notification-text.new {
+            color: #34D399;
+        }
+        .notification-text.expiring {
+            color: #FBBF24;
+        }
+        .wallet-activity {
+            font-size: 12px;
+            color: #64748B;
+        }
+        .more-button {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.2s;
+            color: #94A3B8;
+        }
+        .wallet-card:hover .more-button {
+            opacity: 1;
+            background: #475569;
+        }
+        .more-button:hover {
+            background: #64748B !important;
+        }
+        
+        /* Add Account Button */
+        .add-account-section {
+            padding: 16px 24px;
+            border-top: 1px solid #475569;
+        }
+        .add-account-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            min-height: 56px;
+            transition: all 0.15s;
+        }
+        .add-account-button:hover {
+            background: #2563EB;
+        }
+        .add-account-button:active {
+            transform: scale(0.98);
+            background: #1D4ED8;
+        }
+        .manage-link {
+            width: 100%;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: color 0.2s;
+        }
+        .manage-link:hover {
+            color: #CBD5E1;
+        }
+        
+        /* Features List */
+        .features {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            margin: 20px;
+        }
+        .features h3 {
+            color: #10B981;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .features-list li {
+            padding: 8px 0;
+            color: #CBD5E1;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .features-list li::before {
+            content: "🦊";
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <div class="header">
+            <h1>🦊 MetaMask Portal Exact Replica</h1>
+            <p style="font-size: 14px; color: #94A3B8; margin: 0;">World-class wallet switching experience</p>
+        </div>
+
+        <div class="mock-app">
+            <div class="wallet-chip" onclick="openBottomSheet()">
+                <span style="font-size: 20px;">🦊</span>
+                <div>
+                    <div style="font-weight: 600; font-size: 14px;">MetaMask Account 1</div>
+                    <div style="font-size: 12px; opacity: 0.7; font-family: monospace;">0x44e3...3bee</div>
+                </div>
+                <span style="opacity: 0.5; font-size: 12px;">▼</span>
+            </div>
+            
+            <button class="demo-button" onclick="openBottomSheet()">
+                Experience MetaMask Portal UX
+            </button>
+        </div>
+
+        <div class="features">
+            <h3>🎯 MetaMask Portal Features Replicated</h3>
+            <ul class="features-list">
+                <li>Exact card layout with provider icons and balances</li>
+                <li>Notification indicators (new/expiring)</li>
+                <li>Activity status ("Since your last open")</li>
+                <li>Active state with blue accent and checkmark</li>
+                <li>Three-dot menu on hover for actions</li>
+                <li>Dark theme matching MetaMask Portal</li>
+                <li>Smooth animations and haptic feedback</li>
+                <li>100px card height for easy thumb access</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- MetaMask Portal Bottom Sheet -->
+    <div class="bottom-sheet-backdrop" id="backdrop" onclick="closeBottomSheet()"></div>
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="drag-handle"></div>
+        
+        <div class="sheet-header">
+            <h3>Select Account</h3>
+            <button class="close-button" onclick="closeBottomSheet()">
+                ✕
+            </button>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-icon">🔍</div>
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search accounts"
+                    id="searchInput"
+                    oninput="filterAccounts()"
+                >
+            </div>
+        </div>
+        
+        <div class="wallets-section" id="walletsList">
+            <!-- Active Wallet Card -->
+            <div class="wallet-card active" onclick="switchWallet('MetaMask Account 1', '0x44e3...3bee')">
+                <div class="wallet-top-row">
+                    <div class="wallet-left">
+                        <div class="wallet-icon">
+                            🦊
+                            <div class="active-indicator">✓</div>
+                        </div>
+                        <div class="wallet-info">
+                            <h4>MetaMask Account 1</h4>
+                            <p class="wallet-address">0x44e3...3bee</p>
+                        </div>
+                    </div>
+                    <div class="wallet-balance">
+                        <p class="balance-usd">$5,035.42</p>
+                        <p class="balance-eth">2.85 ETH</p>
+                    </div>
+                </div>
+                <div class="wallet-bottom-row">
+                    <div class="wallet-notifications">
+                        <div class="notification-item">
+                            <div class="notification-dot new"></div>
+                            <span class="notification-text new">3 new</span>
+                        </div>
+                        <div class="notification-item">
+                            <div class="notification-dot expiring"></div>
+                            <span class="notification-text expiring">2 expiring</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="more-button" onclick="showAccountMenu('MetaMask Account 1', event)">
+                    ⋯
+                </button>
+            </div>
+            
+            <!-- Other Wallet Cards -->
+            <div class="wallet-card" onclick="switchWallet('Rainbow Account 1', '0x7942...1436')">
+                <div class="wallet-top-row">
+                    <div class="wallet-left">
+                        <div class="wallet-icon">🌈</div>
+                        <div class="wallet-info">
+                            <h4>Rainbow</h4>
+                            <p class="wallet-address">0x7942...1436</p>
+                        </div>
+                    </div>
+                    <div class="wallet-balance">
+                        <p class="balance-usd">$6,899.89</p>
+                        <p class="balance-eth">3.21 ETH</p>
+                    </div>
+                </div>
+                <div class="wallet-bottom-row">
+                    <div class="wallet-activity">
+                        Since your last open: Open today's pulse • Explore Hunter
+                    </div>
+                </div>
+                <button class="more-button" onclick="showAccountMenu('Rainbow Account 1', event)">
+                    ⋯
+                </button>
+            </div>
+            
+            <div class="wallet-card" onclick="switchWallet('Base Account', '0xd65f...868c2')">
+                <div class="wallet-top-row">
+                    <div class="wallet-left">
+                        <div class="wallet-icon">🔵</div>
+                        <div class="wallet-info">
+                            <h4>Base Account</h4>
+                            <p class="wallet-address">0xd65f...868c2</p>
+                        </div>
+                    </div>
+                    <div class="wallet-balance">
+                        <p class="balance-usd">$9,252.92</p>
+                        <p class="balance-eth">4.12 ETH</p>
+                    </div>
+                </div>
+                <div class="wallet-bottom-row">
+                    <div class="wallet-activity">
+                        Since your last open: Check portfolio
+                    </div>
+                </div>
+                <button class="more-button" onclick="showAccountMenu('Base Account', event)">
+                    ⋯
+                </button>
+            </div>
+        </div>
+        
+        <div class="add-account-section">
+            <button class="add-account-button" onclick="addAccount()">
+                <span style="font-size: 20px;">+</span>
+                Add account
+            </button>
+            <button class="manage-link" onclick="manageAccounts()">
+                Manage all accounts
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let accounts = [
+            { 
+                name: 'MetaMask Account 1', 
+                address: '0x44e3...3bee', 
+                icon: '🦊', 
+                balanceUSD: '$5,035.42',
+                balanceETH: '2.85 ETH',
+                active: true,
+                notifications: { new: 3, expiring: 2 }
+            },
+            { 
+                name: 'Rainbow', 
+                address: '0x7942...1436', 
+                icon: '🌈', 
+                balanceUSD: '$6,899.89',
+                balanceETH: '3.21 ETH',
+                active: false,
+                activity: 'Open today\'s pulse • Explore Hunter'
+            },
+            { 
+                name: 'Base Account', 
+                address: '0xd65f...868c2', 
+                icon: '🔵', 
+                balanceUSD: '$9,252.92',
+                balanceETH: '4.12 ETH',
+                active: false,
+                activity: 'Check portfolio'
+            }
+        ];
+
+        function openBottomSheet() {
+            document.getElementById('backdrop').classList.add('open');
+            document.getElementById('bottomSheet').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBottomSheet() {
+            document.getElementById('backdrop').classList.remove('open');
+            document.getElementById('bottomSheet').classList.remove('open');
+            document.body.style.overflow = 'auto';
+        }
+
+        function switchWallet(walletName, address) {
+            // Update active state
+            accounts.forEach(acc => acc.active = acc.name === walletName);
+            
+            // Haptic feedback
+            if ('vibrate' in navigator) {
+                navigator.vibrate([50]);
+            }
+            
+            alert(`✅ Switched to ${walletName}!\n\n🦊 MetaMask Portal Features:\n• Exact card layout replica\n• Notification indicators\n• Activity status tracking\n• Blue active state accent\n• 100px touch targets\n• Professional dark theme\n• Smooth animations`);
+            
+            // Re-render accounts
+            renderAccounts();
+            
+            setTimeout(() => {
+                closeBottomSheet();
+            }, 300);
+        }
+
+        function showAccountMenu(accountName, event) {
+            event.stopPropagation();
+            alert(`⋯ Account Menu for ${accountName}\n\n🦊 MetaMask Portal Actions:\n• Copy address\n• Rename account\n• View on explorer\n• Account details\n• Disconnect\n\nExact MetaMask Portal UX!`);
+        }
+
+        function addAccount() {
+            alert(`➕ Add Account\n\n🦊 MetaMask Portal Style:\n• Prominent blue button\n• Consistent with MetaMask design\n• Perfect touch target size\n• Professional appearance\n\nNavigating to wallet connection...`);
+            closeBottomSheet();
+        }
+
+        function manageAccounts() {
+            alert(`⚙️ Manage All Accounts\n\n🦊 Enterprise Features:\n• Bulk operations\n• Advanced settings\n• Security preferences\n• Import/export\n\nNavigating to management...`);
+            closeBottomSheet();
+        }
+
+        function filterAccounts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filteredAccounts = accounts.filter(acc => 
+                acc.name.toLowerCase().includes(query) ||
+                acc.address.toLowerCase().includes(query)
+            );
+            renderAccounts(filteredAccounts, query);
+        }
+
+        function renderAccounts(accountsToRender = accounts, searchQuery = '') {
+            const walletsList = document.getElementById('walletsList');
+            
+            if (accountsToRender.length === 0) {
+                walletsList.innerHTML = `
+                    <div style="text-align: center; padding: 48px 24px; color: #94A3B8;">
+                        No accounts found matching "${searchQuery}"
+                    </div>
+                `;
+                return;
+            }
+            
+            walletsList.innerHTML = accountsToRender.map(account => `
+                <div class="wallet-card ${account.active ? 'active' : ''}" onclick="switchWallet('${account.name}', '${account.address}')">
+                    <div class="wallet-top-row">
+                        <div class="wallet-left">
+                            <div class="wallet-icon">
+                                ${account.icon}
+                                ${account.active ? '<div class="active-indicator">✓</div>' : ''}
+                            </div>
+                            <div class="wallet-info">
+                                <h4>${account.name}</h4>
+                                <p class="wallet-address">${account.address}</p>
+                            </div>
+                        </div>
+                        <div class="wallet-balance">
+                            <p class="balance-usd">${account.balanceUSD}</p>
+                            <p class="balance-eth">${account.balanceETH}</p>
+                        </div>
+                    </div>
+                    <div class="wallet-bottom-row">
+                        ${account.notifications ? `
+                            <div class="wallet-notifications">
+                                ${account.notifications.new ? `
+                                    <div class="notification-item">
+                                        <div class="notification-dot new"></div>
+                                        <span class="notification-text new">${account.notifications.new} new</span>
+                                    </div>
+                                ` : ''}
+                                ${account.notifications.expiring ? `
+                                    <div class="notification-item">
+                                        <div class="notification-dot expiring"></div>
+                                        <span class="notification-text expiring">${account.notifications.expiring} expiring</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        ${account.activity ? `
+                            <div class="wallet-activity">
+                                Since your last open: ${account.activity}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <button class="more-button" onclick="showAccountMenu('${account.name}', event)">
+                        ⋯
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Handle swipe down to dismiss
+        let startY = 0;
+        document.getElementById('bottomSheet').addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        });
+
+        document.getElementById('bottomSheet').addEventListener('touchmove', (e) => {
+            const currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+            
+            if (deltaY > 50) {
+                closeBottomSheet();
+            }
+        });
+
+        // Auto-demo on load
+        window.addEventListener('load', () => {
+            console.log('🦊 MetaMask Portal Exact Replica Loaded');
+            
+            setTimeout(() => {
+                if (confirm('🦊 MetaMask Portal Exact Replica\n\nThis is a pixel-perfect recreation of MetaMask Portal\'s wallet switching interface:\n\n• Exact card layout and spacing\n• Notification indicators (new/expiring)\n• Activity status tracking\n• Professional dark theme\n• Blue active state accent\n• 100px touch targets\n• Smooth animations\n\nExperience the world-class UX?')) {
+                    openBottomSheet();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

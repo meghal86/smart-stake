@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HarvestPro Progressive Disclosure Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0A0F1F 0%, #1a1a2e 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 58, 138, 0.6) 50%, rgba(15, 23, 42, 0.8) 100%);
+            border: 1px solid rgba(20, 184, 166, 0.2);
+            border-radius: 20px;
+            padding: 32px 24px;
+            margin: 20px 0;
+            box-shadow: 0 20px 60px -12px rgba(0,0,0,0.6), 0 8px 32px -8px rgba(237,143,45,0.1);
+        }
+        
+        .header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .token-logo {
+            width: 48px;
+            height: 48px;
+            background: #ed8f2d;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .content {
+            flex: 1;
+        }
+        
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .key-metrics {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .metric-label {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        
+        .badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .risk-low { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        .recommended { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .token-tag { background: #ed8f2d; color: white; }
+        
+        .subtitle {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        
+        .description {
+            color: #d1d5db;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 16px 0;
+        }
+        
+        .supporting-metrics {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            margin: 16px 0;
+        }
+        
+        .cta-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, #ed8f2d, #B8722E);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 24px;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(237,143,45,0.3);
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .comparison h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #22c55e;
+        }
+        
+        .old-layout {
+            opacity: 0.7;
+        }
+        
+        .old-layout h3 {
+            color: #ef4444;
+        }
+        
+        .highlight {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 40px;">HarvestPro Progressive Disclosure Enhancement</h1>
+        
+        <div class="comparison">
+            <div>
+                <h3>✅ NEW: Progressive Disclosure Layout</h3>
+                <div class="card">
+                    <div class="header">
+                        <div class="token-logo">ETH</div>
+                        <div class="content">
+                            <div class="title highlight">Harvest ETH Loss</div>
+                            
+                            <div class="key-metrics highlight">
+                                <div class="metric">
+                                    <span class="metric-value" style="color: #22c55e;">$300</span>
+                                    <span class="metric-label">Net Benefit</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-value">85%</span>
+                                    <span class="metric-label">Confidence</span>
+                                </div>
+                            </div>
+                            
+                            <div class="badges highlight">
+                                <span class="badge risk-low">LOW RISK</span>
+                                <span class="badge recommended">Recommended</span>
+                                <span class="badge token-tag">ETH</span>
+                            </div>
+                            
+                            <div class="subtitle">Main Wallet • Uniswap</div>
+                        </div>
+                    </div>
+                    
+                    <div class="description">
+                        Harvest <strong>$1,500</strong> in losses • High confidence opportunity
+                    </div>
+                    
+                    <div class="supporting-metrics">
+                        <div class="metric">
+                            <span style="color: #22c55e;">8/10</span>
+                            <span class="metric-label">Guardian</span>
+                        </div>
+                        <div class="metric">
+                            <span>5-10 min</span>
+                        </div>
+                    </div>
+                    
+                    <button class="cta-button">Start Harvest</button>
+                </div>
+            </div>
+            
+            <div class="old-layout">
+                <h3>❌ OLD: Scattered Information</h3>
+                <div class="card">
+                    <div class="header">
+                        <div class="token-logo">ETH</div>
+                        <div class="content">
+                            <div class="badges">
+                                <span class="badge token-tag">ETH</span>
+                                <span class="badge risk-low">LOW RISK</span>
+                                <span class="badge recommended">Recommended</span>
+                            </div>
+                            
+                            <div class="title">Harvest ETH Loss</div>
+                            <div class="subtitle">Main Wallet • Uniswap</div>
+                        </div>
+                    </div>
+                    
+                    <div class="description">
+                        Harvest <strong>$1,500</strong> in losses for <strong style="color: #22c55e;">$300</strong> net tax benefit after gas and fees. High confidence opportunity
+                    </div>
+                    
+                    <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 24px 0;">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0;">
+                        <div class="metric">
+                            <span class="metric-value" style="color: #22c55e;">$300</span>
+                            <span class="metric-label">NET BENEFIT</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">85%</span>
+                            <span class="metric-label">CONFIDENCE</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value" style="color: #22c55e;">8/10</span>
+                            <span class="metric-label">GUARDIAN</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">5-10 min</span>
+                            <span class="metric-label">TIME</span>
+                        </div>
+                    </div>
+                    
+                    <hr style="border: 1px solid rgba(255,255,255,0.08); margin: 24px 0;">
+                    
+                    <button class="cta-button">Start Harvest</button>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);">
+            <h3>✅ Progressive Disclosure Improvements</h3>
+            <ul style="line-height: 1.6;">
+                <li><strong>Key Information First:</strong> Title, Net Benefit, and Confidence are prominently displayed at the top</li>
+                <li><strong>Visual Hierarchy:</strong> Most important metrics (Net Benefit, Confidence) are larger and more prominent</li>
+                <li><strong>Condensed Layout:</strong> Removed redundant dividers and excessive spacing</li>
+                <li><strong>Logical Grouping:</strong> Risk and status badges grouped together for quick scanning</li>
+                <li><strong>Supporting Details:</strong> Guardian score and execution time moved to supporting position</li>
+                <li><strong>Cleaner Description:</strong> Simplified text without redundant benefit information</li>
+                <li><strong>Better Spacing:</strong> Reduced padding and improved information density</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

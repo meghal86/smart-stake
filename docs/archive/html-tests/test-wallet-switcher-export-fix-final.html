@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Switcher Export Fix - Final Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status.pass { background: #10b981; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        .code-block {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .highlight { color: #60a5fa; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Wallet Switcher Export Fix - Final Test</h1>
+        <p>Testing the resolution of the WalletSwitcherBottomSheet export/import issue.</p>
+
+        <div class="test-section">
+            <h2>❌ Previous Error</h2>
+            <div class="code-block error">
+GlobalHeader.tsx:11 Uncaught SyntaxError: The requested module 
+'/src/components/wallet/WalletSwitcherBottomSheet.tsx?t=1768831897919' 
+does not provide an export named 'default' (at GlobalHeader.tsx:11:8)
+            </div>
+            <p><strong>Root Cause:</strong> Mismatch between export type and import statement</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Applied Fix</h2>
+            
+            <h3>1. Updated WalletSwitcherBottomSheet.tsx</h3>
+            <div class="code-block">
+<span class="highlight">// Added named export alongside default export</span>
+export const WalletSwitcherBottomSheet: React.FC&lt;WalletSwitcherBottomSheetProps&gt; = ({ isOpen, onClose }) => {
+  // ... component implementation
+};
+
+export default WalletSwitcherBottomSheet;
+            </div>
+
+            <h3>2. Updated GlobalHeader.tsx Import</h3>
+            <div class="code-block">
+<span class="error">// Before (causing error)</span>
+import WalletSwitcherBottomSheet from '@/components/wallet/WalletSwitcherBottomSheet'
+
+<span class="success">// After (fixed)</span>
+import { WalletSwitcherBottomSheet } from '@/components/wallet/WalletSwitcherBottomSheet'
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>✅ Expected Results</h2>
+            <ul>
+                <li><span class="status pass">PASS</span> No more SyntaxError on module import</li>
+                <li><span class="status pass">PASS</span> WalletSwitcherBottomSheet component loads correctly</li>
+                <li><span class="status pass">PASS</span> GlobalHeader renders without errors</li>
+                <li><span class="status pass">PASS</span> Wallet switching functionality works</li>
+                <li><span class="status pass">PASS</span> Bottom sheet animations work properly</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Manual Testing Steps</h2>
+            <ol>
+                <li><strong>Start Development Server:</strong> Run <code>npm run dev</code></li>
+                <li><strong>Open Browser:</strong> Navigate to the application</li>
+                <li><strong>Check Console:</strong> Verify no SyntaxError appears</li>
+                <li><strong>Test Header:</strong> Ensure GlobalHeader renders properly</li>
+                <li><strong>Test Wallet Chip:</strong> Click wallet chip (if wallets connected)</li>
+                <li><strong>Test Bottom Sheet:</strong> Verify WalletSwitcherBottomSheet opens</li>
+                <li><strong>Test Interactions:</strong> Try switching wallets, adding accounts</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Technical Details</h2>
+            
+            <h3>Export Strategy</h3>
+            <p>Using both named and default exports provides maximum compatibility:</p>
+            <div class="code-block">
+<span class="highlight">// Named export (recommended for consistency)</span>
+export const WalletSwitcherBottomSheet = ...
+
+<span class="highlight">// Default export (for backward compatibility)</span>
+export default WalletSwitcherBottomSheet;
+            </div>
+
+            <h3>Import Options</h3>
+            <div class="code-block">
+<span class="success">// Option 1: Named import (used in fix)</span>
+import { WalletSwitcherBottomSheet } from './WalletSwitcherBottomSheet'
+
+<span class="success">// Option 2: Default import (also works now)</span>
+import WalletSwitcherBottomSheet from './WalletSwitcherBottomSheet'
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Verification Checklist</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>Build & Runtime</h4>
+                    <ul>
+                        <li>□ No TypeScript errors</li>
+                        <li>□ No build errors</li>
+                        <li>□ No console errors</li>
+                        <li>□ Hot reload works</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Functionality</h4>
+                    <ul>
+                        <li>□ Header renders correctly</li>
+                        <li>□ Wallet chip appears (when applicable)</li>
+                        <li>□ Bottom sheet opens/closes</li>
+                        <li>□ Wallet switching works</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Success Criteria</h2>
+            <p><strong>The fix is successful when:</strong></p>
+            <ul>
+                <li>✅ No SyntaxError appears in browser console</li>
+                <li>✅ GlobalHeader component loads without issues</li>
+                <li>✅ WalletSwitcherBottomSheet can be imported and used</li>
+                <li>✅ All wallet-related functionality works as expected</li>
+                <li>✅ Development server runs without module resolution errors</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Wallet Switcher Export Fix Test Loaded');
+        console.log('✅ If you see this message without errors, the basic module loading is working');
+        
+        // Check if we're in a React environment
+        if (typeof window !== 'undefined') {
+            console.log('🌐 Browser environment detected');
+            console.log('📝 Next: Test the actual React components in your development server');
+        }
+    </script>
+</body>
+</html>

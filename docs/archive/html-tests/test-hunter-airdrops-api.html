@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunter Airdrops API Test - Non-Personalized Feed</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0A0F1F;
+      color: #E2E8F0;
+    }
+    h1 {
+      color: #00D9FF;
+      border-bottom: 2px solid #00D9FF;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #00D9FF;
+      margin-top: 30px;
+    }
+    .test-section {
+      background: #1A1F2E;
+      border: 1px solid #2D3748;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border-left: 4px solid;
+    }
+    .test-result.pass {
+      background: #1A3A2A;
+      border-color: #10B981;
+    }
+    .test-result.fail {
+      background: #3A1A1A;
+      border-color: #EF4444;
+    }
+    .test-result.info {
+      background: #1A2A3A;
+      border-color: #3B82F6;
+    }
+    button {
+      background: #00D9FF;
+      color: #0A0F1F;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px 10px 10px 0;
+    }
+    button:hover {
+      background: #00B8D4;
+    }
+    button:disabled {
+      background: #4A5568;
+      cursor: not-allowed;
+    }
+    pre {
+      background: #0F1419;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .stat {
+      background: #1A1F2E;
+      padding: 15px;
+      border-radius: 8px;
+      flex: 1;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #00D9FF;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #94A3B8;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Hunter Airdrops API Test - Non-Personalized Feed</h1>
+  
+  <div class="test-section">
+    <h2>Test Configuration</h2>
+    <p><strong>Endpoint:</strong> <code>GET /api/hunter/airdrops</code></p>
+    <p><strong>Purpose:</strong> Test non-personalized airdrop feed (no wallet parameter)</p>
+    <p><strong>Requirements:</strong> 1.1-1.7, 14.5</p>
+    
+    <button id="runAllTests">Run All Tests</button>
+    <button id="clearResults">Clear Results</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="totalTests">0</div>
+      <div class="stat-label">Total Tests</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="passedTests">0</div>
+      <div class="stat-label">Passed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="failedTests">0</div>
+      <div class="stat-label">Failed</div>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const ENDPOINT = `${API_BASE}/api/hunter/airdrops`;
+    
+    let totalTests = 0;
+    let passedTests = 0;
+    let failedTests = 0;
+
+    function updateStats() {
+      document.getElementById('totalTests').textContent = totalTests;
+      document.getElementById('passedTests').textContent = passedTests;
+      document.getElementById('failedTests').textContent = failedTests;
+    }
+
+    function addResult(title, status, message, data = null) {
+      const resultsDiv = document.getElementById('results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `test-result ${status}`;
+      
+      let html = `<strong>${title}</strong><br>${message}`;
+      if (data) {
+        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+      
+      resultDiv.innerHTML = html;
+      resultsDiv.appendChild(resultDiv);
+      
+      totalTests++;
+      if (status === 'pass') passedTests++;
+      if (status === 'fail') failedTests++;
+      updateStats();
+    }
+
+    async function testBasicEndpoint() {
+      try {
+        const response = await fetch(ENDPOINT);
+        
+        if (response.status === 200) {
+          addResult('✅ Basic Endpoint', 'pass', 'Returns 200 OK for non-personalized request');
+        } else {
+          addResult('❌ Basic Endpoint', 'fail', `Expected 200, got ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          addResult('✅ Content Type', 'pass', 'Returns application/json');
+        } else {
+          addResult('❌ Content Type', 'fail', `Expected application/json, got ${contentType}`);
+        }
+        
+        return response;
+      } catch (error) {
+        addResult('❌ Basic Endpoint', 'fail', `Request failed: ${error.message}`);
+        throw error;
+      }
+    }
+
+    async function testResponseStructure() {
+      try {
+        const response = await fetch(ENDPOINT);
+        const data = await response.json();
+        
+        // Check required fields
+        const requiredFields = ['items', 'cursor', 'ts'];
+        const missingFields = requiredFields.filter(field => !(field in data));
+        
+        if (missingFields.length === 0) {
+          addResult('✅ Response Structure', 'pass', 'All required fields present: items, cursor, ts');
+        } else {
+          addResult('❌ Response Structure', 'fail', `Missing fields: ${missingFields.join(', ')}`);
+        }
+        
+        // Check items is array
+        if (Array.isArray(data.items)) {
+          addResult('✅ Items Field', 'pass', `Items is an array with ${data.items.length} opportunities`);
+        } else {
+          addResult('❌ Items Field', 'fail', 'Items is not an array');
+        }
+        
+        // Check cursor is null
+        if (data.cursor === null) {
+          addResult('✅ Cursor Field', 'pass', 'Cursor is null (non-paginated)');
+        } else {
+          addResult('❌ Cursor Field', 'fail', `Expected null, got ${data.cursor}`);
+        }
+        
+        // Check timestamp format
+        const tsRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+        if (tsRegex.test(data.ts)) {
+          addResult('✅ Timestamp Format', 'pass', `Valid ISO 8601 timestamp: ${data.ts}`);
+        } else {
+          addResult('❌ Timestamp Format', 'fail', `Invalid timestamp format: ${data.ts}`);
+        }
+        
+        return data;
+      } catch (error) {
+        addResult('❌ Response Structure', 'fail', `Failed to parse response: ${error.message}`);
+        throw error;
+      }
+    }
+
+    async function testAirdropFiltering() {
+      try {
+        const response = await fetch(ENDPOINT);
+        const data = await response.json();
+        
+        if (data.items.length === 0) {
+          addResult('ℹ️ Airdrop Filtering', 'info', 'No airdrops in database to test filtering');
+          return;
+        }
+        
+        // Check all items are type='airdrop'
+        const nonAirdrops = data.items.filter(item => item.type !== 'airdrop');
+        if (nonAirdrops.length === 0) {
+          addResult('✅ Type Filtering', 'pass', 'All opportunities are type=airdrop');
+        } else {
+          addResult('❌ Type Filtering', 'fail', `Found ${nonAirdrops.length} non-airdrop items`, nonAirdrops);
+        }
+        
+        // Check all items are status='published'
+        const nonPublished = data.items.filter(item => item.status !== 'published');
+        if (nonPublished.length === 0) {
+          addResult('✅ Status Filtering', 'pass', 'All opportunities are status=published');
+        } else {
+          addResult('❌ Status Filtering', 'fail', `Found ${nonPublished.length} non-published items`, nonPublished);
+        }
+        
+      } catch (error) {
+        addResult('❌ Airdrop Filtering', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function testOpportunityStructure() {
+      try {
+        const response = await fetch(ENDPOINT);
+        const data = await response.json();
+        
+        if (data.items.length === 0) {
+          addResult('ℹ️ Opportunity Structure', 'info', 'No opportunities to test structure');
+          return;
+        }
+        
+        const opportunity = data.items[0];
+        
+        // Check core fields
+        const coreFields = ['id', 'slug', 'title', 'type', 'status', 'created_at'];
+        const missingCore = coreFields.filter(field => !(field in opportunity));
+        
+        if (missingCore.length === 0) {
+          addResult('✅ Core Fields', 'pass', 'All core fields present');
+        } else {
+          addResult('❌ Core Fields', 'fail', `Missing core fields: ${missingCore.join(', ')}`);
+        }
+        
+        // Check airdrop-specific fields
+        const airdropFields = ['snapshot_date', 'claim_start', 'claim_end', 'airdrop_category'];
+        const hasAirdropFields = airdropFields.some(field => field in opportunity);
+        
+        if (hasAirdropFields) {
+          addResult('✅ Airdrop Fields', 'pass', 'Airdrop-specific fields present');
+        } else {
+          addResult('ℹ️ Airdrop Fields', 'info', 'No airdrop-specific fields (may be null)');
+        }
+        
+        // Check trust_score
+        if (opportunity.trust_score !== null) {
+          if (opportunity.trust_score >= 0 && opportunity.trust_score <= 100) {
+            addResult('✅ Trust Score', 'pass', `Valid trust score: ${opportunity.trust_score}`);
+          } else {
+            addResult('❌ Trust Score', 'fail', `Invalid trust score: ${opportunity.trust_score} (must be 0-100)`);
+          }
+        }
+        
+        // Check chains array
+        if (opportunity.chains && Array.isArray(opportunity.chains)) {
+          addResult('✅ Chains Field', 'pass', `Chains is array: ${opportunity.chains.join(', ')}`);
+        }
+        
+        // Show sample opportunity
+        addResult('ℹ️ Sample Opportunity', 'info', 'First opportunity structure', opportunity);
+        
+      } catch (error) {
+        addResult('❌ Opportunity Structure', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function testNonPersonalizedBehavior() {
+      try {
+        const response = await fetch(ENDPOINT);
+        const data = await response.json();
+        
+        if (data.items.length === 0) {
+          addResult('ℹ️ Non-Personalized Behavior', 'info', 'No opportunities to test');
+          return;
+        }
+        
+        // Check NO eligibility_preview field
+        const hasEligibility = data.items.some(item => 'eligibility_preview' in item);
+        if (!hasEligibility) {
+          addResult('✅ No Eligibility Preview', 'pass', 'No eligibility_preview field (as expected)');
+        } else {
+          addResult('❌ No Eligibility Preview', 'fail', 'Found eligibility_preview field (should not exist without wallet)');
+        }
+        
+        // Check NO ranking field
+        const hasRanking = data.items.some(item => 'ranking' in item);
+        if (!hasRanking) {
+          addResult('✅ No Ranking', 'pass', 'No ranking field (as expected)');
+        } else {
+          addResult('❌ No Ranking', 'fail', 'Found ranking field (should not exist without wallet)');
+        }
+        
+        // Check sorting by created_at descending
+        if (data.items.length > 1) {
+          let isSorted = true;
+          for (let i = 1; i < data.items.length; i++) {
+            const prevDate = new Date(data.items[i - 1].created_at);
+            const currDate = new Date(data.items[i].created_at);
+            if (prevDate < currDate) {
+              isSorted = false;
+              break;
+            }
+          }
+          
+          if (isSorted) {
+            addResult('✅ Sorting', 'pass', 'Results sorted by created_at descending');
+          } else {
+            addResult('❌ Sorting', 'fail', 'Results not properly sorted');
+          }
+        }
+        
+      } catch (error) {
+        addResult('❌ Non-Personalized Behavior', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function testPaginationLimits() {
+      try {
+        const response = await fetch(ENDPOINT);
+        const data = await response.json();
+        
+        if (data.items.length <= 100) {
+          addResult('✅ Pagination Limit', 'pass', `Returns at most 100 opportunities (got ${data.items.length})`);
+        } else {
+          addResult('❌ Pagination Limit', 'fail', `Returned ${data.items.length} opportunities (max 100)`);
+        }
+        
+        // Test empty results handling
+        if (Array.isArray(data.items) && data.cursor === null && data.ts) {
+          addResult('✅ Empty Results Handling', 'pass', 'Handles empty/small result sets gracefully');
+        }
+        
+      } catch (error) {
+        addResult('❌ Pagination Limits', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function testHTTPMethods() {
+      try {
+        // Test POST (should fail)
+        const postResponse = await fetch(ENDPOINT, { method: 'POST' });
+        if ([404, 405].includes(postResponse.status)) {
+          addResult('✅ POST Rejection', 'pass', `POST request rejected with ${postResponse.status}`);
+        } else {
+          addResult('❌ POST Rejection', 'fail', `POST should be rejected, got ${postResponse.status}`);
+        }
+        
+        // Test PUT (should fail)
+        const putResponse = await fetch(ENDPOINT, { method: 'PUT' });
+        if ([404, 405].includes(putResponse.status)) {
+          addResult('✅ PUT Rejection', 'pass', `PUT request rejected with ${putResponse.status}`);
+        } else {
+          addResult('❌ PUT Rejection', 'fail', `PUT should be rejected, got ${putResponse.status}`);
+        }
+        
+        // Test DELETE (should fail)
+        const deleteResponse = await fetch(ENDPOINT, { method: 'DELETE' });
+        if ([404, 405].includes(deleteResponse.status)) {
+          addResult('✅ DELETE Rejection', 'pass', `DELETE request rejected with ${deleteResponse.status}`);
+        } else {
+          addResult('❌ DELETE Rejection', 'fail', `DELETE should be rejected, got ${deleteResponse.status}`);
+        }
+        
+      } catch (error) {
+        addResult('❌ HTTP Methods', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function testPerformance() {
+      try {
+        const start = Date.now();
+        const response = await fetch(ENDPOINT);
+        const duration = Date.now() - start;
+        
+        if (duration < 2000) {
+          addResult('✅ Response Time', 'pass', `Responded in ${duration}ms (< 2000ms)`);
+        } else {
+          addResult('❌ Response Time', 'fail', `Responded in ${duration}ms (should be < 2000ms)`);
+        }
+        
+      } catch (error) {
+        addResult('❌ Performance', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function testSourceFields() {
+      try {
+        const response = await fetch(ENDPOINT);
+        const data = await response.json();
+        
+        if (data.items.length === 0) {
+          addResult('ℹ️ Source Fields', 'info', 'No opportunities to test source fields');
+          return;
+        }
+        
+        const opportunity = data.items[0];
+        
+        // Check source field
+        if ('source' in opportunity) {
+          const validSources = ['admin', 'galxe', 'defillama'];
+          if (opportunity.source === null || validSources.includes(opportunity.source)) {
+            addResult('✅ Source Field', 'pass', `Valid source: ${opportunity.source || 'null'}`);
+          } else {
+            addResult('❌ Source Field', 'fail', `Invalid source: ${opportunity.source}`);
+          }
+        }
+        
+        // Check source_ref field
+        if ('source_ref' in opportunity) {
+          addResult('✅ Source Ref Field', 'pass', `Source ref present: ${opportunity.source_ref || 'null'}`);
+        }
+        
+      } catch (error) {
+        addResult('❌ Source Fields', 'fail', `Test failed: ${error.message}`);
+      }
+    }
+
+    async function runAllTests() {
+      const button = document.getElementById('runAllTests');
+      button.disabled = true;
+      button.textContent = 'Running Tests...';
+      
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      updateStats();
+      
+      try {
+        addResult('🚀 Test Suite Started', 'info', `Testing endpoint: ${ENDPOINT}`);
+        
+        await testBasicEndpoint();
+        await testResponseStructure();
+        await testAirdropFiltering();
+        await testOpportunityStructure();
+        await testNonPersonalizedBehavior();
+        await testPaginationLimits();
+        await testHTTPMethods();
+        await testPerformance();
+        await testSourceFields();
+        
+        addResult('✅ Test Suite Complete', 'info', `Completed ${totalTests} tests: ${passedTests} passed, ${failedTests} failed`);
+        
+      } catch (error) {
+        addResult('❌ Test Suite Error', 'fail', `Fatal error: ${error.message}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Run All Tests';
+      }
+    }
+
+    function clearResults() {
+      document.getElementById('results').innerHTML = '';
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      updateStats();
+    }
+
+    document.getElementById('runAllTests').addEventListener('click', runAllTests);
+    document.getElementById('clearResults').addEventListener('click', clearResults);
+    
+    // Auto-run on load
+    window.addEventListener('load', () => {
+      setTimeout(runAllTests, 500);
+    });
+  </script>
+</body>
+</html>

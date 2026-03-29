@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask All Accounts Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .account {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .address {
+            font-family: monospace;
+            color: #06b6d4;
+            font-size: 14px;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+        .warning { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; }
+        .info { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🦊 MetaMask All Accounts Test</h1>
+    <p>This test tries different methods to fetch all your MetaMask accounts.</p>
+
+    <div class="section">
+        <h2>Current Issue</h2>
+        <div class="status warning">
+            <p><strong>Problem:</strong> You can see 3 accounts in MetaMask, but the app only shows 1.</p>
+            <p><strong>Cause:</strong> MetaMask only returns accounts that have been explicitly connected to this dApp.</p>
+            <p><strong>Solution:</strong> We need to request access to all accounts.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Method 1: eth_accounts (Current Connected)</h2>
+        <button onclick="testEthAccounts()">Test eth_accounts</button>
+        <div id="eth-accounts-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Method 2: eth_requestAccounts (Request Access)</h2>
+        <button onclick="testRequestAccounts()">Test eth_requestAccounts</button>
+        <div id="request-accounts-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Method 3: wallet_requestPermissions (Force Permission)</h2>
+        <button onclick="testRequestPermissions()">Test wallet_requestPermissions</button>
+        <div id="permissions-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Method 4: Combined Approach (What the App Uses)</h2>
+        <button onclick="testCombinedApproach()">Test Combined Approach</button>
+        <div id="combined-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>All Discovered Accounts</h2>
+        <div id="all-accounts"></div>
+        <button onclick="clearAccounts()">Clear Results</button>
+    </div>
+
+    <div class="section">
+        <h2>Console Log</h2>
+        <div id="console-log" class="log"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        let logElement = document.getElementById('console-log');
+        let discoveredAccounts = new Set();
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            logElement.textContent = '';
+        }
+
+        function clearAccounts() {
+            discoveredAccounts.clear();
+            document.getElementById('all-accounts').innerHTML = '';
+        }
+
+        function addDiscoveredAccounts(accounts, method) {
+            accounts.forEach(account => {
+                discoveredAccounts.add(account);
+            });
+            updateAllAccountsDisplay();
+            log(`${method} found ${accounts.length} accounts: ${accounts.join(', ')}`);
+        }
+
+        function updateAllAccountsDisplay() {
+            const accountsArray = Array.from(discoveredAccounts);
+            const html = accountsArray.map((account, index) => `
+                <div class="account">
+                    <div><strong>Account ${index + 1}</strong></div>
+                    <div class="address">${account}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('all-accounts').innerHTML = 
+                `<p><strong>Total Unique Accounts Found: ${accountsArray.length}</strong></p>` + html;
+        }
+
+        async function testEthAccounts() {
+            log('Testing eth_accounts...');
+            
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                document.getElementById('eth-accounts-result').innerHTML = 
+                    `<div class="status ${accounts.length > 1 ? 'success' : 'warning'}">
+                        Found ${accounts.length} accounts: ${accounts.join(', ')}
+                    </div>`;
+                
+                addDiscoveredAccounts(accounts, 'eth_accounts');
+                
+            } catch (error) {
+                document.getElementById('eth-accounts-result').innerHTML = 
+                    `<div class="status error">Error: ${error.message}</div>`;
+                log(`eth_accounts error: ${error.message}`);
+            }
+        }
+
+        async function testRequestAccounts() {
+            log('Testing eth_requestAccounts...');
+            
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                document.getElementById('request-accounts-result').innerHTML = 
+                    `<div class="status ${accounts.length > 1 ? 'success' : 'warning'}">
+                        Found ${accounts.length} accounts: ${accounts.join(', ')}
+                    </div>`;
+                
+                addDiscoveredAccounts(accounts, 'eth_requestAccounts');
+                
+            } catch (error) {
+                document.getElementById('request-accounts-result').innerHTML = 
+                    `<div class="status error">Error: ${error.message}</div>`;
+                log(`eth_requestAccounts error: ${error.message}`);
+            }
+        }
+
+        async function testRequestPermissions() {
+            log('Testing wallet_requestPermissions...');
+            
+            try {
+                // Request permissions
+                await window.ethereum.request({
+                    method: 'wallet_requestPermissions',
+                    params: [{ eth_accounts: {} }]
+                });
+                
+                // Then get accounts
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                
+                document.getElementById('permissions-result').innerHTML = 
+                    `<div class="status ${accounts.length > 1 ? 'success' : 'warning'}">
+                        After requesting permissions, found ${accounts.length} accounts: ${accounts.join(', ')}
+                    </div>`;
+                
+                addDiscoveredAccounts(accounts, 'wallet_requestPermissions');
+                
+            } catch (error) {
+                document.getElementById('permissions-result').innerHTML = 
+                    `<div class="status error">Error: ${error.message}</div>`;
+                log(`wallet_requestPermissions error: ${error.message}`);
+            }
+        }
+
+        async function testCombinedApproach() {
+            log('Testing combined approach (what the app uses)...');
+            
+            try {
+                let allAccounts = [];
+                
+                // Step 1: Try eth_accounts
+                try {
+                    const ethAccounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    allAccounts = [...allAccounts, ...ethAccounts];
+                    log(`Step 1 - eth_accounts: ${ethAccounts.length} accounts`);
+                } catch (e) {
+                    log(`Step 1 failed: ${e.message}`);
+                }
+                
+                // Step 2: If we have <= 1 account, try eth_requestAccounts
+                if (allAccounts.length <= 1) {
+                    try {
+                        const requestedAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        allAccounts = [...new Set([...allAccounts, ...requestedAccounts])];
+                        log(`Step 2 - eth_requestAccounts: added accounts, total now ${allAccounts.length}`);
+                    } catch (e) {
+                        log(`Step 2 failed: ${e.message}`);
+                    }
+                }
+                
+                // Step 3: If still <= 1 account, try wallet_requestPermissions
+                if (allAccounts.length <= 1) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_requestPermissions',
+                            params: [{ eth_accounts: {} }]
+                        });
+                        
+                        const newAccounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (newAccounts.length > allAccounts.length) {
+                            allAccounts = newAccounts;
+                        }
+                        log(`Step 3 - wallet_requestPermissions: total now ${allAccounts.length}`);
+                    } catch (e) {
+                        log(`Step 3 failed: ${e.message}`);
+                    }
+                }
+                
+                document.getElementById('combined-result').innerHTML = 
+                    `<div class="status ${allAccounts.length > 1 ? 'success' : 'warning'}">
+                        Combined approach found ${allAccounts.length} accounts: ${allAccounts.join(', ')}
+                    </div>`;
+                
+                addDiscoveredAccounts(allAccounts, 'Combined Approach');
+                
+            } catch (error) {
+                document.getElementById('combined-result').innerHTML = 
+                    `<div class="status error">Error: ${error.message}</div>`;
+                log(`Combined approach error: ${error.message}`);
+            }
+        }
+
+        // Initialize
+        log('🦊 MetaMask All Accounts Test initialized');
+        log('Try each method to see which one can access all your accounts');
+        
+        if (typeof window.ethereum === 'undefined') {
+            log('❌ MetaMask not detected');
+        } else {
+            log('✅ MetaMask detected');
+        }
+    </script>
+</body>
+</html>

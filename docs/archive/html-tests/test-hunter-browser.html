@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunter API Manual Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0f1f;
+            color: #ffffff;
+        }
+        .test-section {
+            background: #1a1f2e;
+            border: 1px solid #2a3441;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: #00d4ff;
+            color: #0a0f1f;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        .test-button:hover {
+            background: #00b8e6;
+        }
+        .results {
+            background: #0f1419;
+            border: 1px solid #2a3441;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .info { color: #00d4ff; }
+        .warning { color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Hunter API Manual Test (Task 1.9)</h1>
+    <p>This page tests the Hunter Opportunities API personalization features.</p>
+
+    <div class="test-section">
+        <h2>Test 1: Non-Personalized API (Backward Compatibility)</h2>
+        <p>Tests the API without walletAddress parameter to ensure backward compatibility.</p>
+        <button class="test-button" onclick="testNonPersonalized()">Run Non-Personalized Test</button>
+        <div id="nonPersonalizedResults" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Personalized API (New Functionality)</h2>
+        <p>Tests the API with walletAddress parameter to verify personalization features.</p>
+        <input type="text" id="walletAddress" placeholder="Enter wallet address (0x...)" 
+               value="0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6" 
+               style="width: 400px; padding: 8px; margin: 10px 0; background: #2a3441; color: white; border: 1px solid #4a5568; border-radius: 4px;">
+        <br>
+        <button class="test-button" onclick="testPersonalized()">Run Personalized Test</button>
+        <div id="personalizedResults" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Component Integration Test</h2>
+        <p>Tests the individual components (Wallet Signals, Eligibility Engine, Ranking Engine).</p>
+        <button class="test-button" onclick="testWalletSignals()">Test Wallet Signals</button>
+        <button class="test-button" onclick="testEligibilityEngine()">Test Eligibility Engine</button>
+        <button class="test-button" onclick="testRankingEngine()">Test Ranking Engine</button>
+        <div id="componentResults" class="results"></div>
+    </div>
+
+    <script type="module">
+        // Mock data for testing
+        const mockOpportunities = [
+            {
+                id: 'test-1',
+                slug: 'test-airdrop-1',
+                title: 'Test Airdrop 1',
+                protocol: 'TestProtocol1',
+                type: 'airdrop',
+                chains: ['ethereum'],
+                reward_currency: 'USD',
+                reward_confidence: 'confirmed',
+                difficulty: 'easy',
+                trust_score: 85,
+                is_verified: true,
+                audited: true,
+                start_date: new Date().toISOString(),
+                urgency: 'medium',
+                requirements: {
+                    chains: ['ethereum'],
+                    walletAge: 90,
+                    previousTxCount: 10,
+                },
+                steps: [],
+                category: ['defi'],
+                tags: ['test'],
+                featured: false,
+                source: 'test',
+                created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                updated_at: new Date().toISOString(),
+            },
+            {
+                id: 'test-2',
+                slug: 'test-quest-1',
+                title: 'Test Quest 1',
+                protocol: 'TestProtocol2',
+                type: 'quest',
+                chains: ['base'],
+                reward_currency: 'POINTS',
+                reward_confidence: 'estimated',
+                difficulty: 'medium',
+                trust_score: 70,
+                is_verified: false,
+                audited: true,
+                start_date: new Date().toISOString(),
+                urgency: 'high',
+                requirements: {
+                    chains: ['base'],
+                    walletAge: 30,
+                    previousTxCount: 5,
+                },
+                steps: [],
+                category: ['gaming'],
+                tags: ['test'],
+                featured: true,
+                source: 'test',
+                created_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+                updated_at: new Date().toISOString(),
+            }
+        ];
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            element.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function clearLog(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        window.testNonPersonalized = function() {
+            clearLog('nonPersonalizedResults');
+            log('nonPersonalizedResults', '=== Testing Non-Personalized API ===', 'info');
+            
+            try {
+                // Simulate non-personalized request
+                const opportunities = [...mockOpportunities];
+                
+                // Apply default sorting (created_at desc)
+                opportunities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                
+                log('nonPersonalizedResults', '✅ Non-personalized results:', 'success');
+                opportunities.forEach((opp, index) => {
+                    log('nonPersonalizedResults', `  ${index + 1}. ${opp.title} (${opp.type}) - Trust: ${opp.trust_score}`, 'info');
+                });
+                
+                log('nonPersonalizedResults', '✅ Backward compatibility test PASSED', 'success');
+                
+            } catch (error) {
+                log('nonPersonalizedResults', `❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        window.testPersonalized = async function() {
+            clearLog('personalizedResults');
+            log('personalizedResults', '=== Testing Personalized API ===', 'info');
+            
+            const walletAddress = document.getElementById('walletAddress').value;
+            if (!walletAddress || !walletAddress.startsWith('0x')) {
+                log('personalizedResults', '❌ Please enter a valid wallet address', 'error');
+                return;
+            }
+            
+            try {
+                log('personalizedResults', `📡 Testing with wallet: ${walletAddress}`, 'info');
+                
+                // Import the modules dynamically
+                const { getWalletSignals } = await import('/src/lib/hunter/wallet-signals.js');
+                const { batchEvaluateEligibility } = await import('/src/lib/hunter/eligibility-engine.js');
+                const { batchCalculateRanking, calculateRecencyBoost, sortByRanking } = await import('/src/lib/hunter/ranking-engine.js');
+                
+                // Step 1: Fetch wallet signals
+                log('personalizedResults', '📡 Fetching wallet signals...', 'info');
+                const walletSignals = await getWalletSignals(walletAddress);
+                log('personalizedResults', `✅ Wallet signals: Age: ${walletSignals.wallet_age_days} days, Tx: ${walletSignals.tx_count_90d}, Chains: ${walletSignals.chains_active?.join(', ') || 'none'}`, 'success');
+                
+                // Step 2: Preselect candidates
+                log('personalizedResults', '🎯 Preselecting candidates...', 'info');
+                const now = Date.now();
+                const candidatesWithScore = mockOpportunities.map(opp => ({
+                    ...opp,
+                    preScore: (opp.trust_score * 0.7) + (calculateRecencyBoost(opp.created_at, now) * 0.3)
+                }));
+                
+                candidatesWithScore.sort((a, b) => b.preScore - a.preScore);
+                candidatesWithScore.forEach((opp, index) => {
+                    log('personalizedResults', `  ${index + 1}. ${opp.title} - PreScore: ${opp.preScore.toFixed(3)}`, 'info');
+                });
+                
+                // Step 3: Evaluate eligibility
+                log('personalizedResults', '🔍 Evaluating eligibility...', 'info');
+                const eligibilityResults = await batchEvaluateEligibility(walletSignals, candidatesWithScore);
+                eligibilityResults.forEach((result, index) => {
+                    log('personalizedResults', `  ${candidatesWithScore[index].title} - ${result.status} (${result.score.toFixed(3)})`, 'success');
+                });
+                
+                // Step 4: Calculate ranking
+                log('personalizedResults', '📊 Calculating final ranking...', 'info');
+                const userHistory = {};
+                const rankingScores = batchCalculateRanking(candidatesWithScore, eligibilityResults, walletSignals, userHistory);
+                
+                const rankedOpportunities = candidatesWithScore.map((opp, index) => ({
+                    ...opp,
+                    eligibility_preview: eligibilityResults[index],
+                    ranking: rankingScores[index],
+                }));
+                
+                const sortedRankedOpportunities = sortByRanking(rankedOpportunities);
+                
+                log('personalizedResults', '✅ Final personalized ranking:', 'success');
+                sortedRankedOpportunities.forEach((opp, index) => {
+                    log('personalizedResults', `  ${index + 1}. ${opp.title} - Overall: ${opp.ranking.overall.toFixed(3)}`, 'success');
+                });
+                
+                log('personalizedResults', '✅ Personalization test PASSED', 'success');
+                
+            } catch (error) {
+                log('personalizedResults', `❌ Error: ${error.message}`, 'error');
+                log('personalizedResults', 'ℹ️  This might be expected if wallet signals service is not configured', 'warning');
+            }
+        };
+
+        window.testWalletSignals = async function() {
+            clearLog('componentResults');
+            log('componentResults', '=== Testing Wallet Signals Service ===', 'info');
+            
+            try {
+                const { getWalletSignals } = await import('/src/lib/hunter/wallet-signals.js');
+                const testAddress = '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6';
+                
+                log('componentResults', `Testing wallet: ${testAddress}`, 'info');
+                const signals = await getWalletSignals(testAddress);
+                
+                log('componentResults', `✅ Wallet Signals Result:`, 'success');
+                log('componentResults', `  Address: ${signals.address}`, 'info');
+                log('componentResults', `  Age: ${signals.wallet_age_days} days`, 'info');
+                log('componentResults', `  Transactions (90d): ${signals.tx_count_90d}`, 'info');
+                log('componentResults', `  Active Chains: ${signals.chains_active?.join(', ') || 'none'}`, 'info');
+                log('componentResults', `  Stablecoin Balance: $${signals.stablecoin_usd_est || 0}`, 'info');
+                
+            } catch (error) {
+                log('componentResults', `❌ Wallet Signals Error: ${error.message}`, 'error');
+            }
+        };
+
+        window.testEligibilityEngine = async function() {
+            clearLog('componentResults');
+            log('componentResults', '=== Testing Eligibility Engine ===', 'info');
+            
+            try {
+                const { evaluateEligibility } = await import('/src/lib/hunter/eligibility-engine.js');
+                
+                const mockWallet = {
+                    address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+                    wallet_age_days: 365,
+                    tx_count_90d: 100,
+                    chains_active: ['ethereum', 'base'],
+                    top_assets: [{ symbol: 'ETH', amount: 5.0 }],
+                    stablecoin_usd_est: 10000,
+                };
+                
+                const mockOpp = mockOpportunities[0];
+                
+                log('componentResults', `Testing eligibility for: ${mockOpp.title}`, 'info');
+                const result = await evaluateEligibility(mockWallet, mockOpp);
+                
+                log('componentResults', `✅ Eligibility Result:`, 'success');
+                log('componentResults', `  Status: ${result.status}`, 'info');
+                log('componentResults', `  Score: ${result.score.toFixed(3)}`, 'info');
+                log('componentResults', `  Reasons: ${result.reasons.join(', ')}`, 'info');
+                
+            } catch (error) {
+                log('componentResults', `❌ Eligibility Engine Error: ${error.message}`, 'error');
+            }
+        };
+
+        window.testRankingEngine = async function() {
+            clearLog('componentResults');
+            log('componentResults', '=== Testing Ranking Engine ===', 'info');
+            
+            try {
+                const { calculateRanking } = await import('/src/lib/hunter/ranking-engine.js');
+                
+                const mockWallet = {
+                    address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+                    wallet_age_days: 365,
+                    tx_count_90d: 100,
+                    chains_active: ['ethereum', 'base'],
+                    top_assets: [{ symbol: 'ETH', amount: 5.0 }],
+                    stablecoin_usd_est: 10000,
+                };
+                
+                const mockEligibility = {
+                    status: 'likely',
+                    score: 0.85,
+                    reasons: ['Meets all requirements']
+                };
+                
+                const mockOpp = mockOpportunities[0];
+                const mockUserHistory = {};
+                
+                log('componentResults', `Testing ranking for: ${mockOpp.title}`, 'info');
+                log('componentResults', `Opportunity data: trust_score=${mockOpp.trust_score}, created_at=${mockOpp.created_at}`, 'info');
+                log('componentResults', `Wallet data: chains_active=${mockWallet.chains_active?.join(',')}, age=${mockWallet.wallet_age_days}`, 'info');
+                log('componentResults', `Eligibility data: status=${mockEligibility.status}, score=${mockEligibility.score}`, 'info');
+                
+                // Test step by step
+                log('componentResults', '🔍 Step-by-step debugging:', 'info');
+                
+                // Check if all required parameters are present
+                log('componentResults', `  mockOpp exists: ${!!mockOpp}`, 'info');
+                log('componentResults', `  mockEligibility exists: ${!!mockEligibility}`, 'info');
+                log('componentResults', `  mockWallet exists: ${!!mockWallet}`, 'info');
+                log('componentResults', `  mockUserHistory exists: ${!!mockUserHistory}`, 'info');
+                
+                // Check trust_score specifically
+                log('componentResults', `  trust_score type: ${typeof mockOpp.trust_score}`, 'info');
+                log('componentResults', `  trust_score value: ${mockOpp.trust_score}`, 'info');
+                log('componentResults', `  trust_score / 100: ${mockOpp.trust_score / 100}`, 'info');
+                
+                const ranking = calculateRanking(mockOpp, mockEligibility, mockWallet, mockUserHistory);
+                
+                log('componentResults', `Raw ranking object:`, 'info');
+                log('componentResults', `  ${JSON.stringify(ranking, null, 2)}`, 'info');
+                
+                log('componentResults', `✅ Ranking Result:`, 'success');
+                log('componentResults', `  Overall: ${typeof ranking.overall === 'number' ? ranking.overall.toFixed(3) : 'undefined'}`, 'info');
+                log('componentResults', `  Relevance: ${typeof ranking.relevance === 'number' ? ranking.relevance.toFixed(3) : 'undefined'}`, 'info');
+                log('componentResults', `  Trust: ${typeof ranking.trust === 'number' ? ranking.trust.toFixed(3) : 'undefined'}`, 'info');
+                log('componentResults', `  Freshness: ${typeof ranking.freshness === 'number' ? ranking.freshness.toFixed(3) : 'undefined'}`, 'info');
+                
+                // Validate all scores are numbers
+                const scores = [ranking.overall, ranking.relevance, ranking.trust, ranking.freshness];
+                const invalidScores = scores.filter(score => typeof score !== 'number' || isNaN(score));
+                if (invalidScores.length > 0) {
+                    log('componentResults', `⚠️  Warning: Some scores are invalid`, 'warning');
+                    log('componentResults', `  Invalid scores: ${JSON.stringify(invalidScores)}`, 'warning');
+                } else {
+                    log('componentResults', `✅ All scores are valid numbers`, 'success');
+                }
+                
+            } catch (error) {
+                log('componentResults', `❌ Ranking Engine Error: ${error.message}`, 'error');
+                log('componentResults', `Stack trace: ${error.stack}`, 'error');
+            }
+        };
+    </script>
+</body>
+</html>

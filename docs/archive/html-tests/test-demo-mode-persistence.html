@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Mode Persistence Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #0A0F1F;
+      color: white;
+    }
+    .test-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-weight: 600;
+    }
+    .status.demo {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgb(59, 130, 246);
+      color: rgb(147, 197, 253);
+    }
+    .status.live {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid rgb(34, 197, 94);
+      color: rgb(134, 239, 172);
+    }
+    button {
+      background: rgb(6, 182, 212);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: 600;
+    }
+    button:hover {
+      background: rgb(8, 145, 178);
+    }
+    .log {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    .info { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Demo Mode Persistence Test</h1>
+  <p>This test verifies that demo mode toggle state persists when clicking on wallet chip.</p>
+
+  <div class="test-section">
+    <h2>Current State</h2>
+    <div id="currentState" class="status demo">
+      Demo Mode: <span id="demoStatus">Unknown</span>
+    </div>
+    <div>
+      <strong>Reason:</strong> <span id="reason">-</span><br>
+      <strong>User Preference:</strong> <span id="userPref">-</span><br>
+      <strong>LocalStorage Value:</strong> <span id="localStorageValue">-</span>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Actions</h2>
+    <button onclick="toggleDemoMode()">Toggle Demo Mode</button>
+    <button onclick="simulateWalletClick()">Simulate Wallet Click</button>
+    <button onclick="simulateAuthChange()">Simulate Auth Change</button>
+    <button onclick="clearPreference()">Clear Preference</button>
+    <button onclick="refreshState()">Refresh State</button>
+  </div>
+
+  <div class="test-section">
+    <h2>Test Scenario</h2>
+    <ol>
+      <li>Click "Toggle Demo Mode" to enable demo mode</li>
+      <li>Click "Simulate Wallet Click" (mimics clicking wallet chip in header)</li>
+      <li>Verify demo mode state remains unchanged ✅</li>
+      <li>Check localStorage persists the preference</li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>Event Log</h2>
+    <div id="log" class="log"></div>
+  </div>
+
+  <script>
+    // Mock DemoModeManager for testing
+    class DemoModeManager {
+      static instance = null;
+      listeners = new Set();
+      userPreference = null;
+      currentState = {
+        isDemo: true,
+        reason: 'wallet_not_connected',
+        bannerVisible: true,
+        dataSourceStatus: { overall: false }
+      };
+
+      constructor() {
+        // Restore user preference from localStorage
+        try {
+          const saved = localStorage.getItem('aw_demo_mode_preference');
+          if (saved !== null) {
+            this.userPreference = saved === 'true';
+            this.log(`Restored user preference: ${this.userPreference}`, 'info');
+          }
+        } catch (error) {
+          this.log('Failed to restore preference: ' + error.message, 'error');
+        }
+      }
+
+      static getInstance() {
+        if (!DemoModeManager.instance) {
+          DemoModeManager.instance = new DemoModeManager();
+        }
+        return DemoModeManager.instance;
+      }
+
+      subscribe(listener) {
+        this.listeners.add(listener);
+        listener(this.currentState);
+        return () => this.listeners.delete(listener);
+      }
+
+      getCurrentState() {
+        return { ...this.currentState };
+      }
+
+      async updateDemoMode(isWalletConnected, forceDemo) {
+        this.log(`updateDemoMode called: isWalletConnected=${isWalletConnected}, forceDemo=${forceDemo}`, 'info');
+        
+        let newState;
+
+        // If user has manually set a preference, respect it
+        if (this.userPreference !== null && forceDemo === undefined) {
+          this.log(`Using user preference: ${this.userPreference}`, 'success');
+          newState = {
+            isDemo: this.userPreference,
+            reason: this.userPreference ? 'user_preference' : 'live_mode',
+            bannerVisible: this.userPreference,
+            dataSourceStatus: this.currentState.dataSourceStatus
+          };
+        } else if (forceDemo === true) {
+          this.log('Force demo mode requested', 'info');
+          newState = {
+            isDemo: true,
+            reason: 'user_preference',
+            bannerVisible: true,
+            dataSourceStatus: this.currentState.dataSourceStatus
+          };
+        } else if (!isWalletConnected) {
+          this.log('Wallet not connected - demo mode', 'info');
+          newState = {
+            isDemo: true,
+            reason: 'wallet_not_connected',
+            bannerVisible: true,
+            dataSourceStatus: this.currentState.dataSourceStatus
+          };
+        } else {
+          this.log('Wallet connected - live mode', 'success');
+          newState = {
+            isDemo: false,
+            reason: 'live_mode',
+            bannerVisible: false,
+            dataSourceStatus: { overall: true }
+          };
+        }
+
+        if (JSON.stringify(newState) !== JSON.stringify(this.currentState)) {
+          this.currentState = newState;
+          this.notifyListeners();
+          this.log(`State changed to: ${newState.isDemo ? 'DEMO' : 'LIVE'} (${newState.reason})`, 'success');
+        } else {
+          this.log('State unchanged', 'info');
+        }
+      }
+
+      setDemoMode(isDemo) {
+        this.log(`setDemoMode called: ${isDemo}`, 'info');
+        
+        // Save user preference
+        this.userPreference = isDemo;
+        try {
+          localStorage.setItem('aw_demo_mode_preference', String(isDemo));
+          this.log(`Saved preference to localStorage: ${isDemo}`, 'success');
+        } catch (error) {
+          this.log('Failed to save preference: ' + error.message, 'error');
+        }
+
+        const newState = {
+          ...this.currentState,
+          isDemo,
+          reason: isDemo ? 'user_preference' : 'live_mode',
+          bannerVisible: isDemo
+        };
+
+        this.currentState = newState;
+        this.notifyListeners();
+      }
+
+      clearPreference() {
+        this.log('Clearing user preference', 'info');
+        this.userPreference = null;
+        try {
+          localStorage.removeItem('aw_demo_mode_preference');
+          this.log('Preference cleared from localStorage', 'success');
+        } catch (error) {
+          this.log('Failed to clear preference: ' + error.message, 'error');
+        }
+      }
+
+      notifyListeners() {
+        this.listeners.forEach(listener => {
+          try {
+            listener(this.currentState);
+          } catch (error) {
+            this.log('Error in listener: ' + error.message, 'error');
+          }
+        });
+      }
+
+      log(message, type = 'info') {
+        const logDiv = document.getElementById('log');
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(`[DemoModeManager] ${message}`);
+      }
+    }
+
+    // Initialize manager
+    const manager = DemoModeManager.getInstance();
+
+    // Subscribe to state changes
+    manager.subscribe((state) => {
+      updateUI(state);
+    });
+
+    function updateUI(state) {
+      const statusDiv = document.getElementById('currentState');
+      const demoStatus = document.getElementById('demoStatus');
+      const reason = document.getElementById('reason');
+      const userPref = document.getElementById('userPref');
+      const localStorageValue = document.getElementById('localStorageValue');
+
+      demoStatus.textContent = state.isDemo ? 'ENABLED' : 'DISABLED';
+      statusDiv.className = state.isDemo ? 'status demo' : 'status live';
+      reason.textContent = state.reason;
+      userPref.textContent = manager.userPreference !== null ? String(manager.userPreference) : 'Not set';
+      
+      try {
+        const lsValue = localStorage.getItem('aw_demo_mode_preference');
+        localStorageValue.textContent = lsValue !== null ? lsValue : 'Not set';
+      } catch (error) {
+        localStorageValue.textContent = 'Error reading';
+      }
+    }
+
+    function toggleDemoMode() {
+      const currentState = manager.getCurrentState();
+      manager.setDemoMode(!currentState.isDemo);
+    }
+
+    function simulateWalletClick() {
+      manager.log('🔄 Simulating wallet chip click...', 'info');
+      manager.log('This would normally trigger auth state change', 'info');
+      
+      // Simulate what happens when wallet chip is clicked
+      // In the real app, this might trigger useEffect in useDemoMode hook
+      manager.updateDemoMode(true); // Wallet is connected
+      
+      manager.log('✅ Wallet click simulation complete', 'success');
+    }
+
+    function simulateAuthChange() {
+      manager.log('🔄 Simulating auth state change...', 'info');
+      
+      // This simulates the useEffect in useDemoMode hook
+      manager.updateDemoMode(true);
+      
+      manager.log('✅ Auth change simulation complete', 'success');
+    }
+
+    function clearPreference() {
+      manager.clearPreference();
+      manager.updateDemoMode(true); // Re-evaluate with no preference
+    }
+
+    function refreshState() {
+      const state = manager.getCurrentState();
+      updateUI(state);
+      manager.log('State refreshed', 'info');
+    }
+
+    // Initial state update
+    refreshState();
+  </script>
+</body>
+</html>

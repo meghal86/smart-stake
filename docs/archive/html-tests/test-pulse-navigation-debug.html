@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse Navigation Debug Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      margin: 0;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    
+    .button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .pulse-sheet {
+      position: fixed;
+      inset: 0;
+      background: #0f172a;
+      z-index: 50;
+      padding: 20px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .pulse-sheet.open {
+      display: block;
+    }
+    
+    .close-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+    }
+    
+    .log {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px 0;
+      border-bottom: 1px solid #334155;
+    }
+    
+    .debug-info {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pulse Navigation Debug Test</h1>
+    
+    <div class="card">
+      <h2>Today Card</h2>
+      <p>Click the button below to open today's pulse</p>
+      <button class="button" id="openPulseBtn">Open today's pulse</button>
+    </div>
+    
+    <div class="card">
+      <h3>Debug Log</h3>
+      <div class="log" id="log"></div>
+    </div>
+    
+    <div class="card">
+      <h3>Current State</h3>
+      <div class="debug-info" id="debugInfo"></div>
+    </div>
+  </div>
+  
+  <!-- Pulse Sheet -->
+  <div class="pulse-sheet" id="pulseSheet">
+    <button class="close-button" id="closeBtn">×</button>
+    <h1>Today's Pulse</h1>
+    <p>This is the pulse sheet content</p>
+    <div class="card">
+      <h3>Demo Pulse Items</h3>
+      <p>• Arbitrum quest ends in 8h</p>
+      <p>• New DeFi yield opportunity detected</p>
+      <p>• ETH position increased by 15%</p>
+    </div>
+  </div>
+  
+  <script>
+    const log = document.getElementById('log');
+    const debugInfo = document.getElementById('debugInfo');
+    const openPulseBtn = document.getElementById('openPulseBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const pulseSheet = document.getElementById('pulseSheet');
+    
+    function addLog(message) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+      console.log(message);
+    }
+    
+    function updateDebugInfo() {
+      debugInfo.innerHTML = `
+        <div>Current URL: ${window.location.href}</div>
+        <div>Current Hash: ${window.location.hash || '(none)'}</div>
+        <div>Pulse Sheet Open: ${pulseSheet.classList.contains('open') ? 'YES' : 'NO'}</div>
+      `;
+    }
+    
+    function openPulseSheet() {
+      addLog('Opening pulse sheet');
+      pulseSheet.classList.add('open');
+      updateDebugInfo();
+    }
+    
+    function closePulseSheet() {
+      addLog('Closing pulse sheet');
+      pulseSheet.classList.remove('open');
+      // Remove hash when closing
+      if (window.location.hash === '#pulse') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        addLog('Removed #pulse hash from URL');
+      }
+      updateDebugInfo();
+    }
+    
+    // Button click handler
+    openPulseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addLog('Button clicked');
+      
+      const href = '/cockpit#pulse';
+      addLog(`Target href: ${href}`);
+      
+      // Check if it's a hash-only navigation
+      if (href.includes('#')) {
+        const [path, hash] = href.split('#');
+        const currentPath = window.location.pathname;
+        
+        addLog(`Path: ${path}, Hash: ${hash}, Current path: ${currentPath}`);
+        
+        // If we're already on the target path, just change the hash
+        if (path === currentPath || path === '' || path === '/cockpit') {
+          addLog('Already on target path, setting hash');
+          window.location.hash = hash;
+        } else {
+          addLog('Navigating to different path');
+          window.location.href = href;
+        }
+      }
+    });
+    
+    // Close button handler
+    closeBtn.addEventListener('click', () => {
+      closePulseSheet();
+    });
+    
+    // Hash change listener
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.substring(1);
+      addLog(`Hash changed to: ${hash || '(none)'}`);
+      
+      if (hash === 'pulse') {
+        openPulseSheet();
+      } else if (pulseSheet.classList.contains('open')) {
+        closePulseSheet();
+      }
+      
+      updateDebugInfo();
+    });
+    
+    // Initial setup
+    addLog('Page loaded');
+    updateDebugInfo();
+    
+    // Check initial hash
+    if (window.location.hash === '#pulse') {
+      addLog('Initial hash is #pulse, opening sheet');
+      openPulseSheet();
+    }
+  </script>
+</body>
+</html>

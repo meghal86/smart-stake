@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cockpit Demo Test</title>
+</head>
+<body>
+    <h1>Cockpit Demo Mode Test</h1>
+    <p>Testing if the cockpit page loads in demo mode without console errors.</p>
+    
+    <script>
+        // Test if we can access the demo cockpit page
+        console.log('Testing cockpit demo mode...');
+        
+        // Open the cockpit page in demo mode
+        const testUrl = 'http://localhost:8080/cockpit?demo=1';
+        console.log('Demo URL:', testUrl);
+        
+        // You can manually navigate to this URL to test
+        document.body.innerHTML += `<p><a href="${testUrl}" target="_blank">Open Cockpit Demo Mode</a></p>`;
+        
+        // Test the API endpoints that were causing issues
+        console.log('Previous errors were:');
+        console.log('- Failed to fetch preferences: SyntaxError: Unexpected token \'<\', "<!DOCTYPE "... is not valid JSON');
+        console.log('- Failed to fetch cockpit summary: SyntaxError: Unexpected token \'<\', "<!DOCTYPE "... is not valid JSON');
+        console.log('');
+        console.log('These should be fixed now by using demo data instead of API calls.');
+    </script>
+</body>
+</html>

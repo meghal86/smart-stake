@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Wallet Modal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fef2f2; color: #dc2626; }
+        .info { background: #dbeafe; color: #1d4ed8; }
+        
+        /* Mock custom modal */
+        .custom-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        
+        .custom-modal.show {
+            display: flex;
+        }
+        
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999998;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 448px;
+            z-index: 999999;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0;
+        }
+        
+        .modal-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin: 4px 0 0 0;
+        }
+        
+        .close-button {
+            padding: 8px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #64748b;
+            transition: background-color 0.2s;
+        }
+        
+        .close-button:hover {
+            background: #f1f5f9;
+        }
+        
+        .wallet-options {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .wallet-option {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .wallet-option:hover {
+            border-color: #67e8f9;
+            background: #f8fafc;
+        }
+        
+        .wallet-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .wallet-info {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .wallet-name {
+            font-weight: 500;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+        }
+        
+        .wallet-description {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .wallet-status {
+            display: flex;
+            align-items: center;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #06b6d4;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .external-icon {
+            width: 16px;
+            height: 16px;
+            color: #94a3b8;
+        }
+        
+        .modal-footer {
+            padding: 0 24px 24px 24px;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Custom Wallet Modal Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <p>This test verifies that our custom wallet modal works correctly and bypasses RainbowKit entirely.</p>
+        
+        <div class="status info">
+            <strong>Advantages of Custom Modal:</strong>
+            <ul>
+                <li>✅ Complete control over z-index and positioning</li>
+                <li>✅ No CSS conflicts with existing UI</li>
+                <li>✅ Uses wagmi's connect functions directly</li>
+                <li>✅ Consistent styling with app theme</li>
+                <li>✅ Better error handling and loading states</li>
+            </ul>
+        </div>
+        
+        <button class="test-button" onclick="showCustomModal()">
+            Open Custom Wallet Modal
+        </button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Expected Results</h2>
+        <ul>
+            <li>✅ Modal appears immediately when button is clicked</li>
+            <li>✅ Modal is centered and fully visible</li>
+            <li>✅ Modal has proper z-index above all other elements</li>
+            <li>✅ Wallet options are clearly displayed</li>
+            <li>✅ Clicking wallet options shows loading state</li>
+            <li>✅ Clicking backdrop closes modal</li>
+            <li>✅ Close button works correctly</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Implementation Details</h2>
+        <p><strong>File:</strong> <code>src/components/wallet/CustomWalletModal.tsx</code></p>
+        <p><strong>Key Features:</strong></p>
+        <ul>
+            <li>Uses wagmi's <code>useConnect</code> hook directly</li>
+            <li>Portal-based rendering to document.body</li>
+            <li>Maximum z-index (999999) for guaranteed visibility</li>
+            <li>Automatic wallet detection via wagmi connectors</li>
+            <li>Loading states and error handling</li>
+            <li>Success callback for multi-wallet integration</li>
+        </ul>
+    </div>
+    
+    <!-- Custom Modal -->
+    <div id="customModal" class="custom-modal">
+        <div class="modal-backdrop" onclick="hideCustomModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Connect Wallet</h2>
+                    <p class="modal-subtitle">Choose how you want to connect</p>
+                </div>
+                <button class="close-button" onclick="hideCustomModal()">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="wallet-options">
+                <button class="wallet-option" onclick="selectWallet('MetaMask')">
+                    <div class="wallet-icon">M</div>
+                    <div class="wallet-info">
+                        <div class="wallet-name">MetaMask</div>
+                        <div class="wallet-description">Connect using MetaMask browser extension</div>
+                    </div>
+                    <div class="wallet-status">
+                        <svg class="external-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </div>
+                </button>
+                
+                <button class="wallet-option" onclick="selectWallet('WalletConnect')">
+                    <div class="wallet-icon">W</div>
+                    <div class="wallet-info">
+                        <div class="wallet-name">WalletConnect</div>
+                        <div class="wallet-description">Scan QR code with mobile wallet</div>
+                    </div>
+                    <div class="wallet-status">
+                        <svg class="external-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </div>
+                </button>
+                
+                <button class="wallet-option" onclick="selectWallet('Coinbase')">
+                    <div class="wallet-icon">C</div>
+                    <div class="wallet-info">
+                        <div class="wallet-name">Coinbase Wallet</div>
+                        <div class="wallet-description">Connect using Coinbase Wallet</div>
+                    </div>
+                    <div class="wallet-status">
+                        <svg class="external-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+            
+            <div class="modal-footer">
+                <p class="footer-text">
+                    By connecting a wallet, you agree to our Terms of Service and Privacy Policy
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let modalVisible = false;
+        
+        function showCustomModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.add('show');
+            modalVisible = true;
+            
+            console.log('Custom wallet modal opened');
+            showStatus('Custom wallet modal opened successfully', 'success');
+        }
+        
+        function hideCustomModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.remove('show');
+            modalVisible = false;
+            
+            console.log('Custom wallet modal closed');
+        }
+        
+        function selectWallet(walletName) {
+            console.log('Wallet selected:', walletName);
+            showStatus(`${walletName} selected - connection would happen via wagmi`, 'info');
+            
+            // Show loading state
+            const walletOptions = document.querySelectorAll('.wallet-option');
+            walletOptions.forEach(option => {
+                if (option.textContent.includes(walletName)) {
+                    const statusDiv = option.querySelector('.wallet-status');
+                    statusDiv.innerHTML = '<div class="spinner"></div>';
+                }
+            });
+            
+            // Simulate connection
+            setTimeout(() => {
+                showStatus(`${walletName} connected successfully!`, 'success');
+                hideCustomModal();
+                
+                // Reset status
+                setTimeout(() => {
+                    walletOptions.forEach(option => {
+                        const statusDiv = option.querySelector('.wallet-status');
+                        statusDiv.innerHTML = '<svg class="external-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>';
+                    });
+                }, 1000);
+            }, 2000);
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            
+            // Insert after the last test section
+            const testSections = document.querySelectorAll('.test-section');
+            const lastSection = testSections[testSections.length - 1];
+            lastSection.parentNode.insertBefore(statusDiv, lastSection.nextSibling);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalVisible) {
+                hideCustomModal();
+            }
+        });
+        
+        // Initial status
+        showStatus('Custom wallet modal test loaded - ready for testing', 'info');
+    </script>
+</body>
+</html>

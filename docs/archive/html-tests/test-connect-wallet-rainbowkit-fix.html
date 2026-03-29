@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Wallet RainbowKit Fix</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-title {
+            color: #00d9d9;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+        .status.pass { background: #065f46; color: #10b981; }
+        .status.fail { background: #7f1d1d; color: #ef4444; }
+        .status.info { background: #1e3a8a; color: #3b82f6; }
+        .code {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fbbf24;
+            color: #0f172a;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 10px;
+            background: #0f172a;
+            border-left: 3px solid #00d9d9;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .before, .after {
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .before {
+            background: #7f1d1d;
+            border: 1px solid #dc2626;
+        }
+        .after {
+            background: #065f46;
+            border: 1px solid #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Connect Wallet RainbowKit Fix</h1>
+        <p>Fixing the GlobalHeader Connect Wallet button to use RainbowKit modal</p>
+
+        <div class="test-section">
+            <div class="test-title">📋 Problem Analysis</div>
+            
+            <div class="status fail">
+                <strong>Error:</strong> No Ethereum wallet detected. Please install MetaMask or another Web3 wallet.
+            </div>
+
+            <div class="step">
+                <strong>Root Cause:</strong> ActionsSection was calling <code>connectWallet()</code> from WalletContext, which throws an error if no wallet is detected. It should use RainbowKit's <code>openConnectModal()</code> instead.
+            </div>
+
+            <div class="step">
+                <strong>Error Location:</strong>
+                <ul>
+                    <li>File: <code>src/components/header/ActionsSection.tsx</code></li>
+                    <li>Line: 508 in WalletContext.tsx</li>
+                    <li>Triggered by: onClick handler in GlobalHeader</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔍 Implementation Comparison</div>
+            
+            <div class="comparison">
+                <div class="before">
+                    <h4>❌ Before (Broken)</h4>
+                    <div class="code">
+// Wrong imports
+import { useWallet } from '@/contexts/WalletContext'
+import { useToast } from '@/hooks/use-toast'
+
+// Wrong hooks
+const { connectWallet, activeWallet } = useWallet()
+const { toast } = useToast()
+
+// Wrong handler - throws error
+const handleConnectWallet = async () => {
+  try {
+    await connectWallet() // ❌ Throws error
+  } catch (error: any) {
+    toast({
+      title: 'Connection Failed',
+      description: error.message,
+      variant: 'destructive',
+    })
+  }
+}
+                    </div>
+                </div>
+                <div class="after">
+                    <h4>✅ After (Fixed)</h4>
+                    <div class="code">
+// Correct imports
+import { useAccount } from 'wagmi'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
+
+// Correct hooks
+const { address: activeWallet } = useAccount()
+const { openConnectModal } = useConnectModal()
+
+// Correct handler - opens RainbowKit modal
+const handleConnectWallet = () => {
+  if (openConnectModal) {
+    openConnectModal() // ✅ Opens modal
+  } else {
+    console.error('RainbowKit connect modal not available')
+  }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🛠️ Solution Implemented</div>
+            
+            <div class="step">
+                <strong>1. Updated Imports:</strong>
+                <div class="code">
+// Removed
+- import { useWallet } from '@/contexts/WalletContext'
+- import { useToast } from '@/hooks/use-toast'
+
+// Added
++ import { useAccount } from 'wagmi'
++ import { useConnectModal } from '@rainbow-me/rainbowkit'
+                </div>
+            </div>
+
+            <div class="step">
+                <strong>2. Updated Hooks:</strong>
+                <div class="code">
+// Removed
+- const { connectWallet, activeWallet, connectedWallets } = useWallet()
+- const { toast } = useToast()
+
+// Added
++ const { address: activeWallet } = useAccount()
++ const { openConnectModal } = useConnectModal()
+                </div>
+            </div>
+
+            <div class="step">
+                <strong>3. Updated Connect Wallet Handler:</strong>
+                <div class="code">
+const handleConnectWallet = () => {
+  // Open RainbowKit wallet connection modal
+  if (openConnectModal) {
+    openConnectModal()
+  } else {
+    console.error('RainbowKit connect modal not available')
+  }
+}
+                </div>
+            </div>
+
+            <div class="step">
+                <strong>4. Updated Add Wallet Handler:</strong>
+                <div class="code">
+const handleAddWallet = () => {
+  // Open RainbowKit wallet connection modal
+  if (openConnectModal) {
+    openConnectModal()
+  } else {
+    console.error('RainbowKit connect modal not available')
+  }
+}
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🎯 Why This Works</div>
+            
+            <div class="step">
+                <strong>RainbowKit Modal Flow:</strong>
+                <ol>
+                    <li>User clicks "Connect Wallet" button</li>
+                    <li><code>handleConnectWallet()</code> is called</li>
+                    <li><code>openConnectModal()</code> opens RainbowKit modal</li>
+                    <li>User sees wallet options (MetaMask, WalletConnect, etc.)</li>
+                    <li>User selects wallet and connects</li>
+                    <li>Wallet connection is saved to user profile (if authenticated)</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <strong>Consistency with Guardian Header:</strong>
+                <p>This implementation now matches how Guardian and other pages handle wallet connections:</p>
+                <ul>
+                    <li>✅ Uses RainbowKit's <code>useConnectModal</code> hook</li>
+                    <li>✅ Opens the same wallet selection modal</li>
+                    <li>✅ No error thrown if wallet not detected</li>
+                    <li>✅ Wallet connection persists across sessions</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🧪 Testing Checklist</div>
+            
+            <div class="step">
+                <strong>Test 1: Connect Wallet (No Wallet Installed)</strong>
+                <ol>
+                    <li>Open app in browser without MetaMask</li>
+                    <li>Click "Connect Wallet" in header</li>
+                    <li><strong>Expected:</strong> RainbowKit modal opens showing wallet options</li>
+                    <li><strong>Expected:</strong> No error message</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <strong>Test 2: Connect Wallet (MetaMask Installed)</strong>
+                <ol>
+                    <li>Install MetaMask extension</li>
+                    <li>Click "Connect Wallet" in header</li>
+                    <li><strong>Expected:</strong> RainbowKit modal opens</li>
+                    <li>Click "MetaMask" option</li>
+                    <li><strong>Expected:</strong> MetaMask popup opens</li>
+                    <li>Approve connection in MetaMask</li>
+                    <li><strong>Expected:</strong> Wallet connected, header shows wallet pill</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <strong>Test 3: Add Wallet (Authenticated User)</strong>
+                <ol>
+                    <li>Sign in to the app</li>
+                    <li>Click "Add Wallet" button</li>
+                    <li><strong>Expected:</strong> RainbowKit modal opens</li>
+                    <li>Connect wallet</li>
+                    <li><strong>Expected:</strong> Wallet saved to user profile</li>
+                    <li>Refresh page</li>
+                    <li><strong>Expected:</strong> Wallet still connected</li>
+                </ol>
+            </div>
+
+            <div class="step">
+                <strong>Test 4: Session State Transitions</strong>
+                <ol>
+                    <li><strong>S0_GUEST:</strong> Click "Connect Wallet" → Modal opens</li>
+                    <li><strong>S1_ACCOUNT:</strong> Click "Add Wallet" → Modal opens</li>
+                    <li><strong>S2_WALLET:</strong> Wallet pill shows, "Save" button works</li>
+                    <li><strong>S3_BOTH:</strong> Wallet pill + Profile dropdown both work</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📊 Fix Summary</div>
+            
+            <div class="status pass">
+                <strong>Status:</strong> COMPLETE ✅
+            </div>
+            
+            <div class="step">
+                <strong>Files Modified:</strong>
+                <ul>
+                    <li><code>src/components/header/ActionsSection.tsx</code> - Updated to use RainbowKit</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>Key Changes:</strong>
+                <ul>
+                    <li>Replaced WalletContext with wagmi + RainbowKit hooks</li>
+                    <li>Changed <code>connectWallet()</code> to <code>openConnectModal()</code></li>
+                    <li>Removed error handling (RainbowKit handles it)</li>
+                    <li>Simplified handlers (no async/await needed)</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>Benefits:</strong>
+                <ul>
+                    <li>✅ No more "No Ethereum wallet detected" errors</li>
+                    <li>✅ Consistent wallet connection flow across app</li>
+                    <li>✅ Same modal as Guardian and other pages</li>
+                    <li>✅ Wallet connection persists across sessions</li>
+                    <li>✅ Better UX - users see wallet options immediately</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔗 Related Components</div>
+            
+            <div class="step">
+                <strong>Other components using RainbowKit correctly:</strong>
+                <ul>
+                    <li><code>src/pages/GuardianEnhanced.tsx</code></li>
+                    <li><code>src/components/home/HeroSection.tsx</code></li>
+                    <li><code>src/components/home/DashboardHeader.tsx</code></li>
+                    <li><code>src/components/wallet/ActiveWalletIndicator.tsx</code></li>
+                    <li><code>src/components/ux/DemoBanner.tsx</code></li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <strong>Pattern to follow:</strong>
+                <div class="code">
+import { useConnectModal } from '@rainbow-me/rainbowkit'
+
+const { openConnectModal } = useConnectModal()
+
+const handleConnect = () => {
+  if (openConnectModal) {
+    openConnectModal()
+  }
+}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Connect Wallet RainbowKit Fix Test Loaded');
+        console.log('✅ ActionsSection now uses RainbowKit openConnectModal');
+        console.log('🎯 Test by clicking Connect Wallet button in header');
+    </script>
+</body>
+</html>

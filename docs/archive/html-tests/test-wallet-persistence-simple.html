@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Wallet Persistence Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+        .info { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 Simple Wallet Persistence Test</h1>
+    
+    <div class="status info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Open your browser's developer console (F12)</li>
+            <li>Go to your app and connect a wallet</li>
+            <li>Come back here and click "Check Database"</li>
+            <li>Sign out and sign back in to your app</li>
+            <li>Click "Check Database" again to see if wallets persist</li>
+        </ol>
+    </div>
+
+    <button onclick="checkDatabase()">Check Database</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <div id="results"></div>
+
+    <div class="status info">
+        <strong>Expected Result:</strong> You should see your wallet(s) in the database both before and after signing out/in.
+        If wallets disappear after signing out, the persistence fix didn't work correctly.
+    </div>
+
+    <script>
+        async function checkDatabase() {
+            const resultsEl = document.getElementById('results');
+            resultsEl.innerHTML = '<div class="status info">Checking database...</div>';
+
+            try {
+                // This is a simple check - you'll need to replace with your actual Supabase query
+                console.log('To check your database manually:');
+                console.log('1. Go to your Supabase dashboard');
+                console.log('2. Open the SQL editor');
+                console.log('3. Run this query:');
+                console.log('SELECT * FROM user_wallets ORDER BY created_at DESC;');
+                
+                resultsEl.innerHTML = `
+                    <div class="status info">
+                        <strong>Manual Database Check:</strong>
+                        <br>Open your browser console (F12) to see the SQL query you need to run.
+                        <br><br>
+                        Or run this query in your Supabase SQL editor:
+                        <pre>SELECT 
+  id,
+  user_id,
+  address,
+  label,
+  chain_namespace,
+  is_primary,
+  created_at,
+  updated_at
+FROM user_wallets 
+WHERE user_id = (
+  SELECT id FROM auth.users 
+  WHERE email = 'meghal86@gmail.com'
+)
+ORDER BY created_at DESC;</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultsEl.innerHTML = `
+                    <div class="status error">
+                        Error checking database: ${error.message}
+                        <br><br>
+                        Please check manually in your Supabase dashboard.
+                    </div>
+                `;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Show initial instructions
+        window.addEventListener('load', () => {
+            document.getElementById('results').innerHTML = `
+                <div class="status info">
+                    <strong>Ready to test!</strong>
+                    <br>Follow the instructions above and click "Check Database" to verify wallet persistence.
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

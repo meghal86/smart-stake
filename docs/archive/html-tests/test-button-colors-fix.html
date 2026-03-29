@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Colors Fix Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+        }
+        
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        
+        .code-block {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-left: 4px solid #10b981;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ Button Colors Fix Applied</h1>
+    
+    <div class="test-section">
+        <h2 class="success">🔧 Fix Applied: Added Missing CSS Variables</h2>
+        <p>I've added the missing Tailwind CSS variables to <code>src/styles/globals.css</code> that the shadcn/ui Button component requires.</p>
+        
+        <h3>What was fixed:</h3>
+        <ul>
+            <li class="success">✅ Added <code>--primary</code> CSS variable (emerald color)</li>
+            <li class="success">✅ Added <code>--primary-foreground</code> CSS variable (white text)</li>
+            <li class="success">✅ Added <code>--secondary</code>, <code>--accent</code>, and other required variables</li>
+            <li class="success">✅ Added <code>--border</code> and <code>--ring</code> variables for outline buttons</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 How to Test the Fix</h2>
+        
+        <h3>Step 1: Restart Development Server</h3>
+        <div class="code-block">
+            # Stop the current server (Ctrl+C)
+            # Then restart:
+            npm run dev
+        </div>
+        
+        <h3>Step 2: Test Guardian Pages</h3>
+        <ol>
+            <li><strong>Go to /guardian</strong>
+                <ul>
+                    <li>Demo Mode button should be emerald outline (not white)</li>
+                    <li>Connect Wallet button should have proper colors</li>
+                </ul>
+            </li>
+            <li><strong>Go to /guardian-ux2</strong>
+                <ul>
+                    <li>Connect Wallet button should be emerald gradient</li>
+                    <li>Scan Again button should be emerald outline</li>
+                    <li>Fix Risks button should be emerald gradient</li>
+                </ul>
+            </li>
+            <li><strong>Test Demo Mode</strong>
+                <ul>
+                    <li>Click "Try Demo Mode" - button should not be white</li>
+                    <li>Exit Demo button should be gray outline</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <h3>Step 3: Verify Button Variants</h3>
+        <p>Check that these button types now have correct colors:</p>
+        <ul>
+            <li><code>GlowButton variant="glow"</code> → Emerald gradient background</li>
+            <li><code>GlowButton variant="outlineGlow"</code> → Transparent with emerald border</li>
+            <li><code>Button variant="outline"</code> → Gray outline</li>
+            <li><code>Button variant="default"</code> → Emerald background</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Browser DevTools Verification</h2>
+        <p>If buttons still appear white, check in browser DevTools:</p>
+        
+        <h3>1. Check CSS Variables</h3>
+        <div class="code-block">
+            1. Right-click on a button → Inspect Element
+            2. In Styles panel, look for :root section
+            3. Verify these variables exist:
+               --primary: 160 84% 39%
+               --primary-foreground: 355 7% 97%
+        </div>
+        
+        <h3>2. Check Applied Classes</h3>
+        <div class="code-block">
+            1. Inspect button element
+            2. Look for classes like:
+               - bg-primary (should resolve to emerald)
+               - text-primary-foreground (should resolve to white)
+               - border-input (should resolve to gray)
+        </div>
+        
+        <h3>3. Check for CSS Conflicts</h3>
+        <div class="code-block">
+            1. In Computed styles, look for:
+               - background-color
+               - color
+               - border-color
+            2. If showing white/default colors, there may be CSS conflicts
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="warning">⚠️ If Buttons Are Still White</h2>
+        
+        <h3>Additional Troubleshooting:</h3>
+        <ol>
+            <li><strong>Clear Browser Cache</strong>
+                <ul>
+                    <li>Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)</li>
+                    <li>Or open DevTools → Network tab → check "Disable cache"</li>
+                </ul>
+            </li>
+            
+            <li><strong>Check CSS Import Order</strong>
+                <ul>
+                    <li>Ensure globals.css is imported in app/layout.tsx</li>
+                    <li>Verify no other CSS is overriding the variables</li>
+                </ul>
+            </li>
+            
+            <li><strong>Verify Tailwind Config</strong>
+                <ul>
+                    <li>Check tailwind.config.js includes proper content paths</li>
+                    <li>Ensure CSS variables are being processed correctly</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <h3>Manual Override (Last Resort):</h3>
+        <p>If CSS variables still don't work, you can manually override button styles:</p>
+        <div class="code-block">
+            // In GuardianUX2.tsx, add explicit styling:
+            &lt;GlowButton 
+              variant="outlineGlow"
+              style={{
+                borderColor: '#10b981',
+                color: '#10b981',
+                backgroundColor: 'transparent'
+              }}
+            &gt;
+              Try Demo Mode
+            &lt;/GlowButton&gt;
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="success">✅ Expected Results After Fix</h2>
+        <ul>
+            <li class="success">✅ Demo Mode button: Transparent background, emerald border, emerald text</li>
+            <li class="success">✅ Connect Wallet button: Emerald gradient background, white text</li>
+            <li class="success">✅ Scan Again button: Transparent background, emerald border</li>
+            <li class="success">✅ Fix Risks button: Emerald gradient background, white text</li>
+            <li class="success">✅ Exit Demo button: Gray outline, gray text</li>
+        </ul>
+        
+        <p class="success"><strong>The white button issue should now be resolved!</strong></p>
+    </div>
+</body>
+</html>

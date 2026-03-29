@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Realtime Data - Verification Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0A0F1F 0%, #0D1B3A 100%);
+      color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #1CA9FF 0%, #7B61FF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+
+    .test-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(28, 169, 255, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .test-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .status-pass {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status-fail {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .test-steps {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+
+    .test-steps li {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border-left: 3px solid #1CA9FF;
+    }
+
+    .test-steps li strong {
+      color: #1CA9FF;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .expected-results {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .expected-results h3 {
+      color: #22c55e;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .expected-results ul {
+      list-style: none;
+    }
+
+    .expected-results li {
+      padding: 6px 0;
+      padding-left: 24px;
+      position: relative;
+    }
+
+    .expected-results li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    .console-check {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(28, 169, 255, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+    }
+
+    .console-check h3 {
+      color: #1CA9FF;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .console-check code {
+      display: block;
+      padding: 8px;
+      margin: 4px 0;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      color: #22c55e;
+    }
+
+    .console-check .warning {
+      color: #fbbf24;
+    }
+
+    .console-check .error {
+      color: #ef4444;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #1CA9FF 0%, #7B61FF 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: transform 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .checklist {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .checklist h3 {
+      color: #1CA9FF;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .checklist label {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .checklist label:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .checklist input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      cursor: pointer;
+    }
+
+    .summary {
+      background: linear-gradient(135deg, rgba(28, 169, 255, 0.1) 0%, rgba(123, 97, 255, 0.1) 100%);
+      border: 2px solid rgba(28, 169, 255, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 30px;
+    }
+
+    .summary h2 {
+      color: #1CA9FF;
+      margin-bottom: 16px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .summary-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(28, 169, 255, 0.2);
+    }
+
+    .summary-card h3 {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .summary-card p {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #1CA9FF;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Portfolio Realtime Data - Verification Test</h1>
+    <p class="subtitle">Complete testing guide for portfolio realtime data integration</p>
+
+    <!-- Test 1: Demo Mode -->
+    <div class="test-section">
+      <h2>
+        <span>Test 1: Demo Mode (No Wallet)</span>
+        <span class="status-badge status-pending">Pending</span>
+      </h2>
+      
+      <ol class="test-steps">
+        <li>
+          <strong>Step 1:</strong>
+          Open <code>http://localhost:3000/portfolio</code> in your browser
+        </li>
+        <li>
+          <strong>Step 2:</strong>
+          Do NOT connect a wallet
+        </li>
+        <li>
+          <strong>Step 3:</strong>
+          Navigate through all tabs: Overview, Positions, Audit, Stress Test
+        </li>
+        <li>
+          <strong>Step 4:</strong>
+          Open browser console (F12) and check for logs
+        </li>
+      </ol>
+
+      <div class="expected-results">
+        <h3>Expected Results:</h3>
+        <ul>
+          <li>Demo badge visible on all components</li>
+          <li>All tabs show demo data</li>
+          <li>No API calls in Network tab</li>
+          <li>No errors in console</li>
+          <li>Data loads instantly (< 200ms)</li>
+        </ul>
+      </div>
+
+      <div class="console-check">
+        <h3>Console Logs to Look For:</h3>
+        <code>🎭 [PortfolioValuation] Using MOCK data for 1 address(es)</code>
+        <code>🎭 [Guardian] Using MOCK data</code>
+        <code>🎭 [Hunter] Using MOCK data for 1 address(es)</code>
+      </div>
+
+      <div class="checklist">
+        <h3>Verification Checklist:</h3>
+        <label>
+          <input type="checkbox" id="test1-demo-badge">
+          <span>Demo badge is visible</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test1-all-tabs">
+          <span>All tabs render without errors</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test1-no-api">
+          <span>No API calls in Network tab</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test1-console">
+          <span>Console shows mock data logs</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test1-instant">
+          <span>Data loads instantly</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Test 2: Live Mode -->
+    <div class="test-section">
+      <h2>
+        <span>Test 2: Live Mode (Wallet Connected)</span>
+        <span class="status-badge status-pending">Pending</span>
+      </h2>
+      
+      <ol class="test-steps">
+        <li>
+          <strong>Step 1:</strong>
+          Click "Connect Wallet" button
+        </li>
+        <li>
+          <strong>Step 2:</strong>
+          Connect your wallet (MetaMask, WalletConnect, etc.)
+        </li>
+        <li>
+          <strong>Step 3:</strong>
+          Wait for data to load (should see loading spinners)
+        </li>
+        <li>
+          <strong>Step 4:</strong>
+          Navigate through all tabs
+        </li>
+        <li>
+          <strong>Step 5:</strong>
+          Check console logs and Network tab
+        </li>
+      </ol>
+
+      <div class="expected-results">
+        <h3>Expected Results:</h3>
+        <ul>
+          <li>Demo badge disappears</li>
+          <li>All tabs show real blockchain data</li>
+          <li>API calls visible in Network tab</li>
+          <li>Console shows "✅ Received REAL data"</li>
+          <li>Loading spinners during fetch</li>
+        </ul>
+      </div>
+
+      <div class="console-check">
+        <h3>Console Logs to Look For:</h3>
+        <code>📊 [PortfolioValuation] Attempting to call portfolio-tracker-live edge function</code>
+        <code>✅ [PortfolioValuation] Received REAL data from edge function</code>
+        <code>✅ [PortfolioValuation] Aggregated REAL data: 12345.67, 8 holdings, 234ms</code>
+        <code>🛡️ [Guardian] Attempting to call guardian-scan-v2 edge function</code>
+        <code>✅ [Guardian] Received REAL scan data</code>
+        <code>🎯 [Hunter] Attempting to fetch opportunities for addresses</code>
+        <code>✅ [Hunter] Received REAL opportunities</code>
+      </div>
+
+      <div class="checklist">
+        <h3>Verification Checklist:</h3>
+        <label>
+          <input type="checkbox" id="test2-no-demo">
+          <span>Demo badge is NOT visible</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test2-real-data">
+          <span>Real blockchain data displayed</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test2-api-calls">
+          <span>API calls visible in Network tab</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test2-console">
+          <span>Console shows "✅ Received REAL data"</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test2-loading">
+          <span>Loading spinners work correctly</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Test 3: Wallet Switching -->
+    <div class="test-section">
+      <h2>
+        <span>Test 3: Wallet Switching</span>
+        <span class="status-badge status-pending">Pending</span>
+      </h2>
+      
+      <ol class="test-steps">
+        <li>
+          <strong>Step 1:</strong>
+          Ensure you have multiple wallet addresses connected
+        </li>
+        <li>
+          <strong>Step 2:</strong>
+          Use the wallet dropdown to switch between wallets
+        </li>
+        <li>
+          <strong>Step 3:</strong>
+          Observe all tabs updating with new wallet's data
+        </li>
+        <li>
+          <strong>Step 4:</strong>
+          Check console logs for wallet address changes
+        </li>
+      </ol>
+
+      <div class="expected-results">
+        <h3>Expected Results:</h3>
+        <ul>
+          <li>All tabs update immediately</li>
+          <li>Data specific to selected wallet</li>
+          <li>Console shows new wallet address</li>
+          <li>Loading state during switch</li>
+          <li>No errors during transition</li>
+        </ul>
+      </div>
+
+      <div class="console-check">
+        <h3>Console Logs to Look For:</h3>
+        <code>📍 Portfolio: Active wallet scope { walletId: '...', address: '0x...', label: '...' }</code>
+        <code>📊 Portfolio Data Update: { isDemo: false, hasSnapshot: true, walletScope: 'active_wallet', activeWallet: '...' }</code>
+      </div>
+
+      <div class="checklist">
+        <h3>Verification Checklist:</h3>
+        <label>
+          <input type="checkbox" id="test3-all-tabs">
+          <span>All tabs update on wallet switch</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test3-correct-data">
+          <span>Data matches selected wallet</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test3-console">
+          <span>Console shows wallet scope changes</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test3-loading">
+          <span>Loading state visible during switch</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test3-no-errors">
+          <span>No errors in console</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Test 4: Audit Tab in Demo Mode -->
+    <div class="test-section">
+      <h2>
+        <span>Test 4: Audit Tab in Demo Mode</span>
+        <span class="status-badge status-pending">Pending</span>
+      </h2>
+      
+      <ol class="test-steps">
+        <li>
+          <strong>Step 1:</strong>
+          Open portfolio without connecting wallet
+        </li>
+        <li>
+          <strong>Step 2:</strong>
+          Click on the "Audit" tab
+        </li>
+        <li>
+          <strong>Step 3:</strong>
+          Verify all components render correctly
+        </li>
+        <li>
+          <strong>Step 4:</strong>
+          Check console for any errors
+        </li>
+      </ol>
+
+      <div class="expected-results">
+        <h3>Expected Results:</h3>
+        <ul>
+          <li>No errors in console</li>
+          <li>Shows demo transactions</li>
+          <li>Shows empty state for approvals (or demo approvals)</li>
+          <li>All components render correctly</li>
+          <li>Graph visualizer shows demo data</li>
+        </ul>
+      </div>
+
+      <div class="console-check">
+        <h3>Console Logs to Look For:</h3>
+        <code>🔍 AuditTab rendering with data: { hasApprovals: true, approvalsCount: 2, ... }</code>
+        <code class="error">❌ NO ERRORS SHOULD APPEAR</code>
+      </div>
+
+      <div class="checklist">
+        <h3>Verification Checklist:</h3>
+        <label>
+          <input type="checkbox" id="test4-no-errors">
+          <span>No errors in console</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test4-transactions">
+          <span>Transaction timeline renders</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test4-approvals">
+          <span>Approvals list renders (or shows empty state)</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test4-graph">
+          <span>Graph visualizer renders</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test4-receipts">
+          <span>Receipts section renders</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Test 5: Edge Function Fallback -->
+    <div class="test-section">
+      <h2>
+        <span>Test 5: Edge Function Fallback</span>
+        <span class="status-badge status-pending">Pending</span>
+      </h2>
+      
+      <ol class="test-steps">
+        <li>
+          <strong>Step 1:</strong>
+          Connect wallet
+        </li>
+        <li>
+          <strong>Step 2:</strong>
+          Disconnect internet OR stop Supabase services
+        </li>
+        <li>
+          <strong>Step 3:</strong>
+          Refresh the page or switch wallets
+        </li>
+        <li>
+          <strong>Step 4:</strong>
+          Check that app doesn't crash
+        </li>
+      </ol>
+
+      <div class="expected-results">
+        <h3>Expected Results:</h3>
+        <ul>
+          <li>No white screen</li>
+          <li>Console shows "⚠️ Using MOCK data"</li>
+          <li>Mock data displayed as fallback</li>
+          <li>User sees data (not errors)</li>
+          <li>App remains functional</li>
+        </ul>
+      </div>
+
+      <div class="console-check">
+        <h3>Console Logs to Look For:</h3>
+        <code class="warning">⚠️ [PortfolioValuation] Edge function error, falling back to mock data</code>
+        <code>🎭 [PortfolioValuation] Using MOCK data for 1 address(es)</code>
+        <code class="warning">⚠️ [Guardian] Edge function error, falling back to mock data</code>
+        <code>🎭 [Guardian] Using MOCK data</code>
+      </div>
+
+      <div class="checklist">
+        <h3>Verification Checklist:</h3>
+        <label>
+          <input type="checkbox" id="test5-no-crash">
+          <span>App doesn't crash (no white screen)</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test5-fallback">
+          <span>Console shows fallback to mock data</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test5-data">
+          <span>Mock data displayed correctly</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test5-functional">
+          <span>App remains functional</span>
+        </label>
+        <label>
+          <input type="checkbox" id="test5-no-errors">
+          <span>No JavaScript errors</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+      <h2>Testing Summary</h2>
+      <p>Complete all tests above to verify the portfolio realtime data integration is working correctly.</p>
+      
+      <div class="summary-grid">
+        <div class="summary-card">
+          <h3>Tests Completed</h3>
+          <p id="tests-completed">0 / 5</p>
+        </div>
+        <div class="summary-card">
+          <h3>Checks Passed</h3>
+          <p id="checks-passed">0 / 25</p>
+        </div>
+        <div class="summary-card">
+          <h3>Overall Status</h3>
+          <p id="overall-status">Not Started</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <a href="http://localhost:3000/portfolio" class="button" target="_blank">
+          Open Portfolio Page
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Track checkbox changes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const totalChecks = checkboxes.length;
+
+    function updateSummary() {
+      const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+      const percentage = Math.round((checkedCount / totalChecks) * 100);
+
+      document.getElementById('checks-passed').textContent = `${checkedCount} / ${totalChecks}`;
+      
+      // Count completed tests (all checks in a test section)
+      const testSections = document.querySelectorAll('.test-section');
+      let completedTests = 0;
+      
+      testSections.forEach(section => {
+        const sectionCheckboxes = section.querySelectorAll('input[type="checkbox"]');
+        const allChecked = Array.from(sectionCheckboxes).every(cb => cb.checked);
+        if (allChecked && sectionCheckboxes.length > 0) {
+          completedTests++;
+          // Update badge
+          const badge = section.querySelector('.status-badge');
+          badge.textContent = 'Pass';
+          badge.className = 'status-badge status-pass';
+        }
+      });
+
+      document.getElementById('tests-completed').textContent = `${completedTests} / 5`;
+
+      // Update overall status
+      const statusEl = document.getElementById('overall-status');
+      if (percentage === 100) {
+        statusEl.textContent = 'Complete ✓';
+        statusEl.style.color = '#22c55e';
+      } else if (percentage > 0) {
+        statusEl.textContent = `${percentage}% Complete`;
+        statusEl.style.color = '#fbbf24';
+      } else {
+        statusEl.textContent = 'Not Started';
+        statusEl.style.color = '#94a3b8';
+      }
+    }
+
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateSummary);
+    });
+
+    // Initial update
+    updateSummary();
+  </script>
+</body>
+</html>

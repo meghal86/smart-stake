@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisabledTooltipButton Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0A0E1A;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>DisabledTooltipButton Test</h1>
+    
+    <div class="test-section">
+        <h2>Instructions</h2>
+        <p>1. Open the Hunter page: <a href="http://localhost:8081/hunter" target="_blank" style="color: #ed8f2d;">http://localhost:8081/hunter</a></p>
+        <p>2. Try clicking the "Join Quest" buttons</p>
+        <p>3. Open the HarvestPro page: <a href="http://localhost:8081/harvestpro" target="_blank" style="color: #ed8f2d;">http://localhost:8081/harvestpro</a></p>
+        <p>4. Try clicking the "Start Harvest" buttons</p>
+        <p>5. Check the browser console for any errors</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <ul>
+            <li>✅ Buttons should respond to clicks</li>
+            <li>✅ Console should show click events</li>
+            <li>✅ Modals should open when buttons are clicked</li>
+            <li>✅ Hover effects should work</li>
+            <li>✅ Tooltips should show when buttons are disabled</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Debugging Steps</h2>
+        <ol>
+            <li>Open browser DevTools (F12)</li>
+            <li>Go to Console tab</li>
+            <li>Click on buttons and watch for console messages</li>
+            <li>If no messages appear, the onClick handlers are not working</li>
+            <li>Check Elements tab to see if event listeners are attached</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Common Issues</h2>
+        <ul>
+            <li><strong>Event Propagation:</strong> Check if events are being stopped</li>
+            <li><strong>Disabled State:</strong> Verify buttons are not disabled when they should be enabled</li>
+            <li><strong>asChild Prop:</strong> Ensure props are forwarded correctly to motion.button</li>
+            <li><strong>Tooltip Wrapper:</strong> Check if tooltip wrapper is blocking clicks</li>
+        </ul>
+    </div>
+    
+    <div class="log" id="log">
+        Test log will appear here...
+    </div>
+    
+    <script>
+        function logMessage(message) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}<br>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        logMessage('Test page loaded. Open Hunter and HarvestPro pages to test buttons.');
+        
+        // Listen for messages from other windows (if needed)
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'button-click') {
+                logMessage(`Button clicked: ${event.data.buttonName}`);
+            }
+        });
+    </script>
+</body>
+</html>

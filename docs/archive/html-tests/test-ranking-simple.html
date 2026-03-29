@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Ranking Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0f1f;
+            color: #ffffff;
+        }
+        .results {
+            background: #0f1419;
+            border: 1px solid #2a3441;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .info { color: #00d4ff; }
+        .warning { color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Simple Ranking Engine Test</h1>
+    <button onclick="testRanking()">Test Ranking Engine</button>
+    <div id="results" class="results"></div>
+
+    <script type="module">
+        function log(message, type = 'info') {
+            const element = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            element.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Mock data
+        const mockOpportunity = {
+            id: 'test-1',
+            title: 'Test Airdrop 1',
+            type: 'airdrop',
+            chains: ['ethereum'],
+            trust_score: 85,
+            created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            tags: ['test'],
+        };
+
+        const mockWalletSignals = {
+            address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+            wallet_age_days: 365,
+            tx_count_90d: 100,
+            chains_active: ['ethereum', 'base'],
+            top_assets: [{ symbol: 'ETH', amount: 5.0 }],
+            stablecoin_usd_est: 10000,
+        };
+
+        const mockEligibility = {
+            status: 'likely',
+            score: 0.85,
+            reasons: ['Meets all requirements']
+        };
+
+        window.testRanking = async function() {
+            clearLog();
+            log('=== Simple Ranking Engine Test ===', 'info');
+            
+            try {
+                log('Loading ranking engine module...', 'info');
+                const { calculateRanking } = await import('/src/lib/hunter/ranking-engine.js');
+                log('✅ Module loaded successfully', 'success');
+                
+                log('Input validation:', 'info');
+                log(`  Opportunity: ${JSON.stringify(mockOpportunity)}`, 'info');
+                log(`  Wallet: ${JSON.stringify(mockWalletSignals)}`, 'info');
+                log(`  Eligibility: ${JSON.stringify(mockEligibility)}`, 'info');
+                
+                log('Calling calculateRanking...', 'info');
+                const ranking = calculateRanking(mockOpportunity, mockEligibility, mockWalletSignals, {});
+                
+                log('✅ Ranking calculated successfully!', 'success');
+                log(`Raw result: ${JSON.stringify(ranking, null, 2)}`, 'info');
+                
+                // Test each field
+                log('Field validation:', 'info');
+                log(`  overall: ${typeof ranking.overall} = ${ranking.overall}`, ranking.overall !== undefined ? 'success' : 'error');
+                log(`  relevance: ${typeof ranking.relevance} = ${ranking.relevance}`, ranking.relevance !== undefined ? 'success' : 'error');
+                log(`  trust: ${typeof ranking.trust} = ${ranking.trust}`, ranking.trust !== undefined ? 'success' : 'error');
+                log(`  freshness: ${typeof ranking.freshness} = ${ranking.freshness}`, ranking.freshness !== undefined ? 'success' : 'error');
+                
+                // Test toFixed calls
+                log('Testing toFixed calls:', 'info');
+                try {
+                    log(`  overall.toFixed(3): ${ranking.overall.toFixed(3)}`, 'success');
+                } catch (e) {
+                    log(`  overall.toFixed(3): ERROR - ${e.message}`, 'error');
+                }
+                
+                try {
+                    log(`  trust.toFixed(3): ${ranking.trust.toFixed(3)}`, 'success');
+                } catch (e) {
+                    log(`  trust.toFixed(3): ERROR - ${e.message}`, 'error');
+                }
+                
+                log('✅ Test completed successfully!', 'success');
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                log(`Stack: ${error.stack}`, 'error');
+            }
+        };
+    </script>
+</body>
+</html>

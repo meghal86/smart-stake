@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Different Wallet - Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .pass { background: #065f46; color: #d1fae5; }
+        .fail { background: #7f1d1d; color: #fecaca; }
+        .info { background: #1e3a8a; color: #dbeafe; }
+        .warning { background: #92400e; color: #fde68a; }
+        .code {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Add Different Wallet - Fix Test</h1>
+    
+    <div class="info">
+        <strong>User Issue:</strong> "Screen shows it is added but I have not added new wallet"
+        <br><br>
+        <strong>Root Cause:</strong> The previous fix was too aggressive - it assumed users always wanted to add the currently connected wagmi wallet. But users want to add <strong>different</strong> wallets to their collection.
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Updated Solution</h2>
+        
+        <div class="status pass">
+            <strong>New Approach:</strong> Always allow users to open the wallet selection modal
+            <ul>
+                <li>✅ Remove the "shortcut" logic that immediately showed success</li>
+                <li>✅ Always proceed to connecting step</li>
+                <li>✅ Let RainbowKit modal handle wallet/account selection</li>
+                <li>✅ Users can switch to different wallets or accounts</li>
+                <li>✅ Only show success when a genuinely different wallet is connected</li>
+            </ul>
+        </div>
+
+        <div class="status info">
+            <strong>Key Changes Made:</strong>
+            <div class="code">
+// REMOVED: Automatic success for existing wallets
+// if (wagmiConnected && wagmiAddress) {
+//   // Show success immediately - THIS WAS THE PROBLEM
+// }
+
+// NEW: Always proceed to connection flow
+setCurrentStep('connecting');
+
+// Always open RainbowKit modal
+openConnectModal();
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 How It Works Now</h2>
+        
+        <div class="status pass">
+            <strong>User Journey:</strong>
+            <ol>
+                <li>User clicks "Add MetaMask Wallet" (or any provider)</li>
+                <li>System shows "Connecting..." screen</li>
+                <li>RainbowKit modal opens with wallet options</li>
+                <li>User can:
+                    <ul>
+                        <li>Select a different wallet app (Rainbow, Coinbase, etc.)</li>
+                        <li>Switch to a different account in the same wallet</li>
+                        <li>Connect a completely new wallet</li>
+                    </ul>
+                </li>
+                <li>Only when a <strong>different</strong> address is connected → Success screen</li>
+                <li>If same address → Stays in connecting state (as expected)</li>
+            </ol>
+        </div>
+
+        <div class="status info">
+            <strong>Detection Logic:</strong>
+            <div class="code">
+// Only treat as "new" if address actually changes
+const isActuallyNewConnection = previousWagmiAddress && 
+  newAddress !== previousWagmiAddress;
+
+if (isActuallyNewConnection) {
+  // Show success screen
+  setCurrentStep('success');
+} else {
+  // Keep waiting for different wallet
+  console.log('Same wallet, waiting for different connection...');
+}
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Scenarios</h2>
+        
+        <div class="status info">
+            <strong>Scenario 1:</strong> User wants to add a different MetaMask account
+            <br><strong>Steps:</strong>
+            <ol>
+                <li>Currently connected to MetaMask Account 1</li>
+                <li>Click "Add MetaMask Wallet"</li>
+                <li>RainbowKit modal opens</li>
+                <li>User switches to Account 2 in MetaMask</li>
+                <li>Success screen shows with Account 2 address ✅</li>
+            </ol>
+        </div>
+
+        <div class="status info">
+            <strong>Scenario 2:</strong> User wants to add Rainbow wallet
+            <br><strong>Steps:</strong>
+            <ol>
+                <li>Currently connected to MetaMask</li>
+                <li>Click "Add Rainbow Wallet"</li>
+                <li>RainbowKit modal opens</li>
+                <li>User selects Rainbow wallet</li>
+                <li>Success screen shows with Rainbow address ✅</li>
+            </ol>
+        </div>
+
+        <div class="status info">
+            <strong>Scenario 3:</strong> User clicks same wallet they're already using
+            <br><strong>Steps:</strong>
+            <ol>
+                <li>Currently connected to MetaMask Account 1</li>
+                <li>Click "Add MetaMask Wallet"</li>
+                <li>RainbowKit modal opens</li>
+                <li>User selects same MetaMask Account 1</li>
+                <li>Stays in connecting state (no success) ✅</li>
+                <li>User can cancel or try different wallet</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>💡 User Instructions</h2>
+        
+        <div class="status warning">
+            <strong>How to Add Different Wallets:</strong>
+            <ol>
+                <li><strong>Different Account:</strong> In the RainbowKit modal, switch accounts in your current wallet</li>
+                <li><strong>Different Wallet:</strong> In the RainbowKit modal, select a different wallet provider</li>
+                <li><strong>New Wallet:</strong> Install a new wallet extension, then select it in the modal</li>
+            </ol>
+        </div>
+
+        <div class="status info">
+            <strong>Updated UI Text:</strong>
+            <div class="code">
+"Select a wallet in the modal to add to your collection"
+"💡 Tip: You can connect a different wallet or account"
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Troubleshooting</h2>
+        
+        <div class="status warning">
+            <strong>If you still see "Wallet Added!" without adding a new wallet:</strong>
+            <ol>
+                <li>Check the address shown - is it actually different?</li>
+                <li>Clear browser cache and try again</li>
+                <li>Make sure you're selecting a different wallet/account in the modal</li>
+                <li>Check console logs for detection logic</li>
+            </ol>
+        </div>
+
+        <div class="status info">
+            <strong>Console Logs to Watch:</strong>
+            <div class="code">
+✅ Good (when adding different wallet):
+- "New wallet connected via RainbowKit: 0x742d35..."
+- "New wallet detected, adding to registry..."
+
+⚠️ Expected (when selecting same wallet):
+- "Same wallet address or no previous address, not treating as new connection"
+- Stays in connecting state
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="testResults">
+            <div class="status info">
+                Test this fix by:
+                <ol>
+                    <li>Going to /settings/wallets/add</li>
+                    <li>Clicking any wallet provider</li>
+                    <li>Selecting a DIFFERENT wallet/account in the modal</li>
+                    <li>Verifying success screen only shows for different addresses</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🧪 Add Different Wallet Fix Test loaded');
+        console.log('📋 Updated logic: Always open modal, detect actual address changes');
+        
+        // Log test environment
+        console.log('🔍 Test environment:', {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            testFile: 'test-add-wallet-different-wallet-fix.html'
+        });
+    </script>
+</body>
+</html>

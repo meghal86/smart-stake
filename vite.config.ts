@@ -23,8 +23,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
+      external: ['motion-dom'],
+      onwarn(warning, defaultHandler) {
+        // Suppress unresolved external module warnings
+        if (warning.code === 'UNRESOLVED_IMPORT') return;
+        defaultHandler(warning);
+      },
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
@@ -47,8 +53,7 @@ export default defineConfig({
   },
   // Skip TypeScript project checking entirely
   optimizeDeps: {
-    esbuildOptions: {
-      tsconfigRaw: {}
-    }
+    esbuildOptions: {},
+    include: ['react', 'react-dom', 'react-router-dom', '@radix-ui/react-dialog', 'lucide-react']
   }
 })

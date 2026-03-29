@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { UserHeader } from '@/components/layout/UserHeader';
 import { useSimpleSubscription } from '@/hooks/useSimpleSubscription';
+import { IosSubscriptionRedirect } from '@/components/IosSubscriptionRedirect';
 import { ComingSoonBadge } from '@/components/ComingSoonBadge';
 import { EnterpriseContactModal } from '@/components/EnterpriseContactModal';
 import { PlanComparisonTable } from '@/components/PlanComparisonTable';
@@ -130,6 +131,11 @@ const Subscription: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { plan: currentPlan, createCheckout } = useSimpleSubscription();
+
+  // Check if running as a native iOS app
+  const isNativeApp = typeof window !== 'undefined' &&
+    (window.navigator.userAgent.includes('Capacitor') ||
+     window.matchMedia('(display-mode: standalone)').matches);
 
   // Load currency from localStorage
   useEffect(() => {
@@ -256,6 +262,11 @@ const Subscription: React.FC = () => {
     }
     return null;
   };
+
+  // Show native redirect on iOS app instead of web payment UI
+  if (isNativeApp) {
+    return <IosSubscriptionRedirect />;
+  }
 
   return (
     <AppLayout showHeader={false}>

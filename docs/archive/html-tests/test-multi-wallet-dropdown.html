@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Wallet Dropdown Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #06b6d4;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 4px;
+            border-left: 3px solid #06b6d4;
+        }
+        .success {
+            border-left-color: #10b981;
+            background: #064e3b;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background: #7f1d1d;
+        }
+        .code {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            border: 1px solid #334155;
+        }
+        .button {
+            background: #06b6d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0891b2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Multi-Wallet Dropdown Test</h1>
+        <p>This test verifies the multi-wallet selection dropdown functionality in GlobalHeader.</p>
+
+        <div class="test-section">
+            <div class="test-title">🔧 Step 1: Fix Vite Cache Issue</div>
+            <div class="test-step">
+                <strong>Problem:</strong> 504 errors on dependency files (basic-3DJADJTK.js)
+            </div>
+            <div class="test-step">
+                <strong>Solution:</strong> Clear Vite cache and restart dev server
+            </div>
+            <div class="code">
+# Stop dev server (Ctrl+C)
+rm -rf node_modules/.vite
+npm run dev
+            </div>
+            <div class="test-step success">
+                ✅ After clearing cache, wallet connections should work without 504 errors
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔗 Step 2: Connect Multiple Wallets</div>
+            <div class="test-step">
+                1. Click "Connect" button in header
+            </div>
+            <div class="test-step">
+                2. Connect first wallet (MetaMask, WalletConnect, etc.)
+            </div>
+            <div class="test-step">
+                3. Click profile dropdown → "Add Wallet"
+            </div>
+            <div class="test-step">
+                4. Connect second wallet with different address
+            </div>
+            <div class="test-step success">
+                ✅ Both wallets should appear in WalletContext.connectedWallets array
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📋 Step 3: Verify Multi-Wallet Dropdown</div>
+            <div class="test-step">
+                1. Click profile icon in header (should show user avatar)
+            </div>
+            <div class="test-step">
+                2. Dropdown should show:
+                <ul>
+                    <li>Current active wallet address</li>
+                    <li>"Switch Wallet" section (if multiple wallets)</li>
+                    <li>List of all connected wallets with labels</li>
+                    <li>Check mark next to active wallet</li>
+                    <li>"Add Wallet" button</li>
+                </ul>
+            </div>
+            <div class="test-step">
+                3. Click on different wallet in list
+            </div>
+            <div class="test-step success">
+                ✅ Active wallet should switch, check mark should move
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">💾 Step 4: Test Persistence</div>
+            <div class="test-step">
+                1. Switch to second wallet using dropdown
+            </div>
+            <div class="test-step">
+                2. Refresh the page (F5)
+            </div>
+            <div class="test-step success">
+                ✅ Selected wallet should remain active after refresh
+            </div>
+            <div class="test-step">
+                3. Check localStorage in DevTools:
+            </div>
+            <div class="code">
+// Open DevTools → Application → Local Storage
+// Should see:
+aw_active_address: "0x..." // Selected wallet address
+aw_active_network: "eip155:1" // Selected network
+connectedWallets: [...] // Array of all wallets
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🐛 Debugging</div>
+            <div class="test-step">
+                <strong>Console Logs to Watch:</strong>
+            </div>
+            <div class="code">
+// Wallet connection
+"Added new wallet to multi-wallet list: 0x..."
+"Switching to wallet: 0x..."
+
+// RainbowKit vs Custom Modal
+"✅ Using RainbowKit modal..."
+"⚠️ RainbowKit not available, using custom modal..."
+
+// WagmiAccountSync
+"Wagmi account changed: { address: '0x...', chainId: 1 }"
+            </div>
+            <div class="test-step">
+                <strong>Common Issues:</strong>
+            </div>
+            <div class="test-step error">
+                ❌ "Cannot update a component while rendering" → Fixed with useCallback
+            </div>
+            <div class="test-step error">
+                ❌ "Encountered two children with the same key" → Fixed with unique keys
+            </div>
+            <div class="test-step error">
+                ❌ "504 Outdated Optimize Dep" → Clear Vite cache
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">✅ Expected Behavior</div>
+            <div class="test-step success">
+                1. Multiple wallets can be connected through RainbowKit modal
+            </div>
+            <div class="test-step success">
+                2. Dropdown shows all connected wallets with switch functionality
+            </div>
+            <div class="test-step success">
+                3. Active wallet selection persists across page refreshes
+            </div>
+            <div class="test-step success">
+                4. WalletContext manages multi-wallet state correctly
+            </div>
+            <div class="test-step success">
+                5. No console errors or React warnings
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔄 Test Actions</div>
+            <button class="button" onclick="testLocalStorage()">Check localStorage</button>
+            <button class="button" onclick="testWalletContext()">Test WalletContext</button>
+            <button class="button" onclick="clearCache()">Clear Cache Instructions</button>
+            
+            <div id="test-results" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script>
+        function testLocalStorage() {
+            const results = document.getElementById('test-results');
+            const activeAddress = localStorage.getItem('aw_active_address');
+            const activeNetwork = localStorage.getItem('aw_active_network');
+            const connectedWallets = localStorage.getItem('connectedWallets');
+            
+            results.innerHTML = `
+                <div class="code">
+                    <strong>localStorage State:</strong><br>
+                    aw_active_address: ${activeAddress || 'null'}<br>
+                    aw_active_network: ${activeNetwork || 'null'}<br>
+                    connectedWallets: ${connectedWallets ? 'Array with ' + JSON.parse(connectedWallets).length + ' wallets' : 'null'}
+                </div>
+            `;
+        }
+
+        function testWalletContext() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="code">
+                    <strong>WalletContext Test:</strong><br>
+                    Open DevTools Console and run:<br><br>
+                    // Check if WalletContext is working<br>
+                    window.dispatchEvent(new CustomEvent('wagmiAccountChanged', {<br>
+                    &nbsp;&nbsp;detail: { address: '0x1234...', chainId: 1 }<br>
+                    }));<br><br>
+                    // Should see: "Wagmi account changed: ..." in console
+                </div>
+            `;
+        }
+
+        function clearCache() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = `
+                <div class="code">
+                    <strong>Clear Vite Cache:</strong><br>
+                    1. Stop dev server (Ctrl+C)<br>
+                    2. rm -rf node_modules/.vite<br>
+                    3. npm run dev<br><br>
+                    <strong>Full Reset (if needed):</strong><br>
+                    1. Stop dev server<br>
+                    2. rm -rf node_modules node_modules/.vite<br>
+                    3. npm install<br>
+                    4. npm run dev
+                </div>
+            `;
+        }
+
+        // Auto-check localStorage on page load
+        window.addEventListener('load', () => {
+            testLocalStorage();
+        });
+    </script>
+</body>
+</html>

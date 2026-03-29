@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Persistence Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0A0F1F;
+            color: white;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+        .info { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #6b7280; cursor: not-allowed; }
+        .wallet-list {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .wallet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .wallet-item:last-child { border-bottom: none; }
+        .wallet-address { font-family: monospace; }
+        .wallet-label { color: #94a3b8; }
+        input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        input::placeholder { color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <h1>🔗 Wallet Persistence Test</h1>
+    <p>This test verifies that wallets are properly saved to the database and persist across sign-in/sign-out cycles.</p>
+
+    <div class="test-section">
+        <h2>📋 Test Instructions</h2>
+        <ol>
+            <li><strong>Sign in</strong> with your account (meghal86@gmail.com)</li>
+            <li><strong>Add wallets</strong> using the form below</li>
+            <li><strong>Verify</strong> wallets appear in the database</li>
+            <li><strong>Sign out</strong> and <strong>sign back in</strong></li>
+            <li><strong>Check</strong> that wallets are still there</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🔐 Authentication Status</h2>
+        <div id="auth-status" class="status info">Checking authentication...</div>
+        <button id="sign-out-btn" onclick="signOut()" disabled>Sign Out</button>
+    </div>
+
+    <div class="test-section">
+        <h2>➕ Add Test Wallet</h2>
+        <div>
+            <input type="text" id="wallet-address" placeholder="0x1234567890abcdef..." style="width: 300px;">
+            <input type="text" id="wallet-label" placeholder="My Test Wallet" style="width: 200px;">
+            <button onclick="addWallet()">Add Wallet</button>
+        </div>
+        <div id="add-wallet-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>💾 Database Wallets</h2>
+        <button onclick="loadWallets()">Refresh Wallet List</button>
+        <div id="wallet-list" class="wallet-list">
+            <div class="status info">Click "Refresh Wallet List" to load wallets from database</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Results</h2>
+        <div id="test-results">
+            <div class="status info">Run the test steps above to see results</div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let supabase = null;
+
+        // Initialize Supabase client
+        async function initSupabase() {
+            try {
+                // Import Supabase client
+                const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
+                
+                // Get environment variables (you'll need to replace these with actual values)
+                const supabaseUrl = 'YOUR_SUPABASE_URL';
+                const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+                
+                supabase = createClient(supabaseUrl, supabaseAnonKey);
+                
+                // Check current auth status
+                const { data: { user } } = await supabase.auth.getUser();
+                currentUser = user;
+                updateAuthStatus();
+                
+                if (user) {
+                    loadWallets();
+                }
+            } catch (error) {
+                console.error('Failed to initialize Supabase:', error);
+                document.getElementById('auth-status').innerHTML = `
+                    <div class="status error">
+                        ❌ Failed to initialize Supabase. Please check your configuration.
+                        <br><small>Error: ${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        function updateAuthStatus() {
+            const statusEl = document.getElementById('auth-status');
+            const signOutBtn = document.getElementById('sign-out-btn');
+            
+            if (currentUser) {
+                statusEl.innerHTML = `
+                    <div class="status success">
+                        ✅ Signed in as: ${currentUser.email}
+                        <br><small>User ID: ${currentUser.id}</small>
+                    </div>
+                `;
+                signOutBtn.disabled = false;
+            } else {
+                statusEl.innerHTML = `
+                    <div class="status error">
+                        ❌ Not signed in. Please sign in through your app first.
+                    </div>
+                `;
+                signOutBtn.disabled = true;
+            }
+        }
+
+        async function signOut() {
+            if (!supabase) return;
+            
+            try {
+                await supabase.auth.signOut();
+                currentUser = null;
+                updateAuthStatus();
+                document.getElementById('wallet-list').innerHTML = '<div class="status info">Signed out - no wallets loaded</div>';
+                
+                // Show test result
+                document.getElementById('test-results').innerHTML = `
+                    <div class="status success">
+                        ✅ Step 1 Complete: Successfully signed out
+                        <br><small>Now sign back in through your app and check if wallets persist</small>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Sign out error:', error);
+                document.getElementById('test-results').innerHTML = `
+                    <div class="status error">
+                        ❌ Sign out failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function addWallet() {
+            if (!supabase || !currentUser) {
+                alert('Please sign in first');
+                return;
+            }
+
+            const address = document.getElementById('wallet-address').value.trim();
+            const label = document.getElementById('wallet-label').value.trim() || 'Test Wallet';
+            
+            if (!address) {
+                alert('Please enter a wallet address');
+                return;
+            }
+
+            // Validate address format (basic check)
+            if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
+                alert('Please enter a valid Ethereum address (0x followed by 40 hex characters)');
+                return;
+            }
+
+            const statusEl = document.getElementById('add-wallet-status');
+            statusEl.innerHTML = '<div class="status info">Adding wallet...</div>';
+
+            try {
+                const { data, error } = await supabase
+                    .from('user_wallets')
+                    .insert({
+                        user_id: currentUser.id,
+                        address: address.toLowerCase(),
+                        label: label,
+                        chain: 'ethereum',
+                        source: 'manual',
+                        verified: false,
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    if (error.code === '23505') { // Unique constraint violation
+                        statusEl.innerHTML = '<div class="status error">❌ Wallet already exists for this user</div>';
+                    } else {
+                        statusEl.innerHTML = `<div class="status error">❌ Database error: ${error.message}</div>`;
+                    }
+                    return;
+                }
+
+                statusEl.innerHTML = '<div class="status success">✅ Wallet added successfully!</div>';
+                
+                // Clear form
+                document.getElementById('wallet-address').value = '';
+                document.getElementById('wallet-label').value = '';
+                
+                // Refresh wallet list
+                loadWallets();
+                
+            } catch (error) {
+                console.error('Add wallet error:', error);
+                statusEl.innerHTML = `<div class="status error">❌ Failed to add wallet: ${error.message}</div>`;
+            }
+        }
+
+        async function loadWallets() {
+            if (!supabase || !currentUser) {
+                document.getElementById('wallet-list').innerHTML = '<div class="status error">❌ Not signed in</div>';
+                return;
+            }
+
+            const listEl = document.getElementById('wallet-list');
+            listEl.innerHTML = '<div class="status info">Loading wallets...</div>';
+
+            try {
+                const { data: wallets, error } = await supabase
+                    .from('user_wallets')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    listEl.innerHTML = `<div class="status error">❌ Failed to load wallets: ${error.message}</div>`;
+                    return;
+                }
+
+                if (!wallets || wallets.length === 0) {
+                    listEl.innerHTML = '<div class="status info">📭 No wallets found in database</div>';
+                    
+                    // Update test results
+                    document.getElementById('test-results').innerHTML = `
+                        <div class="status error">
+                            ❌ No wallets found! This indicates the persistence issue.
+                            <br><small>Expected: Wallets should be saved to database when added through the app</small>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Display wallets
+                let html = `<div class="status success">✅ Found ${wallets.length} wallet(s) in database:</div>`;
+                
+                wallets.forEach(wallet => {
+                    html += `
+                        <div class="wallet-item">
+                            <div>
+                                <div class="wallet-address">${wallet.address}</div>
+                                <div class="wallet-label">${wallet.label || 'No label'}</div>
+                            </div>
+                            <div>
+                                <small>Chain: ${wallet.chain} | Source: ${wallet.source}</small>
+                                <br><small>Added: ${new Date(wallet.created_at).toLocaleString()}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                listEl.innerHTML = html;
+                
+                // Update test results
+                document.getElementById('test-results').innerHTML = `
+                    <div class="status success">
+                        ✅ Persistence Test: Found ${wallets.length} wallet(s) in database
+                        <br><small>This means wallets are being properly saved and will persist across sign-in/sign-out</small>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Load wallets error:', error);
+                listEl.innerHTML = `<div class="status error">❌ Error loading wallets: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initSupabase);
+    </script>
+
+    <div class="test-section">
+        <h2>🔧 Configuration Notes</h2>
+        <div class="status info">
+            <strong>Important:</strong> This test requires your Supabase configuration.
+            <br>You'll need to replace <code>YOUR_SUPABASE_URL</code> and <code>YOUR_SUPABASE_ANON_KEY</code> in the script above with your actual values.
+            <br><br>
+            <strong>Alternative:</strong> You can also test this by:
+            <ol>
+                <li>Opening your browser's developer console</li>
+                <li>Going to your app and adding wallets</li>
+                <li>Checking the <code>user_wallets</code> table in your Supabase dashboard</li>
+                <li>Signing out and back in to see if wallets persist</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

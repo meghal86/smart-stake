@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainbowKit Modal JavaScript Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { border-color: #4CAF50; background: #f8fff8; }
+        .warning { border-color: #ff9800; background: #fff8f0; }
+        .error { border-color: #f44336; background: #fff8f8; }
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 RainbowKit Modal JavaScript Fix Test</h1>
+        
+        <div class="test-section success">
+            <h2>✅ Implementation Summary</h2>
+            <p><strong>Problem:</strong> RainbowKit modal opens briefly but disappears due to CSS conflicts</p>
+            <p><strong>Solution:</strong> JavaScript DOM manipulation + Enhanced CSS to force modal visibility</p>
+            
+            <h3>Changes Made:</h3>
+            <div class="code">
+1. GlobalHeader.tsx:
+   - Removed CustomWalletModal import/usage
+   - Added useConnectModal hook from RainbowKit
+   - Added forceRainbowKitModalVisible() function
+   - JavaScript DOM manipulation to force modal visibility
+
+2. index.css:
+   - Enhanced RainbowKit CSS with visibility: visible !important
+   - Added animation: none !important to prevent hiding animations
+   - Added transition: none !important to prevent disappearing transitions
+            </div>
+        </div>
+
+        <div class="test-section warning">
+            <h2>🧪 Test Instructions</h2>
+            <ol>
+                <li><strong>Start the app:</strong> <code>npm run dev</code></li>
+                <li><strong>Navigate to any page</strong> (home, cockpit, etc.)</li>
+                <li><strong>Look for "Connect" button</strong> in header (if not authenticated)</li>
+                <li><strong>OR click profile icon → "Add Wallet"</strong> (if authenticated)</li>
+                <li><strong>Verify:</strong> RainbowKit modal opens and STAYS OPEN</li>
+                <li><strong>Test wallet connections:</strong> MetaMask, WalletConnect, etc.</li>
+                <li><strong>Verify:</strong> Modal doesn't disappear after 1 second</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Debug Information</h2>
+            <p>Check browser console for these debug messages:</p>
+            <div class="code">
+✅ "Opening RainbowKit modal..."
+✅ "Forcing RainbowKit modal visibility..."
+✅ "Found RainbowKit portals: [number]"
+✅ "Processing portal [index]: [element]"
+✅ "Found dialog in portal: [element]"
+✅ "Re-forcing portal visibility..." (if needed)
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Expected Behavior</h2>
+            <ul>
+                <li>✅ RainbowKit modal opens immediately when button clicked</li>
+                <li>✅ Modal stays visible (doesn't disappear after 1 second)</li>
+                <li>✅ Original RainbowKit UI styling preserved</li>
+                <li>✅ Wallet options are clickable</li>
+                <li>✅ Modal can be closed by clicking backdrop or X button</li>
+                <li>✅ Multiple wallets can be connected sequentially</li>
+                <li>✅ WagmiAccountSync detects new connections</li>
+                <li>✅ Multi-wallet list updates in WalletContext</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🚨 Troubleshooting</h2>
+            
+            <h3>If modal still disappears:</h3>
+            <div class="code">
+1. Check console for "Found RainbowKit portals: 0"
+   → RainbowKit not creating portal elements
+   
+2. Check for JavaScript errors in console
+   → openConnectModal might be undefined
+   
+3. Verify RainbowKit provider is properly configured
+   → Check ClientProviders.tsx and wagmi.ts
+            </div>
+
+            <h3>If modal appears but buttons don't work:</h3>
+            <div class="code">
+1. Check pointer-events CSS rules
+2. Verify z-index hierarchy
+3. Test with different wallet extensions
+            </div>
+        </div>
+
+        <div class="test-section success">
+            <h2>🎉 Success Criteria</h2>
+            <p><strong>Test passes when:</strong></p>
+            <ul>
+                <li>User can click "Connect" or "Add Wallet" button</li>
+                <li>RainbowKit modal opens with original styling</li>
+                <li>Modal remains visible for more than 5 seconds</li>
+                <li>User can successfully connect multiple wallets</li>
+                <li>Each new wallet appears in the multi-wallet system</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Test Checklist</h2>
+            <label><input type="checkbox"> Modal opens when "Connect" clicked</label><br>
+            <label><input type="checkbox"> Modal stays visible (doesn't disappear)</label><br>
+            <label><input type="checkbox"> Original RainbowKit UI preserved</label><br>
+            <label><input type="checkbox"> Wallet buttons are clickable</label><br>
+            <label><input type="checkbox"> Can connect MetaMask</label><br>
+            <label><input type="checkbox"> Can connect WalletConnect</label><br>
+            <label><input type="checkbox"> Can connect multiple wallets</label><br>
+            <label><input type="checkbox"> Multi-wallet list updates</label><br>
+            <label><input type="checkbox"> Modal can be closed properly</label><br>
+            <label><input type="checkbox"> No console errors</label><br>
+        </div>
+
+        <button onclick="window.open('http://localhost:5173', '_blank')">🚀 Open App</button>
+        <button onclick="location.reload()">🔄 Refresh Test</button>
+    </div>
+
+    <script>
+        // Auto-check items as user tests
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+                const totalCount = document.querySelectorAll('input[type="checkbox"]').length;
+                
+                if (checkedCount === totalCount) {
+                    alert('🎉 All tests passed! RainbowKit modal is working correctly.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
