@@ -195,11 +195,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           const errorCode = err?.code || err?.error?.code;
           const errorMessage = err?.message || err?.error?.message || '';
           
-          // If it's a duplicate key error, treat as success
-          if (errorCode === '23505' || 
-              errorMessage.includes('duplicate key') || 
-              errorMessage.includes('uq_user_wallets_user_addr_chain')) {
-          } else {
+          // If it's a duplicate key error, treat as success (no-op)
+          // Otherwise handle the error
+          if (!(errorCode === '23505' ||
+              errorMessage.includes('duplicate key') ||
+              errorMessage.includes('uq_user_wallets_user_addr_chain'))) {
             // Add to failed set to prevent retry loops for other errors
             setFailedWallets(prev => new Set(prev).add(address));
             
@@ -417,8 +417,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         // Only set activeWallet if it's different from current (avoid unnecessary re-renders)
         if (restoredAddress && restoredAddress !== activeWallet) {
           setActiveWalletState(restoredAddress);
-        } else if (restoredAddress) {
         }
+        // else: restoredAddress matches activeWallet — no state update needed
         
         if (restoredNetwork && getSupportedNetworks().includes(restoredNetwork)) {
           setActiveNetworkState(restoredNetwork);
@@ -631,9 +631,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         timestamp: Date.now()
       });
       
-      if (prevActive === address) {
-      }
-      
+      // No state change needed if same wallet already active
       return address;
     });
     
@@ -663,7 +661,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           
           if (setPrimaryError) {
             console.error('Failed to set primary wallet:', setPrimaryError);
-          } else {
           }
         }
       } catch (error) {
