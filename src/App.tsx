@@ -80,7 +80,6 @@ const AdminOps = React.lazy(() => import("./pages/AdminOps"));
 const WhaleAnalyticsDashboard = React.lazy(() => import("./pages/WhaleAnalytics"));
 const MarketHub = React.lazy(() => import("./pages/MarketHub"));
 const Overview = React.lazy(() => import("./pages/Overview"));
-const PatternModalDemo = React.lazy(() => import("./pages/PatternModalDemo"));
 const TestWorldClass = React.lazy(() => import("./pages/TestWorldClass"));
 
 // Non-lazy imports (lightweight or critical)
@@ -156,9 +155,9 @@ const App = () => {
         {showSplash && (
           <SplashScreen onComplete={handleSplashComplete} duration={1700} />
         )}
-        <LegalDisclosureModal />
-        <InstallPrompt />
         <BrowserRouter>
+          <LegalDisclosureModal />
+          <InstallPrompt />
           <BrowserNavigationProvider showToast={(message) => toast({ description: message })}>
             <Suspense fallback={<PageLoader />}>
             <Routes>
