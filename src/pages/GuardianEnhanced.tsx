@@ -460,80 +460,80 @@ export function GuardianEnhanced() {
   const scanViewContent = useMemo(() => {
     if (activeScanView === 'Health') {
       return {
-        eyebrow: 'Wallet Health',
+        eyebrow: 'Wallet Safety Check',
         title:
           trustScore === null
             ? 'Start with one easy check-in.'
             : trustScore >= 85
-              ? 'Your wallet health feels clear and steady.'
+              ? 'Your wallet looks clean and steady.'
               : trustScore >= 70
-                ? 'The health score is steady, with room to improve.'
-                : 'A short cleanup will lift the health reading quickly.',
+                ? 'Your wallet looks mostly healthy, with a few things to tidy up.'
+                : 'A short cleanup will make this wallet safer to use.',
         body:
           trustScore === null
-            ? 'Health view keeps the read simple: run a first scan, then Guardian can explain the score and what moved it.'
-            : `This view is focused on the score itself, the confidence behind it, and how recently Guardian checked the wallet. ${flagCount > 0 ? 'The next lift will usually come from the top flagged item.' : 'No active issues are weighing it down right now.'}`,
+            ? 'Run a first scan and Guardian will translate wallet safety into plain language: what looks safe, what needs attention, and what to fix first.'
+            : `This view focuses on the wallet safety score, how confident Guardian is in that score, and how recently the wallet was checked. ${flagCount > 0 ? 'The biggest improvement usually comes from fixing the top item first.' : 'No active issues are pulling the score down right now.'}`,
         statusLabel: trustScore === null ? 'Scan required' : healthBand,
         statusTone: trustScore === null ? chipClass : trustScore >= 70 ? accentPanelClass : warningPanelClass,
-        metricA: { label: 'Health Score', value: trustScore ?? '--', detail: 'Current reading' },
-        metricB: { label: 'Confidence', value: scanResult?.confidence ?? '--', detail: 'How sure Guardian is' },
-        metricC: { label: 'Last Check-In', value: freshnessDetail, detail: 'Most recent completed scan' },
-        trendTitle: 'Health trajectory',
-        trendBody: 'A narrow view of how the score has moved across recent reads.',
+        metricA: { label: 'Safety Score', value: trustScore ?? '--', detail: 'Overall wallet safety today' },
+        metricB: { label: 'Confidence', value: scanResult?.confidence ?? '--', detail: 'How sure Guardian is about this reading' },
+        metricC: { label: 'Last Check-In', value: freshnessDetail, detail: 'Most recent completed wallet scan' },
+        trendTitle: 'Score movement',
+        trendBody: 'A simple view of whether wallet safety is improving or slipping over time.',
         actionTitle: 'Keep the score moving',
         actionBody:
           flagCount > 0
-            ? 'The fastest way to improve the health reading is still the highest-impact open item.'
-            : 'There is no urgent fix right now. Refresh after new wallet activity to keep the read current.',
-        actionPrimary: flagCount > 0 ? 'Review health fixes' : 'Refresh now',
+            ? 'The fastest way to improve the safety score is still the highest-impact open item.'
+            : 'There is no urgent fix right now. Refresh after new wallet activity to keep this check current.',
+        actionPrimary: flagCount > 0 ? 'Review safety fixes' : 'Refresh now',
         actionSecondary: 'See score details',
       };
     }
 
     if (activeScanView === 'Exposure') {
       return {
-        eyebrow: 'Exposure Read',
+        eyebrow: 'Permissions & Risky Activity',
         title:
           flagCount === 0
-            ? 'Exposure looks quiet across the latest pass.'
-            : 'Exposure is concentrated in a few places worth attention.',
+            ? 'Permissions and wallet activity look quiet right now.'
+            : 'A few apps or wallet actions deserve a closer look.',
         body:
           flagCount === 0
-            ? 'This view highlights where approvals, risky counterparties, or wallet patterns could create drag. Nothing dominant is showing right now.'
-            : `Guardian is currently tracking ${(scanResult?.approvals || []).length} approvals, ${approvalRiskCount} approval-related items, and ${flagCount} open findings across the wallet.`,
+            ? 'This view highlights old app permissions, risky counterparties, and suspicious wallet patterns. Nothing major is showing right now.'
+            : `Guardian is currently tracking ${(scanResult?.approvals || []).length} app permissions, ${approvalRiskCount} permission-related items, and ${flagCount} open findings across the wallet.`,
         statusLabel: flagCount === 0 ? 'Low exposure' : `${flagCount} open items`,
         statusTone: flagCount === 0 ? accentPanelClass : dangerPanelClass,
-        metricA: { label: 'Approvals Tracked', value: (scanResult?.approvals || []).length, detail: 'Contracts with spending access' },
-        metricB: { label: 'Approval Risks', value: approvalRiskCount, detail: 'Approval-related findings' },
-        metricC: { label: 'Open Findings', value: flagCount, detail: 'Items shaping the exposure view' },
-        trendTitle: 'Exposure pulse',
-        trendBody: 'A simplified posture line that helps spot drift before it compounds.',
-        actionTitle: 'Review the main exposure',
+        metricA: { label: 'Permissions Tracked', value: (scanResult?.approvals || []).length, detail: 'Apps that can move tokens for you' },
+        metricB: { label: 'Permission Risks', value: approvalRiskCount, detail: 'Permissions that may be too broad or too old' },
+        metricC: { label: 'Open Findings', value: flagCount, detail: 'Items shaping this risk view' },
+        trendTitle: 'Risk pulse',
+        trendBody: 'A simple view to help spot growing risk before it becomes a problem.',
+        actionTitle: 'Review the main risk',
         actionBody:
           approvalRiskCount > 0
-            ? 'Approval cleanup is the fastest place to reduce exposure today.'
-            : 'Exposure is being driven by broader findings instead of token approvals.',
-        actionPrimary: approvalRiskCount > 0 ? 'Review approvals' : 'Review findings',
-        actionSecondary: 'Open exposure details',
+            ? 'Cleaning up old token permissions is the fastest way to reduce risk today.'
+            : 'This risk is being driven by broader wallet findings instead of token permissions.',
+        actionPrimary: approvalRiskCount > 0 ? 'Review permissions' : 'Review findings',
+        actionSecondary: 'Open risk details',
       };
     }
 
     return {
-      eyebrow: 'Wallet Health',
+      eyebrow: 'Wallet Safety Check',
       title: healthHeadline,
       body: healthMessage,
       statusLabel: healthBand,
       statusTone: trustScore === null ? chipClass : trustScore >= 85 ? accentPanelClass : trustScore >= 70 ? warningPanelClass : dangerPanelClass,
-      metricA: { label: 'Health Score', value: trustScore ?? '--', detail: 'Current reading' },
-      metricB: { label: 'Last Check-In', value: freshnessDetail, detail: 'Most recent full wallet reading.' },
+      metricA: { label: 'Safety Score', value: trustScore ?? '--', detail: 'Overall wallet safety today' },
+      metricB: { label: 'Last Check-In', value: freshnessDetail, detail: 'Most recent full wallet scan.' },
       metricC: { label: 'Open Items', value: flagCount, detail: flagCount === 0 ? 'Nothing urgent right now.' : `${flagCount} items are shaping today’s reading.` },
-      trendTitle: 'Health Trend',
-      trendBody: 'A clean view of the recent posture swing.',
+      trendTitle: 'Safety Trend',
+      trendBody: 'A clear view of whether wallet safety is improving or slipping.',
       actionTitle: primaryCareAction,
       actionBody:
         flagCount === 0
-          ? 'You are in maintenance mode. Keep this feeling by refreshing after new approvals or contract interactions.'
-          : 'Guardian is surfacing the easiest way to improve today’s reading. Start with the highest-impact item and the rest gets lighter.',
+          ? 'You are in maintenance mode. Refresh after new app connections or contract activity to keep this current.'
+          : 'Guardian is surfacing the easiest way to make the wallet safer today. Start with the highest-impact item and the rest gets lighter.',
       actionPrimary: flagCount > 0 ? 'Review fixes' : 'Refresh now',
       actionSecondary: 'Open details',
     };
@@ -619,7 +619,7 @@ export function GuardianEnhanced() {
                     Guardian
                   </h1>
                   <p className={`text-xs leading-snug ${bodyTextClass}`}>
-                    Clean wallet oversight with no dashboard noise.
+                    Wallet safety without the security jargon.
                   </p>
                 </div>
               </div>
@@ -664,7 +664,7 @@ export function GuardianEnhanced() {
               </div>
 
               <p className={`max-w-xl text-base leading-7 ${bodyTextClass}`}>
-                One quiet surface, one honest reading, one next step. The goal is clarity, not decoration.
+                Guardian is a wallet safety check. It looks for old app permissions, risky contract activity, and wallet behavior that could put funds at risk, then tells you what to fix first.
               </p>
 
               <div className="flex flex-wrap gap-3">
@@ -691,9 +691,9 @@ export function GuardianEnhanced() {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
-                  ['Overview first', 'Lead with the state of the wallet before the details.'],
-                  ['Minimal chrome', 'Thin borders, restrained color, and clean hierarchy.'],
-                  ['Fast action', 'Find the one thing to do next without hunting.'],
+                  ['Checks app permissions', 'Finds old token approvals that still let apps move funds on your behalf.'],
+                  ['Checks wallet activity', 'Looks for wallet behavior or counterparties that can raise risk.'],
+                  ['Tells you what to fix first', 'Turns crypto jargon into one simple next step.'],
                 ].map(([title, description]) => (
                   <div key={title} className={`rounded-[22px] p-4 ${mutedPanelClass}`}>
                     <p className={`text-sm font-semibold ${titleTextClass}`}>{title}</p>
@@ -1040,6 +1040,19 @@ export function GuardianEnhanced() {
             walletAddress={activeAddress || undefined} 
             walletLabel={activeWallet?.label}
           />
+
+          <div className={`grid gap-3 rounded-[28px] p-4 md:grid-cols-3 ${mutedPanelClass}`}>
+            {[
+              ['1. Old app permissions', 'Guardian checks whether past DeFi apps can still spend your tokens without asking again.'],
+              ['2. Risky wallet activity', 'It looks for wallet behavior or counterparties that may make the address look unsafe.'],
+              ['3. Clear next step', 'It converts all of that into one simple action so you know what to do first.'],
+            ].map(([title, description]) => (
+              <div key={title} className={`rounded-[22px] p-4 ${isDarkTheme ? 'bg-white/[0.03]' : 'bg-white/70'}`}>
+                <p className={`text-sm font-semibold ${titleTextClass}`}>{title}</p>
+                <p className={`mt-2 text-sm leading-6 ${bodyTextClass}`}>{description}</p>
+              </div>
+            ))}
+          </div>
         </div>
         
         <motion.section
@@ -1354,7 +1367,7 @@ export function GuardianEnhanced() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h2 className={`text-sm font-medium tracking-[0.22em] uppercase transition-colors duration-300 ${mutedTextClass}`}>
-                Today’s Read
+                In Plain English
               </h2>
               <DisabledTooltipButton
                 onClick={() => setShowGuideDrawer(true)}
@@ -1431,11 +1444,12 @@ export function GuardianEnhanced() {
             transition={{ duration: 0.3 }}
             className={`overflow-hidden rounded-[24px] p-4 mt-2 text-sm ${mutedPanelClass} ${bodyTextClass}`}
           >
-            <p className={`mb-2 text-base font-semibold ${accentTextClass}`}>What is wallet health?</p>
+            <p className={`mb-2 text-base font-semibold ${accentTextClass}`}>What Guardian is actually checking</p>
             <ul className="space-y-1 list-disc list-inside">
-              <li>It combines approvals, mixer activity, and contract reputation into one simple reading.</li>
-              <li>Higher score = calmer wallet and less drain risk.</li>
-              <li>Guardian refreshes this reading over time so you can spot drift early.</li>
+              <li>Token permissions: apps you once approved to spend tokens for you.</li>
+              <li>Risky activity: wallet behavior that exchanges or protocols may treat as suspicious.</li>
+              <li>Contract reputation: whether the apps and contracts you used have a bad track record.</li>
+              <li>Higher score = safer wallet and less chance of an avoidable drain or lockup.</li>
             </ul>
             <div className={`mt-2 text-xs ${mutedTextClass}`}>
               <a href="/guardian/learn" className={`underline ${accentTextClass}`}>
@@ -1593,8 +1607,8 @@ export function GuardianEnhanced() {
             </DialogTitle>
           </DialogHeader>
           <p className={`mt-2 text-sm ${bodyTextClass}`}>
-            Guardian scans your wallet for hidden risks — like old approvals or shady contracts.
-            Everything runs read-only; no funds ever move without your consent.
+            Guardian checks your wallet for things like old token permissions, risky app connections, and suspicious activity patterns.
+            Everything runs read-only, and no funds ever move without your consent.
           </p>
           <DisabledTooltipButton
             onClick={() => {

@@ -173,7 +173,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const chainName = chainIdToName[wagmiChainId] || 'ethereum';
         const chainNamespace = legacyChainToCAIP2(chainName);
         
-        console.log('Adding new wagmi wallet to registry:', address);
         
         // Mark as being added to prevent duplicates
         setAddingWallets(prev => new Set(prev).add(address));
@@ -183,7 +182,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           label: `Connected Wallet`,
           chain_namespace: chainNamespace,
         }).then(() => {
-          console.log('Successfully added wagmi wallet to registry:', address);
           // Remove from adding set
           setAddingWallets(prev => {
             const newSet = new Set(prev);
@@ -201,7 +199,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           if (errorCode === '23505' || 
               errorMessage.includes('duplicate key') || 
               errorMessage.includes('uq_user_wallets_user_addr_chain')) {
-            console.log('✅ Wallet already exists in database, treating as success');
           } else {
             // Add to failed set to prevent retry loops for other errors
             setFailedWallets(prev => new Set(prev).add(address));
@@ -224,7 +221,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       // Set as active if no active wallet exists
       if (!activeWallet) {
         setActiveWalletState(address);
-        console.log('Set wagmi wallet as active:', address);
       }
     }
   }, [wagmiAddress, wagmiChainId, userId, addToRegistry, connectedWallets, activeWallet, addingWallets, failedWallets]);
@@ -241,12 +237,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       const savedNetwork = localStorage.getItem('aw_active_network');
       
       if (savedAddress) {
-        console.log('🔄 Immediately restoring active wallet from localStorage:', savedAddress);
         setActiveWalletState(savedAddress);
       }
       
       if (savedNetwork && getSupportedNetworks().includes(savedNetwork)) {
-        console.log('🔄 Immediately restoring active network from localStorage:', savedNetwork);
         setActiveNetworkState(savedNetwork);
       }
     } catch (error) {
@@ -280,7 +274,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     });
 
     if (wallets.length === 0) {
-      console.log('❌ No wallets available, returning null selection');
       return { address: null, network: 'eip155:1' };
     }
 
@@ -310,7 +303,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       );
 
       if (isValidInServerData) {
-        console.log('✅ localStorage selection is valid, using it:', { savedAddress, savedNetwork });
         return { address: savedAddress, network: savedNetwork };
       } else {
         console.log('🔄 localStorage selection is invalid, clearing and falling back:', {
@@ -358,7 +350,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       try {
         localStorage.setItem('aw_active_address', firstWallet.address);
         localStorage.setItem('aw_active_network', firstWallet.chainNamespace || 'eip155:1');
-        console.log('💾 Saved active selection to localStorage for future visits');
       } catch (error) {
         console.warn('Failed to save to localStorage:', error);
       }
@@ -369,7 +360,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       };
     }
 
-    console.log('❌ No valid wallet selection found');
     return { address: null, network: 'eip155:1' };
   }, []);
 
@@ -387,7 +377,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     });
 
     if (!isAuthenticated || !session?.user?.id) {
-      console.log('❌ Not authenticated, clearing wallet state');
       // Clear wallet state if not authenticated
       setActiveWalletState(null);
       setHydratedForUserId(null);
@@ -396,11 +385,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Skip if already hydrated for this user
     if (hydratedForUserId === session.user.id) {
-      console.log('✅ Already hydrated for this user, skipping');
       return;
     }
 
-    console.log('🚀 Starting wallet hydration for user:', session.user.id);
     setIsLoading(true);
     
     try {
@@ -430,14 +417,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         // Only set activeWallet if it's different from current (avoid unnecessary re-renders)
         if (restoredAddress && restoredAddress !== activeWallet) {
           setActiveWalletState(restoredAddress);
-          console.log('✅ Set active wallet:', restoredAddress);
         } else if (restoredAddress) {
-          console.log('✅ Active wallet already set correctly:', restoredAddress);
         }
         
         if (restoredNetwork && getSupportedNetworks().includes(restoredNetwork)) {
           setActiveNetworkState(restoredNetwork);
-          console.log('✅ Set active network:', restoredNetwork);
         }
         
         // Emit wallet connected event for other components
@@ -453,7 +437,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         }
         
       } else {
-        console.log('⚠️ No wallets found in registry, user needs to connect');
         // Only clear activeWallet if it's currently set (avoid unnecessary re-renders)
         if (activeWallet !== null) {
           setActiveWalletState(null);
@@ -471,7 +454,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         const savedNetwork = localStorage.getItem('aw_active_network');
         
         if (savedAddress && connectedWallets.some(w => w.address.toLowerCase() === savedAddress.toLowerCase())) {
-          console.log('🔄 Using localStorage fallback:', savedAddress);
           setActiveWalletState(savedAddress);
         }
         
@@ -483,7 +465,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       }
     } finally {
       setIsLoading(false);
-      console.log('✅ Wallet hydration completed');
     }
   }, [isAuthenticated, session, hydratedForUserId, connectedWallets, registryWallets, restoreActiveSelection]);
 
@@ -639,10 +620,8 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
     // Track the current state before any changes
     const stateBeforeChange = activeWallet;
-    console.log('🔍 STATE BEFORE CHANGE:', stateBeforeChange);
 
     // EMERGENCY: Try direct state update first (bypass useTransition)
-    console.log('🚨 EMERGENCY: Attempting direct state update (no useTransition)');
     
     setActiveWalletState(prevActive => {
       console.log('🚨 DIRECT FUNCTIONAL UPDATE CALLED:', {
@@ -653,13 +632,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       });
       
       if (prevActive === address) {
-        console.log('⚠️ WARNING: New address same as previous, but continuing...');
       }
       
       return address;
     });
     
-    console.log('🚨 DIRECT STATE UPDATE COMPLETED');
     
     // Update is_primary in database - SIMPLE DIRECT UPDATE
     (async () => {
@@ -687,7 +664,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           if (setPrimaryError) {
             console.error('Failed to set primary wallet:', setPrimaryError);
           } else {
-            console.log('✅ Primary wallet updated in database');
           }
         }
       } catch (error) {
@@ -697,7 +673,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     
     // Check state after a short delay
     setTimeout(() => {
-      console.log('🚨 STATE CHECK AFTER 100ms - Current activeWallet should be:', address);
       // Note: We can't access activeWallet here due to closure, but React DevTools will show the real value
     }, 100);
     
@@ -710,7 +685,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     });
     window.dispatchEvent(event);
     
-    console.log('🚨 setActiveWallet COMPLETED - Check React DevTools for state change');
     
   }, [connectedWallets, activeWallet, registryWallets]);
 

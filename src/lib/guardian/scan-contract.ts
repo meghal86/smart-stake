@@ -13,6 +13,10 @@ export interface GuardianFinding {
   severity: GuardianFindingSeverity;
   description: string;
   recommendation?: string;
+  evidence?: Record<string, unknown>;
+  contractAddress?: string;
+  txHash?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GuardianApproval {
@@ -59,6 +63,8 @@ export interface GuardianNormalizedScanResult {
     scannedAt: string;
   };
   recommendedActions: GuardianRecommendedAction[];
+  evidenceSummary?: Record<string, unknown>;
+  scoreFactors?: Array<Record<string, unknown>>;
 
   // Compatibility fields for existing screens while the UI migrates.
   trustScorePercent: number;
@@ -76,7 +82,14 @@ export interface GuardianRawRisk {
   type?: string;
   severity?: GuardianFindingSeverity;
   description?: string;
+  details?: string;
   recommendation?: string;
+  evidence?: Record<string, unknown>;
+  contractAddress?: string;
+  contract_address?: string;
+  txHash?: string;
+  tx_hash?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GuardianRawApproval {
@@ -101,15 +114,20 @@ export interface GuardianRawApproval {
 }
 
 export interface GuardianRawScanPayload {
+  trust_score?: number;
   trust_score_percent?: number;
   risk_score?: number;
   risks?: GuardianRawRisk[];
+  flags?: GuardianRawRisk[];
   approvals?: GuardianRawApproval[];
   scanned_at?: string;
   updated_at?: string;
   confidence?: number;
   scan_id?: string;
   guardian_scan_id?: string;
+  recommended_actions?: GuardianRecommendedAction[];
+  evidence_summary?: Record<string, unknown>;
+  score_factors?: Array<Record<string, unknown>>;
 }
 
 function clampScore(value: number) {
@@ -199,15 +217,24 @@ function normalizeFindings(risks: GuardianRawRisk[] | undefined): GuardianFindin
   return risks.map((risk) => ({
     type: risk.type || 'UNKNOWN',
     severity: risk.severity || 'medium',
-    description: risk.description || 'Security risk detected',
+    description: risk.description || risk.details || 'Security risk detected',
     recommendation: risk.recommendation,
+    evidence: risk.evidence,
+    contractAddress: risk.contractAddress || risk.contract_address,
+    txHash: risk.txHash || risk.tx_hash,
+    metadata: risk.metadata,
   }));
 }
 
 function deriveRecommendedActions(
   findings: GuardianFinding[],
-  approvals: GuardianApproval[]
+  approvals: GuardianApproval[],
+  providedActions?: GuardianRecommendedAction[]
 ): GuardianRecommendedAction[] {
+  if (Array.isArray(providedActions) && providedActions.length > 0) {
+    return providedActions;
+  }
+
   const actions: GuardianRecommendedAction[] = [];
 
   if (findings.length > 0) {
@@ -253,6 +280,8 @@ export function normalizeGuardianScanPayload(
 ): GuardianNormalizedScanResult {
   const explicitTrustScore = typeof payload.trust_score_percent === 'number'
     ? payload.trust_score_percent
+    : typeof payload.trust_score === 'number'
+      ? (payload.trust_score <= 1 ? payload.trust_score * 100 : payload.trust_score)
     : null;
   const rawRiskScore = typeof payload.risk_score === 'number'
     ? payload.risk_score
@@ -266,7 +295,7 @@ export function normalizeGuardianScanPayload(
     explicitTrustScore ?? Math.max(0, 100 - rawRiskScore! * 10)
   );
   const riskScore = rawRiskScore ?? Math.max(0, Math.round((100 - trustScorePercent) / 10));
-  const findings = normalizeFindings(payload.risks);
+  const findings = normalizeFindings(payload.risks || payload.flags);
   const approvals = normalizeApprovals(payload.approvals);
   const posture = deriveRiskLevel(riskScore);
   const scannedAt = payload.scanned_at || payload.updated_at || new Date().toISOString();
@@ -288,7 +317,9 @@ export function normalizeGuardianScanPayload(
     freshness: {
       scannedAt,
     },
-    recommendedActions: deriveRecommendedActions(findings, approvals),
+    recommendedActions: deriveRecommendedActions(findings, approvals, payload.recommended_actions),
+    evidenceSummary: payload.evidence_summary,
+    scoreFactors: payload.score_factors,
 
     trustScorePercent,
     trustScoreRaw: trustScorePercent / 100,

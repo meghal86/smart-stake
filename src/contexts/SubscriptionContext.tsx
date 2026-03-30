@@ -108,9 +108,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   };
 
   const upgradeToTier = async (tier: SubscriptionTier) => {
-    // Mock upgrade - in production, this would integrate with Stripe
-    console.log(`Upgrading to ${tier} plan...`);
-    
+    // Mock upgrade - in production, this would integrate with Stripe    
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     

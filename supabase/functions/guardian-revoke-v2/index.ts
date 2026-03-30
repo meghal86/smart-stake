@@ -4,6 +4,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger, generateRequestId } from '../_lib/log.ts';
 import { checkIdempotency, getIdempotency } from '../_lib/rate-limit.ts';
 import { simulateTransaction, calculateRiskDelta } from '../_lib/simulate.ts';
@@ -14,11 +15,16 @@ const corsHeaders = {
 };
 
 interface RevokeRequest {
-  token: string;
-  spender: string;
+  token?: string;
+  spender?: string;
   user: string;
   chain: string;
   idempotencyKey: string;
+  dryRun?: boolean;
+  approvals?: Array<{
+    token: string;
+    spender: string;
+  }>;
 }
 
 function buildRevokeTx(token: string, spender: string): {
@@ -45,16 +51,24 @@ serve(async (req) => {
 
   const requestId = generateRequestId();
   const logger = createLogger(requestId);
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
   try {
     const body: RevokeRequest = await req.json();
-    const { token, spender, user, chain, idempotencyKey } = body;
+    const { token, spender, user, chain, idempotencyKey, dryRun = false } = body;
+    const approvals = Array.isArray(body.approvals) && body.approvals.length > 0
+      ? body.approvals
+      : token && spender
+        ? [{ token, spender }]
+        : [];
 
-    logger.info('revoke_requested', { token, spender, user, chain, idempotencyKey });
+    logger.info('revoke_requested', { approvals, user, chain, idempotencyKey, dryRun });
 
     // Validate addresses
     const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-    if (!addressRegex.test(token) || !addressRegex.test(spender) || !addressRegex.test(user)) {
+    if (!addressRegex.test(user) || approvals.length === 0 || approvals.some((item) => !addressRegex.test(item.token) || !addressRegex.test(item.spender))) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -76,6 +90,28 @@ serve(async (req) => {
       );
     }
 
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+    if (authHeader?.startsWith('Bearer ')) {
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      });
+      const { data } = await authClient.auth.getUser();
+      userId = data.user?.id ?? null;
+    }
+
+    const serviceSupabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
     // Check idempotency
     const exists = await getIdempotency(idempotencyKey);
     if (exists) {
@@ -93,10 +129,6 @@ serve(async (req) => {
       );
     }
 
-    // Build transaction
-    const tx = buildRevokeTx(token, spender);
-
-    // Pre-simulate
     const chainIds: Record<string, number> = {
       ethereum: 1,
       base: 8453,
@@ -104,53 +136,108 @@ serve(async (req) => {
       polygon: 137,
     };
     const chainId = chainIds[chain.toLowerCase()] || 1;
+    const simulations = [];
+    let totalGasEstimate = 0n;
 
-    const simulation = await simulateTransaction(
-      {
-        from: user,
-        to: tx.to,
-        data: tx.data,
-        value: tx.value,
-      },
-      chainId
-    );
-
-    if (!simulation.success) {
-      logger.error('simulation_failed', new Error(simulation.reason));
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: {
-            code: 'SIMULATION_FAILED',
-            message: `Transaction will fail: ${simulation.reason}`,
-          },
-          requestId,
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    for (const approval of approvals) {
+      const tx = buildRevokeTx(approval.token, approval.spender);
+      const simulation = await simulateTransaction(
+        {
+          from: user,
+          to: tx.to,
+          data: tx.data,
+          value: tx.value,
+        },
+        chainId,
       );
+
+      if (!simulation.success) {
+        logger.error('simulation_failed', new Error(simulation.reason));
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: {
+              code: 'SIMULATION_FAILED',
+              message: `Transaction will fail: ${simulation.reason}`,
+            },
+            requestId,
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+
+      const gasEstimate = BigInt(simulation.gasEstimate || '0');
+      totalGasEstimate += gasEstimate;
+      simulations.push({
+        approval,
+        tx,
+        gasEstimate,
+        simulation,
+      });
     }
 
-    // Calculate risk delta (assuming 1 approval = 15 points back)
-    const scoreDelta = calculateRiskDelta(1);
+    const scoreDelta = calculateRiskDelta(approvals.length);
 
     // Store idempotency key (5 min TTL)
     await checkIdempotency(idempotencyKey, 300);
 
-    logger.info('revoke_success', { gasEstimate: simulation.gasEstimate, scoreDelta });
+    let operationId: string | undefined;
+    if (userId) {
+      const operationInsert = await serviceSupabase
+        .from('guardian_remediation_operations')
+        .insert({
+          user_id: userId,
+          wallet_address: user,
+          wallet_address_lc: user.toLowerCase(),
+          operation_type: approvals.length > 1 ? 'batch_revoke' : 'revoke',
+          network: chain,
+          token_address: approvals[0].token,
+          spender: approvals[0].spender,
+          status: dryRun ? 'prepared' : 'requested',
+          idempotency_key: idempotencyKey,
+          gas_estimate: totalGasEstimate.toString(),
+          score_delta_min: scoreDelta.min,
+          score_delta_max: scoreDelta.max,
+          simulation: {
+            dryRun,
+            approvals,
+            steps: simulations.map((item) => ({
+              token: item.approval.token,
+              spender: item.approval.spender,
+              gasEstimate: item.gasEstimate.toString(),
+              simulation: item.simulation,
+            })),
+          },
+        })
+        .select('id')
+        .single();
+
+      if (!operationInsert.error) {
+        operationId = operationInsert.data?.id;
+      }
+    }
+
+    logger.info('revoke_success', { gasEstimate: totalGasEstimate.toString(), scoreDelta, operationId });
 
     // Return unsigned transaction
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          to: tx.to,
-          data: tx.data,
-          value: tx.value,
-          gasEstimate: simulation.gasEstimate,
+          to: simulations[0].tx.to,
+          data: simulations[0].tx.data,
+          value: simulations[0].tx.value,
+          gasEstimate: totalGasEstimate.toString(),
           scoreDelta,
           simulation: {
             success: true,
+            steps: simulations.map((item) => ({
+              token: item.approval.token,
+              spender: item.approval.spender,
+              gasEstimate: item.gasEstimate.toString(),
+            })),
           },
+          operationId,
         },
         requestId,
       }),
@@ -177,4 +264,3 @@ serve(async (req) => {
     );
   }
 });
-

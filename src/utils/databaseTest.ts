@@ -17,9 +17,10 @@ export const testDatabaseConnection = async () => {
     
     console.log('Database connection successful');
     return { success: true, data };
-  } catch (error) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error('Database test failed:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: msg };
   }
 };
 
@@ -54,8 +55,9 @@ export const createUserIfNotExists = async (userId: string, email: string) => {
     }
 
     return { success: true };
-  } catch (error) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error('User creation failed:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: msg };
   }
 };

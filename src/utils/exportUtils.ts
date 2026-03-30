@@ -97,15 +97,18 @@ export function prepareWhaleAnalyticsExport(whales: unknown[]): ExportData {
     title: 'Whale Analytics Report',
     timestamp: new Date(),
     headers: ['Address', 'Label', 'Balance (ETH)', 'Risk Score', 'Recent Activity', 'Chain', 'Provider'],
-    rows: whales.map(whale => [
-      whale.fullAddress,
-      whale.label,
-      whale.balance.toFixed(2),
-      whale.riskScore,
-      whale.recentActivity,
-      whale.chain,
-      whale.provider
-    ])
+    rows: whales.map((whale: unknown) => {
+      const w = whale as Record<string, unknown>;
+      return [
+        String(w.fullAddress || ''),
+        String(w.label || ''),
+        typeof w.balance === 'number' ? w.balance.toFixed(2) : '0',
+        String(w.riskScore || ''),
+        String(w.recentActivity || ''),
+        String(w.chain || ''),
+        String(w.provider || '')
+      ];
+    })
   };
 }
 
@@ -115,15 +118,18 @@ export function preparePortfolioExport(assets: unknown[], totalValue: number): E
     timestamp: new Date(),
     headers: ['Asset', 'Symbol', 'Allocation %', 'Value (USD)', 'Price', '24h Change %', 'Holdings'],
     rows: [
-      ...assets.map(asset => [
-        asset.name,
-        asset.symbol,
-        asset.allocation?.toFixed(2) || '0.00',
-        asset.value?.toLocaleString() || '0',
-        asset.price?.toLocaleString() || '0',
-        asset.change24h?.toFixed(2) || '0.00',
-        asset.holdings?.toFixed(4) || '0.0000'
-      ]),
+      ...assets.map((asset: unknown) => {
+        const a = asset as Record<string, unknown>;
+        return [
+          String(a.name || ''),
+          String(a.symbol || ''),
+          typeof a.allocation === 'number' ? a.allocation.toFixed(2) : '0.00',
+          typeof a.value === 'number' ? a.value.toLocaleString() : '0',
+          typeof a.price === 'number' ? a.price.toLocaleString() : '0',
+          typeof a.change24h === 'number' ? a.change24h.toFixed(2) : '0.00',
+          typeof a.holdings === 'number' ? a.holdings.toFixed(4) : '0.0000'
+        ];
+      }),
       ['', '', '', '', '', '', ''],
       ['TOTAL PORTFOLIO VALUE', '', '100.00', totalValue.toLocaleString(), '', '', '']
     ]

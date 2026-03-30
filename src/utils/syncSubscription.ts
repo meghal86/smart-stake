@@ -46,7 +46,8 @@ export const syncSubscriptionStatus = async (userId: string) => {
 
     return { success: true };
   } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error('Sync error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: msg };
   }
 };

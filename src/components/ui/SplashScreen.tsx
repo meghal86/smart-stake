@@ -10,6 +10,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   duration = 1800,
 }) => {
   const [isExiting, setIsExiting] = useState(false);
+  const [logoSrc, setLogoSrc] = useState('/header.png');
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -45,9 +46,14 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       >
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/12 bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
           <img
-            src="/whaleplus-logo.svg"
+            src={logoSrc}
             alt="WhalePulse"
             className="h-9 w-9 object-contain"
+            onError={() => {
+              if (logoSrc !== '/hero_logo_512.png') {
+                setLogoSrc('/hero_logo_512.png');
+              }
+            }}
           />
         </div>
 

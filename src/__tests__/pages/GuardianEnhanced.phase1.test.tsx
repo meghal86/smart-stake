@@ -296,18 +296,18 @@ describe('GuardianEnhanced Phase 1', () => {
 
     render(<GuardianEnhanced />);
 
-    expect(screen.getByText('Wallet Health')).toBeInTheDocument();
-    expect(screen.getByText('Health Trend')).toBeInTheDocument();
+    expect(screen.getByText('Wallet Safety Check')).toBeInTheDocument();
+    expect(screen.getByText('Safety Trend')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /switch guardian overview to health/i }));
 
-    expect(screen.getByText('Health trajectory')).toBeInTheDocument();
-    expect(screen.getByText('How sure Guardian is')).toBeInTheDocument();
+    expect(screen.getByText('Score movement')).toBeInTheDocument();
+    expect(screen.getByText('How sure Guardian is about this reading')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /switch guardian overview to exposure/i }));
 
-    expect(screen.getByText('Exposure Read')).toBeInTheDocument();
-    expect(screen.getByText('Contracts with spending access')).toBeInTheDocument();
+    expect(screen.getByText('Permissions & Risky Activity')).toBeInTheDocument();
+    expect(screen.getByText('Apps that can move tokens for you')).toBeInTheDocument();
   });
 
   it('scans every wallet from the live wallet list when scan all is requested', async () => {

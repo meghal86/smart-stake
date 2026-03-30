@@ -66,10 +66,15 @@ export function parseSearchQuery(query: string): SearchContext {
               case 'b': numValue *= 1000000000; break;
             }
             
-            context.amount = {
-              operator: operator as unknown,
-              value: numValue
-            };
+            // Validate operator is one of the allowed types
+            const validOperators = ['>', '<', '=', '>=', '<='];
+            const op = operator as string;
+            if (validOperators.includes(op)) {
+              context.amount = {
+                operator: op as '>' | '<' | '=' | '>=' | '<=',
+                value: numValue
+              };
+            }
           }
           break;
         }

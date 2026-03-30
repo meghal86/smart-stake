@@ -19,6 +19,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { requestGuardianRevoke } from '@/services/guardianService';
+import { updateGuardianRemediationOperation } from '@/services/guardianLedgerService';
+import { waitForTransactionReceipt } from '@wagmi/core';
+import { useChainId, useWalletClient } from 'wagmi';
+import { wagmiConfig } from '@/config/wagmi';
 
 interface Approval {
   token: `0x${string}`;
@@ -51,6 +55,8 @@ export function RevokeModal({
   const [success, setSuccess] = useState(false);
   const [gasEstimate, setGasEstimate] = useState<{ total: number; perTx: number } | null>(null);
   const [loadingGas, setLoadingGas] = useState(false);
+  const { data: walletClient } = useWalletClient();
+  const chainId = useChainId();
 
   // Fetch gas estimate when selection changes
   useEffect(() => {
@@ -123,6 +129,76 @@ export function RevokeModal({
 
     try {
       const toRevoke = approvals.filter((a) => selected.has(a.token));
+      if (!walletAddress) {
+        throw new Error('Connect a wallet before revoking approvals.');
+      }
+
+      if (!walletClient) {
+        throw new Error('Wallet signer unavailable. Reconnect your wallet and try again.');
+      }
+
+      for (const approval of toRevoke) {
+        const response = await requestGuardianRevoke({
+          wallet: walletAddress,
+          approvals: [
+            {
+              token: approval.token,
+              spender: approval.spender,
+            },
+          ],
+          network: 'ethereum',
+          dry_run: false,
+        });
+
+        const txHash = await walletClient.sendTransaction({
+          account: walletClient.account,
+          to: response.to as `0x${string}`,
+          data: response.data as `0x${string}`,
+          value: response.value ? BigInt(response.value) : 0n,
+          chain: walletClient.chain,
+        });
+
+        if (response.operation_id) {
+          await updateGuardianRemediationOperation(response.operation_id, {
+            status: 'broadcast',
+            tx_hash: txHash,
+          });
+        }
+
+        try {
+          const receipt = await waitForTransactionReceipt(wagmiConfig, {
+            hash: txHash,
+            chainId,
+            confirmations: 1,
+          });
+
+          if (response.operation_id) {
+            await updateGuardianRemediationOperation(response.operation_id, {
+              status: receipt.status === 'success' ? 'confirmed' : 'failed',
+              tx_hash: txHash,
+              confirmed_at: receipt.status === 'success' ? new Date().toISOString() : null,
+              receipt: {
+                blockHash: receipt.blockHash,
+                blockNumber: receipt.blockNumber?.toString(),
+                gasUsed: receipt.gasUsed?.toString(),
+                transactionHash: receipt.transactionHash,
+                status: receipt.status,
+              },
+              error_message: receipt.status === 'reverted' ? 'Transaction reverted onchain.' : null,
+            });
+          }
+        } catch (receiptError) {
+          if (response.operation_id) {
+            await updateGuardianRemediationOperation(response.operation_id, {
+              status: 'failed',
+              tx_hash: txHash,
+              error_message: receiptError instanceof Error ? receiptError.message : 'Receipt tracking failed.',
+            });
+          }
+          throw receiptError;
+        }
+      }
+
       await onRevoke(toRevoke);
       setSuccess(true);
       setTimeout(() => {
@@ -291,7 +367,7 @@ export function RevokeModal({
               </Button>
               <Button
                 onClick={handleRevoke}
-                disabled={selected.size === 0 || revoking}
+                disabled={selected.size === 0 || revoking || !walletClient}
                 className="bg-red-500 hover:bg-red-600"
               >
                 {revoking ? (
@@ -313,4 +389,3 @@ export function RevokeModal({
     </Dialog>
   );
 }
-
