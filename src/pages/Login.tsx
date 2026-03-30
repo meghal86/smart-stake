@@ -177,7 +177,7 @@ const Login: React.FC = () => {
           <section className="rounded-3xl border border-white/10 bg-[#0c0d11]/92 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur sm:p-7">
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]">
-              <img src="/header.png" alt="WhalePulse" className="h-8 w-8 rounded-full" />
+              <img src="/header.png" alt="AlphaWhale" className="h-8 w-8 rounded-full" />
             </div>
             <h1
               className="mt-5 text-3xl text-[#f6f2ea]"
@@ -311,7 +311,7 @@ const Login: React.FC = () => {
           </form>
 
           <div className="mt-7 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-4 text-center text-sm text-[#9f9a91]">
-            New to WhalePulse?{' '}
+            New to AlphaWhale?{' '}
             <Link to="/signup" className="font-medium text-[#f6f2ea] transition hover:text-white">
               Create an account
             </Link>

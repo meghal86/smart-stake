@@ -69,13 +69,13 @@ export function GlobalHeader({ className }: GlobalHeaderProps) {
             onClick={() => navigate(user ? '/cockpit' : '/')}
             className="flex items-center gap-3 text-left transition-opacity hover:opacity-80"
           >
-            <img src="/header.png" alt="WhalePulse" className="h-8 w-8 rounded-full" />
+            <img src="/header.png" alt="AlphaWhale" className="h-8 w-8 rounded-full" />
             <div className="flex flex-col">
               <span
                 className="text-lg font-semibold tracking-tight text-[#111111] dark:text-[#f5f2ea]"
                 style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}
               >
-                WhalePulse
+                AlphaWhale
               </span>
               <span className="text-[11px] uppercase tracking-[0.22em] text-[#7a766e] dark:text-[#8f8a82]">
                 Overview

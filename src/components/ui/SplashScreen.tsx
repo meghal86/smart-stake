@@ -47,7 +47,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/12 bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
           <img
             src={logoSrc}
-            alt="WhalePulse"
+            alt="AlphaWhale"
             className="h-9 w-9 object-contain"
             onError={() => {
               if (logoSrc !== '/hero_logo_512.png') {
@@ -59,7 +59,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
         <div className="space-y-2">
           <p className="text-[11px] uppercase tracking-[0.36em] text-white/55">
-            WhalePulse
+            AlphaWhale
           </p>
           <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-stone-100">
             Overview

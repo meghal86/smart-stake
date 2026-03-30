@@ -227,10 +227,10 @@ export default function AlphaWhaleHome() {
                             <div>
                               <p className="text-[11px] uppercase tracking-[0.28em] text-[#a7c0ff]">Desk surface</p>
                               <p className="mt-3 text-3xl text-[#f6f2ea]" style={{ fontFamily: 'Iowan Old Style, Georgia, serif' }}>
-                                WhalePulse
+                                AlphaWhale
                               </p>
                             </div>
-                            <img src="/header.png" alt="WhalePulse mark" className="h-14 w-14 rounded-full object-cover opacity-95" />
+                            <img src="/header.png" alt="AlphaWhale mark" className="h-14 w-14 rounded-full object-cover opacity-95" />
                           </div>
 
                           <div className="mt-8 space-y-3">

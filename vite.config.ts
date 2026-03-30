@@ -25,10 +25,9 @@ export default defineConfig({
     sourcemap: true,
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
-      external: ['motion-dom'],
       onwarn(warning, defaultHandler) {
-        // Suppress unresolved external module warnings
-        if (warning.code === 'UNRESOLVED_IMPORT') return;
+        // Suppress circular dependency warnings from framer-motion internals
+        if (warning.code === 'CIRCULAR_DEPENDENCY') return;
         defaultHandler(warning);
       },
       output: {
@@ -54,6 +53,10 @@ export default defineConfig({
   // Skip TypeScript project checking entirely
   optimizeDeps: {
     esbuildOptions: {},
-    include: ['react', 'react-dom', 'react-router-dom', '@radix-ui/react-dialog', 'lucide-react']
+    include: [
+      'react', 'react-dom', 'react-router-dom',
+      '@radix-ui/react-dialog', 'lucide-react',
+      'framer-motion', 'motion-dom'
+    ]
   }
 })
